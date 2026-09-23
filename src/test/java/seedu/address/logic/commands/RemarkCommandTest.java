@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
+import seedu.address.model.person.Remark;
 
 public class RemarkCommandTest {
 
@@ -17,7 +18,7 @@ public class RemarkCommandTest {
 
     @Test
     public void execute_displaysParsedArguments() {
-        String remark = "Some remark";
+        Remark remark = new Remark("Some remark");
         RemarkCommand remarkCommand = new RemarkCommand(INDEX_FIRST_PERSON, remark);
 
         assertCommandFailure(remarkCommand, model,
@@ -26,13 +27,13 @@ public class RemarkCommandTest {
 
     @Test
     public void equals() {
-        RemarkCommand standardCommand = new RemarkCommand(INDEX_FIRST_PERSON, "Likes skiing");
+        RemarkCommand standardCommand = new RemarkCommand(INDEX_FIRST_PERSON, new Remark("Likes skiing"));
 
-        assertTrue(standardCommand.equals(new RemarkCommand(INDEX_FIRST_PERSON, "Likes skiing")));
+        assertTrue(standardCommand.equals(new RemarkCommand(INDEX_FIRST_PERSON, new Remark("Likes skiing"))));
         assertTrue(standardCommand.equals(standardCommand));
         assertFalse(standardCommand.equals(null));
         assertFalse(standardCommand.equals(new ClearCommand()));
-        assertFalse(standardCommand.equals(new RemarkCommand(INDEX_SECOND_PERSON, "Likes skiing")));
-        assertFalse(standardCommand.equals(new RemarkCommand(INDEX_FIRST_PERSON, "Likes swimming")));
+        assertFalse(standardCommand.equals(new RemarkCommand(INDEX_SECOND_PERSON, new Remark("Likes skiing"))));
+        assertFalse(standardCommand.equals(new RemarkCommand(INDEX_FIRST_PERSON, new Remark("Likes swimming"))));
     }
 }
