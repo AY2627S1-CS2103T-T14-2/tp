@@ -13,7 +13,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 ### Aahil
 
-<img src="tp/docs/images/docs:images:aahilma.png" width="200px">
+<img src="images/aahilma.png" width="200px">
 
 [[github](https://github.com/aahilma)]
 
