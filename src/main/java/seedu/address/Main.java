@@ -11,7 +11,8 @@ import seedu.address.commons.core.LogsCenter;
  * This is a workaround for the following error when MainApp is made the
  * entry point of the application:
  *
- *     Error: JavaFX runtime components are missing, and are required to run this application
+ * Error: JavaFX runtime components are missing, and are required to run this
+ * application
  *
  * The reason is that MainApp extends Application. In that case, the
  * LauncherHelper will check for the javafx.graphics module to be present
@@ -27,7 +28,7 @@ public class Main {
     public static void main(String[] args) {
 
         logger.warning("The warnings about a 'restricted method in java.lang.System' "
-            + "and 'enabling native access' appearing below (if any) can be ignored.");
+                + "and 'enabling native access' appearing below (if any) can be ignored.");
         Application.launch(MainApp.class, args);
     }
 }
