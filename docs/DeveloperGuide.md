@@ -327,6 +327,42 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case ends.
 
+**Use case: Set a supporter's cultivation stage**
+
+**MSS**
+
+1.  User requests to find a supporter
+2.  SupporterBook shows a list of matching supporters
+3.  User requests to set the cultivation stage of a specific supporter in the list
+4.  SupporterBook updates the supporter's cultivation stage
+5.  SupporterBook confirms the change and shows the updated supporter
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. No supporters match the search.
+
+  Use case ends.
+
+* 3a. The given index is invalid.
+
+    * 3a1. SupporterBook shows an error message.
+
+      Use case resumes at step 2.
+
+* 3b. The given cultivation stage is invalid.
+
+    * 3b1. SupporterBook shows an error message indicating the valid cultivation stages.
+
+      Use case resumes at step 3.
+
+* 3c. The supporter is already at the requested cultivation stage.
+
+    * 3c1. SupporterBook informs the user that the supporter is already at that cultivation stage and makes no changes.
+
+      Use case ends.
+
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
