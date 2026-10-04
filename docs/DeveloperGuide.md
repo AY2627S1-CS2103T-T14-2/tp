@@ -4,7 +4,7 @@
   pageNav: 3
 ---
 
-# AB-3 Developer Guide
+# SupporterBook Developer Guide
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -326,10 +326,15 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
-
-*{More to be added}*
+2.  Should work without requiring an installer.
+3.  Should be distributable as a single JAR file of no more than 100 MB.
+4.  Should be usable by a single user on one computer, without supporting concurrent or shared access to the same data.
+5.  Should store all supporter data locally in a human-readable file that can be inspected and edited while the application is not running.
+6.  Should be usable for its normal functionality without depending on a remote server or internet connection.
+7.  Should clearly inform the user if supporter data cannot be loaded or saved, rather than failing silently.
+8.  Should be able to hold at least 250 supporters without noticeable sluggishness in performance for typical usage. 
+9.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most common supporter-management tasks faster using commands than using the mouse.
+10. The GUI should work well at standard screen resolutions 1920x1080 or higher at 100% or 125% screen scaling, and should remain usable at resolutions 1280x720 or higher and 150% scaling.
 
 ### Glossary
 
