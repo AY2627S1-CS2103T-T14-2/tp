@@ -4,7 +4,7 @@
   pageNav: 3
 ---
 
-# AB-3 Developer Guide
+# SupporterBook Developer Guide
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -419,15 +419,83 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
       Use case resumes from step 2.
 
-*{More to be added}*
+**Use case: View a supporter's details and interaction history**
+
+**MSS**
+
+1.  User requests to find a supporter
+2.  SupporterBook shows a list of matching supporters
+3.  User requests to view a specific supporter in the list
+4.  SupporterBook shows the supporter's details and interaction history, with the most recent interactions shown first
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. No supporters match the search.
+
+      Use case ends.
+
+* 3a. The given index is invalid.
+
+    * 3a1. SupporterBook shows an error message.
+
+      Use case resumes at step 2.
+
+* 4a. The supporter has no logged interactions.
+
+    * 4a1. SupporterBook shows the supporter's details and indicates that there are no interactions logged yet.
+
+      Use case ends.
+
+**Use case: Set a supporter's cultivation stage**
+
+**MSS**
+
+1.  User requests to find a supporter
+2.  SupporterBook shows a list of matching supporters
+3.  User requests to set the cultivation stage of a specific supporter in the list
+4.  SupporterBook updates the supporter's cultivation stage
+5.  SupporterBook confirms the change and shows the updated supporter
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. No supporters match the search.
+
+  Use case ends.
+
+* 3a. The given index is invalid.
+
+    * 3a1. SupporterBook shows an error message.
+
+      Use case resumes at step 2.
+
+* 3b. The given cultivation stage is invalid.
+
+    * 3b1. SupporterBook shows an error message indicating the valid cultivation stages.
+
+      Use case resumes at step 3.
+
+* 3c. The supporter is already at the requested cultivation stage.
+
+    * 3c1. SupporterBook informs the user that the supporter is already at that cultivation stage and makes no changes.
+
+      Use case ends.
 
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
-
-*{More to be added}*
+2.  Should work without requiring an installer.
+3.  Should be distributable as a single JAR file of no more than 100 MB.
+4.  Should be usable by a single user on one computer, without supporting concurrent or shared access to the same data.
+5.  Should store all supporter data locally in a human-readable file that can be inspected and edited while the application is not running.
+6.  Should be usable for its normal functionality without depending on a remote server or internet connection.
+7.  Should clearly inform the user if supporter data cannot be loaded or saved, rather than failing silently.
+8.  Should be able to hold at least 250 supporters without noticeable sluggishness in performance for typical usage. 
+9.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most common supporter-management tasks faster using commands than using the mouse.
+10. The GUI should work well at standard screen resolutions 1920x1080 or higher at 100% or 125% screen scaling, and should remain usable at resolutions 1280x720 or higher and 150% scaling.
 
 ### Glossary
 
