@@ -270,33 +270,154 @@ _{Explain here how the data archiving feature will be implemented}_
 
 **Target user profile**:
 
-* has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
-* is reasonably comfortable using CLI apps
+* Donor and corporate-partnership executives at small (Tier 1) charities, who single-handedly manage every supporter relationship without access to a CRM.
 
-**Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
+(Definition of Tier 1: under the Code of Governance for Charities and IPCs (2023), Tier 1 covers small and medium non-IPC charities with gross annual receipts or total expenditure from $50,000 to under $10 million; Tier 2 covers all IPCs and large non-IPC charities.)
+
+
+**Value proposition**: SupporterBook helps the sole fundraising and outreach staff at a small charity stay on top of every donor and corporate relationship, keeping each supporter’s history and the introductions behind it in one place, so follow-ups happen on time and relationships outlast whoever holds the role. It also allows fast CLI-based retrieval.
 
 
 ### User stories
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-| Priority | As a …                                    | I want to …                 | So that I can…                                                        |
-|----------|--------------------------------------------|------------------------------|------------------------------------------------------------------------|
-| `* * *`  | new user                                   | see usage instructions       | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person             |                                                                        |
-| `* * *`  | user                                       | delete a person              | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name        | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name         | locate a person easily                                                 |
+Stories are grouped by epic, with the highest-priority stories listed first within each epic.
 
-*{More to be added}*
+#### A. Getting started
+
+| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
+|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `*`      | potential user exploring the app                 | see the app pre-populated with sample supporter records                         | I can tell what it will look like once my own data is in it                        |
+| `*`      | potential user exploring the app                 | see a list of all available commands with an example of each                    | I can learn what the app does without reading a manual                             |
+| `*`      | user ready to start using the app for real       | clear all sample data in one command                                            | I can begin from a clean list of my own supporters                                 |
+| `*`      | new user who already keeps a spreadsheet         | import my existing supporter list from a CSV file                               | I do not have to retype 250 contacts before the app is of any use                  |
+| `*`      | new user                                         | see where the app stores my data file                                           | I know what to back up and what to hand over                                       |
+
+#### B. Contact records
+
+| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
+|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `* * *`  | fundraiser                                       | add a supporter with their name and contact details                             | every supporter sits in one place instead of in my inbox                           |
+| `* * *`  | fundraiser                                       | see a list of all my supporters                                                 | I can see everyone I am responsible for                                            |
+| `* * *`  | fundraiser                                       | delete a supporter                                                              | my list does not fill up with people I will never contact again                    |
+| `* * *`  | fundraiser                                       | edit a supporter's details                                                      | their phone and email stay current when they change jobs                           |
+| `* * *`  | fundraiser                                       | record the organisation a contact belongs to                                    | I know which company a CSR contact speaks for                                      |
+| `* *`    | fundraiser                                       | view one supporter's whole record on a single screen                            | I can prepare for a meeting in the minute before it starts                         |
+| `* *`    | fundraiser                                       | add free-form notes to a supporter                                              | I can keep the things that do not fit any field                                    |
+| `* *`    | fundraiser recording Singaporean names           | save names containing hyphens, apostrophes, s/o and d/o                         | I can record my supporters' names as they actually are                             |
+| `* *`    | fundraiser with overseas corporate contacts      | save phone numbers that include a country code                                  | I can store the numbers I actually dial                                            |
+| `* *`    | fundraiser                                       | mark whether a contact is an individual supporter or a corporate contact        | I can tell the two kinds of relationship apart                                     |
+| `*`      | fundraiser                                       | record a contact's job title                                                    | I know whether I am talking to someone who can approve a partnership               |
+| `*`      | fundraiser                                       | record how a supporter prefers to be addressed                                  | I do not open a letter to a major donor with the wrong name                        |
+
+#### C. Finding and retrieving
+
+| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
+|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `* * *`  | fundraiser                                       | find a supporter by part of their name                                          | I can pull up a record without remembering the exact spelling                      |
+| `*`      | fundraiser                                       | search on fields other than the name                                            | I can find the person at a particular bank when their name escapes me              |
+| `*`      | forgetful user                                   | be warned when I add someone whose name closely matches an existing contact     | I do not create a second record for a person I already have                        |
+| `*`      | fundraiser                                       | filter my supporters by tag                                                     | I can pull up everyone sitting at one cultivation stage                            |
+| `*`      | fundraiser                                       | combine more than one filter in a single search                                 | I can ask a precise question such as corporate contacts untouched since June       |
+| `*`      | fundraiser                                       | sort my list by the date I last spoke to each person                            | whoever has gone quiet rises to the top                                            |
+| `*`      | fundraiser                                       | see how many supporters match a search                                          | I know the size of the job before I start working through it                       |
+
+#### D. Interaction history
+
+| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
+|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `* * *`  | fundraiser                                       | log an interaction against a supporter with a date and a short note             | what was said stops living only in my memory                                       |
+| `* * *`  | fundraiser                                       | see all logged interactions for a supporter in date order                       | I can see how the relationship has developed                                       |
+| `* *`    | fundraiser                                       | correct or remove a logged interaction                                          | a mistyped date does not stay wrong forever                                        |
+| `* *`    | fundraiser                                       | see the date of the most recent interaction beside each supporter in the list   | I can see at a glance who has gone quiet                                           |
+| `*`      | fundraiser                                       | log an interaction dated in the past                                            | I can write up a meeting the week after it happened                                |
+| `*`      | fundraiser                                       | record what kind of interaction it was, such as a call, a meeting or an email   | I can tell a coffee meeting apart from a mass mailing                              |
+| `*`      | fundraiser                                       | record the next step I intend to take with a supporter                          | I know what I promised to do next                                                  |
+| `*`      | fundraiser                                       | see which intended next steps are overdue                                       | nothing I promised slips silently                                                  |
+
+#### E. Introductions and relationships
+
+| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
+|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `*`      | fundraiser                                       | record who introduced me to a supporter                                         | I know whose goodwill created the relationship                                     |
+| `*`      | fundraiser                                       | see everyone a given person has introduced me to                                | I can tell which board member opens the most doors                                 |
+| `*`      | fundraiser                                       | trace an introduction chain back to where it started                            | I can see how a major partnership actually came about                              |
+| `*`      | fundraiser                                       | see which introductions I have not yet reported back on                         | the person who made them keeps making them                                         |
+| `*`      | fundraiser                                       | link contacts who share an affiliation such as a company or a board             | I can see everyone I know at one organisation                                      |
+
+#### F. Cultivation and prioritisation
+
+| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
+|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `* * *`  | fundraiser                                       | set a cultivation stage on a supporter                                          | I know whether they have been approached, are giving, have lapsed or have declined |
+| `* *`    | fundraiser                                       | tag supporters with labels of my own                                            | I can group them in ways I did not anticipate when I started                       |
+| `*`      | fundraiser                                       | change a supporter's stage in a single command                                  | updating where things stand after a meeting takes seconds                          |
+| `*`      | fundraiser                                       | see how many supporters sit at each stage                                       | I can tell early in the year whether I have enough prospects                       |
+| `*`      | fundraiser                                       | record that a supporter declined, together with a reason                        | I do not approach them again the same way                                          |
+| `*`      | fundraiser                                       | pin a small number of key relationships                                         | the handful my year depends on stay in front of me                                 |
+| `*`      | fundraiser                                       | see supporters marked as giving who have had no interaction this financial year | lapsed givers surface before the year closes                                       |
+
+#### G. Data safety and trust
+
+| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
+|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `* * *`  | fundraiser                                       | have every change saved automatically                                           | I never lose work by forgetting to save                                            |
+| `* *`    | careless user                                    | undo my last command                                                            | a mistaken delete does not cost me a record I cannot rebuild                       |
+| `*`      | cautious user                                    | be asked to confirm before a command that wipes all my data                     | one stray keystroke cannot empty the list                                          |
+| `*`      | fundraiser handling other people's personal data | keep everything in a file on my own machine with nothing sent anywhere          | supporters' details never leave the charity's laptop                               |
+| `*`      | fundraiser                                       | open and repair my data file in a text editor                                   | a corrupted file does not mean starting again from nothing                         |
 
 ### Use cases
 
 (For all use cases below, the **System** is the `SupporterBook` and the **Actor** is the `user`, unless specified otherwise)
+
+**Use case: UC01 - Add a supporter**
+
+**MSS**
+
+1.  User requests to add a supporter, giving their details.
+2.  SupporterBook adds the supporter and shows the full list with the new supporter at the end.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. User did not provide a name.
+
+    * 1a1. SupporterBook shows an error message.
+    * 1a2. User requests to add the supporter again, giving a name.
+
+      Steps 1a1-1a2 are repeated until the data entered is correct.
+
+      Use case resumes from step 2.
+
+* 1b. User provided neither a phone number nor an email.
+
+    * 1b1. SupporterBook shows an error message stating that at least one is required.
+    * 1b2. User requests to add the supporter again, giving a phone number, an email, or both.
+
+      Steps 1b1-1b2 are repeated until the data entered is correct.
+
+      Use case resumes from step 2.
+
+* 1c. User provided a detail that is invalid (e.g. a name with symbols, a phone number with spaces, an unknown stage).
+
+    * 1c1. SupporterBook shows an error message for that detail.
+    * 1c2. User requests to add the supporter again, with the detail corrected.
+
+      Steps 1c1-1c2 are repeated until the data entered is correct.
+
+      Use case resumes from step 2.
+
+* 1d. A supporter with the same name already exists, ignoring capitalisation and extra spaces.
+
+    * 1d1. SupporterBook shows an error message suggesting a way to tell the two supporters apart.
+    * 1d2. User requests to add the supporter again, with a name that tells the two supporters apart.
+
+      Steps 1d1-1d2 are repeated until the data entered is correct.
+
+      Use case resumes from step 2.
 
 **Use case: View a supporter's details and interaction history**
 
@@ -313,7 +434,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 2a. No supporters match the search.
 
-  Use case ends.
+      Use case ends.
 
 * 3a. The given index is invalid.
 
