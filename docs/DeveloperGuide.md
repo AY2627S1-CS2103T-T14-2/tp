@@ -386,101 +386,159 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 * 1a. User did not provide a name.
 
     * 1a1. SupporterBook shows an error message.
-    * 1a2. User requests to add the supporter again, giving a name.
 
-      Steps 1a1-1a2 are repeated until the data entered is correct.
-
-      Use case resumes from step 2.
+      Use case resumes from step 1.
 
 * 1b. User provided neither a phone number nor an email.
 
     * 1b1. SupporterBook shows an error message stating that at least one is required.
-    * 1b2. User requests to add the supporter again, giving a phone number, an email, or both.
 
-      Steps 1b1-1b2 are repeated until the data entered is correct.
-
-      Use case resumes from step 2.
+      Use case resumes from step 1.
 
 * 1c. User provided a detail that is invalid (e.g. a name with symbols, a phone number with spaces, an unknown stage).
 
     * 1c1. SupporterBook shows an error message for that detail.
-    * 1c2. User requests to add the supporter again, with the detail corrected.
 
-      Steps 1c1-1c2 are repeated until the data entered is correct.
-
-      Use case resumes from step 2.
+      Use case resumes from step 1.
 
 * 1d. A supporter with the same name already exists, ignoring capitalisation and extra spaces.
 
     * 1d1. SupporterBook shows an error message suggesting a way to tell the two supporters apart.
-    * 1d2. User requests to add the supporter again, with a name that tells the two supporters apart.
 
-      Steps 1d1-1d2 are repeated until the data entered is correct.
+      Use case resumes from step 1.
 
-      Use case resumes from step 2.
-
-**Use case: View a supporter's details and interaction history**
+**Use case: UC02 - List all supporters**
 
 **MSS**
 
-1.  User requests to find a supporter
-2.  SupporterBook shows a list of matching supporters
-3.  User requests to view a specific supporter in the list
-4.  SupporterBook shows the supporter's details and interaction history, with the most recent interactions shown first
+1.  User requests to list all supporters.
+2.  SupporterBook shows the list of every supporter, clearing any find filter.
 
     Use case ends.
 
 **Extensions**
 
-* 2a. No supporters match the search.
+* 2a. No supporters have been added yet.
+
+    * 2a1. SupporterBook shows an empty list (i.e. the list panel is empty).
 
       Use case ends.
 
-* 3a. The given index is invalid.
-
-    * 3a1. SupporterBook shows an error message.
-
-      Use case resumes at step 2.
-
-* 4a. The supporter has no logged interactions.
-
-    * 4a1. SupporterBook shows the supporter's details and indicates that there are no interactions logged yet.
-
-      Use case ends.
-
-**Use case: Set a supporter's cultivation stage**
+**Use case: UC03 - Find supporters by part of a name**
 
 **MSS**
 
-1.  User requests to find a supporter
-2.  SupporterBook shows a list of matching supporters
-3.  User requests to set the cultivation stage of a specific supporter in the list
-4.  SupporterBook updates the supporter's cultivation stage
-5.  SupporterBook confirms the change and shows the updated supporter
+1.  User requests to find supporters whose name contains certain keywords, giving the keyword(s).
+2.  SupporterBook shows the list of every supporter whose name contains every keyword given, replacing any previous find filter.
 
     Use case ends.
 
 **Extensions**
 
-* 2a. No supporters match the search.
+* 1a. User did not provide any keywords.
 
-  Use case ends.
+    * 1a1. SupporterBook shows an error message, suggesting an invalid command format.
 
-* 3a. The given index is invalid.
+      Use case resumes from step 1.
 
-    * 3a1. SupporterBook shows an error message.
+* 2a. No supporters' name contains all keywords provided.
 
-      Use case resumes at step 2.
+    * 2a1. SupporterBook shows an empty list (i.e. the list panel is empty).
 
-* 3b. The given cultivation stage is invalid.
+      Use case ends.
 
-    * 3b1. SupporterBook shows an error message indicating the valid cultivation stages.
+**Use case: UC04 - Edit a supporter**
 
-      Use case resumes at step 3.
+**MSS**
 
-* 3c. The supporter is already at the requested cultivation stage.
+1.  User requests to edit an existing supporter's details, giving an index and the field(s) to edit.
+2.  SupporterBook updates only the specified field(s) of the supporter, without altering the supporter's interaction history.
+3.  SupporterBook shows the list of every supporter, clearing any find filter. If the detail panel was displaying the edited supporter, it updates to show the new details.
 
-    * 3c1. SupporterBook informs the user that the supporter is already at that cultivation stage and makes no changes.
+    Use case ends.
+
+**Extensions**
+
+* 1a. The given index is invalid.
+
+    * 1a1. SupporterBook shows an error message.
+
+      Use case resumes from step 1.
+
+* 1b. User does not give a field.
+
+    * 1b1. SupporterBook shows an error message, suggesting for the user to provide at least one field.
+
+      Use case resumes from step 1.
+
+* 1c. User gives multiple values for the same field (excluding the tags field).
+
+    * 1c1. SupporterBook shows an error message, indicating the field with multiple values given.
+
+      Use case resumes from step 1.
+
+* 1d. User gives invalid values for certain fields.
+
+    * 1d1. SupporterBook shows an error message, indicating the field with invalid value.
+
+      Use case resumes from step 1.
+
+* 1e. User gives a name that already exists in the name field.
+
+    * 1e1. SupporterBook shows an error message, suggesting a way to tell the two supporters apart.
+
+      Use case resumes from step 1.
+
+**Use case: UC07 - View a supporter's details and interaction history**
+
+**MSS**
+
+1.  User requests to view a specific supporter in the list, giving an index.
+2.  SupporterBook shows the supporter's details and interaction history, with the most recent interactions shown first.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The given index is invalid.
+
+    * 1a1. SupporterBook shows an error message.
+
+      Use case resumes from step 1.
+
+* 2a. The supporter has no logged interactions.
+
+    * 2a1. SupporterBook shows the supporter's details and indicates that there are no interactions logged yet.
+
+      Use case ends.
+
+**Use case: UC08 - Set a supporter's cultivation stage**
+
+**MSS**
+
+1.  User requests to set the cultivation stage of a specific supporter in the list.
+2.  SupporterBook updates the supporter's cultivation stage.
+3.  SupporterBook confirms the change and shows the updated supporter.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The given index is invalid.
+
+    * 1a1. SupporterBook shows an error message.
+
+      Use case resumes at step 1.
+
+* 1b. The given cultivation stage is invalid.
+
+    * 1b1. SupporterBook shows an error message indicating the valid cultivation stages.
+
+      Use case resumes at step 1.
+
+* 1c. The supporter is already at the requested cultivation stage.
+
+    * 1c1. SupporterBook informs the user that the supporter is already at that cultivation stage and makes no changes.
 
       Use case ends.
 
