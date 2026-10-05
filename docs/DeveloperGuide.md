@@ -449,6 +449,8 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **Use case: UC04 - Edit a supporter**
 
+**Preconditions: A list of supporters with corresponding indexes is displayed in the list panel**
+
 **MSS**
 
 1.  User requests to edit an existing supporter's details, giving an index and the field(s) to edit.
@@ -491,6 +493,8 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **Use case: UC07 - View a supporter's details and interaction history**
 
+**Preconditions: A list of supporters with corresponding indexes is displayed in the list panel**
+
 **MSS**
 
 1.  User requests to view a specific supporter in the list, giving an index.
@@ -513,6 +517,8 @@ Stories are grouped by epic, with the highest-priority stories listed first with
       Use case ends.
 
 **Use case: UC08 - Set a supporter's cultivation stage**
+
+**Preconditions: A list of supporters with corresponding indexes is displayed in the list panel**
 
 **MSS**
 
