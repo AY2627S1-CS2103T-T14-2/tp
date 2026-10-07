@@ -280,7 +280,7 @@ _{Explain here how the data archiving feature will be implemented}_
 
 ### User stories
 
-Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
+Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (later version) - `*`
 
 Stories are grouped by epic, with the highest-priority stories listed first within each epic.
 
@@ -318,7 +318,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | `* * *`  | fundraiser                                       | find a supporter by part of their name                                          | I can pull up a record without remembering the exact spelling                      |
 | `*`      | fundraiser                                       | search on fields other than the name                                            | I can find the person at a particular bank when their name escapes me              |
 | `*`      | forgetful user                                   | be warned when I add someone whose name closely matches an existing contact     | I do not create a second record for a person I already have                        |
-| `*`      | fundraiser                                       | filter my supporters by tag                                                     | I can pull up everyone sitting at one cultivation stage                            |
+| `*`      | fundraiser                                       | filter my supporters by cultivation stage                                       | I can work through everyone at one stage of the relationship                       |
 | `*`      | fundraiser                                       | combine more than one filter in a single search                                 | I can ask a precise question such as corporate contacts untouched since June       |
 | `*`      | fundraiser                                       | sort my list by the date I last spoke to each person                            | whoever has gone quiet rises to the top                                            |
 | `*`      | fundraiser                                       | see how many supporters match a search                                          | I know the size of the job before I start working through it                       |
@@ -351,8 +351,8 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
 |----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
 | `* * *`  | fundraiser                                       | set a cultivation stage on a supporter                                          | I know whether they have been approached, are giving, have lapsed or have declined |
+| `* * *`  | fundraiser                                       | change a supporter's stage in a single command                                  | updating where things stand after a meeting takes seconds                          |
 | `* *`    | fundraiser                                       | tag supporters with labels of my own                                            | I can group them in ways I did not anticipate when I started                       |
-| `*`      | fundraiser                                       | change a supporter's stage in a single command                                  | updating where things stand after a meeting takes seconds                          |
 | `*`      | fundraiser                                       | see how many supporters sit at each stage                                       | I can tell early in the year whether I have enough prospects                       |
 | `*`      | fundraiser                                       | record that a supporter declined, together with a reason                        | I do not approach them again the same way                                          |
 | `*`      | fundraiser                                       | pin a small number of key relationships                                         | the handful my year depends on stay in front of me                                 |
@@ -367,6 +367,27 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | `*`      | cautious user                                    | be asked to confirm before a command that wipes all my data                     | one stray keystroke cannot empty the list                                          |
 | `*`      | fundraiser handling other people's personal data | keep everything in a file on my own machine with nothing sent anywhere          | supporters' details never leave the charity's laptop                               |
 | `*`      | fundraiser                                       | open and repair my data file in a text editor                                   | a corrupted file does not mean starting again from nothing                         |
+| `*`      | fundraiser                                       | export my supporters to a spreadsheet                                           | I can hand a list to my executive director without giving them the app             |
+
+#### H. Speed for expert users
+
+| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
+|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `*`      | expert user                                      | bring back previous commands with the up arrow                                  | I can repeat a near-identical command without retyping it                          |
+| `*`      | expert user                                      | use short aliases for the commands I run most often                             | logging a call costs me a few keystrokes                                           |
+| `*`      | expert user                                      | see the parameters of a command as I type it                                    | I do not have to remember the exact format of a command I use rarely               |
+| `*`      | expert user                                      | delete a range of contacts in one command                                       | clearing up after a campaign does not take twenty commands                         |
+| `*`      | expert user                                      | log one interaction against several contacts at once                            | recording a meeting with three people from one company takes one command           |
+
+#### I. Continuity and handover
+
+| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
+|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `*`      | newly hired executive inheriting the role        | read the interaction notes my predecessor left                                  | I am not starting every relationship from zero                                     |
+| `*`      | departing executive                              | hand over a single data file that holds everything                              | what I know about our supporters stays with the charity                            |
+| `*`      | returning user after weeks on an event           | see which relationships have gone stale while I was busy                        | I can pick up where I left off                                                     |
+| `*`      | long-time user                                   | archive supporters I no longer actively cultivate without deleting them         | my working list stays short while the history survives                             |
+| `*`      | fundraiser reporting to the board                | produce a summary of my activity over a period                                  | I can show what I have been doing without rebuilding it from memory                |
 
 ### Use cases
 
