@@ -428,6 +428,12 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
       Use case resumes from step 1.
 
+* 1e. User gives more than one value for a detail that takes only one value (e.g. two names).
+
+    * 1e1. SupporterBook shows an error message, indicating the detail with multiple values given.
+
+      Use case resumes from step 1.
+
 **Use case: UC02 - List all supporters**
 
 **MSS**
@@ -458,7 +464,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 * 1a. User did not provide any keywords.
 
-    * 1a1. SupporterBook shows an error message, suggesting an invalid command format.
+    * 1a1. SupporterBook shows an error message with the correct command format.
 
       Use case resumes from step 1.
 
@@ -506,7 +512,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
       Use case resumes from step 1.
 
-* 1e. User gives a name that already exists in the name field.
+* 1e. The new name is the same as another supporter's name, ignoring capitalisation and extra spaces.
 
     * 1e1. SupporterBook shows an error message, suggesting a way to tell the two supporters apart.
 
