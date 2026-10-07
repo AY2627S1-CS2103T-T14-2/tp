@@ -512,6 +512,70 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
       Use case resumes from step 1.
 
+**Use case: UC05 - Delete a supporter**
+
+**Preconditions: A list of supporters is shown, with an index beside each supporter**
+
+**MSS**
+
+1.  User requests to delete a specific supporter in the list, giving an index.
+2.  SupporterBook deletes the supporter, together with every interaction logged with them.
+3.  SupporterBook confirms the deletion, stating how many logged interactions were deleted with the supporter.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The given index is invalid.
+
+    * 1a1. SupporterBook shows an error message.
+
+      Use case resumes from step 1.
+
+* 2a. The deleted supporter's details were being shown.
+
+    * 2a1. SupporterBook stops showing that supporter's details.
+
+      Use case resumes from step 3.
+
+**Use case: UC06 - Log an interaction with a supporter**
+
+**Preconditions: A list of supporters is shown, with an index beside each supporter**
+
+**MSS**
+
+1.  User requests to log an interaction with a specific supporter in the list, giving an index and a short note.
+2.  SupporterBook records the interaction, dated today, in the supporter's interaction history.
+3.  SupporterBook confirms the logged interaction and shows the supporter's details and updated interaction history.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The given index is invalid.
+
+    * 1a1. SupporterBook shows an error message.
+
+      Use case resumes from step 1.
+
+* 1b. User does not give a note.
+
+    * 1b1. SupporterBook shows an error message.
+
+      Use case resumes from step 1.
+
+* 1c. The given note is blank or longer than 500 characters.
+
+    * 1c1. SupporterBook shows an error message stating the rules for a note.
+
+      Use case resumes from step 1.
+
+* 1d. User gives more than one note.
+
+    * 1d1. SupporterBook shows an error message, indicating that only one note can be given.
+
+      Use case resumes from step 1.
+
 **Use case: UC07 - View a supporter's details and interaction history**
 
 **Preconditions: A list of supporters with corresponding indexes is displayed in the list panel**
