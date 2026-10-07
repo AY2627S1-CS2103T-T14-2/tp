@@ -648,9 +648,11 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 5.  Should store all supporter data locally in a human-readable file that can be inspected and edited while the application is not running.
 6.  Should be usable for its normal functionality without depending on a remote server or internet connection.
 7.  Should clearly inform the user if supporter data cannot be loaded or saved, rather than failing silently.
-8.  Should be able to hold at least 250 supporters without noticeable sluggishness in performance for typical usage. 
+8.  With up to 1000 supporters, each with up to 50 logged interactions, every command should complete within 1 second on a typical laptop.
 9.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most common supporter-management tasks faster using commands than using the mouse.
 10. The GUI should work well at standard screen resolutions 1920x1080 or higher at 100% or 125% screen scaling, and should remain usable at resolutions 1280x720 or higher and 150% scaling.
+11. Should not send any supporter data over the network, so that supporters' personal details stay on the user's computer.
+12. Should not require the user to create an account or log in.
 
 ### Glossary
 
