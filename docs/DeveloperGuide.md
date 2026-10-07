@@ -441,7 +441,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 * 2a. No supporters have been added yet.
 
-    * 2a1. SupporterBook shows an empty list (i.e. the list panel is empty).
+    * 2a1. SupporterBook shows an empty list.
 
       Use case ends.
 
@@ -464,19 +464,19 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 * 2a. No supporters' name contains all keywords provided.
 
-    * 2a1. SupporterBook shows an empty list (i.e. the list panel is empty).
+    * 2a1. SupporterBook shows an empty list.
 
       Use case ends.
 
 **Use case: UC04 - Edit a supporter**
 
-**Preconditions: A list of supporters with corresponding indexes is displayed in the list panel**
+**Preconditions: A list of supporters is shown, with an index beside each supporter**
 
 **MSS**
 
 1.  User requests to edit an existing supporter's details, giving an index and the field(s) to edit.
 2.  SupporterBook updates only the specified field(s) of the supporter, without altering the supporter's interaction history.
-3.  SupporterBook shows the list of every supporter, clearing any find filter. If the detail panel was displaying the edited supporter, it updates to show the new details.
+3.  SupporterBook shows the list of every supporter, clearing any find filter. If the edited supporter's details were being shown, SupporterBook shows the updated details.
 
     Use case ends.
 
@@ -578,7 +578,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **Use case: UC07 - View a supporter's details and interaction history**
 
-**Preconditions: A list of supporters with corresponding indexes is displayed in the list panel**
+**Preconditions: A list of supporters is shown, with an index beside each supporter**
 
 **MSS**
 
@@ -603,7 +603,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **Use case: UC08 - Set a supporter's cultivation stage**
 
-**Preconditions: A list of supporters with corresponding indexes is displayed in the list panel**
+**Preconditions: A list of supporters is shown, with an index beside each supporter**
 
 **MSS**
 
@@ -619,13 +619,13 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     * 1a1. SupporterBook shows an error message.
 
-      Use case resumes at step 1.
+      Use case resumes from step 1.
 
 * 1b. The given cultivation stage is invalid.
 
     * 1b1. SupporterBook shows an error message indicating the valid cultivation stages.
 
-      Use case resumes at step 1.
+      Use case resumes from step 1.
 
 * 1c. The supporter is already at the requested cultivation stage.
 
