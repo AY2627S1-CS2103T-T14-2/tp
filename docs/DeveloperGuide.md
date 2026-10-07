@@ -272,9 +272,6 @@ _{Explain here how the data archiving feature will be implemented}_
 
 * Donor and corporate-partnership executives at small (Tier 1) charities, who single-handedly manage every supporter relationship without access to a CRM.
 
-(Definition of Tier 1: under the Code of Governance for Charities and IPCs (2023), Tier 1 covers small and medium non-IPC charities with gross annual receipts or total expenditure from $50,000 to under $10 million; Tier 2 covers all IPCs and large non-IPC charities.)
-
-
 **Value proposition**: SupporterBook helps the sole fundraising and outreach staff at a small charity stay on top of every donor and corporate relationship, keeping each supporter’s history and the introductions behind it in one place, so follow-ups happen on time and relationships outlast whoever holds the role. It also allows fast CLI-based retrieval.
 
 
@@ -656,8 +653,24 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 ### Glossary
 
+* **CRM (Customer Relationship Management system)**: Software that an organisation uses to keep track of its relationships with customers or supporters. Small charities often cannot afford one.
+* **CSR (Corporate Social Responsibility)**: A company's programme for supporting causes such as charities, e.g. through donations, partnerships or employee volunteering. A _CSR contact_ is the person at a company who manages it.
+* **Cultivation stage**: How far a supporter's relationship with the charity has progressed. Every supporter is at exactly one of these six stages:
+    * **Prospect**: Identified as a possible supporter, not yet approached. This is the stage of a newly added supporter.
+    * **Contacted**: First approach made, with no real conversation yet.
+    * **Cultivating**: In an active relationship or discussion, not yet giving.
+    * **Giving**: Currently donating (an individual) or partnering (a company).
+    * **Lapsed**: Gave before, but is no longer giving.
+    * **Declined**: Said no.
+* **Epic**: A large user need that is broken down into several smaller user stories. The user stories above are grouped by epic.
+* **Find filter**: The shorter list of supporters shown after a `find` command. It stays in place until `list`, `add` or `edit` is run.
+* **Index**: The number shown beside a supporter in the currently displayed list, used by commands to refer to that supporter. The same supporter can have a different index after a `find`.
+* **Interaction**: A dated record of one conversation or other contact with a supporter, with a short note of what happened. A supporter's interactions together form their _interaction history_.
+* **Introduction chain**: A sequence of introductions linking supporters, e.g. a board member introduces a CSR contact, who then introduces a colleague.
+* **IPC (Institution of a Public Character)**: A Singapore charity that is approved to issue tax-deductible receipts to its donors.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Supporter**: Anyone whose relationship with the charity SupporterBook keeps track of, e.g. an individual donor, a prospective donor, a contact at a partner company, a board member, or a volunteer who makes introductions.
+* **Tier 1 charity**: Under the Code of Governance for Charities and IPCs (2023), a small or medium charity that is not an IPC, with gross annual receipts or total expenditure from $50,000 to under $10 million. Tier 2 covers all IPCs and large non-IPC charities.
 
 --------------------------------------------------------------------------------------------------------------------
 
