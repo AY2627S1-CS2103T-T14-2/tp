@@ -272,15 +272,12 @@ _{Explain here how the data archiving feature will be implemented}_
 
 * Donor and corporate-partnership executives at small (Tier 1) charities, who single-handedly manage every supporter relationship without access to a CRM.
 
-(Definition of Tier 1: under the Code of Governance for Charities and IPCs (2023), Tier 1 covers small and medium non-IPC charities with gross annual receipts or total expenditure from $50,000 to under $10 million; Tier 2 covers all IPCs and large non-IPC charities.)
-
-
 **Value proposition**: SupporterBook helps the sole fundraising and outreach staff at a small charity stay on top of every donor and corporate relationship, keeping each supporter’s history and the introductions behind it in one place, so follow-ups happen on time and relationships outlast whoever holds the role. It also allows fast CLI-based retrieval.
 
 
 ### User stories
 
-Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
+Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (later version) - `*`
 
 Stories are grouped by epic, with the highest-priority stories listed first within each epic.
 
@@ -318,7 +315,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | `* * *`  | fundraiser                                       | find a supporter by part of their name                                          | I can pull up a record without remembering the exact spelling                      |
 | `*`      | fundraiser                                       | search on fields other than the name                                            | I can find the person at a particular bank when their name escapes me              |
 | `*`      | forgetful user                                   | be warned when I add someone whose name closely matches an existing contact     | I do not create a second record for a person I already have                        |
-| `*`      | fundraiser                                       | filter my supporters by tag                                                     | I can pull up everyone sitting at one cultivation stage                            |
+| `*`      | fundraiser                                       | filter my supporters by cultivation stage                                       | I can work through everyone at one stage of the relationship                       |
 | `*`      | fundraiser                                       | combine more than one filter in a single search                                 | I can ask a precise question such as corporate contacts untouched since June       |
 | `*`      | fundraiser                                       | sort my list by the date I last spoke to each person                            | whoever has gone quiet rises to the top                                            |
 | `*`      | fundraiser                                       | see how many supporters match a search                                          | I know the size of the job before I start working through it                       |
@@ -351,8 +348,8 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
 |----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
 | `* * *`  | fundraiser                                       | set a cultivation stage on a supporter                                          | I know whether they have been approached, are giving, have lapsed or have declined |
+| `* * *`  | fundraiser                                       | change a supporter's stage in a single command                                  | updating where things stand after a meeting takes seconds                          |
 | `* *`    | fundraiser                                       | tag supporters with labels of my own                                            | I can group them in ways I did not anticipate when I started                       |
-| `*`      | fundraiser                                       | change a supporter's stage in a single command                                  | updating where things stand after a meeting takes seconds                          |
 | `*`      | fundraiser                                       | see how many supporters sit at each stage                                       | I can tell early in the year whether I have enough prospects                       |
 | `*`      | fundraiser                                       | record that a supporter declined, together with a reason                        | I do not approach them again the same way                                          |
 | `*`      | fundraiser                                       | pin a small number of key relationships                                         | the handful my year depends on stay in front of me                                 |
@@ -367,6 +364,27 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | `*`      | cautious user                                    | be asked to confirm before a command that wipes all my data                     | one stray keystroke cannot empty the list                                          |
 | `*`      | fundraiser handling other people's personal data | keep everything in a file on my own machine with nothing sent anywhere          | supporters' details never leave the charity's laptop                               |
 | `*`      | fundraiser                                       | open and repair my data file in a text editor                                   | a corrupted file does not mean starting again from nothing                         |
+| `*`      | fundraiser                                       | export my supporters to a spreadsheet                                           | I can hand a list to my executive director without giving them the app             |
+
+#### H. Speed for expert users
+
+| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
+|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `*`      | expert user                                      | bring back previous commands with the up arrow                                  | I can repeat a near-identical command without retyping it                          |
+| `*`      | expert user                                      | use short aliases for the commands I run most often                             | logging a call costs me a few keystrokes                                           |
+| `*`      | expert user                                      | see the parameters of a command as I type it                                    | I do not have to remember the exact format of a command I use rarely               |
+| `*`      | expert user                                      | delete a range of contacts in one command                                       | clearing up after a campaign does not take twenty commands                         |
+| `*`      | expert user                                      | log one interaction against several contacts at once                            | recording a meeting with three people from one company takes one command           |
+
+#### I. Continuity and handover
+
+| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
+|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| `*`      | newly hired executive inheriting the role        | read the interaction notes my predecessor left                                  | I am not starting every relationship from zero                                     |
+| `*`      | departing executive                              | hand over a single data file that holds everything                              | what I know about our supporters stays with the charity                            |
+| `*`      | returning user after weeks on an event           | see which relationships have gone stale while I was busy                        | I can pick up where I left off                                                     |
+| `*`      | long-time user                                   | archive supporters I no longer actively cultivate without deleting them         | my working list stays short while the history survives                             |
+| `*`      | fundraiser reporting to the board                | produce a summary of my activity over a period                                  | I can show what I have been doing without rebuilding it from memory                |
 
 ### Use cases
 
@@ -407,6 +425,12 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
       Use case resumes from step 1.
 
+* 1e. User gives more than one value for a detail that takes only one value (e.g. two names).
+
+    * 1e1. SupporterBook shows an error message, indicating the detail with multiple values given.
+
+      Use case resumes from step 1.
+
 **Use case: UC02 - List all supporters**
 
 **MSS**
@@ -420,7 +444,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 * 2a. No supporters have been added yet.
 
-    * 2a1. SupporterBook shows an empty list (i.e. the list panel is empty).
+    * 2a1. SupporterBook shows an empty list.
 
       Use case ends.
 
@@ -437,25 +461,25 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 * 1a. User did not provide any keywords.
 
-    * 1a1. SupporterBook shows an error message, suggesting an invalid command format.
+    * 1a1. SupporterBook shows an error message with the correct command format.
 
       Use case resumes from step 1.
 
 * 2a. No supporters' name contains all keywords provided.
 
-    * 2a1. SupporterBook shows an empty list (i.e. the list panel is empty).
+    * 2a1. SupporterBook shows an empty list.
 
       Use case ends.
 
 **Use case: UC04 - Edit a supporter**
 
-**Preconditions: A list of supporters with corresponding indexes is displayed in the list panel**
+**Preconditions: A list of supporters is shown, with an index beside each supporter**
 
 **MSS**
 
 1.  User requests to edit an existing supporter's details, giving an index and the field(s) to edit.
 2.  SupporterBook updates only the specified field(s) of the supporter, without altering the supporter's interaction history.
-3.  SupporterBook shows the list of every supporter, clearing any find filter. If the detail panel was displaying the edited supporter, it updates to show the new details.
+3.  SupporterBook shows the list of every supporter, clearing any find filter. If the edited supporter's details were being shown, SupporterBook shows the updated details.
 
     Use case ends.
 
@@ -485,15 +509,79 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
       Use case resumes from step 1.
 
-* 1e. User gives a name that already exists in the name field.
+* 1e. The new name is the same as another supporter's name, ignoring capitalisation and extra spaces.
 
     * 1e1. SupporterBook shows an error message, suggesting a way to tell the two supporters apart.
 
       Use case resumes from step 1.
 
+**Use case: UC05 - Delete a supporter**
+
+**Preconditions: A list of supporters is shown, with an index beside each supporter**
+
+**MSS**
+
+1.  User requests to delete a specific supporter in the list, giving an index.
+2.  SupporterBook deletes the supporter, together with every interaction logged with them.
+3.  SupporterBook confirms the deletion, stating how many logged interactions were deleted with the supporter.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The given index is invalid.
+
+    * 1a1. SupporterBook shows an error message.
+
+      Use case resumes from step 1.
+
+* 2a. The deleted supporter's details were being shown.
+
+    * 2a1. SupporterBook stops showing that supporter's details.
+
+      Use case resumes from step 3.
+
+**Use case: UC06 - Log an interaction with a supporter**
+
+**Preconditions: A list of supporters is shown, with an index beside each supporter**
+
+**MSS**
+
+1.  User requests to log an interaction with a specific supporter in the list, giving an index and a short note.
+2.  SupporterBook records the interaction, dated today, in the supporter's interaction history.
+3.  SupporterBook confirms the logged interaction and shows the supporter's details and updated interaction history.
+
+    Use case ends.
+
+**Extensions**
+
+* 1a. The given index is invalid.
+
+    * 1a1. SupporterBook shows an error message.
+
+      Use case resumes from step 1.
+
+* 1b. User does not give a note.
+
+    * 1b1. SupporterBook shows an error message.
+
+      Use case resumes from step 1.
+
+* 1c. The given note is blank or longer than 500 characters.
+
+    * 1c1. SupporterBook shows an error message stating the rules for a note.
+
+      Use case resumes from step 1.
+
+* 1d. User gives more than one note.
+
+    * 1d1. SupporterBook shows an error message, indicating that only one note can be given.
+
+      Use case resumes from step 1.
+
 **Use case: UC07 - View a supporter's details and interaction history**
 
-**Preconditions: A list of supporters with corresponding indexes is displayed in the list panel**
+**Preconditions: A list of supporters is shown, with an index beside each supporter**
 
 **MSS**
 
@@ -518,7 +606,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **Use case: UC08 - Set a supporter's cultivation stage**
 
-**Preconditions: A list of supporters with corresponding indexes is displayed in the list panel**
+**Preconditions: A list of supporters is shown, with an index beside each supporter**
 
 **MSS**
 
@@ -534,13 +622,13 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     * 1a1. SupporterBook shows an error message.
 
-      Use case resumes at step 1.
+      Use case resumes from step 1.
 
 * 1b. The given cultivation stage is invalid.
 
     * 1b1. SupporterBook shows an error message indicating the valid cultivation stages.
 
-      Use case resumes at step 1.
+      Use case resumes from step 1.
 
 * 1c. The supporter is already at the requested cultivation stage.
 
@@ -557,14 +645,32 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 5.  Should store all supporter data locally in a human-readable file that can be inspected and edited while the application is not running.
 6.  Should be usable for its normal functionality without depending on a remote server or internet connection.
 7.  Should clearly inform the user if supporter data cannot be loaded or saved, rather than failing silently.
-8.  Should be able to hold at least 250 supporters without noticeable sluggishness in performance for typical usage. 
+8.  With up to 1000 supporters, each with up to 50 logged interactions, every command should complete within 1 second on a typical laptop.
 9.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most common supporter-management tasks faster using commands than using the mouse.
 10. The GUI should work well at standard screen resolutions 1920x1080 or higher at 100% or 125% screen scaling, and should remain usable at resolutions 1280x720 or higher and 150% scaling.
+11. Should not send any supporter data over the network, so that supporters' personal details stay on the user's computer.
+12. Should not require the user to create an account or log in.
 
 ### Glossary
 
+* **CRM (Customer Relationship Management system)**: Software that an organisation uses to keep track of its relationships with customers or supporters. Small charities often cannot afford one.
+* **CSR (Corporate Social Responsibility)**: A company's programme for supporting causes such as charities, e.g. through donations, partnerships or employee volunteering. A _CSR contact_ is the person at a company who manages it.
+* **Cultivation stage**: How far a supporter's relationship with the charity has progressed. Every supporter is at exactly one of these six stages:
+    * **Prospect**: Identified as a possible supporter, not yet approached. This is the stage of a newly added supporter.
+    * **Contacted**: First approach made, with no real conversation yet.
+    * **Cultivating**: In an active relationship or discussion, not yet giving.
+    * **Giving**: Currently donating (an individual) or partnering (a company).
+    * **Lapsed**: Gave before, but is no longer giving.
+    * **Declined**: Said no.
+* **Epic**: A large user need that is broken down into several smaller user stories. The user stories above are grouped by epic.
+* **Find filter**: The shorter list of supporters shown after a `find` command. It stays in place until `list`, `add` or `edit` is run.
+* **Index**: The number shown beside a supporter in the currently displayed list, used by commands to refer to that supporter. The same supporter can have a different index after a `find`.
+* **Interaction**: A dated record of one conversation or other contact with a supporter, with a short note of what happened. A supporter's interactions together form their _interaction history_.
+* **Introduction chain**: A sequence of introductions linking supporters, e.g. a board member introduces a CSR contact, who then introduces a colleague.
+* **IPC (Institution of a Public Character)**: A Singapore charity that is approved to issue tax-deductible receipts to its donors.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Supporter**: Anyone whose relationship with the charity SupporterBook keeps track of, e.g. an individual donor, a prospective donor, a contact at a partner company, a board member, or a volunteer who makes introductions.
+* **Tier 1 charity**: Under the Code of Governance for Charities and IPCs (2023), a small or medium charity that is not an IPC, with gross annual receipts or total expenditure from $50,000 to under $10 million. Tier 2 covers all IPCs and large non-IPC charities.
 
 --------------------------------------------------------------------------------------------------------------------
 
