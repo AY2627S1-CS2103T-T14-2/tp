@@ -16,6 +16,7 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Stage;
 import seedu.address.model.tag.Tag;
 
 public class ParserUtilTest {
@@ -121,6 +122,29 @@ public class ParserUtilTest {
         String addressWithWhitespace = WHITESPACE + VALID_ADDRESS + WHITESPACE;
         Address expectedAddress = new Address(VALID_ADDRESS);
         assertEquals(expectedAddress, ParserUtil.parseAddress(addressWithWhitespace));
+    }
+
+    @Test
+    public void parseStage_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseStage(null));
+    }
+
+    @Test
+    public void parseStage_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, Stage.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseStage("givng"));
+        assertThrows(ParseException.class, Stage.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseStage(""));
+        assertThrows(ParseException.class, Stage.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseStage("cult"));
+    }
+
+    @Test
+    public void parseStage_validValueWithoutWhitespace_returnsStage() throws Exception {
+        assertEquals(Stage.CULTIVATING, ParserUtil.parseStage("cultivating"));
+        assertEquals(Stage.CULTIVATING, ParserUtil.parseStage("CULTIVATING"));
+    }
+
+    @Test
+    public void parseStage_validValueWithWhitespace_returnsTrimmedStage() throws Exception {
+        assertEquals(Stage.DECLINED, ParserUtil.parseStage(WHITESPACE + "Declined" + WHITESPACE));
     }
 
     @Test
