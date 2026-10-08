@@ -453,7 +453,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 **MSS**
 
 1.  User requests to find supporters whose name contains certain keywords, giving the keyword(s).
-2.  SupporterBook shows the list of every supporter whose name contains every keyword given, replacing any previous find filter.
+2.  SupporterBook shows the list of every supporter whose name contains at least one of the keywords given, replacing any previous find filter.
 
     Use case ends.
 
@@ -465,7 +465,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
       Use case resumes from step 1.
 
-* 2a. No supporters' name contains all keywords provided.
+* 2a. No supporter's name contains any of the keywords given.
 
     * 2a1. SupporterBook shows an empty list.
 
