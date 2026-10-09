@@ -350,3 +350,36 @@
     -fx-background-radius: 2;
     -fx-font-size: 11;
 }
+
+.stage_badge {
+    -fx-text-fill: white;
+    -fx-background-color: #6b6b6b;
+    -fx-padding: 1 6 1 6;
+    -fx-background-radius: 8;
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 11;
+}
+
+.stage_prospect {
+    -fx-background-color: #6b6b6b;
+}
+
+.stage_contacted {
+    -fx-background-color: #3e6fb0;
+}
+
+.stage_cultivating {
+    -fx-background-color: #8a5bb5;
+}
+
+.stage_giving {
+    -fx-background-color: #3a8a4f;
+}
+
+.stage_lapsed {
+    -fx-background-color: #b07a2a;
+}
+
+.stage_declined {
+    -fx-background-color: #a23c3c;
+}
