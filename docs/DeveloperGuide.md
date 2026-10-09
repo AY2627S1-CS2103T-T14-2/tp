@@ -159,6 +159,41 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Cultivation stage field
+
+Every `Person` has exactly one cultivation stage (see the [Glossary](#glossary) for what each stage means). The stage is represented by the `Stage` enumeration in the `Model` component, with the six values `PROSPECT`, `CONTACTED`, `CULTIVATING`, `GIVING`, `LAPSED` and `DECLINED`.
+
+* `Stage#isValidStage(String)` accepts any of the six stage names, ignoring case and surrounding whitespace, and `Stage#fromString(String)` converts such a string into a `Stage`.
+* `Stage#toString()` returns the stage with a capital first letter (e.g. `Giving`). This is the form that is saved to the data file and shown to the user.
+* `Stage.DEFAULT_STAGE` is `PROSPECT`. The `Person` constructor without a stage parameter uses it, so code that creates a `Person` without knowing about stages still works.
+* `EditCommand` copies the existing stage into the edited `Person`, so editing other details never resets a supporter's stage.
+
+In the `Storage` component, `JsonAdaptedPerson` saves the stage as a `"stage"` string. When the data file is loaded, a missing or unrecognised stage makes the whole file invalid, in the same way as any other invalid field, so the app starts with an empty list rather than silently guessing a stage.
+
+In tests, `PersonBuilder` gives every `Person` the default stage unless `PersonBuilder#withStage(String)` is called.
+
+#### Design considerations:
+
+**Aspect: How to represent a stage**
+
+* **Alternative 1 (current choice):** An enumeration of the six stages.
+  * Pros: Only valid stages can exist, and later features that filter or count by stage can compare values directly.
+  * Cons: Adding a new stage needs a code change.
+
+* **Alternative 2:** A free-text field, validated like `Address`.
+  * Pros: Users could invent their own stages.
+  * Cons: Typos such as `givng` would create stages that no filter or count would match.
+
+**Aspect: What to do when a saved stage is missing**
+
+* **Alternative 1 (current choice):** Treat the data file as invalid.
+  * Pros: Consistent with every other required field; a corrupted file is noticed instead of silently changing supporters' stages.
+  * Cons: A data file saved before stages existed cannot be loaded.
+
+* **Alternative 2:** Load the supporter at the default stage.
+  * Pros: Old data files still load.
+  * Cons: A supporter who was `Giving` could silently become a `Prospect` if the field was deleted by mistake.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
@@ -724,5 +759,18 @@ testers are expected to do more *exploratory* testing.
 1. Dealing with missing/corrupted data files
 
    1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+
+1. Dealing with an invalid cultivation stage in the data file
+
+   1. Prerequisites: Run the app once and close it, so that the data file has been created.
+
+   1. Test case: In the data file, change one supporter's `"stage"` value to `"Gave"`, then launch the app.<br>
+      Expected: The app starts with an empty list, as the data file is invalid.
+
+   1. Test case: In the data file, delete one supporter's `"stage"` line, then launch the app.<br>
+      Expected: Similar to previous.
+
+   1. Test case: In the data file, change one supporter's `"stage"` value to `"giving"` (lower case), then launch the app.<br>
+      Expected: The data loads, as stages are not case-sensitive.
 
 1. _{ more test cases … }_
