@@ -106,6 +106,12 @@ public class PersonTest {
     }
 
     @Test
+    public void hashCode_equalPersons_sameHashCode() {
+        Person bensonCopy = new PersonBuilder(BENSON).build();
+        assertEquals(BENSON.hashCode(), bensonCopy.hashCode());
+    }
+
+    @Test
     public void constructor_withoutOrganisation_hasNoOrganisation() {
         Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
                 ALICE.getStage(), ALICE.getTags());

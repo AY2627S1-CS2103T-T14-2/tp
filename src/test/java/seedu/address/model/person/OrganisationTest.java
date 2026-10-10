@@ -46,6 +46,11 @@ public class OrganisationTest {
     }
 
     @Test
+    public void hashCode_equalOrganisations_sameHashCode() {
+        assertEquals(new Organisation("DBS Bank").hashCode(), new Organisation("DBS  Bank").hashCode());
+    }
+
+    @Test
     public void equals() {
         Organisation organisation = new Organisation("DBS Bank");
 
