@@ -15,6 +15,7 @@ import seedu.address.model.person.Person;
 public class PersonCard extends UiPart<Region> {
 
     private static final String FXML = "PersonListCard.fxml";
+    private static final String NO_ORGANISATION = "(no organisation)";
 
     /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
@@ -39,6 +40,8 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label email;
     @FXML
+    private Label organisation;
+    @FXML
     private Label stage;
     @FXML
     private FlowPane tags;
@@ -53,6 +56,7 @@ public class PersonCard extends UiPart<Region> {
         name.setText(person.getName().fullName);
         stage.setText(person.getStage().toString());
         stage.getStyleClass().add("stage_" + person.getStage().name().toLowerCase());
+        organisation.setText(person.getOrganisation().map(org -> org.value).orElse(NO_ORGANISATION));
         phone.setText(person.getPhone().value);
         address.setText(person.getAddress().value);
         email.setText(person.getEmail().value);

@@ -44,8 +44,10 @@ public class Messages {
                 .append("; Email: ")
                 .append(person.getEmail())
                 .append("; Address: ")
-                .append(person.getAddress())
-                .append("; Tags: ");
+                .append(person.getAddress());
+        // an optional field is left out of the message when the supporter does not have it
+        person.getOrganisation().ifPresent(organisation -> builder.append("; Organisation: ").append(organisation));
+        builder.append("; Tags: ");
         person.getTags().forEach(builder::append);
         return builder.toString();
     }
