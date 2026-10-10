@@ -171,7 +171,36 @@ public class EditCommandTest {
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder(firstPerson).build();
         EditCommand editCommand = new EditCommand(INDEX_SECOND_PERSON, descriptor);
 
-        assertCommandFailure(editCommand, model, EditCommand.MESSAGE_DUPLICATE_PERSON);
+        String expectedMessage = String.format(Messages.MESSAGE_DUPLICATE_PERSON, firstPerson.getName());
+        assertCommandFailure(editCommand, model, expectedMessage);
+    }
+
+    @Test
+    public void execute_nameDiffersOnlyInCaseAndSpaces_failure() {
+        // "alice  pauline" counts as the same supporter as "Alice Pauline"
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        String sameNameDifferentCase = "  " + firstPerson.getName().fullName.toLowerCase().replace(" ", "  ");
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(sameNameDifferentCase).build();
+        EditCommand editCommand = new EditCommand(INDEX_SECOND_PERSON, descriptor);
+
+        String expectedMessage = String.format(Messages.MESSAGE_DUPLICATE_PERSON, firstPerson.getName());
+        assertCommandFailure(editCommand, model, expectedMessage);
+    }
+
+    @Test
+    public void execute_changeCaseOfOwnName_success() {
+        // changing only the capitalisation of a supporter's own name is not a duplicate
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        String newName = firstPerson.getName().fullName.toUpperCase();
+        Person editedPerson = new PersonBuilder(firstPerson).withName(newName).build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(newName).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        expectedModel.setPerson(firstPerson, editedPerson);
+
+        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
     }
 
     @Test
@@ -183,7 +212,8 @@ public class EditCommandTest {
         EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON,
                 new EditPersonDescriptorBuilder(personInList).build());
 
-        assertCommandFailure(editCommand, model, EditCommand.MESSAGE_DUPLICATE_PERSON);
+        String expectedMessage = String.format(Messages.MESSAGE_DUPLICATE_PERSON, personInList.getName());
+        assertCommandFailure(editCommand, model, expectedMessage);
     }
 
     @Test

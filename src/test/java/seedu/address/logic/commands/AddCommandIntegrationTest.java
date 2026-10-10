@@ -42,7 +42,17 @@ public class AddCommandIntegrationTest {
     public void execute_duplicatePerson_throwsCommandException() {
         Person personInList = model.getAddressBook().getPersonList().get(0);
         assertCommandFailure(new AddCommand(personInList), model,
-                AddCommand.MESSAGE_DUPLICATE_PERSON);
+                String.format(Messages.MESSAGE_DUPLICATE_PERSON, personInList.getName()));
+    }
+
+    @Test
+    public void execute_nameDiffersOnlyInCaseAndSpaces_throwsCommandException() {
+        // the message names the supporter already in the list, as they were saved
+        Person personInList = model.getAddressBook().getPersonList().get(0);
+        String sameNameDifferentCase = personInList.getName().fullName.toUpperCase().replace(" ", "   ");
+        Person newPerson = new PersonBuilder().withName(sameNameDifferentCase).build();
+        assertCommandFailure(new AddCommand(newPerson), model,
+                String.format(Messages.MESSAGE_DUPLICATE_PERSON, personInList.getName()));
     }
 
 }
