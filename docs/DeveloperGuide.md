@@ -233,6 +233,41 @@ The stage is also shown in the UI: `PersonCard` displays it as a badge next to t
   * Pros: Draws attention to a possibly mistaken command.
   * Cons: Treats a harmless command as a failure.
 
+### Organisation field
+
+A `Person` may belong to an organisation, such as the company a CSR contact speaks for. Individual donors usually have none, so the field is optional. It is represented by the `Organisation` class in the `Model` component.
+
+* `Organisation#isValidOrganisation(String)` accepts any characters, because company names often contain symbols (e.g. `Procter & Gamble`). After leading and trailing spaces are removed and each run of spaces inside is reduced to one, the value must not be blank and must be at most `Organisation.MAX_LENGTH` (100) characters long.
+* The `Organisation` constructor applies the same space normalisation before storing the value, so `DBS  Bank` and `DBS Bank` are equal.
+* `Person` stores no organisation as `null` internally, but `Person#getOrganisation()` returns an `Optional<Organisation>`, so callers must handle the missing case explicitly. The `Person` constructors without an organisation parameter create a supporter with none.
+* `EditCommand` and `StageCommand` copy the existing organisation into the `Person` they create, so editing other details or changing the stage never removes it.
+
+In the `Storage` component, `JsonAdaptedPerson` saves the organisation as an `"organisation"` string, and leaves the key out when the supporter has none. When the data file is loaded, a missing `"organisation"` means the supporter has no organisation, while a value that breaks the rule above makes the whole file invalid.
+
+In tests, `PersonBuilder` builds a `Person` with no organisation unless `PersonBuilder#withOrganisation(String)` is called.
+
+#### Design considerations:
+
+**Aspect: How to represent a missing organisation**
+
+* **Alternative 1 (current choice):** `Person#getOrganisation()` returns an `Optional<Organisation>`.
+  * Pros: The type shows that the value may be missing, so code that forgets to handle it does not compile.
+  * Cons: Callers need an extra step (e.g. `map` or `isPresent`) to read the value.
+
+* **Alternative 2:** An `Organisation` object holding an empty string when there is none.
+  * Pros: Callers can always read `value` directly.
+  * Cons: An empty organisation would be a valid object, which goes against the rule that an organisation is never blank, and every caller would have to remember to check for it.
+
+**Aspect: What to do when a saved organisation is missing**
+
+* **Alternative 1 (current choice):** Load the supporter with no organisation.
+  * Pros: Matches the field being optional, and data files saved before organisations existed still load.
+  * Cons: An organisation deleted from the file by mistake is not noticed.
+
+* **Alternative 2:** Treat the data file as invalid, as for a missing stage.
+  * Pros: Consistent with the required fields.
+  * Cons: Every supporter without an organisation would need an explicit empty value in the file.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation

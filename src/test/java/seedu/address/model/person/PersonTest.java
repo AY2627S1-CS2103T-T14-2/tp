@@ -6,11 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_ADDRESS_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_ORGANISATION_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_STAGE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
+import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
 import org.junit.jupiter.api.Test;
@@ -93,6 +95,33 @@ public class PersonTest {
         // different stage -> returns false
         editedAlice = new PersonBuilder(ALICE).withStage(VALID_STAGE_BOB).build();
         assertFalse(ALICE.equals(editedAlice));
+
+        // organisation added -> returns false
+        editedAlice = new PersonBuilder(ALICE).withOrganisation(VALID_ORGANISATION_BOB).build();
+        assertFalse(ALICE.equals(editedAlice));
+
+        // different organisation -> returns false
+        Person editedBenson = new PersonBuilder(BENSON).withOrganisation("OCBC Bank").build();
+        assertFalse(BENSON.equals(editedBenson));
+    }
+
+    @Test
+    public void hashCode_equalPersons_sameHashCode() {
+        Person bensonCopy = new PersonBuilder(BENSON).build();
+        assertEquals(BENSON.hashCode(), bensonCopy.hashCode());
+    }
+
+    @Test
+    public void constructor_withoutOrganisation_hasNoOrganisation() {
+        Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
+                ALICE.getStage(), ALICE.getTags());
+        assertTrue(person.getOrganisation().isEmpty());
+    }
+
+    @Test
+    public void constructor_nullOrganisation_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new Person(ALICE.getName(), ALICE.getPhone(),
+                ALICE.getEmail(), ALICE.getAddress(), null, ALICE.getStage(), ALICE.getTags()));
     }
 
     @Test
@@ -111,7 +140,8 @@ public class PersonTest {
     @Test
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
-                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", stage=" + ALICE.getStage()
+                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress()
+                + ", organisation=" + ALICE.getOrganisation().orElse(null) + ", stage=" + ALICE.getStage()
                 + ", tags=" + ALICE.getTags() + "}";
         assertEquals(expected, ALICE.toString());
     }

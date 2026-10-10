@@ -60,7 +60,8 @@ public class StageCommand extends Command {
         }
 
         Person updatedPerson = new Person(personToUpdate.getName(), personToUpdate.getPhone(),
-                personToUpdate.getEmail(), personToUpdate.getAddress(), stage, personToUpdate.getTags());
+                personToUpdate.getEmail(), personToUpdate.getAddress(), personToUpdate.getOrganisation(), stage,
+                personToUpdate.getTags());
         model.setPerson(personToUpdate, updatedPerson);
 
         return new CommandResult(String.format(MESSAGE_STAGE_CHANGED, personToUpdate.getName(), oldStage, stage));
