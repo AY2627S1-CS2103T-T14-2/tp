@@ -198,6 +198,8 @@ AddressBook data is saved automatically as a JSON file `[JAR file location]/data
 
 Each supporter in the data file has a `"stage"`, which records how far the relationship has progressed. It must be one of `Prospect`, `Contacted`, `Cultivating`, `Giving`, `Lapsed` or `Declined` (upper or lower case). A supporter's stage stays the same when you edit their other details.
 
+A supporter may also have an `"organisation"`, such as the company a CSR contact works for. Leave the key out if the supporter has no organisation. If present, it must not be blank and must be at most 100 characters long.
+
 <box type="warning" seamless>
 
 **Caution:**
