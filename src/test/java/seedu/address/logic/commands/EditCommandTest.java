@@ -16,6 +16,8 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
@@ -25,6 +27,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Stage;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
@@ -134,6 +137,21 @@ public class EditCommandTest {
 
         Person editedPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
         assertEquals(secondPerson.getOrganisation(), editedPerson.getOrganisation());
+    }
+
+    @Test
+    public void execute_editSupporterWithInteractions_interactionsPreserved() throws Exception {
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person personWithInteraction = new PersonBuilder(firstPerson)
+                .withInteractions(new Interaction(LocalDate.of(2026, 9, 16), "Called"))
+                .build();
+        model.setPerson(firstPerson, personWithInteraction);
+
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build();
+        new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(model);
+
+        Person editedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        assertEquals(personWithInteraction.getInteractions(), editedPerson.getInteractions());
     }
 
     @Test

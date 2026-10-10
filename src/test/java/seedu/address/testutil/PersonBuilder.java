@@ -1,11 +1,15 @@
 package seedu.address.testutil;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Organisation;
 import seedu.address.model.person.Person;
@@ -30,6 +34,7 @@ public class PersonBuilder {
     private Optional<Address> address;
     private Optional<Organisation> organisation;
     private Stage stage;
+    private List<Interaction> interactions;
     private Set<Tag> tags;
 
     /**
@@ -42,6 +47,7 @@ public class PersonBuilder {
         address = Optional.of(new Address(DEFAULT_ADDRESS));
         organisation = Optional.empty();
         stage = Stage.DEFAULT_STAGE;
+        interactions = new ArrayList<>();
         tags = new HashSet<>();
     }
 
@@ -55,6 +61,7 @@ public class PersonBuilder {
         address = personToCopy.getAddress();
         organisation = personToCopy.getOrganisation();
         stage = personToCopy.getStage();
+        interactions = new ArrayList<>(personToCopy.getInteractions());
         tags = new HashSet<>(personToCopy.getTags());
     }
 
@@ -138,8 +145,16 @@ public class PersonBuilder {
         return this;
     }
 
+    /**
+     * Sets the interaction history of the {@code Person} that we are building.
+     */
+    public PersonBuilder withInteractions(Interaction... interactions) {
+        this.interactions = new ArrayList<>(Arrays.asList(interactions));
+        return this;
+    }
+
     public Person build() {
-        return new Person(name, phone, email, address, organisation, stage, tags);
+        return new Person(name, phone, email, address, organisation, stage, interactions, tags);
     }
 
 }
