@@ -15,6 +15,8 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.testutil.PersonBuilder;
@@ -96,6 +98,14 @@ public class PersonTest {
         editedAlice = new PersonBuilder(ALICE).withStage(VALID_STAGE_BOB).build();
         assertFalse(ALICE.equals(editedAlice));
 
+        // phone removed -> returns false
+        editedAlice = new PersonBuilder(ALICE).withoutPhone().build();
+        assertFalse(ALICE.equals(editedAlice));
+
+        // address removed -> returns false
+        editedAlice = new PersonBuilder(ALICE).withoutAddress().build();
+        assertFalse(ALICE.equals(editedAlice));
+
         // organisation added -> returns false
         editedAlice = new PersonBuilder(ALICE).withOrganisation(VALID_ORGANISATION_BOB).build();
         assertFalse(ALICE.equals(editedAlice));
@@ -113,8 +123,8 @@ public class PersonTest {
 
     @Test
     public void constructor_withoutOrganisation_hasNoOrganisation() {
-        Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
-                ALICE.getStage(), ALICE.getTags());
+        Person person = new Person(ALICE.getName(), ALICE.getPhone().get(), ALICE.getEmail().get(),
+                ALICE.getAddress().get(), ALICE.getStage(), ALICE.getTags());
         assertTrue(person.getOrganisation().isEmpty());
     }
 
@@ -125,22 +135,42 @@ public class PersonTest {
     }
 
     @Test
+    public void constructor_neitherPhoneNorEmail_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, Person.MESSAGE_CONSTRAINTS, () -> new Person(ALICE.getName(),
+                Optional.empty(), Optional.empty(), ALICE.getAddress(), Optional.empty(), ALICE.getStage(),
+                ALICE.getTags()));
+    }
+
+    @Test
+    public void constructor_onlyPhoneOrOnlyEmail_success() {
+        Person phoneOnly = new PersonBuilder(ALICE).withoutEmail().withoutAddress().build();
+        assertTrue(phoneOnly.getPhone().isPresent());
+        assertTrue(phoneOnly.getEmail().isEmpty());
+        assertTrue(phoneOnly.getAddress().isEmpty());
+
+        Person emailOnly = new PersonBuilder(ALICE).withoutPhone().build();
+        assertTrue(emailOnly.getPhone().isEmpty());
+        assertTrue(emailOnly.getEmail().isPresent());
+    }
+
+    @Test
     public void constructor_withoutStage_defaultsToProspect() {
-        Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
-                ALICE.getTags());
+        Person person = new Person(ALICE.getName(), ALICE.getPhone().get(), ALICE.getEmail().get(),
+                ALICE.getAddress().get(), ALICE.getTags());
         assertEquals(Stage.PROSPECT, person.getStage());
     }
 
     @Test
     public void constructor_nullStage_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> new Person(ALICE.getName(), ALICE.getPhone(),
-                ALICE.getEmail(), ALICE.getAddress(), null, ALICE.getTags()));
+        assertThrows(NullPointerException.class, () -> new Person(ALICE.getName(), ALICE.getPhone().get(),
+                ALICE.getEmail().get(), ALICE.getAddress().get(), null, ALICE.getTags()));
     }
 
     @Test
     public void toStringMethod() {
-        String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
-                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress()
+        String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName()
+                + ", phone=" + ALICE.getPhone().orElse(null) + ", email=" + ALICE.getEmail().orElse(null)
+                + ", address=" + ALICE.getAddress().orElse(null)
                 + ", organisation=" + ALICE.getOrganisation().orElse(null) + ", stage=" + ALICE.getStage()
                 + ", tags=" + ALICE.getTags() + "}";
         assertEquals(expected, ALICE.toString());

@@ -110,6 +110,20 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_addPhoneToEmailOnlySupporter_success() throws Exception {
+        // a supporter who gave only an email can have a phone number added later
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person emailOnly = new PersonBuilder(firstPerson).withoutPhone().withoutAddress().build();
+        model.setPerson(firstPerson, emailOnly);
+
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build();
+        new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(model);
+
+        Person editedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        assertEquals(new PersonBuilder(emailOnly).withPhone(VALID_PHONE_BOB).build(), editedPerson);
+    }
+
+    @Test
     public void execute_editSupporterWithOrganisation_organisationPreserved() throws Exception {
         // second typical person has an organisation, which edit must carry over unchanged
         Person secondPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());

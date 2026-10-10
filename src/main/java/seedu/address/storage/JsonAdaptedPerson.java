@@ -29,8 +29,11 @@ class JsonAdaptedPerson {
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Supporter's %s field is missing!";
 
     private final String name;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String phone;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String email;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String address;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String organisation;
@@ -61,9 +64,9 @@ class JsonAdaptedPerson {
      */
     public JsonAdaptedPerson(Person source) {
         name = source.getName().fullName;
-        phone = source.getPhone().value;
-        email = source.getEmail().value;
-        address = source.getAddress().value;
+        phone = source.getPhone().map(p -> p.value).orElse(null);
+        email = source.getEmail().map(e -> e.value).orElse(null);
+        address = source.getAddress().map(a -> a.value).orElse(null);
         organisation = source.getOrganisation().map(org -> org.value).orElse(null);
         stage = source.getStage().toString();
         tags.addAll(source.getTags().stream()
@@ -90,29 +93,25 @@ class JsonAdaptedPerson {
         }
         final Name modelName = new Name(name);
 
-        if (phone == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.class.getSimpleName()));
-        }
-        if (!Phone.isValidPhone(phone)) {
+        // phone, email and address are optional, so a missing value means the supporter does not have it
+        if (phone != null && !Phone.isValidPhone(phone)) {
             throw new IllegalValueException(Phone.MESSAGE_CONSTRAINTS);
         }
-        final Phone modelPhone = new Phone(phone);
+        final Optional<Phone> modelPhone = Optional.ofNullable(phone).map(Phone::new);
 
-        if (email == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Email.class.getSimpleName()));
-        }
-        if (!Email.isValidEmail(email)) {
+        if (email != null && !Email.isValidEmail(email)) {
             throw new IllegalValueException(Email.MESSAGE_CONSTRAINTS);
         }
-        final Email modelEmail = new Email(email);
+        final Optional<Email> modelEmail = Optional.ofNullable(email).map(Email::new);
 
-        if (address == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Address.class.getSimpleName()));
+        if (!Person.isValidContact(modelPhone, modelEmail)) {
+            throw new IllegalValueException(Person.MESSAGE_CONSTRAINTS);
         }
-        if (!Address.isValidAddress(address)) {
+
+        if (address != null && !Address.isValidAddress(address)) {
             throw new IllegalValueException(Address.MESSAGE_CONSTRAINTS);
         }
-        final Address modelAddress = new Address(address);
+        final Optional<Address> modelAddress = Optional.ofNullable(address).map(Address::new);
 
         // organisation is optional, so a missing value means the supporter has no organisation
         if (organisation != null && !Organisation.isValidOrganisation(organisation)) {

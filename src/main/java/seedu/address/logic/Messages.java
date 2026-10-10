@@ -38,17 +38,16 @@ public class Messages {
         final StringBuilder builder = new StringBuilder();
         builder.append(person.getName())
                 .append("; Stage: ")
-                .append(person.getStage())
-                .append("; Phone: ")
-                .append(person.getPhone())
-                .append("; Email: ")
-                .append(person.getEmail())
-                .append("; Address: ")
-                .append(person.getAddress());
+                .append(person.getStage());
         // an optional field is left out of the message when the supporter does not have it
+        person.getPhone().ifPresent(phone -> builder.append("; Phone: ").append(phone));
+        person.getEmail().ifPresent(email -> builder.append("; Email: ").append(email));
+        person.getAddress().ifPresent(address -> builder.append("; Address: ").append(address));
         person.getOrganisation().ifPresent(organisation -> builder.append("; Organisation: ").append(organisation));
-        builder.append("; Tags: ");
-        person.getTags().forEach(builder::append);
+        if (!person.getTags().isEmpty()) {
+            builder.append("; Tags: ");
+            person.getTags().forEach(builder::append);
+        }
         return builder.toString();
     }
 
