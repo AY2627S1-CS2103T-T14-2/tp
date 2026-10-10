@@ -1,11 +1,13 @@
 package seedu.address.testutil;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Organisation;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Stage;
@@ -26,6 +28,7 @@ public class PersonBuilder {
     private Phone phone;
     private Email email;
     private Address address;
+    private Optional<Organisation> organisation;
     private Stage stage;
     private Set<Tag> tags;
 
@@ -37,6 +40,7 @@ public class PersonBuilder {
         phone = new Phone(DEFAULT_PHONE);
         email = new Email(DEFAULT_EMAIL);
         address = new Address(DEFAULT_ADDRESS);
+        organisation = Optional.empty();
         stage = Stage.DEFAULT_STAGE;
         tags = new HashSet<>();
     }
@@ -49,6 +53,7 @@ public class PersonBuilder {
         phone = personToCopy.getPhone();
         email = personToCopy.getEmail();
         address = personToCopy.getAddress();
+        organisation = personToCopy.getOrganisation();
         stage = personToCopy.getStage();
         tags = new HashSet<>(personToCopy.getTags());
     }
@@ -94,6 +99,14 @@ public class PersonBuilder {
     }
 
     /**
+     * Sets the {@code Organisation} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withOrganisation(String organisation) {
+        this.organisation = Optional.of(new Organisation(organisation));
+        return this;
+    }
+
+    /**
      * Sets the {@code Stage} of the {@code Person} that we are building.
      */
     public PersonBuilder withStage(String stage) {
@@ -102,7 +115,7 @@ public class PersonBuilder {
     }
 
     public Person build() {
-        return new Person(name, phone, email, address, stage, tags);
+        return new Person(name, phone, email, address, organisation, stage, tags);
     }
 
 }

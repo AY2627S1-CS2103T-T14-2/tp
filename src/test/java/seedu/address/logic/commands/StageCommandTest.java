@@ -68,6 +68,18 @@ public class StageCommandTest {
     }
 
     @Test
+    public void execute_supporterWithOrganisation_organisationPreserved() throws Exception {
+        // second typical person has an organisation, which changing the stage must not remove
+        Person personToUpdate = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        assertTrue(personToUpdate.getOrganisation().isPresent());
+
+        new StageCommand(INDEX_SECOND_PERSON, Stage.LAPSED).execute(model);
+
+        Person updatedPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        assertEquals(personToUpdate.getOrganisation(), updatedPerson.getOrganisation());
+    }
+
+    @Test
     public void execute_sameStage_successWithoutChange() {
         Person person = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
         StageCommand stageCommand = new StageCommand(INDEX_SECOND_PERSON, Stage.GIVING);

@@ -91,6 +91,19 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_editSupporterWithOrganisation_organisationPreserved() throws Exception {
+        // second typical person has an organisation, which edit must carry over unchanged
+        Person secondPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        assertTrue(secondPerson.getOrganisation().isPresent());
+
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build();
+        new EditCommand(INDEX_SECOND_PERSON, descriptor).execute(model);
+
+        Person editedPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        assertEquals(secondPerson.getOrganisation(), editedPerson.getOrganisation());
+    }
+
+    @Test
     public void execute_noFieldSpecifiedUnfilteredList_success() {
         EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptor());
         Person editedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
