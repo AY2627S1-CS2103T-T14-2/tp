@@ -20,6 +20,7 @@ Class Name
 Class Phone
 Class Organisation
 Class Stage <<enumeration>>
+Class Interaction
 Class Tag
 
 Class I #FFFFFF
@@ -45,6 +46,7 @@ Person *--> Email
 Person *--> Address
 Person *--> "0..1" Organisation
 Person --> "1" Stage
+Person *--> "*" Interaction
 Person *--> "*" Tag
 
 Person -[hidden]up--> I

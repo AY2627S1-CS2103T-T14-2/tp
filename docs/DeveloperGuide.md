@@ -293,6 +293,42 @@ In tests, `PersonBuilder` builds a `Person` with no organisation unless `PersonB
   * Pros: Consistent with the required fields.
   * Cons: Every supporter without an organisation would need an explicit empty value in the file.
 
+### Interaction history field
+
+Each `Person` owns an interaction history. An entry is represented by the immutable `Interaction` class in the `Model` component and contains a `LocalDate` and a short note.
+
+* An interaction note is trimmed before it is stored. It must not be blank after trimming and must be at most `Interaction.MAX_NOTE_LENGTH` (500) characters long.
+* `Person` stores interactions in logging order. Its constructor makes a defensive copy of the supplied list, and `Person#getInteractions()` returns an unmodifiable view.
+* Existing `Person` constructors create an empty interaction history. This keeps existing creation paths compatible with the new field.
+* `EditCommand` and `StageCommand` copy the existing history into the replacement `Person`, so changing other supporter details never removes past interactions.
+* Interaction history is included in `Person#equals(Object)` and `Person#hashCode()`, but not in `Person#isSamePerson(Person)`. Supporter identity therefore remains name-based.
+
+In the `Storage` component, `JsonAdaptedInteraction` stores a date as an ISO `yyyy-MM-dd` string and a note as a string. `JsonAdaptedPerson` stores the entries in an `"interactions"` array while preserving their order. When loading, a missing array means the supporter has an empty history, so data files created before interaction histories existed remain compatible. A missing interaction field, malformed date, blank note or note longer than 500 characters makes the data file invalid.
+
+In tests, `PersonBuilder` builds a `Person` with an empty history unless `PersonBuilder#withInteractions(Interaction...)` is called.
+
+#### Design considerations:
+
+**Aspect: Where to store interaction histories**
+
+* **Alternative 1 (current choice):** Each `Person` owns a list of `Interaction` objects.
+  * Pros: A supporter's details and relationship history form one record, so replacing or deleting that supporter naturally handles the history with it.
+  * Cons: Operations across every interaction must traverse all supporters.
+
+* **Alternative 2:** Store all interactions in one address-book-level collection and separately associate each one with a supporter.
+  * Pros: Whole-address-book interaction queries operate on one collection.
+  * Cons: Supporter replacement and deletion require maintaining a separate relationship and avoiding orphaned interactions.
+
+**Aspect: How to represent a supporter with no interactions**
+
+* **Alternative 1 (current choice):** Use an empty list and treat a missing `"interactions"` array as empty when loading.
+  * Pros: Callers can iterate without handling a second absent state, and older data files load without migration.
+  * Cons: An array deleted accidentally is indistinguishable from a supporter who has no history.
+
+* **Alternative 2:** Use an `Optional<List<Interaction>>` and reject a missing array.
+  * Pros: Absence can be distinguished from an explicitly empty history.
+  * Cons: It adds a redundant state and prevents older data files from loading.
+
 ### Optional contact fields
 
 A supporter's phone number, email and address are optional, but every supporter has at least one of a phone number and an email, so there is always a way to reach them.
