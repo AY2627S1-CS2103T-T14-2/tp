@@ -246,6 +246,10 @@ In the `Storage` component, `JsonAdaptedPerson` saves the organisation as an `"o
 
 In tests, `PersonBuilder` builds a `Person` with no organisation unless `PersonBuilder#withOrganisation(String)` is called.
 
+**Setting an organisation:** `AddCommandParser` and `EditCommandParser` accept an optional `o/ORGANISATION` prefix (`CliSyntax.PREFIX_ORGANISATION`) and parse it with `ParserUtil#parseOrganisation(String)`, which gives the organisation error message for a blank or overlong value. In `add`, leaving out the prefix creates a supporter with no organisation. In `edit`, `EditPersonDescriptor` holds the new organisation, and leaving out the prefix keeps the existing one. Giving `o/` more than once is reported as a repeated prefix, as for the other single-valued fields.
+
+**Showing an organisation:** `PersonCard` shows the organisation under the supporter's name, or `(no organisation)` when there is none. `Messages#format(Person)` adds `Organisation: ...` to command result messages only when the supporter has one.
+
 #### Design considerations:
 
 **Aspect: How to represent a missing organisation**
