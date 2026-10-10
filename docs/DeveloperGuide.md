@@ -293,6 +293,29 @@ In tests, `PersonBuilder` builds a `Person` with no organisation unless `PersonB
   * Pros: Consistent with the required fields.
   * Cons: Every supporter without an organisation would need an explicit empty value in the file.
 
+### Optional contact fields
+
+A supporter's phone number, email and address are optional, but every supporter has at least one of a phone number and an email, so there is always a way to reach them.
+
+* `Person` stores a missing field as `null` internally, and `Person#getPhone()`, `Person#getEmail()` and `Person#getAddress()` return an `Optional`, in the same way as `Person#getOrganisation()`.
+* The main `Person` constructor takes each optional field as an `Optional`, and throws an `IllegalArgumentException` if both the phone number and the email are empty. `Person#isValidContact(Optional, Optional)` holds this rule so that other components can check it first.
+* `AddCommandParser` requires only `n/NAME`. If neither `p/PHONE` nor `e/EMAIL` is given, it reports `AddCommand.MESSAGE_MISSING_CONTACT`, which names the two prefixes so the user knows how to fix the command.
+* `EditCommand` keeps a field's current value, which may be empty, when the edit leaves it out. As `edit` cannot remove a field, an edit can never leave a supporter without a phone number and an email.
+* `JsonAdaptedPerson` leaves out the keys of missing fields when saving. When loading, a missing key means the field is empty, and a supporter with neither a phone number nor an email makes the whole data file invalid.
+* `Messages#format(Person)` and `PersonCard` show only the fields a supporter has. `PersonCard` hides the label of a missing field, so it takes up no space.
+
+#### Design considerations:
+
+**Aspect: Which contact details are required**
+
+* **Alternative 1 (current choice):** At least one of a phone number and an email.
+  * Pros: Online donors who give only an email, and people met at events who give only a number, can both be recorded, while a supporter the user has no way to reach is still rejected.
+  * Cons: The rule involves two fields, so it cannot be checked by either field's own class and needs a separate check in `Person`.
+
+* **Alternative 2:** Both required, as in AB3.
+  * Pros: Simpler; every supporter can be reached in both ways.
+  * Cons: The user would have to invent a phone number or email for many real supporters.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation

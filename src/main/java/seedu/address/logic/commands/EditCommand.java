@@ -39,7 +39,8 @@ public class EditCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the supporter identified "
             + "by the index number used in the displayed supporter list. "
-            + "Existing values will be overwritten by the input values.\n"
+            + "Existing values will be overwritten by the input values. "
+            + "At least one field must be provided.\n"
             + "Parameters: INDEX (must be a positive integer) "
             + "[" + PREFIX_NAME + "NAME] "
             + "[" + PREFIX_PHONE + "PHONE] "
@@ -99,12 +100,12 @@ public class EditCommand extends Command {
         assert personToEdit != null;
 
         Name updatedName = editPersonDescriptor.getName().orElse(personToEdit.getName());
-        Phone updatedPhone = editPersonDescriptor.getPhone().orElse(personToEdit.getPhone());
-        Email updatedEmail = editPersonDescriptor.getEmail().orElse(personToEdit.getEmail());
-        Address updatedAddress = editPersonDescriptor.getAddress().orElse(personToEdit.getAddress());
-        Optional<Organisation> updatedOrganisation = editPersonDescriptor.getOrganisation().isPresent()
-                ? editPersonDescriptor.getOrganisation()
-                : personToEdit.getOrganisation();
+        // a field left out of the edit keeps its current value, which may be empty
+        Optional<Phone> updatedPhone = editPersonDescriptor.getPhone().or(personToEdit::getPhone);
+        Optional<Email> updatedEmail = editPersonDescriptor.getEmail().or(personToEdit::getEmail);
+        Optional<Address> updatedAddress = editPersonDescriptor.getAddress().or(personToEdit::getAddress);
+        Optional<Organisation> updatedOrganisation =
+                editPersonDescriptor.getOrganisation().or(personToEdit::getOrganisation);
         Set<Tag> updatedTags = editPersonDescriptor.getTags().orElse(personToEdit.getTags());
 
         // stage is changed with the stage command, so edit carries it over unchanged

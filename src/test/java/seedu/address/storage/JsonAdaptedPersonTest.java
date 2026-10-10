@@ -18,8 +18,10 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Organisation;
+import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Stage;
+import seedu.address.testutil.PersonBuilder;
 
 public class JsonAdaptedPersonTest {
     private static final String INVALID_NAME = "R@chel";
@@ -31,9 +33,9 @@ public class JsonAdaptedPersonTest {
     private static final String INVALID_ORGANISATION = " ";
 
     private static final String VALID_NAME = BENSON.getName().toString();
-    private static final String VALID_PHONE = BENSON.getPhone().toString();
-    private static final String VALID_EMAIL = BENSON.getEmail().toString();
-    private static final String VALID_ADDRESS = BENSON.getAddress().toString();
+    private static final String VALID_PHONE = BENSON.getPhone().get().toString();
+    private static final String VALID_EMAIL = BENSON.getEmail().get().toString();
+    private static final String VALID_ADDRESS = BENSON.getAddress().get().toString();
     private static final String VALID_ORGANISATION = BENSON.getOrganisation().get().toString();
     private static final String VALID_STAGE = BENSON.getStage().toString();
     private static final List<JsonAdaptedTag> VALID_TAGS = BENSON.getTags().stream()
@@ -74,12 +76,20 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
-    public void toModelType_nullPhone_throwsIllegalValueException() {
+    public void toModelType_nullPhone_returnsPersonWithoutPhone() throws Exception {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, null, VALID_EMAIL, VALID_ADDRESS,
                         VALID_ORGANISATION, VALID_STAGE, VALID_TAGS);
-        String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.class.getSimpleName());
-        assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+        assertTrue(person.toModelType().getPhone().isEmpty());
+    }
+
+    @Test
+    public void toModelType_nullPhoneAndEmail_throwsIllegalValueException() {
+        // a supporter must have at least one way to reach them
+        JsonAdaptedPerson person =
+                new JsonAdaptedPerson(VALID_NAME, null, null, VALID_ADDRESS,
+                        VALID_ORGANISATION, VALID_STAGE, VALID_TAGS);
+        assertThrows(IllegalValueException.class, Person.MESSAGE_CONSTRAINTS, person::toModelType);
     }
 
     @Test
@@ -92,12 +102,11 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
-    public void toModelType_nullEmail_throwsIllegalValueException() {
+    public void toModelType_nullEmail_returnsPersonWithoutEmail() throws Exception {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, null, VALID_ADDRESS,
                         VALID_ORGANISATION, VALID_STAGE, VALID_TAGS);
-        String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Email.class.getSimpleName());
-        assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+        assertTrue(person.toModelType().getEmail().isEmpty());
     }
 
     @Test
@@ -110,12 +119,17 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
-    public void toModelType_nullAddress_throwsIllegalValueException() {
+    public void toModelType_nullAddress_returnsPersonWithoutAddress() throws Exception {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, null,
                         VALID_ORGANISATION, VALID_STAGE, VALID_TAGS);
-        String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Address.class.getSimpleName());
-        assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+        assertTrue(person.toModelType().getAddress().isEmpty());
+    }
+
+    @Test
+    public void toModelType_personWithOnlyEmail_returnsSamePerson() throws Exception {
+        Person emailOnly = new PersonBuilder(BENSON).withoutPhone().withoutAddress().build();
+        assertEquals(emailOnly, new JsonAdaptedPerson(emailOnly).toModelType());
     }
 
     @Test

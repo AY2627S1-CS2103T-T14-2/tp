@@ -39,17 +39,25 @@ public class AddCommandParser implements Parser<AddCommand> {
                 ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
                         PREFIX_ORGANISATION, PREFIX_STAGE, PREFIX_TAG);
 
-        if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_ADDRESS, PREFIX_PHONE, PREFIX_EMAIL)
-                || !argMultimap.getPreamble().isEmpty()) {
+        if (!arePrefixesPresent(argMultimap, PREFIX_NAME) || !argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+        }
+        if (!arePrefixesPresent(argMultimap, PREFIX_PHONE) && !arePrefixesPresent(argMultimap, PREFIX_EMAIL)) {
+            throw new ParseException(AddCommand.MESSAGE_MISSING_CONTACT);
         }
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
                 PREFIX_ORGANISATION, PREFIX_STAGE);
         Name name = ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get());
-        Phone phone = ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get());
-        Email email = ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get());
-        Address address = ParserUtil.parseAddress(argMultimap.getValue(PREFIX_ADDRESS).get());
+        Optional<Phone> phone = argMultimap.getValue(PREFIX_PHONE).isPresent()
+                ? Optional.of(ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get()))
+                : Optional.empty();
+        Optional<Email> email = argMultimap.getValue(PREFIX_EMAIL).isPresent()
+                ? Optional.of(ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get()))
+                : Optional.empty();
+        Optional<Address> address = argMultimap.getValue(PREFIX_ADDRESS).isPresent()
+                ? Optional.of(ParserUtil.parseAddress(argMultimap.getValue(PREFIX_ADDRESS).get()))
+                : Optional.empty();
         Optional<Organisation> organisation = argMultimap.getValue(PREFIX_ORGANISATION).isPresent()
                 ? Optional.of(ParserUtil.parseOrganisation(argMultimap.getValue(PREFIX_ORGANISATION).get()))
                 : Optional.empty();
