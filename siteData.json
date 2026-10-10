@@ -53,6 +53,7 @@
         "implementation": "Implementation",
         "cultivation-stage-field": "Cultivation stage field",
         "setting-and-changing-a-stage": "Setting and changing a stage",
+        "organisation-field": "Organisation field",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
