@@ -52,6 +52,7 @@
         "common-classes": "Common classes",
         "implementation": "Implementation",
         "cultivation-stage-field": "Cultivation stage field",
+        "setting-and-changing-a-stage": "Setting and changing a stage",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
@@ -64,6 +65,7 @@
         "appendix-instructions-for-manual-testing": "Appendix: Instructions for manual testing",
         "launch-and-shutdown": "Launch and shutdown",
         "deleting-a-person": "Deleting a person",
+        "setting-a-supporter-s-stage": "Setting a supporter's stage",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
@@ -115,6 +117,7 @@
         "adding-a-person-add": "Adding a person: add",
         "listing-all-persons-list": "Listing all persons: list",
         "editing-a-person-edit": "Editing a person: edit",
+        "setting-a-supporter-s-stage-stage": "Setting a supporter's stage: stage",
         "locating-persons-by-name-find": "Locating persons by name: find",
         "deleting-a-person-delete": "Deleting a person: delete",
         "clearing-all-entries-clear": "Clearing all entries: clear",
