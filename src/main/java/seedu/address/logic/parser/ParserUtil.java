@@ -13,6 +13,7 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Stage;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -93,6 +94,21 @@ public class ParserUtil {
             throw new ParseException(Email.MESSAGE_CONSTRAINTS);
         }
         return new Email(trimmedEmail);
+    }
+
+    /**
+     * Parses a {@code String stage} into a {@code Stage}.
+     * Leading and trailing whitespaces will be trimmed and case is ignored.
+     *
+     * @throws ParseException if the given {@code stage} is invalid.
+     */
+    public static Stage parseStage(String stage) throws ParseException {
+        requireNonNull(stage);
+        String trimmedStage = stage.trim();
+        if (!Stage.isValidStage(trimmedStage)) {
+            throw new ParseException(Stage.MESSAGE_CONSTRAINTS);
+        }
+        return Stage.fromString(trimmedStage);
     }
 
     /**

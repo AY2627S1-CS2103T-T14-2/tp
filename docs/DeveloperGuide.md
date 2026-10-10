@@ -194,6 +194,45 @@ In tests, `PersonBuilder` gives every `Person` the default stage unless `PersonB
   * Pros: Old data files still load.
   * Cons: A supporter who was `Giving` could silently become a `Prospect` if the field was deleted by mistake.
 
+### Setting and changing a stage
+
+A stage can be set when a supporter is added, and changed afterwards with the `stage` command.
+
+**Setting a stage in `add`:** `AddCommandParser` accepts an optional `st/STAGE` prefix (`CliSyntax.PREFIX_STAGE`) and parses it with `ParserUtil#parseStage(String)`. If the prefix is absent, `Stage.DEFAULT_STAGE` is used. The prefix is `st/` rather than `s/`, so that a name containing `s/o` can later be allowed without being misread as a stage.
+
+**Changing a stage with `stage INDEX STAGE`:** The command is implemented by `StageCommandParser` and `StageCommand`, and works as follows.
+
+1. `AddressBookParser` passes the arguments after the command word to `StageCommandParser#parse(String)`.
+2. `StageCommandParser` splits the arguments on whitespace. Anything other than exactly two parts gives an invalid command format error. The first part is parsed with `ParserUtil#parseIndex(String)` (also an invalid command format error if it fails), and the second with `ParserUtil#parseStage(String)` (which gives the stage error message if it fails).
+3. `StageCommand#execute(Model)` checks the index against the filtered list from `Model#getFilteredPersonList()`.
+4. If the supporter is already at the given stage, it returns a normal `CommandResult` saying that nothing was changed. Otherwise, it creates a copy of the `Person` with the new stage and calls `Model#setPerson(Person, Person)`.
+
+`StageCommand` does not call `Model#updateFilteredPersonList(Predicate)`, so a `find` filter stays in place after the stage changes.
+
+The stage is also shown in the UI: `PersonCard` displays it as a badge next to the name, and adds a style class such as `stage_giving` so that each stage has its own color in `DarkTheme.css`. `Messages#format(Person)` includes the stage in command result messages.
+
+#### Design considerations:
+
+**Aspect: How the user changes a stage**
+
+* **Alternative 1 (current choice):** A separate `stage INDEX STAGE` command with no prefix.
+  * Pros: Changing a stage after a meeting is a frequent action, and this is the shortest command for it.
+  * Cons: One more command to learn.
+
+* **Alternative 2:** An `st/` prefix in `edit`.
+  * Pros: No new command.
+  * Cons: Longer to type, and mixes a frequent workflow action with occasional corrections to contact details.
+
+**Aspect: Setting the stage a supporter is already at**
+
+* **Alternative 1 (current choice):** Show a normal message saying nothing was changed.
+  * Pros: The user's intention is already true, so it is not treated as a mistake.
+  * Cons: A typo in the index that happens to hit a supporter at that stage is not flagged as an error.
+
+* **Alternative 2:** Show an error.
+  * Pros: Draws attention to a possibly mistaken command.
+  * Cons: Treats a harmless command as a failure.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
@@ -753,6 +792,42 @@ testers are expected to do more *exploratory* testing.
       Expected: Similar to previous.
 
 1. _{ more test cases … }_
+
+### Setting a supporter's stage
+
+1. Changing the stage while all supporters are being shown
+
+   1. Prerequisites: List all supporters using the `list` command, with multiple supporters in the list. The 1st supporter is not at stage `Giving`.
+
+   1. Test case: `stage 1 giving`<br>
+      Expected: The 1st supporter's badge changes to `Giving`. The status message shows the old and new stages.
+
+   1. Test case: `stage 1 giving` again<br>
+      Expected: Nothing is changed. The status message says the supporter is already at stage `Giving`, and is not shown as an error.
+
+   1. Test case: `stage 1 GIVING`, then `stage 1 lapsed`<br>
+      Expected: Upper case is accepted; the 1st supporter moves to `Lapsed`.
+
+   1. Test case: `stage 1 gave`<br>
+      Expected: No stage is changed. The status message lists the six valid stages.
+
+   1. Other incorrect stage commands to try: `stage`, `stage 1`, `stage 0 giving`, `stage 1 giving lapsed`, `stage x giving` (where x is larger than the list size)<br>
+      Expected: No stage is changed. The status message shows error details.
+
+1. Changing the stage after a `find`
+
+   1. Prerequisites: Run a `find` command that shows at least one supporter.
+
+   1. Test case: `stage 1 cultivating`<br>
+      Expected: The 1st supporter in the results moves to `Cultivating`, and the list still shows only the `find` results.
+
+1. Setting a stage when adding a supporter
+
+   1. Test case: `add n/Stage Tester p/91234567 e/tester@example.com a/1 Test Street st/contacted`<br>
+      Expected: The new supporter is added with the `Contacted` badge.
+
+   1. Test case: the same command without `st/contacted`, and with a different name<br>
+      Expected: The new supporter is added with the `Prospect` badge.
 
 ### Saving data
 

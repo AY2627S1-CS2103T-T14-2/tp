@@ -80,7 +80,10 @@ Format: `help`
 
 Adds a person to the address book.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [st/STAGE] [t/TAG]... `
+
+* `STAGE` is the supporter's cultivation stage, and must be one of `prospect`, `contacted`, `cultivating`, `giving`, `lapsed` or `declined`. Upper and lower case are both accepted.
+* If `st/STAGE` is left out, the new supporter starts at stage `Prospect`.
 
 <box type="tip" seamless>
 
@@ -90,6 +93,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
 Examples:
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
 * `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
+* `add n/John Lim p/81112222 e/johnlim@example.com a/Bedok North Ave 1 st/lapsed` adds a past donor at stage `Lapsed`.
 
 ### Listing all persons: `list`
 
@@ -108,10 +112,38 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]... `
 * Existing values will be updated to the input values.
 * When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
 * To remove all of a person's tags, enter `t/` without a tag after it.
+* A supporter's stage cannot be changed with `edit`, and stays the same when other details are edited. Use the `stage` command instead.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
+
+### Setting a supporter's stage: `stage`
+
+Changes how far the relationship with a supporter has progressed.
+
+Format: `stage INDEX STAGE`
+
+* Sets the stage of the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list. The index **must be a positive integer** 1, 2, 3, ...
+* `STAGE` must be one of the six stages below. Upper and lower case are both accepted. No prefix is needed before it.
+* Any stage can be changed to any other stage, e.g. a lapsed donor can be moved back to `cultivating`.
+* If the supporter is already at that stage, nothing is changed and a message says so.
+* The displayed list stays the same, so a `find` result is kept.
+
+Stage | Meaning
+------|--------
+`Prospect` | Identified as a possible supporter, not yet approached. New supporters start here.
+`Contacted` | First approach made, with no real conversation yet.
+`Cultivating` | In an active relationship or discussion, not yet giving.
+`Giving` | Currently donating (an individual) or partnering (a company).
+`Lapsed` | Gave before, but is no longer giving.
+`Declined` | Said no.
+
+Each supporter's stage is shown as a coloured badge next to their name in the list.
+
+Examples:
+* `stage 2 cultivating` moves the 2nd supporter in the displayed list to stage `Cultivating`.
+* `find Tan` followed by `stage 1 GIVING` moves the 1st supporter in the results of the `find` command to stage `Giving`.
 
 ### Locating persons by name: `find`
 
@@ -197,10 +229,11 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
+**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [st/STAGE] [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 st/contacted t/friend t/colleague`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
+**Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`
 **Help**   | `help`
