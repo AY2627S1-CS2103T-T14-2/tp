@@ -86,6 +86,9 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [o/ORGANISATION] [st/STAGE]
 * `ORGANISATION` can contain any characters (e.g. `Procter & Gamble`), must not be blank, and can be at most 100 characters long. Extra spaces are removed.
 * `STAGE` is the supporter's cultivation stage, and must be one of `prospect`, `contacted`, `cultivating`, `giving`, `lapsed` or `declined`. Upper and lower case are both accepted.
 * If `st/STAGE` is left out, the new supporter starts at stage `Prospect`.
+* `PHONE_NUMBER` must contain only digits, and be between 3 and 15 digits long.
+* Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`.
+* Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
 
 <box type="tip" seamless>
 
@@ -116,6 +119,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t
 * When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
 * To remove all of a person's tags, enter `t/` without a tag after it.
 * A supporter's stage cannot be changed with `edit`, and stays the same when other details are edited. Use the `stage` command instead.
+* A supporter's name cannot be changed to the name of another supporter, using the same comparison as `add`. Changing only the capitalisation of their own name is allowed.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.

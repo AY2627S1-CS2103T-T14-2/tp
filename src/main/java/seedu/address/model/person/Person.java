@@ -96,8 +96,8 @@ public class Person {
     }
 
     /**
-     * Returns true if both persons have the same name.
-     * This defines a weaker notion of equality between two persons.
+     * Returns true if both persons have the same name, ignoring case and extra spaces.
+     * This defines a weaker notion of equality between two persons, used to detect duplicate supporters.
      */
     public boolean isSamePerson(Person otherPerson) {
         if (otherPerson == this) {
@@ -105,7 +105,7 @@ public class Person {
         }
 
         return otherPerson != null
-                && otherPerson.getName().equals(getName());
+                && otherPerson.getName().isSameName(getName());
     }
 
     /**
