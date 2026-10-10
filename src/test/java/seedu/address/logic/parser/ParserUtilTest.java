@@ -15,6 +15,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Organisation;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Stage;
 import seedu.address.model.tag.Tag;
@@ -122,6 +123,25 @@ public class ParserUtilTest {
         String addressWithWhitespace = WHITESPACE + VALID_ADDRESS + WHITESPACE;
         Address expectedAddress = new Address(VALID_ADDRESS);
         assertEquals(expectedAddress, ParserUtil.parseAddress(addressWithWhitespace));
+    }
+
+    @Test
+    public void parseOrganisation_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseOrganisation(null));
+    }
+
+    @Test
+    public void parseOrganisation_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, Organisation.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseOrganisation(""));
+        assertThrows(ParseException.class, Organisation.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseOrganisation(
+                "a".repeat(Organisation.MAX_LENGTH + 1)));
+    }
+
+    @Test
+    public void parseOrganisation_validValueWithWhitespace_returnsNormalisedOrganisation() throws Exception {
+        Organisation expectedOrganisation = new Organisation("Procter & Gamble");
+        String organisationWithWhitespace = WHITESPACE + "Procter  &  Gamble" + WHITESPACE;
+        assertEquals(expectedOrganisation, ParserUtil.parseOrganisation(organisationWithWhitespace));
     }
 
     @Test
