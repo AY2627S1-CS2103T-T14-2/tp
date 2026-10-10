@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -36,6 +37,33 @@ public class NameTest {
         assertTrue(Name.isValidName("peter the 2nd")); // alphanumeric characters
         assertTrue(Name.isValidName("Capital Tan")); // with capital letters
         assertTrue(Name.isValidName("David Roger Jackson Ray Jr 2nd")); // long names
+        assertTrue(Name.isValidName("  Tan   Wei Ming ")); // extra spaces, removed when saved
+    }
+
+    @Test
+    public void constructor_extraSpaces_spacesNormalised() {
+        assertEquals("Tan Wei Ming", new Name("  Tan   Wei Ming ").fullName);
+        assertEquals(new Name("Tan Wei Ming"), new Name("Tan  Wei  Ming"));
+    }
+
+    @Test
+    public void isSameName() {
+        Name name = new Name("Tan Wei Ming");
+
+        // same name -> returns true
+        assertTrue(name.isSameName(new Name("Tan Wei Ming")));
+
+        // different case -> returns true
+        assertTrue(name.isSameName(new Name("tan WEI ming")));
+
+        // extra spaces -> returns true
+        assertTrue(name.isSameName(new Name(" Tan  Wei   Ming ")));
+
+        // null -> returns false
+        assertFalse(name.isSameName(null));
+
+        // different name -> returns false
+        assertFalse(name.isSameName(new Name("Tan Wei Min")));
     }
 
     @Test
