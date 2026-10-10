@@ -3,8 +3,10 @@ package seedu.address.model.person;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -30,6 +32,7 @@ public class Person {
     private final Address address; // null if the supporter has no address
     private final Organisation organisation; // null if the supporter has no organisation
     private final Stage stage;
+    private final List<Interaction> interactions = new ArrayList<>();
     private final Set<Tag> tags = new HashSet<>();
 
     /**
@@ -57,7 +60,20 @@ public class Person {
      */
     public Person(Name name, Optional<Phone> phone, Optional<Email> email, Optional<Address> address,
             Optional<Organisation> organisation, Stage stage, Set<Tag> tags) {
+        this(name, phone, email, address, organisation, stage, Collections.emptyList(), tags);
+    }
+
+    /**
+     * Creates a {@code Person} with the given details and interaction history.
+     * Every field must be present and not null. An empty optional field means the supporter does not have it,
+     * but at least one of {@code phone} and {@code email} must be present.
+     *
+     * @throws IllegalArgumentException if both {@code phone} and {@code email} are empty.
+     */
+    public Person(Name name, Optional<Phone> phone, Optional<Email> email, Optional<Address> address,
+            Optional<Organisation> organisation, Stage stage, List<Interaction> interactions, Set<Tag> tags) {
         requireAllNonNull(name, phone, email, address, organisation, stage, tags);
+        requireAllNonNull(interactions);
         checkArgument(isValidContact(phone, email), MESSAGE_CONSTRAINTS);
         this.name = name;
         this.phone = phone.orElse(null);
@@ -65,6 +81,7 @@ public class Person {
         this.address = address.orElse(null);
         this.organisation = organisation.orElse(null);
         this.stage = stage;
+        this.interactions.addAll(interactions);
         this.tags.addAll(tags);
     }
 
@@ -112,6 +129,13 @@ public class Person {
     }
 
     /**
+     * Returns the supporter's interactions in the order they were logged.
+     */
+    public List<Interaction> getInteractions() {
+        return Collections.unmodifiableList(interactions);
+    }
+
+    /**
      * Returns an immutable tag set, which throws {@code UnsupportedOperationException}
      * if modification is attempted.
      */
@@ -153,13 +177,14 @@ public class Person {
                 && Objects.equals(address, otherPerson.address)
                 && Objects.equals(organisation, otherPerson.organisation)
                 && stage.equals(otherPerson.stage)
+                && interactions.equals(otherPerson.interactions)
                 && tags.equals(otherPerson.tags);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, organisation, stage, tags);
+        return Objects.hash(name, phone, email, address, organisation, stage, interactions, tags);
     }
 
     @Override
@@ -171,6 +196,7 @@ public class Person {
                 .add("address", address)
                 .add("organisation", organisation)
                 .add("stage", stage)
+                .add("interactions", interactions)
                 .add("tags", tags)
                 .toString();
     }

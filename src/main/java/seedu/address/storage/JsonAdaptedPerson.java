@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Organisation;
 import seedu.address.model.person.Person;
@@ -38,6 +39,7 @@ class JsonAdaptedPerson {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String organisation;
     private final String stage;
+    private final List<JsonAdaptedInteraction> interactions = new ArrayList<>();
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
 
     /**
@@ -47,6 +49,7 @@ class JsonAdaptedPerson {
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("address") String address,
             @JsonProperty("organisation") String organisation, @JsonProperty("stage") String stage,
+            @JsonProperty("interactions") List<JsonAdaptedInteraction> interactions,
             @JsonProperty("tags") List<JsonAdaptedTag> tags) {
         this.name = name;
         this.phone = phone;
@@ -54,6 +57,9 @@ class JsonAdaptedPerson {
         this.address = address;
         this.organisation = organisation;
         this.stage = stage;
+        if (interactions != null) {
+            this.interactions.addAll(interactions);
+        }
         if (tags != null) {
             this.tags.addAll(tags);
         }
@@ -69,6 +75,9 @@ class JsonAdaptedPerson {
         address = source.getAddress().map(a -> a.value).orElse(null);
         organisation = source.getOrganisation().map(org -> org.value).orElse(null);
         stage = source.getStage().toString();
+        interactions.addAll(source.getInteractions().stream()
+                .map(JsonAdaptedInteraction::new)
+                .collect(Collectors.toList()));
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
@@ -80,6 +89,15 @@ class JsonAdaptedPerson {
      * @throws IllegalValueException if there were any data constraints violated in the adapted person.
      */
     public Person toModelType() throws IllegalValueException {
+        final List<Interaction> personInteractions = new ArrayList<>();
+        for (JsonAdaptedInteraction interaction : interactions) {
+            if (interaction == null) {
+                throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
+                        Interaction.class.getSimpleName()));
+            }
+            personInteractions.add(interaction.toModelType());
+        }
+
         final List<Tag> personTags = new ArrayList<>();
         for (JsonAdaptedTag tag : tags) {
             personTags.add(tag.toModelType());
@@ -129,7 +147,7 @@ class JsonAdaptedPerson {
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
         return new Person(modelName, modelPhone, modelEmail, modelAddress, modelOrganisation, modelStage,
-                modelTags);
+                personInteractions, modelTags);
     }
 
 }

@@ -215,6 +215,17 @@ A supporter may also have an `"organisation"`, such as the company a CSR contact
 
 Each supporter card in the list shows the supporter's organisation, or `(no organisation)` if they have none.
 
+A supporter's `"interactions"` array stores their interaction history in logging order. Each entry has a `"date"` in `yyyy-MM-dd` format and a non-blank `"note"` of at most 500 characters. For example:
+
+```json
+"interactions" : [ {
+  "date" : "2026-10-11",
+  "note" : "Called to discuss the year-end appeal"
+} ]
+```
+
+The array may be empty or left out when the supporter has no interactions. A missing array is also how data files created before interaction histories were introduced remain compatible.
+
 <box type="warning" seamless>
 
 **Caution:**

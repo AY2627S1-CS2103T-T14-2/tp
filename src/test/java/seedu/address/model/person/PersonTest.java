@@ -15,6 +15,9 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -121,6 +124,12 @@ public class PersonTest {
         // different organisation -> returns false
         Person editedBenson = new PersonBuilder(BENSON).withOrganisation("OCBC Bank").build();
         assertFalse(BENSON.equals(editedBenson));
+
+        // different interaction history -> returns false
+        editedAlice = new PersonBuilder(ALICE)
+                .withInteractions(new Interaction(LocalDate.of(2026, 9, 16), "Called"))
+                .build();
+        assertFalse(ALICE.equals(editedAlice));
     }
 
     @Test
@@ -169,6 +178,32 @@ public class PersonTest {
     }
 
     @Test
+    public void constructor_withoutInteractions_hasEmptyHistory() {
+        Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
+                ALICE.getOrganisation(), ALICE.getStage(), ALICE.getTags());
+        assertTrue(person.getInteractions().isEmpty());
+    }
+
+    @Test
+    public void constructor_withInteractions_defensivelyCopiesHistory() {
+        Interaction interaction = new Interaction(LocalDate.of(2026, 9, 16), "Called");
+        List<Interaction> interactions = new ArrayList<>(List.of(interaction));
+        Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
+                ALICE.getOrganisation(), ALICE.getStage(), interactions, ALICE.getTags());
+
+        interactions.clear();
+        assertEquals(List.of(interaction), person.getInteractions());
+    }
+
+    @Test
+    public void getInteractions_modifyList_throwsUnsupportedOperationException() {
+        Person person = new PersonBuilder(ALICE)
+                .withInteractions(new Interaction(LocalDate.of(2026, 9, 16), "Called"))
+                .build();
+        assertThrows(UnsupportedOperationException.class, () -> person.getInteractions().clear());
+    }
+
+    @Test
     public void constructor_nullStage_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new Person(ALICE.getName(), ALICE.getPhone().get(),
                 ALICE.getEmail().get(), ALICE.getAddress().get(), null, ALICE.getTags()));
@@ -180,7 +215,7 @@ public class PersonTest {
                 + ", phone=" + ALICE.getPhone().orElse(null) + ", email=" + ALICE.getEmail().orElse(null)
                 + ", address=" + ALICE.getAddress().orElse(null)
                 + ", organisation=" + ALICE.getOrganisation().orElse(null) + ", stage=" + ALICE.getStage()
-                + ", tags=" + ALICE.getTags() + "}";
+                + ", interactions=" + ALICE.getInteractions() + ", tags=" + ALICE.getTags() + "}";
         assertEquals(expected, ALICE.toString());
     }
 }
