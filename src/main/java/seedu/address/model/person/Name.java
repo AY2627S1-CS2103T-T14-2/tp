@@ -21,21 +21,34 @@ public class Name {
     public final String fullName;
 
     /**
-     * Constructs a {@code Name}.
+     * Constructs a {@code Name}, removing leading and trailing spaces
+     * and reducing each run of spaces inside the name to one.
      *
      * @param name A valid name.
      */
     public Name(String name) {
         requireNonNull(name);
         checkArgument(isValidName(name), MESSAGE_CONSTRAINTS);
-        fullName = name;
+        fullName = normalise(name);
     }
 
     /**
-     * Returns true if a given string is a valid name.
+     * Returns true if a given string is a valid name once its spaces are normalised.
      */
     public static boolean isValidName(String test) {
-        return test.matches(VALIDATION_REGEX);
+        return normalise(test).matches(VALIDATION_REGEX);
+    }
+
+    private static String normalise(String name) {
+        return name.trim().replaceAll("\\s+", " ");
+    }
+
+    /**
+     * Returns true if both names are the same, ignoring case.
+     * Spaces need no special handling, as every {@code Name} has its spaces normalised.
+     */
+    public boolean isSameName(Name otherName) {
+        return otherName != null && fullName.equalsIgnoreCase(otherName.fullName);
     }
 
 

@@ -50,7 +50,6 @@ public class EditCommand extends Command {
 
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited supporter: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
-    public static final String MESSAGE_DUPLICATE_PERSON = "This supporter already exists in SupporterBook.";
 
     private final Index index;
     private final EditPersonDescriptor editPersonDescriptor;
@@ -80,7 +79,8 @@ public class EditCommand extends Command {
         Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
 
         if (!personToEdit.isSamePerson(editedPerson) && model.hasPerson(editedPerson)) {
-            throw new CommandException(MESSAGE_DUPLICATE_PERSON);
+            throw new CommandException(
+                    Messages.getErrorMessageForDuplicatePerson(model.getAddressBook().getPersonList(), editedPerson));
         }
 
         model.setPerson(personToEdit, editedPerson);

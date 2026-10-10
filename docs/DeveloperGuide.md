@@ -159,6 +159,27 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Duplicate supporters
+
+Two supporters count as the same supporter if their names match, ignoring case and extra spaces. No other field is compared.
+
+* The `Name` constructor removes leading and trailing spaces and reduces each run of spaces inside the name to one, so every `Name` is stored in a normalised form.
+* `Name#isSameName(Name)` compares two names ignoring case. Because both names are already normalised, extra spaces need no special handling.
+* `Person#isSamePerson(Person)` uses `Name#isSameName(Name)`. `UniquePersonList`, `AddCommand`, `EditCommand` and the loading of the data file all rely on `Person#isSamePerson(Person)`, so they all apply the same rule.
+* When `AddCommand` or `EditCommand` finds a duplicate, `Messages#getErrorMessageForDuplicatePerson(List, Person)` names the supporter already in the list, and suggests adding a distinguishing word to the new name.
+
+#### Design considerations:
+
+**Aspect: Which fields decide whether two supporters are the same**
+
+* **Alternative 1 (current choice):** The name only, ignoring case and extra spaces.
+  * Pros: Re-adding someone already in the list is caught even if their phone or email has changed, which would otherwise split one relationship's history across two records.
+  * Cons: Two different people with the same name cannot both be stored under that exact name; the user must add a distinguishing word to one of them.
+
+* **Alternative 2:** The name together with the phone number or email.
+  * Pros: Namesakes can be stored without changing either name.
+  * Cons: The same person could be added twice as soon as they change jobs and contact details.
+
 ### Cultivation stage field
 
 Every `Person` has exactly one cultivation stage (see the [Glossary](#glossary) for what each stage means). The stage is represented by the `Stage` enumeration in the `Model` component, with the six values `PROSPECT`, `CONTACTED`, `CULTIVATING`, `GIVING`, `LAPSED` and `DECLINED`.
