@@ -329,6 +329,40 @@ In tests, `PersonBuilder` builds a `Person` with an empty history unless `Person
   * Pros: Absence can be distinguished from an explicitly empty history.
   * Cons: It adds a redundant state and prevents older data files from loading.
 
+### Logging an interaction
+
+`LogCommand` performs the model update for `log INDEX nt/NOTE` after the index and note have been parsed. It works as follows.
+
+1. `LogCommand#execute(Model)` obtains the currently displayed supporters from `Model#getFilteredPersonList()` and checks the given index against that list. An out-of-range index gives the same invalid-index error as the other index-based commands.
+2. It creates an `Interaction` using the note and today's date. The public constructor uses the computer's default clock, while tests can supply a fixed `Clock` so that their expected dates do not depend on when they run.
+3. It copies the supporter's existing interactions in logging order and appends the new interaction. The size of this updated list is the new interaction's stable number.
+4. It creates a replacement `Person` with the updated history and copies every other field unchanged, including the cultivation stage and tags. It then calls `Model#setPerson(Person, Person)`.
+5. It returns a `CommandResult` that identifies the interaction number, supporter, date and note.
+
+Identical interactions are appended normally because two calls or messages with the same note can happen on the same day. `LogCommand` also does not call `Model#updateFilteredPersonList(Predicate)`, so logging against a supporter in a `find` result keeps that filter in place.
+
+#### Design considerations:
+
+**Aspect: How to update a supporter's interaction history**
+
+* **Alternative 1 (current choice):** Create a replacement `Person` containing a copied and extended interaction list.
+  * Pros: `Person` and its interaction history remain immutable to callers, and the update follows the same `Model#setPerson(Person, Person)` pattern as `edit` and `stage`.
+  * Cons: Every field must be copied correctly even though only the history changes.
+
+* **Alternative 2:** Mutate the interaction list inside the existing `Person`.
+  * Pros: Only the new interaction needs to be added.
+  * Cons: It breaks `Person`'s immutability and can bypass the observable-list replacement that informs other components of a changed supporter.
+
+**Aspect: How to obtain today's date**
+
+* **Alternative 1 (current choice):** Store a `Clock` in `LogCommand`, using the system-default clock in production and a fixed clock in tests.
+  * Pros: The command follows the computer's date in normal use while date-dependent tests remain deterministic.
+  * Cons: The command carries an extra dependency used only to obtain the date.
+
+* **Alternative 2:** Call `LocalDate#now()` directly during execution.
+  * Pros: Less constructor and field code.
+  * Cons: Tests can fail or require changing expected values depending on the day they run.
+
 ### Optional contact fields
 
 A supporter's phone number, email and address are optional, but every supporter has at least one of a phone number and an email, so there is always a way to reach them.
