@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Organisation;
 import seedu.address.model.person.Phone;
@@ -31,6 +32,7 @@ public class ParserUtilTest {
     private static final String VALID_PHONE = "123456";
     private static final String VALID_ADDRESS = "123 Main Street #0505";
     private static final String VALID_EMAIL = "rachel@example.com";
+    private static final String VALID_INTERACTION_NOTE = "Called to discuss the year-end appeal";
     private static final String VALID_TAG_1 = "friend";
     private static final String VALID_TAG_2 = "neighbour";
 
@@ -165,6 +167,30 @@ public class ParserUtilTest {
     @Test
     public void parseStage_validValueWithWhitespace_returnsTrimmedStage() throws Exception {
         assertEquals(Stage.DECLINED, ParserUtil.parseStage(WHITESPACE + "Declined" + WHITESPACE));
+    }
+
+    @Test
+    public void parseInteractionNote_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseInteractionNote(null));
+    }
+
+    @Test
+    public void parseInteractionNote_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, Interaction.MESSAGE_CONSTRAINTS, () ->
+                ParserUtil.parseInteractionNote(" "));
+        assertThrows(ParseException.class, Interaction.MESSAGE_CONSTRAINTS, () ->
+                ParserUtil.parseInteractionNote("a".repeat(Interaction.MAX_NOTE_LENGTH + 1)));
+    }
+
+    @Test
+    public void parseInteractionNote_validValueWithoutWhitespace_returnsNote() throws Exception {
+        assertEquals(VALID_INTERACTION_NOTE, ParserUtil.parseInteractionNote(VALID_INTERACTION_NOTE));
+    }
+
+    @Test
+    public void parseInteractionNote_validValueWithWhitespace_returnsTrimmedNote() throws Exception {
+        String noteWithWhitespace = WHITESPACE + VALID_INTERACTION_NOTE + WHITESPACE;
+        assertEquals(VALID_INTERACTION_NOTE, ParserUtil.parseInteractionNote(noteWithWhitespace));
     }
 
     @Test
