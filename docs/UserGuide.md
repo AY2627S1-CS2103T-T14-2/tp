@@ -187,6 +187,29 @@ Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
 * `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
+### Logging an interaction: `log`
+
+Records an interaction with a supporter, dated today.
+
+Format: `log INDEX nt/NOTE`
+
+* Logs the interaction against the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and must be a positive integer.
+* `NOTE` records what happened. It can contain any characters, must not be blank, and can be at most 500 characters long. Leading and trailing spaces are removed.
+* The interaction is automatically dated using the computer's current date.
+* Interactions are numbered in the order they are logged, starting from `#1` for each supporter.
+* Identical notes logged on the same day are accepted as separate interactions.
+* On success, the result display shows the interaction number, supporter, date and note.
+* Logging an interaction does not change the supporter's cultivation stage or the currently displayed list. A `find` result therefore remains in place.
+
+Examples:
+* `log 2 nt/Coffee at Raffles Place, keen on a Q4 volunteering day`
+* `find Tan` followed by `log 1 nt/Left voicemail about the year-end appeal` logs the interaction against the 1st supporter in the search results.
+
+<box type="warning" seamless>
+
+If a note contains a space followed by `nt/`, that text is treated as a second note prefix and the command is rejected. Rephrase the note to avoid `nt/`.
+</box>
+
 ### Clearing all entries: `clear`
 
 Clears all entries from the address book.
@@ -263,5 +286,6 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
+**Log**    | `log INDEX nt/NOTE`<br> e.g., `log 2 nt/Called to discuss the year-end appeal`
 **Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`
 **Help**   | `help`
