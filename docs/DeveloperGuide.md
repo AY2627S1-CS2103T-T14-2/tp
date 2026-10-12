@@ -1014,6 +1014,42 @@ testers are expected to do more *exploratory* testing.
    1. Other incorrect commands to try: `log`, `log 1`, `log 1 Called`, `log 0 nt/Called`, and `log 999 nt/Called` (where `999` is larger than the displayed list size)<br>
       Expected: No interaction is logged. The status message shows error details.
 
+### Viewing a supporter's interaction summary
+
+1. Viewing a supporter with no interactions
+
+   1. Prerequisites: Add a supporter with a unique name using `add n/View Tester p/91234567`, then run `find View Tester`. Ensure exactly one supporter is displayed.
+
+   1. Test case: `view 1`<br>
+      Expected: `Showing View Tester: no interactions logged yet`.
+
+1. Viewing a supporter with interactions
+
+   1. Prerequisites: Keep View Tester as the only displayed supporter. Run `log 1 nt/Called about volunteering` and `log 1 nt/Met to discuss the appeal`.
+
+   1. Test case: `view 1`<br>
+      Expected: `Showing View Tester: 2 interaction(s) logged`.
+
+1. Viewing by the current displayed index
+
+   1. Prerequisites: Run `list` with at least two supporters. Note the name at index 2, then use `find` to show only that supporter.
+
+   1. Test case: `view 1`<br>
+      Expected: The message names the supporter who was previously at index 2.
+
+1. Invalid view commands
+
+   1. Test cases: `view`, `view abc`, `view 0`, `view -1`, `view 1.5`, `view 2147483648` and `view 1 2`<br>
+      Expected: `Invalid command format!` followed by the `view` usage message.
+
+   1. Test case: With exactly one supporter displayed, run `view 2`.<br>
+      Expected: `The supporter index provided is invalid.`
+
+   1. Test case: Run a `find` that returns no supporters, then `view 1`.<br>
+      Expected: `The supporter index provided is invalid.`
+
+Selection retention and clearing are checked by the automated model tests because the current UI does not expose the selected supporter separately from command feedback. No detail panel appears in this version.
+
 ### Saving data
 
 1. Dealing with missing/corrupted data files

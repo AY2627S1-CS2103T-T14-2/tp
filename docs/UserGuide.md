@@ -210,6 +210,23 @@ Examples:
 If a note contains a space followed by `nt/`, that text is treated as a second note prefix and the command is rejected. Rephrase the note to avoid `nt/`.
 </box>
 
+### Viewing a supporter's interaction summary: `view`
+
+Selects a supporter and shows their name and the number of logged interactions in the result display.
+
+Format: `view INDEX`
+
+* `INDEX` is required and must be a positive integer from the currently displayed supporter list. After a `find`, use the index shown in the search results.
+* Supply exactly one index, with no additional arguments.
+* Viewing a supporter preserves the displayed list, its filter and all supporter data.
+* The app remembers the viewed supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. A successful `view` selects another supporter. Deleting the viewed supporter or running `clear` clears the selection; restarting the app starts with no selection.
+* This version shows the interaction summary only. The detail panel containing supporter details and individual interaction entries will be added in a future release.
+
+Examples:
+
+* `view 2` selects the 2nd supporter in the displayed list.
+* `find Priya` followed by `view 1` selects the 1st supporter in the search results.
+
 ### Clearing all entries: `clear`
 
 Clears all entries from the address book.
@@ -288,4 +305,5 @@ Action     | Format, Examples
 **List**   | `list`
 **Log**    | `log INDEX nt/NOTE`<br> e.g., `log 2 nt/Called to discuss the year-end appeal`
 **Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`
+**View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
