@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import java.util.Comparator;
+import java.util.Optional;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -15,6 +16,7 @@ import seedu.address.model.person.Person;
 public class PersonCard extends UiPart<Region> {
 
     private static final String FXML = "PersonListCard.fxml";
+    private static final String NO_ORGANISATION = "(no organisation)";
 
     /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
@@ -39,6 +41,10 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label email;
     @FXML
+    private Label organisation;
+    @FXML
+    private Label stage;
+    @FXML
     private FlowPane tags;
 
     /**
@@ -49,11 +55,24 @@ public class PersonCard extends UiPart<Region> {
         this.person = person;
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
-        phone.setText(person.getPhone().value);
-        address.setText(person.getAddress().value);
-        email.setText(person.getEmail().value);
+        stage.setText(person.getStage().toString());
+        stage.getStyleClass().add("stage_" + person.getStage().name().toLowerCase());
+        organisation.setText(person.getOrganisation().map(org -> org.value).orElse(NO_ORGANISATION));
+        showIfPresent(phone, person.getPhone().map(p -> p.value));
+        showIfPresent(address, person.getAddress().map(a -> a.value));
+        showIfPresent(email, person.getEmail().map(e -> e.value));
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
+    }
+
+    /**
+     * Shows {@code value} in {@code label}, or hides the label and the space it takes up if there is no value.
+     */
+    private static void showIfPresent(Label label, Optional<String> value) {
+        value.ifPresentOrElse(label::setText, () -> {
+            label.setVisible(false);
+            label.setManaged(false);
+        });
     }
 }

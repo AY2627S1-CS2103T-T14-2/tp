@@ -3,18 +3,23 @@ package seedu.address.storage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Organisation;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Stage;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -22,12 +27,19 @@ import seedu.address.model.tag.Tag;
  */
 class JsonAdaptedPerson {
 
-    public static final String MISSING_FIELD_MESSAGE_FORMAT = "Person's %s field is missing!";
+    public static final String MISSING_FIELD_MESSAGE_FORMAT = "Supporter's %s field is missing!";
 
     private final String name;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String phone;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String email;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String address;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private final String organisation;
+    private final String stage;
+    private final List<JsonAdaptedInteraction> interactions = new ArrayList<>();
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
 
     /**
@@ -36,11 +48,18 @@ class JsonAdaptedPerson {
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("address") String address,
+            @JsonProperty("organisation") String organisation, @JsonProperty("stage") String stage,
+            @JsonProperty("interactions") List<JsonAdaptedInteraction> interactions,
             @JsonProperty("tags") List<JsonAdaptedTag> tags) {
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.address = address;
+        this.organisation = organisation;
+        this.stage = stage;
+        if (interactions != null) {
+            this.interactions.addAll(interactions);
+        }
         if (tags != null) {
             this.tags.addAll(tags);
         }
@@ -51,9 +70,14 @@ class JsonAdaptedPerson {
      */
     public JsonAdaptedPerson(Person source) {
         name = source.getName().fullName;
-        phone = source.getPhone().value;
-        email = source.getEmail().value;
-        address = source.getAddress().value;
+        phone = source.getPhone().map(p -> p.value).orElse(null);
+        email = source.getEmail().map(e -> e.value).orElse(null);
+        address = source.getAddress().map(a -> a.value).orElse(null);
+        organisation = source.getOrganisation().map(org -> org.value).orElse(null);
+        stage = source.getStage().toString();
+        interactions.addAll(source.getInteractions().stream()
+                .map(JsonAdaptedInteraction::new)
+                .collect(Collectors.toList()));
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
@@ -65,6 +89,15 @@ class JsonAdaptedPerson {
      * @throws IllegalValueException if there were any data constraints violated in the adapted person.
      */
     public Person toModelType() throws IllegalValueException {
+        final List<Interaction> personInteractions = new ArrayList<>();
+        for (JsonAdaptedInteraction interaction : interactions) {
+            if (interaction == null) {
+                throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
+                        Interaction.class.getSimpleName()));
+            }
+            personInteractions.add(interaction.toModelType());
+        }
+
         final List<Tag> personTags = new ArrayList<>();
         for (JsonAdaptedTag tag : tags) {
             personTags.add(tag.toModelType());
@@ -78,32 +111,43 @@ class JsonAdaptedPerson {
         }
         final Name modelName = new Name(name);
 
-        if (phone == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.class.getSimpleName()));
-        }
-        if (!Phone.isValidPhone(phone)) {
+        // phone, email and address are optional, so a missing value means the supporter does not have it
+        if (phone != null && !Phone.isValidPhone(phone)) {
             throw new IllegalValueException(Phone.MESSAGE_CONSTRAINTS);
         }
-        final Phone modelPhone = new Phone(phone);
+        final Optional<Phone> modelPhone = Optional.ofNullable(phone).map(Phone::new);
 
-        if (email == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Email.class.getSimpleName()));
-        }
-        if (!Email.isValidEmail(email)) {
+        if (email != null && !Email.isValidEmail(email)) {
             throw new IllegalValueException(Email.MESSAGE_CONSTRAINTS);
         }
-        final Email modelEmail = new Email(email);
+        final Optional<Email> modelEmail = Optional.ofNullable(email).map(Email::new);
 
-        if (address == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Address.class.getSimpleName()));
+        if (!Person.isValidContact(modelPhone, modelEmail)) {
+            throw new IllegalValueException(Person.MESSAGE_CONSTRAINTS);
         }
-        if (!Address.isValidAddress(address)) {
+
+        if (address != null && !Address.isValidAddress(address)) {
             throw new IllegalValueException(Address.MESSAGE_CONSTRAINTS);
         }
-        final Address modelAddress = new Address(address);
+        final Optional<Address> modelAddress = Optional.ofNullable(address).map(Address::new);
+
+        // organisation is optional, so a missing value means the supporter has no organisation
+        if (organisation != null && !Organisation.isValidOrganisation(organisation)) {
+            throw new IllegalValueException(Organisation.MESSAGE_CONSTRAINTS);
+        }
+        final Optional<Organisation> modelOrganisation = Optional.ofNullable(organisation).map(Organisation::new);
+
+        if (stage == null) {
+            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Stage.class.getSimpleName()));
+        }
+        if (!Stage.isValidStage(stage)) {
+            throw new IllegalValueException(Stage.MESSAGE_CONSTRAINTS);
+        }
+        final Stage modelStage = Stage.fromString(stage);
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
-        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelTags);
+        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelOrganisation, modelStage,
+                personInteractions, modelTags);
     }
 
 }

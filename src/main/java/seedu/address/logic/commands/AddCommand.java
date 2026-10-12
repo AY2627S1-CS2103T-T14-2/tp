@@ -4,7 +4,9 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ORGANISATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_STAGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import seedu.address.commons.util.ToStringBuilder;
@@ -20,23 +22,27 @@ public class AddCommand extends Command {
 
     public static final String COMMAND_WORD = "add";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a person to the address book. "
+    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a supporter to SupporterBook. "
             + "Parameters: "
             + PREFIX_NAME + "NAME "
-            + PREFIX_PHONE + "PHONE "
-            + PREFIX_EMAIL + "EMAIL "
-            + PREFIX_ADDRESS + "ADDRESS "
+            + "[" + PREFIX_PHONE + "PHONE] "
+            + "[" + PREFIX_EMAIL + "EMAIL] "
+            + "[" + PREFIX_ADDRESS + "ADDRESS] "
+            + "[" + PREFIX_ORGANISATION + "ORGANISATION] "
+            + "[" + PREFIX_STAGE + "STAGE] "
             + "[" + PREFIX_TAG + "TAG]...\n"
+            + "At least one of " + PREFIX_PHONE + "PHONE and " + PREFIX_EMAIL + "EMAIL is required.\n"
             + "Example: " + COMMAND_WORD + " "
-            + PREFIX_NAME + "John Doe "
-            + PREFIX_PHONE + "98765432 "
-            + PREFIX_EMAIL + "johnd@example.com "
-            + PREFIX_ADDRESS + "311, Clementi Ave 2, #02-25 "
-            + PREFIX_TAG + "friends "
-            + PREFIX_TAG + "owesMoney";
+            + PREFIX_NAME + "Tan Wei Ming "
+            + PREFIX_PHONE + "91234567 "
+            + PREFIX_EMAIL + "weiming@dbs.com "
+            + PREFIX_ORGANISATION + "DBS Bank "
+            + PREFIX_TAG + "boardIntro";
 
-    public static final String MESSAGE_SUCCESS = "New person added: %1$s";
-    public static final String MESSAGE_DUPLICATE_PERSON = "This person already exists in the address book.";
+    public static final String MESSAGE_MISSING_CONTACT = "A supporter needs at least one way to reach them. "
+            + "Provide " + PREFIX_PHONE + "PHONE, " + PREFIX_EMAIL + "EMAIL, or both.";
+
+    public static final String MESSAGE_SUCCESS = "New supporter added: %1$s";
 
     private final Person toAdd;
 
@@ -53,7 +59,8 @@ public class AddCommand extends Command {
         requireNonNull(model);
 
         if (model.hasPerson(toAdd)) {
-            throw new CommandException(MESSAGE_DUPLICATE_PERSON);
+            throw new CommandException(
+                    Messages.getErrorMessageForDuplicatePerson(model.getAddressBook().getPersonList(), toAdd));
         }
 
         model.addPerson(toAdd);

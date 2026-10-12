@@ -11,8 +11,11 @@ import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Organisation;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Stage;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -93,6 +96,50 @@ public class ParserUtil {
             throw new ParseException(Email.MESSAGE_CONSTRAINTS);
         }
         return new Email(trimmedEmail);
+    }
+
+    /**
+     * Parses a {@code String organisation} into an {@code Organisation}.
+     * Leading and trailing whitespaces will be trimmed, and runs of whitespace inside reduced to one.
+     *
+     * @throws ParseException if the given {@code organisation} is invalid.
+     */
+    public static Organisation parseOrganisation(String organisation) throws ParseException {
+        requireNonNull(organisation);
+        if (!Organisation.isValidOrganisation(organisation)) {
+            throw new ParseException(Organisation.MESSAGE_CONSTRAINTS);
+        }
+        return new Organisation(organisation);
+    }
+
+    /**
+     * Parses a {@code String stage} into a {@code Stage}.
+     * Leading and trailing whitespaces will be trimmed and case is ignored.
+     *
+     * @throws ParseException if the given {@code stage} is invalid.
+     */
+    public static Stage parseStage(String stage) throws ParseException {
+        requireNonNull(stage);
+        String trimmedStage = stage.trim();
+        if (!Stage.isValidStage(trimmedStage)) {
+            throw new ParseException(Stage.MESSAGE_CONSTRAINTS);
+        }
+        return Stage.fromString(trimmedStage);
+    }
+
+    /**
+     * Parses a {@code String note} into a valid interaction note.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code note} is invalid.
+     */
+    public static String parseInteractionNote(String note) throws ParseException {
+        requireNonNull(note);
+        String trimmedNote = note.trim();
+        if (!Interaction.isValidNote(trimmedNote)) {
+            throw new ParseException(Interaction.MESSAGE_CONSTRAINTS);
+        }
+        return trimmedNote;
     }
 
     /**

@@ -14,8 +14,11 @@ import org.junit.jupiter.api.Test;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Organisation;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Stage;
 import seedu.address.model.tag.Tag;
 
 public class ParserUtilTest {
@@ -29,6 +32,7 @@ public class ParserUtilTest {
     private static final String VALID_PHONE = "123456";
     private static final String VALID_ADDRESS = "123 Main Street #0505";
     private static final String VALID_EMAIL = "rachel@example.com";
+    private static final String VALID_INTERACTION_NOTE = "Called to discuss the year-end appeal";
     private static final String VALID_TAG_1 = "friend";
     private static final String VALID_TAG_2 = "neighbour";
 
@@ -121,6 +125,72 @@ public class ParserUtilTest {
         String addressWithWhitespace = WHITESPACE + VALID_ADDRESS + WHITESPACE;
         Address expectedAddress = new Address(VALID_ADDRESS);
         assertEquals(expectedAddress, ParserUtil.parseAddress(addressWithWhitespace));
+    }
+
+    @Test
+    public void parseOrganisation_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseOrganisation(null));
+    }
+
+    @Test
+    public void parseOrganisation_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, Organisation.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseOrganisation(""));
+        assertThrows(ParseException.class, Organisation.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseOrganisation(
+                "a".repeat(Organisation.MAX_LENGTH + 1)));
+    }
+
+    @Test
+    public void parseOrganisation_validValueWithWhitespace_returnsNormalisedOrganisation() throws Exception {
+        Organisation expectedOrganisation = new Organisation("Procter & Gamble");
+        String organisationWithWhitespace = WHITESPACE + "Procter  &  Gamble" + WHITESPACE;
+        assertEquals(expectedOrganisation, ParserUtil.parseOrganisation(organisationWithWhitespace));
+    }
+
+    @Test
+    public void parseStage_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseStage(null));
+    }
+
+    @Test
+    public void parseStage_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, Stage.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseStage("givng"));
+        assertThrows(ParseException.class, Stage.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseStage(""));
+        assertThrows(ParseException.class, Stage.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseStage("cult"));
+    }
+
+    @Test
+    public void parseStage_validValueWithoutWhitespace_returnsStage() throws Exception {
+        assertEquals(Stage.CULTIVATING, ParserUtil.parseStage("cultivating"));
+        assertEquals(Stage.CULTIVATING, ParserUtil.parseStage("CULTIVATING"));
+    }
+
+    @Test
+    public void parseStage_validValueWithWhitespace_returnsTrimmedStage() throws Exception {
+        assertEquals(Stage.DECLINED, ParserUtil.parseStage(WHITESPACE + "Declined" + WHITESPACE));
+    }
+
+    @Test
+    public void parseInteractionNote_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseInteractionNote(null));
+    }
+
+    @Test
+    public void parseInteractionNote_invalidValue_throwsParseException() {
+        assertThrows(ParseException.class, Interaction.MESSAGE_CONSTRAINTS, () ->
+                ParserUtil.parseInteractionNote(" "));
+        assertThrows(ParseException.class, Interaction.MESSAGE_CONSTRAINTS, () ->
+                ParserUtil.parseInteractionNote("a".repeat(Interaction.MAX_NOTE_LENGTH + 1)));
+    }
+
+    @Test
+    public void parseInteractionNote_validValueWithoutWhitespace_returnsNote() throws Exception {
+        assertEquals(VALID_INTERACTION_NOTE, ParserUtil.parseInteractionNote(VALID_INTERACTION_NOTE));
+    }
+
+    @Test
+    public void parseInteractionNote_validValueWithWhitespace_returnsTrimmedNote() throws Exception {
+        String noteWithWhitespace = WHITESPACE + VALID_INTERACTION_NOTE + WHITESPACE;
+        assertEquals(VALID_INTERACTION_NOTE, ParserUtil.parseInteractionNote(noteWithWhitespace));
     }
 
     @Test

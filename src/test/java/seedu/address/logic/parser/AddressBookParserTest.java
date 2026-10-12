@@ -21,9 +21,12 @@ import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.LogCommand;
+import seedu.address.logic.commands.StageCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Stage;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PersonUtil;
@@ -50,6 +53,27 @@ public class AddressBookParserTest {
         DeleteCommand command = (DeleteCommand) parser.parseCommand(
                 DeleteCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased());
         assertEquals(new DeleteCommand(INDEX_FIRST_PERSON), command);
+    }
+
+    @Test
+    public void parseCommand_log() throws Exception {
+        String note = "Called to discuss the year-end appeal";
+        LogCommand command = (LogCommand) parser.parseCommand(LogCommand.COMMAND_WORD + " "
+                + INDEX_FIRST_PERSON.getOneBased() + " nt/" + note);
+        assertEquals(new LogCommand(INDEX_FIRST_PERSON, note), command);
+    }
+
+    @Test
+    public void parseCommand_stage() throws Exception {
+        StageCommand command = (StageCommand) parser.parseCommand(
+                StageCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased() + " cultivating");
+        assertEquals(new StageCommand(INDEX_FIRST_PERSON, Stage.CULTIVATING), command);
+    }
+
+    @Test
+    public void parseCommand_stageWrongCase_throwsParseException() {
+        // command words are case-sensitive
+        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("STAGE 1 giving"));
     }
 
     @Test

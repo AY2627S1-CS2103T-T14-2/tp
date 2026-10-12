@@ -1,13 +1,20 @@
 package seedu.address.testutil;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Organisation;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Stage;
 import seedu.address.model.tag.Tag;
 import seedu.address.model.util.SampleDataUtil;
 
@@ -22,9 +29,12 @@ public class PersonBuilder {
     public static final String DEFAULT_ADDRESS = "123, Jurong West Ave 6, #08-111";
 
     private Name name;
-    private Phone phone;
-    private Email email;
-    private Address address;
+    private Optional<Phone> phone;
+    private Optional<Email> email;
+    private Optional<Address> address;
+    private Optional<Organisation> organisation;
+    private Stage stage;
+    private List<Interaction> interactions;
     private Set<Tag> tags;
 
     /**
@@ -32,9 +42,12 @@ public class PersonBuilder {
      */
     public PersonBuilder() {
         name = new Name(DEFAULT_NAME);
-        phone = new Phone(DEFAULT_PHONE);
-        email = new Email(DEFAULT_EMAIL);
-        address = new Address(DEFAULT_ADDRESS);
+        phone = Optional.of(new Phone(DEFAULT_PHONE));
+        email = Optional.of(new Email(DEFAULT_EMAIL));
+        address = Optional.of(new Address(DEFAULT_ADDRESS));
+        organisation = Optional.empty();
+        stage = Stage.DEFAULT_STAGE;
+        interactions = new ArrayList<>();
         tags = new HashSet<>();
     }
 
@@ -46,6 +59,9 @@ public class PersonBuilder {
         phone = personToCopy.getPhone();
         email = personToCopy.getEmail();
         address = personToCopy.getAddress();
+        organisation = personToCopy.getOrganisation();
+        stage = personToCopy.getStage();
+        interactions = new ArrayList<>(personToCopy.getInteractions());
         tags = new HashSet<>(personToCopy.getTags());
     }
 
@@ -69,7 +85,15 @@ public class PersonBuilder {
      * Sets the {@code Address} of the {@code Person} that we are building.
      */
     public PersonBuilder withAddress(String address) {
-        this.address = new Address(address);
+        this.address = Optional.of(new Address(address));
+        return this;
+    }
+
+    /**
+     * Removes the {@code Address} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withoutAddress() {
+        this.address = Optional.empty();
         return this;
     }
 
@@ -77,7 +101,15 @@ public class PersonBuilder {
      * Sets the {@code Phone} of the {@code Person} that we are building.
      */
     public PersonBuilder withPhone(String phone) {
-        this.phone = new Phone(phone);
+        this.phone = Optional.of(new Phone(phone));
+        return this;
+    }
+
+    /**
+     * Removes the {@code Phone} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withoutPhone() {
+        this.phone = Optional.empty();
         return this;
     }
 
@@ -85,12 +117,44 @@ public class PersonBuilder {
      * Sets the {@code Email} of the {@code Person} that we are building.
      */
     public PersonBuilder withEmail(String email) {
-        this.email = new Email(email);
+        this.email = Optional.of(new Email(email));
+        return this;
+    }
+
+    /**
+     * Removes the {@code Email} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withoutEmail() {
+        this.email = Optional.empty();
+        return this;
+    }
+
+    /**
+     * Sets the {@code Organisation} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withOrganisation(String organisation) {
+        this.organisation = Optional.of(new Organisation(organisation));
+        return this;
+    }
+
+    /**
+     * Sets the {@code Stage} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withStage(String stage) {
+        this.stage = Stage.fromString(stage);
+        return this;
+    }
+
+    /**
+     * Sets the interaction history of the {@code Person} that we are building.
+     */
+    public PersonBuilder withInteractions(Interaction... interactions) {
+        this.interactions = new ArrayList<>(Arrays.asList(interactions));
         return this;
     }
 
     public Person build() {
-        return new Person(name, phone, email, address, tags);
+        return new Person(name, phone, email, address, organisation, stage, interactions, tags);
     }
 
 }
