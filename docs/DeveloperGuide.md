@@ -331,7 +331,9 @@ In tests, `PersonBuilder` builds a `Person` with an empty history unless `Person
 
 ### Logging an interaction
 
-`LogCommand` performs the model update for `log INDEX nt/NOTE` after the index and note have been parsed. It works as follows.
+`AddressBookParser` routes `log` arguments to `LogCommandParser`. The command parser requires one `nt/NOTE`, rejects a repeated `nt/` prefix, and uses `ParserUtil` to parse the displayed index and validate the interaction note. It then creates a `LogCommand` with the parsed values.
+
+`LogCommand` performs the model update as follows.
 
 1. `LogCommand#execute(Model)` obtains the currently displayed supporters from `Model#getFilteredPersonList()` and checks the given index against that list. An out-of-range index gives the same invalid-index error as the other index-based commands.
 2. It creates an `Interaction` using the note and today's date. The public constructor uses the computer's default clock, while tests can supply a fixed `Clock` so that their expected dates do not depend on when they run.
@@ -981,6 +983,36 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: the same command without `st/contacted`, and with a different name<br>
       Expected: The new supporter is added with the `Prospect` badge.
+
+### Logging an interaction
+
+1. Logging while all supporters are being shown
+
+   1. Prerequisites: List all supporters using the `list` command, with at least one supporter in the list.
+
+   1. Test case: `log 1 nt/Called to discuss the year-end appeal`<br>
+      Expected: An interaction dated today is logged against the 1st supporter. The status message shows the interaction number, supporter, date and note. The displayed list does not change.
+
+   1. Test case: Repeat `log 1 nt/Called to discuss the year-end appeal`<br>
+      Expected: The duplicate is accepted as a separate interaction. Its interaction number is one higher than the previous interaction.
+
+1. Logging after a `find`
+
+   1. Prerequisites: Run a `find` command that shows at least one supporter.
+
+   1. Test case: `log 1 nt/Followed up after the meeting`<br>
+      Expected: The interaction is logged against the 1st supporter in the results, and the list still shows only the `find` results.
+
+1. Invalid interaction logging commands
+
+   1. Test case: `log 1 nt/`<br>
+      Expected: No interaction is logged. The status message says that an interaction note must not be blank and must be at most 500 characters long.
+
+   1. Test case: `log 1 nt/Called nt/Emailed`<br>
+      Expected: No interaction is logged. The status message reports the repeated `nt/` prefix.
+
+   1. Other incorrect commands to try: `log`, `log 1`, `log 1 Called`, `log 0 nt/Called`, and `log 999 nt/Called` (where `999` is larger than the displayed list size)<br>
+      Expected: No interaction is logged. The status message shows error details.
 
 ### Saving data
 

@@ -11,6 +11,7 @@ import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
+import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Organisation;
 import seedu.address.model.person.Phone;
@@ -124,6 +125,21 @@ public class ParserUtil {
             throw new ParseException(Stage.MESSAGE_CONSTRAINTS);
         }
         return Stage.fromString(trimmedStage);
+    }
+
+    /**
+     * Parses a {@code String note} into a valid interaction note.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code note} is invalid.
+     */
+    public static String parseInteractionNote(String note) throws ParseException {
+        requireNonNull(note);
+        String trimmedNote = note.trim();
+        if (!Interaction.isValidNote(trimmedNote)) {
+            throw new ParseException(Interaction.MESSAGE_CONSTRAINTS);
+        }
+        return trimmedNote;
     }
 
     /**
