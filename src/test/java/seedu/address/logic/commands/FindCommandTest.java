@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -81,6 +82,28 @@ public class FindCommandTest {
         assertCommandSuccess(new FindCommand(predicate), model,
                 String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 2), expectedModel);
         assertEquals(List.of(CARL, ELLE), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_newFind_replacesPreviousFilter() throws Exception {
+        AddressBookParser parser = new AddressBookParser();
+        parser.parseCommand("find uR").execute(model);
+        assertEquals(List.of(CARL), model.getFilteredPersonList());
+
+        CommandResult result = parser.parseCommand("find ell").execute(model);
+
+        assertEquals("1 supporter(s) listed!", result.getFeedbackToUser());
+        assertEquals(List.of(ELLE), model.getFilteredPersonList());
+        assertEquals(getTypicalAddressBook(), model.getAddressBook());
+    }
+
+    @Test
+    public void execute_nonMatchingKeyword_showsEmptyList() throws Exception {
+        CommandResult result = new AddressBookParser().parseCommand("find @").execute(model);
+
+        assertEquals("0 supporter(s) listed!", result.getFeedbackToUser());
+        assertEquals(List.of(), model.getFilteredPersonList());
+        assertEquals(getTypicalAddressBook(), model.getAddressBook());
     }
 
     @Test
