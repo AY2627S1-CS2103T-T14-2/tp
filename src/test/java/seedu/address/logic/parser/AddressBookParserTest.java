@@ -8,6 +8,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,10 @@ import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.LogCommand;
 import seedu.address.logic.commands.StageCommand;
+import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.Model;
+import seedu.address.model.ModelManager;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Stage;
@@ -74,6 +78,43 @@ public class AddressBookParserTest {
     public void parseCommand_stageWrongCase_throwsParseException() {
         // command words are case-sensitive
         assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("STAGE 1 giving"));
+    }
+
+    @Test
+    public void parseCommand_view_returnsViewCommand() throws Exception {
+        assertEquals(new ViewCommand(INDEX_FIRST_PERSON), parser.parseCommand("view 1"));
+        assertEquals(new ViewCommand(INDEX_FIRST_PERSON), parser.parseCommand("  view\t1  "));
+    }
+
+    @Test
+    public void parseCommand_viewInvalidArguments_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ViewCommand.MESSAGE_USAGE);
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view"));
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view abc"));
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view 0"));
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view 1 2"));
+    }
+
+    @Test
+    public void parseCommand_viewWrongCase_throwsParseException() {
+        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("VIEW 1"));
+    }
+
+    @Test
+    public void parseCommand_viewAfterFind_selectsSupporterAndKeepsFilteredList() throws Exception {
+        Model model = new ModelManager();
+        Person alice = new PersonBuilder().withName("Alice").build();
+        Person benson = new PersonBuilder().withName("Benson").build();
+        model.addPerson(alice);
+        model.addPerson(benson);
+        parser.parseCommand("find Benson").execute(model);
+        assertEquals(List.of(benson), model.getFilteredPersonList());
+
+        assertEquals("Showing Benson: no interactions logged yet",
+                parser.parseCommand("view 1").execute(model).getFeedbackToUser());
+        assertEquals(Optional.of(benson), model.getViewedPerson());
+        assertEquals(List.of(benson), model.getFilteredPersonList());
+        assertEquals(List.of(alice, benson), model.getAddressBook().getPersonList());
     }
 
     @Test
