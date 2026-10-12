@@ -3,6 +3,7 @@ package seedu.address.model;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -21,6 +22,7 @@ public class ModelManager implements Model {
     private final AddressBook addressBook;
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
+    private Person viewedPerson = null;
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -91,6 +93,17 @@ public class ModelManager implements Model {
         requireAllNonNull(target, editedPerson);
 
         addressBook.setPerson(target, editedPerson);
+    }
+
+    @Override
+    public Optional<Person> getViewedPerson() {
+        return Optional.ofNullable(viewedPerson);
+    }
+
+    @Override
+    public void setViewedPerson(Person person) {
+        requireNonNull(person);
+        viewedPerson = person;
     }
 
     //=========== Filtered Person List Accessors =============================================================
