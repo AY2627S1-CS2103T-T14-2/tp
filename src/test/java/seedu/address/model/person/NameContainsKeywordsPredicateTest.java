@@ -57,6 +57,46 @@ public class NameContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_partialKeyword_returnsTrue() {
+        Person person = new PersonBuilder().withName("Weiling Koh").build();
+
+        // Beginning, middle and end of a word
+        assertTrue(new NameContainsKeywordsPredicate(List.of("wei")).test(person));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("eili")).test(person));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("ing")).test(person));
+
+        // Partial matching ignores case and uses OR across keywords
+        assertTrue(new NameContainsKeywordsPredicate(List.of("TAN", "WEI")).test(person));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("kOH")).test(person));
+    }
+
+    @Test
+    public void test_repeatedKeyword_sameResult() {
+        Person person = new PersonBuilder().withName("Tan Wei Ming").build();
+        NameContainsKeywordsPredicate singleKeyword = new NameContainsKeywordsPredicate(List.of("tan"));
+        NameContainsKeywordsPredicate repeatedKeyword = new NameContainsKeywordsPredicate(List.of("tan", "tan"));
+
+        assertEquals(singleKeyword.test(person), repeatedKeyword.test(person));
+    }
+
+    @Test
+    public void test_keywordAcrossSpace_returnsFalse() {
+        Person person = new PersonBuilder().withName("Tan Wei Ming").build();
+
+        assertFalse(new NameContainsKeywordsPredicate(List.of("weiming")).test(person));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("wei")).test(person));
+    }
+
+    @Test
+    public void test_partialKeywordOutsideName_returnsFalse() {
+        Person person = new PersonBuilder().withName("Alice").withPhone("12345")
+                .withEmail("alice@example.com").withAddress("Main Street").build();
+
+        assertFalse(new NameContainsKeywordsPredicate(List.of("234", "example", "treet")).test(person));
+        assertFalse(new NameContainsKeywordsPredicate(List.of("@")).test(person));
+    }
+
+    @Test
     public void test_nameDoesNotContainKeywords_returnsFalse() {
         // Zero keywords
         NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of());

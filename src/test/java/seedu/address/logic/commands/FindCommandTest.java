@@ -74,6 +74,16 @@ public class FindCommandTest {
     }
 
     @Test
+    public void execute_partialKeywords_multiplePersonsFoundInOriginalOrder() {
+        NameContainsKeywordsPredicate predicate = preparePredicate("uR ell");
+        expectedModel.updateFilteredPersonList(predicate);
+
+        assertCommandSuccess(new FindCommand(predicate), model,
+                String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 2), expectedModel);
+        assertEquals(List.of(CARL, ELLE), model.getFilteredPersonList());
+    }
+
+    @Test
     public void toStringMethod() {
         NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of("keyword"));
         FindCommand findCommand = new FindCommand(predicate);
