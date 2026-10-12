@@ -11,7 +11,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 <!-- * Table of Contents -->
 <page-nav-print />
 
---------------------------------------------------------------------------------------------------------------------
+---
 
 ## Quick start
 
@@ -28,20 +28,19 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
+   - `list` : Lists all contacts.
 
-   * `list` : Lists all contacts.
+   - `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to the Address Book.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to the Address Book.
+   - `delete 3` : Deletes the 3rd contact shown in the current list.
 
-   * `delete 3` : Deletes the 3rd contact shown in the current list.
+   - `clear` : Deletes all contacts.
 
-   * `clear` : Deletes all contacts.
-
-   * `exit` : Exits the app.
+   - `exit` : Exits the app.
 
 1. Refer to the [Features](#features) section below for details of each command.
 
---------------------------------------------------------------------------------------------------------------------
+---
 
 ## Features
 
@@ -49,23 +48,23 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 
 **Notes about the command format:**<br>
 
-* Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
+- Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
-* Items in square brackets are optional.<br>
+- Items in square brackets are optional.<br>
   For example, `n/NAME [t/TAG]` can be used as `n/John Doe t/friend` or as `n/John Doe`.
 
-* Items followed by `...` can appear zero or more times.<br>
+- Items followed by `...` can appear zero or more times.<br>
   For example, `[t/TAG]... ` may be omitted, or written as `t/friend` or `t/friend t/family`.
 
-* Parameters can be in any order.<br>
+- Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
+- Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
-* If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
-</box>
+- If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
+  </box>
 
 ### Viewing help: `help`
 
@@ -75,22 +74,21 @@ Shows a message explaining how to access the help page.
 
 Format: `help`
 
-
 ### Adding a person: `add`
 
 Adds a person to the address book.
 
 Format: `add n/NAME [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] [t/TAG]... `
 
-* At least one of `p/PHONE_NUMBER` and `e/EMAIL` must be given, so that there is a way to reach the supporter. Online donors often give only an email, and people met at events often give only a number.
-* `a/ADDRESS` can be left out, e.g. when you do not know a corporate contact's postal address.
-* `ORGANISATION` is the company or group the supporter belongs to, e.g. the company a CSR contact speaks for. Leave out `o/ORGANISATION` for individual donors.
-* `ORGANISATION` can contain any characters (e.g. `Procter & Gamble`), must not be blank, and can be at most 100 characters long. Extra spaces are removed.
-* `STAGE` is the supporter's cultivation stage, and must be one of `prospect`, `contacted`, `cultivating`, `giving`, `lapsed` or `declined`. Upper and lower case are both accepted.
-* If `st/STAGE` is left out, the new supporter starts at stage `Prospect`.
-* `PHONE_NUMBER` must contain only digits, and be between 3 and 15 digits long.
-* Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`.
-* Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
+- At least one of `p/PHONE_NUMBER` and `e/EMAIL` must be given, so that there is a way to reach the supporter. Online donors often give only an email, and people met at events often give only a number.
+- `a/ADDRESS` can be left out, e.g. when you do not know a corporate contact's postal address.
+- `ORGANISATION` is the company or group the supporter belongs to, e.g. the company a CSR contact speaks for. Leave out `o/ORGANISATION` for individual donors.
+- `ORGANISATION` can contain any characters (e.g. `Procter & Gamble`), must not be blank, and can be at most 100 characters long. Extra spaces are removed.
+- `STAGE` is the supporter's cultivation stage, and must be one of `prospect`, `contacted`, `cultivating`, `giving`, `lapsed` or `declined`. Upper and lower case are both accepted.
+- If `st/STAGE` is left out, the new supporter starts at stage `Prospect`.
+- `PHONE_NUMBER` must contain only digits, and be between 3 and 15 digits long.
+- Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`.
+- Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
 
 <box type="tip" seamless>
 
@@ -98,17 +96,21 @@ Format: `add n/NAME [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/
 </box>
 
 Examples:
-* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
-* `add n/Aisha Rahman e/aisha.r@gmail.com` adds an online donor who gave only an email.
-* `add n/John Lim p/81112222 e/johnlim@example.com a/Bedok North Ave 1 st/lapsed` adds a past donor at stage `Lapsed`.
-* `add n/Tan Wei Ming p/91234567 e/weiming@dbs.com a/12 Marina Boulevard o/DBS Bank` adds a CSR contact at DBS Bank.
 
-### Listing all persons: `list`
+- `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
+- `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
+- `add n/Aisha Rahman e/aisha.r@gmail.com` adds an online donor who gave only an email.
+- `add n/John Lim p/81112222 e/johnlim@example.com a/Bedok North Ave 1 st/lapsed` adds a past donor at stage `Lapsed`.
+- `add n/Tan Wei Ming p/91234567 e/weiming@dbs.com a/12 Marina Boulevard o/DBS Bank` adds a CSR contact at DBS Bank.
 
-Shows a list of all persons in the address book.
+### Listing all supporters: `list`
+
+Shows all supporters in the order they were added, clearing any active `find` filter.
 
 Format: `list`
+
+The success message is `Listed all supporters.`, even when the list is empty.
+Anything typed after the command word is ignored; `list 123` behaves as `list`.
 
 ### Editing a person: `edit`
 
@@ -116,18 +118,19 @@ Edits an existing person in the address book.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t/TAG]... `
 
-* Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
-* At least one of the optional fields must be provided.
-* Existing values will be updated to the input values.
-* When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
-* To remove all of a person's tags, enter `t/` without a tag after it.
-* A supporter's stage cannot be changed with `edit`, and stays the same when other details are edited. Use the `stage` command instead.
-* A supporter's name cannot be changed to the name of another supporter, using the same comparison as `add`. Changing only the capitalisation of their own name is allowed.
+- Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
+- At least one of the optional fields must be provided.
+- Existing values will be updated to the input values.
+- When editing tags, all of the person's existing tags are removed; adding tags is not cumulative.
+- To remove all of a person's tags, enter `t/` without a tag after it.
+- A supporter's stage cannot be changed with `edit`, and stays the same when other details are edited. Use the `stage` command instead.
+- A supporter's name cannot be changed to the name of another supporter, using the same comparison as `add`. Changing only the capitalisation of their own name is allowed.
 
 Examples:
-*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
-*  `edit 3 o/OCBC Bank` Changes the organisation of the 3rd supporter to `OCBC Bank`, e.g. after they change jobs.
+
+- `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
+- `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
+- `edit 3 o/OCBC Bank` Changes the organisation of the 3rd supporter to `OCBC Bank`, e.g. after they change jobs.
 
 ### Setting a supporter's stage: `stage`
 
@@ -135,43 +138,53 @@ Changes how far the relationship with a supporter has progressed.
 
 Format: `stage INDEX STAGE`
 
-* Sets the stage of the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list. The index **must be a positive integer** 1, 2, 3, ...
-* `STAGE` must be one of the six stages below. Upper and lower case are both accepted. No prefix is needed before it.
-* Any stage can be changed to any other stage, e.g. a lapsed donor can be moved back to `cultivating`.
-* If the supporter is already at that stage, nothing is changed and a message says so.
-* The displayed list stays the same, so a `find` result is kept.
+- Sets the stage of the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list. The index **must be a positive integer** 1, 2, 3, ...
+- `STAGE` must be one of the six stages below. Upper and lower case are both accepted. No prefix is needed before it.
+- Any stage can be changed to any other stage, e.g. a lapsed donor can be moved back to `cultivating`.
+- If the supporter is already at that stage, nothing is changed and a message says so.
+- The displayed list stays the same, so a `find` result is kept.
 
-Stage | Meaning
-------|--------
-`Prospect` | Identified as a possible supporter, not yet approached. New supporters start here.
-`Contacted` | First approach made, with no real conversation yet.
-`Cultivating` | In an active relationship or discussion, not yet giving.
-`Giving` | Currently donating (an individual) or partnering (a company).
-`Lapsed` | Gave before, but is no longer giving.
-`Declined` | Said no.
+| Stage         | Meaning                                                                            |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `Prospect`    | Identified as a possible supporter, not yet approached. New supporters start here. |
+| `Contacted`   | First approach made, with no real conversation yet.                                |
+| `Cultivating` | In an active relationship or discussion, not yet giving.                           |
+| `Giving`      | Currently donating (an individual) or partnering (a company).                      |
+| `Lapsed`      | Gave before, but is no longer giving.                                              |
+| `Declined`    | Said no.                                                                           |
 
 Each supporter's stage is shown as a coloured badge next to their name in the list.
 
 Examples:
-* `stage 2 cultivating` moves the 2nd supporter in the displayed list to stage `Cultivating`.
-* `find Tan` followed by `stage 1 GIVING` moves the 1st supporter in the results of the `find` command to stage `Giving`.
 
-### Locating persons by name: `find`
+- `stage 2 cultivating` moves the 2nd supporter in the displayed list to stage `Cultivating`.
+- `find Tan` followed by `stage 1 GIVING` moves the 1st supporter in the results of the `find` command to stage `Giving`.
 
-Finds persons whose names contain any of the given keywords.
+### Finding supporters by part of a name: `find`
 
-Format: `find KEYWORD [MORE_KEYWORDS]`
+Shows supporters whose names contain at least one of the given keywords.
 
-* The search is case-insensitive; for example, `hans` matches `Hans`.
-* Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* The search considers only names.
-* Only full words match; for example, `Han` does not match `Hans`.
-* Persons matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
+Format: `find KEYWORD [MORE_KEYWORDS]...`
 
-Examples:
-* `find John` returns `john` and `John Doe`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
+- The search is case-insensitive; `KOH` matches `Weiling Koh`.
+- A keyword can match any part of a word; `wei` matches both `Tan Wei Ming` and `Weiling Koh`.
+- Supporters matching any keyword are returned (an `OR` search). Keyword order and repeated keywords do not affect the results.
+- Only names are searched. A keyword such as `@` is accepted and simply matches nobody.
+- Keywords are separated by whitespace and cannot span a space in a name: `weiming` does not match `Wei Ming`.
+- Results stay in their original list order and are numbered from 1. Other commands use these displayed indices.
+- A new `find` replaces the previous filter. The filter stays active until `list`, `add` or `edit` is run.
+- At least one keyword is required. `find` with no keywords shows an invalid-command-format message.
+
+For a list containing `Tan Wei Ming`, `Tan Ah Kow` and `Weiling Koh`:
+
+- `find wei` returns `Tan Wei Ming` and `Weiling Koh`.
+- `find tan wei` returns all three supporters.
+- `find KOH` returns `Weiling Koh`.
+- `find tan tan` returns the same results as `find tan`.
+
+The success message reports the number of matches, for example `3 supporter(s) listed!`.
+If nothing matches, the list is empty and the message is `0 supporter(s) listed!`.
+Run `list` to show all supporters again.
 
 ### Deleting a person: `delete`
 
@@ -179,13 +192,14 @@ Deletes the specified person from the address book.
 
 Format: `delete INDEX`
 
-* Deletes the person at the specified `INDEX`.
-* The index refers to the index number shown in the displayed person list.
-* The index **must be a positive integer** 1, 2, 3, ...
+- Deletes the person at the specified `INDEX`.
+- The index refers to the index number shown in the displayed person list.
+- The index **must be a positive integer** 1, 2, 3, ...
 
 Examples:
-* `list` followed by `delete 2` deletes the 2nd person in the address book.
-* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+
+- `list` followed by `delete 2` deletes the 2nd person in the address book.
+- `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
 ### Logging an interaction: `log`
 
@@ -193,17 +207,18 @@ Records an interaction with a supporter, dated today.
 
 Format: `log INDEX nt/NOTE`
 
-* Logs the interaction against the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and must be a positive integer.
-* `NOTE` records what happened. It can contain any characters, must not be blank, and can be at most 500 characters long. Leading and trailing spaces are removed.
-* The interaction is automatically dated using the computer's current date.
-* Interactions are numbered in the order they are logged, starting from `#1` for each supporter.
-* Identical notes logged on the same day are accepted as separate interactions.
-* On success, the result display shows the interaction number, supporter, date and note.
-* Logging an interaction does not change the supporter's cultivation stage or the currently displayed list. A `find` result therefore remains in place.
+- Logs the interaction against the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and must be a positive integer.
+- `NOTE` records what happened. It can contain any characters, must not be blank, and can be at most 500 characters long. Leading and trailing spaces are removed.
+- The interaction is automatically dated using the computer's current date.
+- Interactions are numbered in the order they are logged, starting from `#1` for each supporter.
+- Identical notes logged on the same day are accepted as separate interactions.
+- On success, the result display shows the interaction number, supporter, date and note.
+- Logging an interaction does not change the supporter's cultivation stage or the currently displayed list. A `find` result therefore remains in place.
 
 Examples:
-* `log 2 nt/Coffee at Raffles Place, keen on a Q4 volunteering day`
-* `find Tan` followed by `log 1 nt/Left voicemail about the year-end appeal` logs the interaction against the 1st supporter in the search results.
+
+- `log 2 nt/Coffee at Raffles Place, keen on a Q4 volunteering day`
+- `find Tan` followed by `log 1 nt/Left voicemail about the year-end appeal` logs the interaction against the 1st supporter in the search results.
 
 <box type="warning" seamless>
 
@@ -277,21 +292,21 @@ Furthermore, certain edits can cause the AddressBook to behave in unexpected way
 
 _Details coming soon ..._
 
---------------------------------------------------------------------------------------------------------------------
+---
 
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
 **A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous AddressBook home folder.
 
---------------------------------------------------------------------------------------------------------------------
+---
 
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
---------------------------------------------------------------------------------------------------------------------
+---
 
 ## Command summary
 
@@ -301,7 +316,7 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
+**Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei`
 **List**   | `list`
 **Log**    | `log INDEX nt/NOTE`<br> e.g., `log 2 nt/Called to discuss the year-end appeal`
 **Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`

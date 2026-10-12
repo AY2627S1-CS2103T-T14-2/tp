@@ -21,7 +21,7 @@ public class Messages {
     public static final String MESSAGE_DUPLICATE_PERSON = "A supporter named %1$s already exists. "
             + "If this is a different person, add something to tell them apart, e.g. n/%1$s DBS";
     public static final String MESSAGE_DUPLICATE_FIELDS =
-                "Multiple values specified for the following single-valued field(s): ";
+            "Multiple values specified for the following single-valued field(s): ";
 
     /**
      * Returns an error message indicating the duplicate prefixes.
@@ -29,15 +29,16 @@ public class Messages {
     public static String getErrorMessageForDuplicatePrefixes(Prefix... duplicatePrefixes) {
         assert duplicatePrefixes.length > 0;
 
-        Set<String> duplicateFields =
-                Stream.of(duplicatePrefixes).map(Prefix::toString).collect(Collectors.toSet());
+        Set<String> duplicateFields = Stream.of(duplicatePrefixes).map(Prefix::toString).collect(Collectors.toSet());
 
         return MESSAGE_DUPLICATE_FIELDS + String.join(" ", duplicateFields);
     }
 
     /**
-     * Returns an error message naming the supporter in {@code existingPersons} who counts as the same
-     * supporter as {@code person}, so the user can see which record they clashed with.
+     * Returns an error message naming the supporter in {@code existingPersons} who
+     * counts as the same
+     * supporter as {@code person}, so the user can see which record they clashed
+     * with.
      */
     public static String getErrorMessageForDuplicatePerson(List<Person> existingPersons, Person person) {
         Name existingName = existingPersons.stream()
@@ -56,7 +57,8 @@ public class Messages {
         builder.append(person.getName())
                 .append("; Stage: ")
                 .append(person.getStage());
-        // an optional field is left out of the message when the supporter does not have it
+        // an optional field is left out of the message when the supporter does not have
+        // it
         person.getPhone().ifPresent(phone -> builder.append("; Phone: ").append(phone));
         person.getEmail().ifPresent(email -> builder.append("; Email: ").append(email));
         person.getAddress().ifPresent(address -> builder.append("; Address: ").append(address));
