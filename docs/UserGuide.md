@@ -91,11 +91,14 @@ Examples:
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
 * `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
 
-### Listing all persons: `list`
+### Listing all supporters: `list`
 
-Shows a list of all persons in the address book.
+Shows all supporters in the order they were added, clearing any active `find` filter.
 
 Format: `list`
+
+The success message is `Listed all supporters.`, even when the list is empty.
+Anything typed after the command word is ignored; `list 123` behaves as `list`.
 
 ### Editing a person: `edit`
 
@@ -113,22 +116,31 @@ Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
 
-### Locating persons by name: `find`
+### Finding supporters by part of a name: `find`
 
-Finds persons whose names contain any of the given keywords.
+Shows supporters whose names contain at least one of the given keywords.
 
-Format: `find KEYWORD [MORE_KEYWORDS]`
+Format: `find KEYWORD [MORE_KEYWORDS]...`
 
-* The search is case-insensitive; for example, `hans` matches `Hans`.
-* Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* The search considers only names.
-* Only full words match; for example, `Han` does not match `Hans`.
-* Persons matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
+* The search is case-insensitive; `KOH` matches `Weiling Koh`.
+* A keyword can match any part of a word; `wei` matches both `Tan Wei Ming` and `Weiling Koh`.
+* Supporters matching any keyword are returned (an `OR` search). Keyword order and repeated keywords do not affect the results.
+* Only names are searched. A keyword such as `@` is accepted and simply matches nobody.
+* Keywords are separated by whitespace and cannot span a space in a name: `weiming` does not match `Wei Ming`.
+* Results stay in their original list order and are numbered from 1. Other commands use these displayed indices.
+* A new `find` replaces the previous filter. The filter stays active until `list`, `add` or `edit` is run.
+* At least one keyword is required. `find` with no keywords shows an invalid-command-format message.
 
-Examples:
-* `find John` returns `john` and `John Doe`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
+For a list containing `Tan Wei Ming`, `Tan Ah Kow` and `Weiling Koh`:
+
+* `find wei` returns `Tan Wei Ming` and `Weiling Koh`.
+* `find tan wei` returns all three supporters.
+* `find KOH` returns `Weiling Koh`.
+* `find tan tan` returns the same results as `find tan`.
+
+The success message reports the number of matches, for example `3 supporter(s) listed!`.
+If nothing matches, the list is empty and the message is `0 supporter(s) listed!`.
+Run `list` to show all supporters again.
 
 ### Deleting a person: `delete`
 
@@ -199,6 +211,6 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
+**Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei`
 **List**   | `list`
 **Help**   | `help`

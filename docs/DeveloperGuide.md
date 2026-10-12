@@ -159,6 +159,23 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Finding and listing supporters
+
+`FindCommandParser` rejects missing keywords and splits the input on whitespace. It creates a
+`NameContainsKeywordsPredicate`, which compares each keyword with the supporter's name using
+case-insensitive substring matching. Both strings are converted to lower case with `Locale.ROOT`
+so matching does not depend on the computer's locale. Keywords are matched literally, rather
+than as regular expressions, and spaces in names are retained.
+
+The predicate uses OR matching: a supporter is included if any keyword matches. This allows
+`find tan wei` to show both `Tan Ah Kow` and `Weiling Koh`, even though neither contains both
+keywords. Partial matching lets `wei` match `Weiling`, unlike AB3's whole-word matching.
+
+`FindCommand#execute(Model)` replaces the current filter using
+`Model#updateFilteredPersonList(Predicate)`. The filtered list preserves the underlying insertion
+order, and the UI numbers its results from 1. `ListCommand#execute(Model)` resets the predicate
+to `Model.PREDICATE_SHOW_ALL_PERSONS`, restoring the full list without changing stored supporters.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
@@ -453,7 +470,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 **MSS**
 
 1.  User requests to find supporters whose name contains certain keywords, giving the keyword(s).
-2.  SupporterBook shows the list of every supporter whose name contains every keyword given, replacing any previous find filter.
+2.  SupporterBook shows every supporter whose name contains any keyword given, ignoring case and matching even part of a word. Results keep their original list order and replace any previous find filter.
 
     Use case ends.
 
@@ -465,7 +482,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
       Use case resumes from step 1.
 
-* 2a. No supporters' name contains all keywords provided.
+* 2a. No supporter's name contains any keyword provided.
 
     * 2a1. SupporterBook shows an empty list.
 
@@ -701,6 +718,25 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
+
+### Finding and listing supporters
+
+1. Prerequisites: The list contains `Tan Wei Ming`, `Tan Ah Kow` and `Weiling Koh`, added in that order.
+
+1. Test case: `find wei`<br>
+   Expected: `Tan Wei Ming` and `Weiling Koh` are shown in that order, numbered 1 and 2. The message is `2 supporter(s) listed!`.
+
+1. Test case: `find tan wei`<br>
+   Expected: All three supporters are shown in their original order, demonstrating OR matching and replacement of the previous filter.
+
+1. Test cases: `find KOH`, then `find weiming`<br>
+   Expected: The first command shows `Weiling Koh`. The second shows an empty list because a keyword cannot cross a space in a name.
+
+1. Test case: `list 123` after a `find`<br>
+   Expected: Every supporter is shown in the order added. The message is `Listed all supporters.` and stored data is unchanged.
+
+1. Test case: `find` without keywords<br>
+   Expected: An invalid-command-format message is shown and the displayed list is unchanged.
 
 ### Deleting a person
 
