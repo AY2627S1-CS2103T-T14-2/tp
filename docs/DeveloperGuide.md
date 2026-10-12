@@ -9,19 +9,19 @@
 <!-- * Table of Contents -->
 <page-nav-print />
 
---------------------------------------------------------------------------------------------------------------------
+---
 
 ## **Acknowledgements**
 
 This project is based on the AddressBook-Level3 project created by the [SE-EDU initiative](https://se-education.org).
 
---------------------------------------------------------------------------------------------------------------------
+---
 
 ## **Setting up, getting started**
 
 Refer to the guide [_Setting up and getting started_](SettingUp.md).
 
---------------------------------------------------------------------------------------------------------------------
+---
 
 ## **Design**
 
@@ -29,35 +29,36 @@ Refer to the guide [_Setting up and getting started_](SettingUp.md).
 
 <puml src="diagrams/ArchitectureDiagram.puml" width="280" />
 
-The ***Architecture Diagram*** given above explains the high-level design of the App.
+The **_Architecture Diagram_** given above explains the high-level design of the App.
 
 The following provides a quick overview of the main components and their interactions.
 
 **Main components of the architecture**
 
 **`Main`** (consisting of classes [`Main`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/Main.java) and [`MainApp`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/MainApp.java)) is in charge of the app launch and shut down.
-* At app launch, it initializes the other components in the correct sequence, and connects them up with each other.
-* At shut down, it shuts down the other components and invokes cleanup methods where necessary.
+
+- At app launch, it initializes the other components in the correct sequence, and connects them up with each other.
+- At shut down, it shuts down the other components and invokes cleanup methods where necessary.
 
 The bulk of the app's work is done by the following four components:
 
-* [**`UI`**](#ui-component): The UI of the App.
-* [**`Logic`**](#logic-component): The command executor.
-* [**`Model`**](#model-component): Holds the data of the App in memory.
-* [**`Storage`**](#storage-component): Reads data from, and writes data to, the hard disk.
+- [**`UI`**](#ui-component): The UI of the App.
+- [**`Logic`**](#logic-component): The command executor.
+- [**`Model`**](#model-component): Holds the data of the App in memory.
+- [**`Storage`**](#storage-component): Reads data from, and writes data to, the hard disk.
 
 [**`Commons`**](#common-classes) represents a collection of classes used by multiple other components.
 
 **How the architecture components interact with each other**
 
-The *Sequence Diagram* below shows how the components interact with each other for the scenario where the user issues the command `delete 1`.
+The _Sequence Diagram_ below shows how the components interact with each other for the scenario where the user issues the command `delete 1`.
 
 <puml src="diagrams/ArchitectureSequenceDiagram.puml" width="574" />
 
 Each of the four main components (also shown in the diagram above),
 
-* defines its *API* in an `interface` with the same name as the Component.
-* provides its functionality through a concrete `{Component Name}Manager` class that implements the corresponding API interface.
+- defines its _API_ in an `interface` with the same name as the Component.
+- provides its functionality through a concrete `{Component Name}Manager` class that implements the corresponding API interface.
 
 For example, the `Logic` component defines its API in `Logic.java` and implements it in `LogicManager.java`. Other components interact with a component through its interface rather than its concrete class, preventing them from coupling to that component's implementation, as illustrated in the following partial class diagram.
 
@@ -77,10 +78,10 @@ The `UI` component uses the JavaFX UI framework. The layouts of these UI parts a
 
 The `UI` component,
 
-* executes user commands using the `Logic` component.
-* listens for changes to `Model` data so that the UI can be updated with the modified data.
-* keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
-* depends on some classes in the `Model` component because it displays `Person` objects from the model.
+- executes user commands using the `Logic` component.
+- listens for changes to `Model` data so that the UI can be updated with the modified data.
+- keeps a reference to the `Logic` component, because the `UI` relies on the `Logic` to execute commands.
+- depends on some classes in the `Model` component because it displays `Person` objects from the model.
 
 ### Logic component
 
@@ -99,7 +100,6 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 **Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, the lifeline continues till the end of diagram.
 </box>
 
-
 How the `Logic` component works:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
@@ -113,22 +113,22 @@ Here are the other classes in `Logic` (omitted from the class diagram above) tha
 <puml src="diagrams/ParserClasses.puml" width="600"/>
 
 How the parsing works:
-* When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
-* All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
+
+- When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
+- All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
 ### Model component
+
 **API** : [`Model.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/model/Model.java)
 
 <puml src="diagrams/ModelClassDiagram.puml" width="450" />
 
-
 The `Model` component,
 
-* stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
-* stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
-* stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
-* does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
-
+- stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+- stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
+- stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
+- does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
 <box type="info" seamless>
 
@@ -137,7 +137,6 @@ The `Model` component,
 <puml src="diagrams/BetterModelClassDiagram.puml" width="450" />
 </box>
 
-
 ### Storage component
 
 **API** : [`Storage.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/storage/Storage.java)
@@ -145,49 +144,67 @@ The `Model` component,
 <puml src="diagrams/StorageClassDiagram.puml" width="550" />
 
 The `Storage` component,
-* can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
-* is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
-* depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
+
+- can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
+- is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
+- depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
 ### Common classes
 
 Classes used by multiple components are in the `seedu.address.commons` package.
 
---------------------------------------------------------------------------------------------------------------------
+---
 
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Finding and listing supporters
+
+`FindCommandParser` rejects missing keywords and splits the input on whitespace. It creates a
+`NameContainsKeywordsPredicate`, which compares each keyword with the supporter's name using
+case-insensitive substring matching. Both strings are converted to lower case with `Locale.ROOT`
+so matching does not depend on the computer's locale. Keywords are matched literally, rather
+than as regular expressions, and spaces in names are retained.
+
+The predicate uses OR matching: a supporter is included if any keyword matches. This allows
+`find tan wei` to show both `Tan Ah Kow` and `Weiling Koh`, even though neither contains both
+keywords. Partial matching lets `wei` match `Weiling`, unlike AB3's whole-word matching.
+
+`FindCommand#execute(Model)` replaces the current filter using
+`Model#updateFilteredPersonList(Predicate)`. The filtered list preserves the underlying insertion
+order, and the UI numbers its results from 1. `ListCommand#execute(Model)` resets the predicate
+to `Model.PREDICATE_SHOW_ALL_PERSONS`, restoring the full list without changing stored supporters.
+
 ### Duplicate supporters
 
 Two supporters count as the same supporter if their names match, ignoring case and extra spaces. No other field is compared.
 
-* The `Name` constructor removes leading and trailing spaces and reduces each run of spaces inside the name to one, so every `Name` is stored in a normalised form.
-* `Name#isSameName(Name)` compares two names ignoring case. Because both names are already normalised, extra spaces need no special handling.
-* `Person#isSamePerson(Person)` uses `Name#isSameName(Name)`. `UniquePersonList`, `AddCommand`, `EditCommand` and the loading of the data file all rely on `Person#isSamePerson(Person)`, so they all apply the same rule.
-* When `AddCommand` or `EditCommand` finds a duplicate, `Messages#getErrorMessageForDuplicatePerson(List, Person)` names the supporter already in the list, and suggests adding a distinguishing word to the new name.
+- The `Name` constructor removes leading and trailing spaces and reduces each run of spaces inside the name to one, so every `Name` is stored in a normalised form.
+- `Name#isSameName(Name)` compares two names ignoring case. Because both names are already normalised, extra spaces need no special handling.
+- `Person#isSamePerson(Person)` uses `Name#isSameName(Name)`. `UniquePersonList`, `AddCommand`, `EditCommand` and the loading of the data file all rely on `Person#isSamePerson(Person)`, so they all apply the same rule.
+- When `AddCommand` or `EditCommand` finds a duplicate, `Messages#getErrorMessageForDuplicatePerson(List, Person)` names the supporter already in the list, and suggests adding a distinguishing word to the new name.
 
 #### Design considerations:
 
 **Aspect: Which fields decide whether two supporters are the same**
 
-* **Alternative 1 (current choice):** The name only, ignoring case and extra spaces.
-  * Pros: Re-adding someone already in the list is caught even if their phone or email has changed, which would otherwise split one relationship's history across two records.
-  * Cons: Two different people with the same name cannot both be stored under that exact name; the user must add a distinguishing word to one of them.
+- **Alternative 1 (current choice):** The name only, ignoring case and extra spaces.
+  - Pros: Re-adding someone already in the list is caught even if their phone or email has changed, which would otherwise split one relationship's history across two records.
+  - Cons: Two different people with the same name cannot both be stored under that exact name; the user must add a distinguishing word to one of them.
 
-* **Alternative 2:** The name together with the phone number or email.
-  * Pros: Namesakes can be stored without changing either name.
-  * Cons: The same person could be added twice as soon as they change jobs and contact details.
+- **Alternative 2:** The name together with the phone number or email.
+  - Pros: Namesakes can be stored without changing either name.
+  - Cons: The same person could be added twice as soon as they change jobs and contact details.
 
 ### Cultivation stage field
 
 Every `Person` has exactly one cultivation stage (see the [Glossary](#glossary) for what each stage means). The stage is represented by the `Stage` enumeration in the `Model` component, with the six values `PROSPECT`, `CONTACTED`, `CULTIVATING`, `GIVING`, `LAPSED` and `DECLINED`.
 
-* `Stage#isValidStage(String)` accepts any of the six stage names, ignoring case and surrounding whitespace, and `Stage#fromString(String)` converts such a string into a `Stage`.
-* `Stage#toString()` returns the stage with a capital first letter (e.g. `Giving`). This is the form that is saved to the data file and shown to the user.
-* `Stage.DEFAULT_STAGE` is `PROSPECT`. The `Person` constructor without a stage parameter uses it, so code that creates a `Person` without knowing about stages still works.
-* `EditCommand` copies the existing stage into the edited `Person`, so editing other details never resets a supporter's stage.
+- `Stage#isValidStage(String)` accepts any of the six stage names, ignoring case and surrounding whitespace, and `Stage#fromString(String)` converts such a string into a `Stage`.
+- `Stage#toString()` returns the stage with a capital first letter (e.g. `Giving`). This is the form that is saved to the data file and shown to the user.
+- `Stage.DEFAULT_STAGE` is `PROSPECT`. The `Person` constructor without a stage parameter uses it, so code that creates a `Person` without knowing about stages still works.
+- `EditCommand` copies the existing stage into the edited `Person`, so editing other details never resets a supporter's stage.
 
 In the `Storage` component, `JsonAdaptedPerson` saves the stage as a `"stage"` string. When the data file is loaded, a missing or unrecognised stage makes the whole file invalid, in the same way as any other invalid field, so the app starts with an empty list rather than silently guessing a stage.
 
@@ -197,23 +214,23 @@ In tests, `PersonBuilder` gives every `Person` the default stage unless `PersonB
 
 **Aspect: How to represent a stage**
 
-* **Alternative 1 (current choice):** An enumeration of the six stages.
-  * Pros: Only valid stages can exist, and later features that filter or count by stage can compare values directly.
-  * Cons: Adding a new stage needs a code change.
+- **Alternative 1 (current choice):** An enumeration of the six stages.
+  - Pros: Only valid stages can exist, and later features that filter or count by stage can compare values directly.
+  - Cons: Adding a new stage needs a code change.
 
-* **Alternative 2:** A free-text field, validated like `Address`.
-  * Pros: Users could invent their own stages.
-  * Cons: Typos such as `givng` would create stages that no filter or count would match.
+- **Alternative 2:** A free-text field, validated like `Address`.
+  - Pros: Users could invent their own stages.
+  - Cons: Typos such as `givng` would create stages that no filter or count would match.
 
 **Aspect: What to do when a saved stage is missing**
 
-* **Alternative 1 (current choice):** Treat the data file as invalid.
-  * Pros: Consistent with every other required field; a corrupted file is noticed instead of silently changing supporters' stages.
-  * Cons: A data file saved before stages existed cannot be loaded.
+- **Alternative 1 (current choice):** Treat the data file as invalid.
+  - Pros: Consistent with every other required field; a corrupted file is noticed instead of silently changing supporters' stages.
+  - Cons: A data file saved before stages existed cannot be loaded.
 
-* **Alternative 2:** Load the supporter at the default stage.
-  * Pros: Old data files still load.
-  * Cons: A supporter who was `Giving` could silently become a `Prospect` if the field was deleted by mistake.
+- **Alternative 2:** Load the supporter at the default stage.
+  - Pros: Old data files still load.
+  - Cons: A supporter who was `Giving` could silently become a `Prospect` if the field was deleted by mistake.
 
 ### Setting and changing a stage
 
@@ -236,32 +253,32 @@ The stage is also shown in the UI: `PersonCard` displays it as a badge next to t
 
 **Aspect: How the user changes a stage**
 
-* **Alternative 1 (current choice):** A separate `stage INDEX STAGE` command with no prefix.
-  * Pros: Changing a stage after a meeting is a frequent action, and this is the shortest command for it.
-  * Cons: One more command to learn.
+- **Alternative 1 (current choice):** A separate `stage INDEX STAGE` command with no prefix.
+  - Pros: Changing a stage after a meeting is a frequent action, and this is the shortest command for it.
+  - Cons: One more command to learn.
 
-* **Alternative 2:** An `st/` prefix in `edit`.
-  * Pros: No new command.
-  * Cons: Longer to type, and mixes a frequent workflow action with occasional corrections to contact details.
+- **Alternative 2:** An `st/` prefix in `edit`.
+  - Pros: No new command.
+  - Cons: Longer to type, and mixes a frequent workflow action with occasional corrections to contact details.
 
 **Aspect: Setting the stage a supporter is already at**
 
-* **Alternative 1 (current choice):** Show a normal message saying nothing was changed.
-  * Pros: The user's intention is already true, so it is not treated as a mistake.
-  * Cons: A typo in the index that happens to hit a supporter at that stage is not flagged as an error.
+- **Alternative 1 (current choice):** Show a normal message saying nothing was changed.
+  - Pros: The user's intention is already true, so it is not treated as a mistake.
+  - Cons: A typo in the index that happens to hit a supporter at that stage is not flagged as an error.
 
-* **Alternative 2:** Show an error.
-  * Pros: Draws attention to a possibly mistaken command.
-  * Cons: Treats a harmless command as a failure.
+- **Alternative 2:** Show an error.
+  - Pros: Draws attention to a possibly mistaken command.
+  - Cons: Treats a harmless command as a failure.
 
 ### Organisation field
 
 A `Person` may belong to an organisation, such as the company a CSR contact speaks for. Individual donors usually have none, so the field is optional. It is represented by the `Organisation` class in the `Model` component.
 
-* `Organisation#isValidOrganisation(String)` accepts any characters, because company names often contain symbols (e.g. `Procter & Gamble`). After leading and trailing spaces are removed and each run of spaces inside is reduced to one, the value must not be blank and must be at most `Organisation.MAX_LENGTH` (100) characters long.
-* The `Organisation` constructor applies the same space normalisation before storing the value, so `DBS  Bank` and `DBS Bank` are equal.
-* `Person` stores no organisation as `null` internally, but `Person#getOrganisation()` returns an `Optional<Organisation>`, so callers must handle the missing case explicitly. The `Person` constructors without an organisation parameter create a supporter with none.
-* `EditCommand` and `StageCommand` copy the existing organisation into the `Person` they create, so editing other details or changing the stage never removes it.
+- `Organisation#isValidOrganisation(String)` accepts any characters, because company names often contain symbols (e.g. `Procter & Gamble`). After leading and trailing spaces are removed and each run of spaces inside is reduced to one, the value must not be blank and must be at most `Organisation.MAX_LENGTH` (100) characters long.
+- The `Organisation` constructor applies the same space normalisation before storing the value, so `DBS  Bank` and `DBS Bank` are equal.
+- `Person` stores no organisation as `null` internally, but `Person#getOrganisation()` returns an `Optional<Organisation>`, so callers must handle the missing case explicitly. The `Person` constructors without an organisation parameter create a supporter with none.
+- `EditCommand` and `StageCommand` copy the existing organisation into the `Person` they create, so editing other details or changing the stage never removes it.
 
 In the `Storage` component, `JsonAdaptedPerson` saves the organisation as an `"organisation"` string, and leaves the key out when the supporter has none. When the data file is loaded, a missing `"organisation"` means the supporter has no organisation, while a value that breaks the rule above makes the whole file invalid.
 
@@ -275,33 +292,33 @@ In tests, `PersonBuilder` builds a `Person` with no organisation unless `PersonB
 
 **Aspect: How to represent a missing organisation**
 
-* **Alternative 1 (current choice):** `Person#getOrganisation()` returns an `Optional<Organisation>`.
-  * Pros: The type shows that the value may be missing, so code that forgets to handle it does not compile.
-  * Cons: Callers need an extra step (e.g. `map` or `isPresent`) to read the value.
+- **Alternative 1 (current choice):** `Person#getOrganisation()` returns an `Optional<Organisation>`.
+  - Pros: The type shows that the value may be missing, so code that forgets to handle it does not compile.
+  - Cons: Callers need an extra step (e.g. `map` or `isPresent`) to read the value.
 
-* **Alternative 2:** An `Organisation` object holding an empty string when there is none.
-  * Pros: Callers can always read `value` directly.
-  * Cons: An empty organisation would be a valid object, which goes against the rule that an organisation is never blank, and every caller would have to remember to check for it.
+- **Alternative 2:** An `Organisation` object holding an empty string when there is none.
+  - Pros: Callers can always read `value` directly.
+  - Cons: An empty organisation would be a valid object, which goes against the rule that an organisation is never blank, and every caller would have to remember to check for it.
 
 **Aspect: What to do when a saved organisation is missing**
 
-* **Alternative 1 (current choice):** Load the supporter with no organisation.
-  * Pros: Matches the field being optional, and data files saved before organisations existed still load.
-  * Cons: An organisation deleted from the file by mistake is not noticed.
+- **Alternative 1 (current choice):** Load the supporter with no organisation.
+  - Pros: Matches the field being optional, and data files saved before organisations existed still load.
+  - Cons: An organisation deleted from the file by mistake is not noticed.
 
-* **Alternative 2:** Treat the data file as invalid, as for a missing stage.
-  * Pros: Consistent with the required fields.
-  * Cons: Every supporter without an organisation would need an explicit empty value in the file.
+- **Alternative 2:** Treat the data file as invalid, as for a missing stage.
+  - Pros: Consistent with the required fields.
+  - Cons: Every supporter without an organisation would need an explicit empty value in the file.
 
 ### Interaction history field
 
 Each `Person` owns an interaction history. An entry is represented by the immutable `Interaction` class in the `Model` component and contains a `LocalDate` and a short note.
 
-* An interaction note is trimmed before it is stored. It must not be blank after trimming and must be at most `Interaction.MAX_NOTE_LENGTH` (500) characters long.
-* `Person` stores interactions in logging order. Its constructor makes a defensive copy of the supplied list, and `Person#getInteractions()` returns an unmodifiable view.
-* Existing `Person` constructors create an empty interaction history. This keeps existing creation paths compatible with the new field.
-* `EditCommand` and `StageCommand` copy the existing history into the replacement `Person`, so changing other supporter details never removes past interactions.
-* Interaction history is included in `Person#equals(Object)` and `Person#hashCode()`, but not in `Person#isSamePerson(Person)`. Supporter identity therefore remains name-based.
+- An interaction note is trimmed before it is stored. It must not be blank after trimming and must be at most `Interaction.MAX_NOTE_LENGTH` (500) characters long.
+- `Person` stores interactions in logging order. Its constructor makes a defensive copy of the supplied list, and `Person#getInteractions()` returns an unmodifiable view.
+- Existing `Person` constructors create an empty interaction history. This keeps existing creation paths compatible with the new field.
+- `EditCommand` and `StageCommand` copy the existing history into the replacement `Person`, so changing other supporter details never removes past interactions.
+- Interaction history is included in `Person#equals(Object)` and `Person#hashCode()`, but not in `Person#isSamePerson(Person)`. Supporter identity therefore remains name-based.
 
 In the `Storage` component, `JsonAdaptedInteraction` stores a date as an ISO `yyyy-MM-dd` string and a note as a string. `JsonAdaptedPerson` stores the entries in an `"interactions"` array while preserving their order. When loading, a missing array means the supporter has an empty history, so data files created before interaction histories existed remain compatible. A missing interaction field, malformed date, blank note or note longer than 500 characters makes the data file invalid.
 
@@ -311,23 +328,23 @@ In tests, `PersonBuilder` builds a `Person` with an empty history unless `Person
 
 **Aspect: Where to store interaction histories**
 
-* **Alternative 1 (current choice):** Each `Person` owns a list of `Interaction` objects.
-  * Pros: A supporter's details and relationship history form one record, so replacing or deleting that supporter naturally handles the history with it.
-  * Cons: Operations across every interaction must traverse all supporters.
+- **Alternative 1 (current choice):** Each `Person` owns a list of `Interaction` objects.
+  - Pros: A supporter's details and relationship history form one record, so replacing or deleting that supporter naturally handles the history with it.
+  - Cons: Operations across every interaction must traverse all supporters.
 
-* **Alternative 2:** Store all interactions in one address-book-level collection and separately associate each one with a supporter.
-  * Pros: Whole-address-book interaction queries operate on one collection.
-  * Cons: Supporter replacement and deletion require maintaining a separate relationship and avoiding orphaned interactions.
+- **Alternative 2:** Store all interactions in one address-book-level collection and separately associate each one with a supporter.
+  - Pros: Whole-address-book interaction queries operate on one collection.
+  - Cons: Supporter replacement and deletion require maintaining a separate relationship and avoiding orphaned interactions.
 
 **Aspect: How to represent a supporter with no interactions**
 
-* **Alternative 1 (current choice):** Use an empty list and treat a missing `"interactions"` array as empty when loading.
-  * Pros: Callers can iterate without handling a second absent state, and older data files load without migration.
-  * Cons: An array deleted accidentally is indistinguishable from a supporter who has no history.
+- **Alternative 1 (current choice):** Use an empty list and treat a missing `"interactions"` array as empty when loading.
+  - Pros: Callers can iterate without handling a second absent state, and older data files load without migration.
+  - Cons: An array deleted accidentally is indistinguishable from a supporter who has no history.
 
-* **Alternative 2:** Use an `Optional<List<Interaction>>` and reject a missing array.
-  * Pros: Absence can be distinguished from an explicitly empty history.
-  * Cons: It adds a redundant state and prevents older data files from loading.
+- **Alternative 2:** Use an `Optional<List<Interaction>>` and reject a missing array.
+  - Pros: Absence can be distinguished from an explicitly empty history.
+  - Cons: It adds a redundant state and prevents older data files from loading.
 
 ### Logging an interaction
 
@@ -347,46 +364,46 @@ Identical interactions are appended normally because two calls or messages with 
 
 **Aspect: How to update a supporter's interaction history**
 
-* **Alternative 1 (current choice):** Create a replacement `Person` containing a copied and extended interaction list.
-  * Pros: `Person` and its interaction history remain immutable to callers, and the update follows the same `Model#setPerson(Person, Person)` pattern as `edit` and `stage`.
-  * Cons: Every field must be copied correctly even though only the history changes.
+- **Alternative 1 (current choice):** Create a replacement `Person` containing a copied and extended interaction list.
+  - Pros: `Person` and its interaction history remain immutable to callers, and the update follows the same `Model#setPerson(Person, Person)` pattern as `edit` and `stage`.
+  - Cons: Every field must be copied correctly even though only the history changes.
 
-* **Alternative 2:** Mutate the interaction list inside the existing `Person`.
-  * Pros: Only the new interaction needs to be added.
-  * Cons: It breaks `Person`'s immutability and can bypass the observable-list replacement that informs other components of a changed supporter.
+- **Alternative 2:** Mutate the interaction list inside the existing `Person`.
+  - Pros: Only the new interaction needs to be added.
+  - Cons: It breaks `Person`'s immutability and can bypass the observable-list replacement that informs other components of a changed supporter.
 
 **Aspect: How to obtain today's date**
 
-* **Alternative 1 (current choice):** Store a `Clock` in `LogCommand`, using the system-default clock in production and a fixed clock in tests.
-  * Pros: The command follows the computer's date in normal use while date-dependent tests remain deterministic.
-  * Cons: The command carries an extra dependency used only to obtain the date.
+- **Alternative 1 (current choice):** Store a `Clock` in `LogCommand`, using the system-default clock in production and a fixed clock in tests.
+  - Pros: The command follows the computer's date in normal use while date-dependent tests remain deterministic.
+  - Cons: The command carries an extra dependency used only to obtain the date.
 
-* **Alternative 2:** Call `LocalDate#now()` directly during execution.
-  * Pros: Less constructor and field code.
-  * Cons: Tests can fail or require changing expected values depending on the day they run.
+- **Alternative 2:** Call `LocalDate#now()` directly during execution.
+  - Pros: Less constructor and field code.
+  - Cons: Tests can fail or require changing expected values depending on the day they run.
 
 ### Optional contact fields
 
 A supporter's phone number, email and address are optional, but every supporter has at least one of a phone number and an email, so there is always a way to reach them.
 
-* `Person` stores a missing field as `null` internally, and `Person#getPhone()`, `Person#getEmail()` and `Person#getAddress()` return an `Optional`, in the same way as `Person#getOrganisation()`.
-* The main `Person` constructor takes each optional field as an `Optional`, and throws an `IllegalArgumentException` if both the phone number and the email are empty. `Person#isValidContact(Optional, Optional)` holds this rule so that other components can check it first.
-* `AddCommandParser` requires only `n/NAME`. If neither `p/PHONE` nor `e/EMAIL` is given, it reports `AddCommand.MESSAGE_MISSING_CONTACT`, which names the two prefixes so the user knows how to fix the command.
-* `EditCommand` keeps a field's current value, which may be empty, when the edit leaves it out. As `edit` cannot remove a field, an edit can never leave a supporter without a phone number and an email.
-* `JsonAdaptedPerson` leaves out the keys of missing fields when saving. When loading, a missing key means the field is empty, and a supporter with neither a phone number nor an email makes the whole data file invalid.
-* `Messages#format(Person)` and `PersonCard` show only the fields a supporter has. `PersonCard` hides the label of a missing field, so it takes up no space.
+- `Person` stores a missing field as `null` internally, and `Person#getPhone()`, `Person#getEmail()` and `Person#getAddress()` return an `Optional`, in the same way as `Person#getOrganisation()`.
+- The main `Person` constructor takes each optional field as an `Optional`, and throws an `IllegalArgumentException` if both the phone number and the email are empty. `Person#isValidContact(Optional, Optional)` holds this rule so that other components can check it first.
+- `AddCommandParser` requires only `n/NAME`. If neither `p/PHONE` nor `e/EMAIL` is given, it reports `AddCommand.MESSAGE_MISSING_CONTACT`, which names the two prefixes so the user knows how to fix the command.
+- `EditCommand` keeps a field's current value, which may be empty, when the edit leaves it out. As `edit` cannot remove a field, an edit can never leave a supporter without a phone number and an email.
+- `JsonAdaptedPerson` leaves out the keys of missing fields when saving. When loading, a missing key means the field is empty, and a supporter with neither a phone number nor an email makes the whole data file invalid.
+- `Messages#format(Person)` and `PersonCard` show only the fields a supporter has. `PersonCard` hides the label of a missing field, so it takes up no space.
 
 #### Design considerations:
 
 **Aspect: Which contact details are required**
 
-* **Alternative 1 (current choice):** At least one of a phone number and an email.
-  * Pros: Online donors who give only an email, and people met at events who give only a number, can both be recorded, while a supporter the user has no way to reach is still rejected.
-  * Cons: The rule involves two fields, so it cannot be checked by either field's own class and needs a separate check in `Person`.
+- **Alternative 1 (current choice):** At least one of a phone number and an email.
+  - Pros: Online donors who give only an email, and people met at events who give only a number, can both be recorded, while a supporter the user has no way to reach is still rejected.
+  - Cons: The rule involves two fields, so it cannot be checked by either field's own class and needs a separate check in `Person`.
 
-* **Alternative 2:** Both required, as in AB3.
-  * Pros: Simpler; every supporter can be reached in both ways.
-  * Cons: The user would have to invent a phone number or email for many real supporters.
+- **Alternative 2:** Both required, as in AB3.
+  - Pros: Simpler; every supporter can be reached in both ways.
+  - Cons: The user would have to invent a phone number or email for many real supporters.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -394,9 +411,9 @@ A supporter's phone number, email and address are optional, but every supporter 
 
 The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
 
-* `VersionedAddressBook#commit()` -- Saves the current address book state in its history.
-* `VersionedAddressBook#undo()` -- Restores the previous address book state from its history.
-* `VersionedAddressBook#redo()` -- Restores a previously undone address book state from its history.
+- `VersionedAddressBook#commit()` -- Saves the current address book state in its history.
+- `VersionedAddressBook#undo()` -- Restores the previous address book state from its history.
+- `VersionedAddressBook#redo()` -- Restores a previously undone address book state from its history.
 
 These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
 
@@ -422,7 +439,6 @@ Step 3. The user executes `add n/David …​` to add a new person. The `add` co
 Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous address book state, and restores the address book to that state.
 
 <puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
-
 
 <box type="info" seamless>
 
@@ -466,14 +482,14 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 **Aspect: How undo & redo execute:**
 
-* **Alternative 1 (current choice):** Saves the entire address book.
-  * Pros: Easy to implement.
-  * Cons: May have performance issues in terms of memory usage.
+- **Alternative 1 (current choice):** Saves the entire address book.
+  - Pros: Easy to implement.
+  - Cons: May have performance issues in terms of memory usage.
 
-* **Alternative 2:** Individual command knows how to undo/redo by
+- **Alternative 2:** Individual command knows how to undo/redo by
   itself.
-  * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
-  * Cons: We must ensure that the implementation of each individual command is correct.
+  - Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
+  - Cons: We must ensure that the implementation of each individual command is correct.
 
 _{more aspects and alternatives to be added}_
 
@@ -481,17 +497,16 @@ _{more aspects and alternatives to be added}_
 
 _{Explain here how the data archiving feature will be implemented}_
 
-
---------------------------------------------------------------------------------------------------------------------
+---
 
 ## **Documentation, logging, testing, dev-ops**
 
-* [Documentation guide](Documentation.md)
-* [Testing guide](Testing.md)
-* [Logging guide](Logging.md)
-* [DevOps guide](DevOps.md)
+- [Documentation guide](Documentation.md)
+- [Testing guide](Testing.md)
+- [Logging guide](Logging.md)
+- [DevOps guide](DevOps.md)
 
---------------------------------------------------------------------------------------------------------------------
+---
 
 ## **Appendix: Requirements**
 
@@ -499,10 +514,9 @@ _{Explain here how the data archiving feature will be implemented}_
 
 **Target user profile**:
 
-* Donor and corporate-partnership executives at small (Tier 1) charities, who single-handedly manage every supporter relationship without access to a CRM.
+- Donor and corporate-partnership executives at small (Tier 1) charities, who single-handedly manage every supporter relationship without access to a CRM.
 
 **Value proposition**: SupporterBook helps the sole fundraising and outreach staff at a small charity stay on top of every donor and corporate relationship, keeping each supporter’s history and the introductions behind it in one place, so follow-ups happen on time and relationships outlast whoever holds the role. It also allows fast CLI-based retrieval.
-
 
 ### User stories
 
@@ -512,108 +526,108 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 #### A. Getting started
 
-| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
-|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| `*`      | potential user exploring the app                 | see the app pre-populated with sample supporter records                         | I can tell what it will look like once my own data is in it                        |
-| `*`      | potential user exploring the app                 | see a list of all available commands with an example of each                    | I can learn what the app does without reading a manual                             |
-| `*`      | user ready to start using the app for real       | clear all sample data in one command                                            | I can begin from a clean list of my own supporters                                 |
-| `*`      | new user who already keeps a spreadsheet         | import my existing supporter list from a CSV file                               | I do not have to retype 250 contacts before the app is of any use                  |
-| `*`      | new user                                         | see where the app stores my data file                                           | I know what to back up and what to hand over                                       |
+| Priority | As a …                                     | I want to …                                                  | So that …                                                         |
+| -------- | ------------------------------------------ | ------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `*`      | potential user exploring the app           | see the app pre-populated with sample supporter records      | I can tell what it will look like once my own data is in it       |
+| `*`      | potential user exploring the app           | see a list of all available commands with an example of each | I can learn what the app does without reading a manual            |
+| `*`      | user ready to start using the app for real | clear all sample data in one command                         | I can begin from a clean list of my own supporters                |
+| `*`      | new user who already keeps a spreadsheet   | import my existing supporter list from a CSV file            | I do not have to retype 250 contacts before the app is of any use |
+| `*`      | new user                                   | see where the app stores my data file                        | I know what to back up and what to hand over                      |
 
 #### B. Contact records
 
-| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
-|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| `* * *`  | fundraiser                                       | add a supporter with their name and contact details                             | every supporter sits in one place instead of in my inbox                           |
-| `* * *`  | fundraiser                                       | see a list of all my supporters                                                 | I can see everyone I am responsible for                                            |
-| `* * *`  | fundraiser                                       | delete a supporter                                                              | my list does not fill up with people I will never contact again                    |
-| `* * *`  | fundraiser                                       | edit a supporter's details                                                      | their phone and email stay current when they change jobs                           |
-| `* * *`  | fundraiser                                       | record the organisation a contact belongs to                                    | I know which company a CSR contact speaks for                                      |
-| `* *`    | fundraiser                                       | view one supporter's whole record on a single screen                            | I can prepare for a meeting in the minute before it starts                         |
-| `* *`    | fundraiser                                       | add free-form notes to a supporter                                              | I can keep the things that do not fit any field                                    |
-| `* *`    | fundraiser recording Singaporean names           | save names containing hyphens, apostrophes, s/o and d/o                         | I can record my supporters' names as they actually are                             |
-| `* *`    | fundraiser with overseas corporate contacts      | save phone numbers that include a country code                                  | I can store the numbers I actually dial                                            |
-| `* *`    | fundraiser                                       | mark whether a contact is an individual supporter or a corporate contact        | I can tell the two kinds of relationship apart                                     |
-| `*`      | fundraiser                                       | record a contact's job title                                                    | I know whether I am talking to someone who can approve a partnership               |
-| `*`      | fundraiser                                       | record how a supporter prefers to be addressed                                  | I do not open a letter to a major donor with the wrong name                        |
+| Priority | As a …                                      | I want to …                                                              | So that …                                                            |
+| -------- | ------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `* * *`  | fundraiser                                  | add a supporter with their name and contact details                      | every supporter sits in one place instead of in my inbox             |
+| `* * *`  | fundraiser                                  | see a list of all my supporters                                          | I can see everyone I am responsible for                              |
+| `* * *`  | fundraiser                                  | delete a supporter                                                       | my list does not fill up with people I will never contact again      |
+| `* * *`  | fundraiser                                  | edit a supporter's details                                               | their phone and email stay current when they change jobs             |
+| `* * *`  | fundraiser                                  | record the organisation a contact belongs to                             | I know which company a CSR contact speaks for                        |
+| `* *`    | fundraiser                                  | view one supporter's whole record on a single screen                     | I can prepare for a meeting in the minute before it starts           |
+| `* *`    | fundraiser                                  | add free-form notes to a supporter                                       | I can keep the things that do not fit any field                      |
+| `* *`    | fundraiser recording Singaporean names      | save names containing hyphens, apostrophes, s/o and d/o                  | I can record my supporters' names as they actually are               |
+| `* *`    | fundraiser with overseas corporate contacts | save phone numbers that include a country code                           | I can store the numbers I actually dial                              |
+| `* *`    | fundraiser                                  | mark whether a contact is an individual supporter or a corporate contact | I can tell the two kinds of relationship apart                       |
+| `*`      | fundraiser                                  | record a contact's job title                                             | I know whether I am talking to someone who can approve a partnership |
+| `*`      | fundraiser                                  | record how a supporter prefers to be addressed                           | I do not open a letter to a major donor with the wrong name          |
 
 #### C. Finding and retrieving
 
-| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
-|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| `* * *`  | fundraiser                                       | find a supporter by part of their name                                          | I can pull up a record without remembering the exact spelling                      |
-| `*`      | fundraiser                                       | search on fields other than the name                                            | I can find the person at a particular bank when their name escapes me              |
-| `*`      | forgetful user                                   | be warned when I add someone whose name closely matches an existing contact     | I do not create a second record for a person I already have                        |
-| `*`      | fundraiser                                       | filter my supporters by cultivation stage                                       | I can work through everyone at one stage of the relationship                       |
-| `*`      | fundraiser                                       | combine more than one filter in a single search                                 | I can ask a precise question such as corporate contacts untouched since June       |
-| `*`      | fundraiser                                       | sort my list by the date I last spoke to each person                            | whoever has gone quiet rises to the top                                            |
-| `*`      | fundraiser                                       | see how many supporters match a search                                          | I know the size of the job before I start working through it                       |
+| Priority | As a …         | I want to …                                                                 | So that …                                                                    |
+| -------- | -------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `* * *`  | fundraiser     | find a supporter by part of their name                                      | I can pull up a record without remembering the exact spelling                |
+| `*`      | fundraiser     | search on fields other than the name                                        | I can find the person at a particular bank when their name escapes me        |
+| `*`      | forgetful user | be warned when I add someone whose name closely matches an existing contact | I do not create a second record for a person I already have                  |
+| `*`      | fundraiser     | filter my supporters by cultivation stage                                   | I can work through everyone at one stage of the relationship                 |
+| `*`      | fundraiser     | combine more than one filter in a single search                             | I can ask a precise question such as corporate contacts untouched since June |
+| `*`      | fundraiser     | sort my list by the date I last spoke to each person                        | whoever has gone quiet rises to the top                                      |
+| `*`      | fundraiser     | see how many supporters match a search                                      | I know the size of the job before I start working through it                 |
 
 #### D. Interaction history
 
-| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
-|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| `* * *`  | fundraiser                                       | log an interaction against a supporter with a date and a short note             | what was said stops living only in my memory                                       |
-| `* * *`  | fundraiser                                       | see all logged interactions for a supporter in date order                       | I can see how the relationship has developed                                       |
-| `* *`    | fundraiser                                       | correct or remove a logged interaction                                          | a mistyped date does not stay wrong forever                                        |
-| `* *`    | fundraiser                                       | see the date of the most recent interaction beside each supporter in the list   | I can see at a glance who has gone quiet                                           |
-| `*`      | fundraiser                                       | log an interaction dated in the past                                            | I can write up a meeting the week after it happened                                |
-| `*`      | fundraiser                                       | record what kind of interaction it was, such as a call, a meeting or an email   | I can tell a coffee meeting apart from a mass mailing                              |
-| `*`      | fundraiser                                       | record the next step I intend to take with a supporter                          | I know what I promised to do next                                                  |
-| `*`      | fundraiser                                       | see which intended next steps are overdue                                       | nothing I promised slips silently                                                  |
+| Priority | As a …     | I want to …                                                                   | So that …                                             |
+| -------- | ---------- | ----------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `* * *`  | fundraiser | log an interaction against a supporter with a date and a short note           | what was said stops living only in my memory          |
+| `* * *`  | fundraiser | see all logged interactions for a supporter in date order                     | I can see how the relationship has developed          |
+| `* *`    | fundraiser | correct or remove a logged interaction                                        | a mistyped date does not stay wrong forever           |
+| `* *`    | fundraiser | see the date of the most recent interaction beside each supporter in the list | I can see at a glance who has gone quiet              |
+| `*`      | fundraiser | log an interaction dated in the past                                          | I can write up a meeting the week after it happened   |
+| `*`      | fundraiser | record what kind of interaction it was, such as a call, a meeting or an email | I can tell a coffee meeting apart from a mass mailing |
+| `*`      | fundraiser | record the next step I intend to take with a supporter                        | I know what I promised to do next                     |
+| `*`      | fundraiser | see which intended next steps are overdue                                     | nothing I promised slips silently                     |
 
 #### E. Introductions and relationships
 
-| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
-|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| `*`      | fundraiser                                       | record who introduced me to a supporter                                         | I know whose goodwill created the relationship                                     |
-| `*`      | fundraiser                                       | see everyone a given person has introduced me to                                | I can tell which board member opens the most doors                                 |
-| `*`      | fundraiser                                       | trace an introduction chain back to where it started                            | I can see how a major partnership actually came about                              |
-| `*`      | fundraiser                                       | see which introductions I have not yet reported back on                         | the person who made them keeps making them                                         |
-| `*`      | fundraiser                                       | link contacts who share an affiliation such as a company or a board             | I can see everyone I know at one organisation                                      |
+| Priority | As a …     | I want to …                                                         | So that …                                             |
+| -------- | ---------- | ------------------------------------------------------------------- | ----------------------------------------------------- |
+| `*`      | fundraiser | record who introduced me to a supporter                             | I know whose goodwill created the relationship        |
+| `*`      | fundraiser | see everyone a given person has introduced me to                    | I can tell which board member opens the most doors    |
+| `*`      | fundraiser | trace an introduction chain back to where it started                | I can see how a major partnership actually came about |
+| `*`      | fundraiser | see which introductions I have not yet reported back on             | the person who made them keeps making them            |
+| `*`      | fundraiser | link contacts who share an affiliation such as a company or a board | I can see everyone I know at one organisation         |
 
 #### F. Cultivation and prioritisation
 
-| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
-|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| `* * *`  | fundraiser                                       | set a cultivation stage on a supporter                                          | I know whether they have been approached, are giving, have lapsed or have declined |
-| `* * *`  | fundraiser                                       | change a supporter's stage in a single command                                  | updating where things stand after a meeting takes seconds                          |
-| `* *`    | fundraiser                                       | tag supporters with labels of my own                                            | I can group them in ways I did not anticipate when I started                       |
-| `*`      | fundraiser                                       | see how many supporters sit at each stage                                       | I can tell early in the year whether I have enough prospects                       |
-| `*`      | fundraiser                                       | record that a supporter declined, together with a reason                        | I do not approach them again the same way                                          |
-| `*`      | fundraiser                                       | pin a small number of key relationships                                         | the handful my year depends on stay in front of me                                 |
-| `*`      | fundraiser                                       | see supporters marked as giving who have had no interaction this financial year | lapsed givers surface before the year closes                                       |
+| Priority | As a …     | I want to …                                                                     | So that …                                                                          |
+| -------- | ---------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `* * *`  | fundraiser | set a cultivation stage on a supporter                                          | I know whether they have been approached, are giving, have lapsed or have declined |
+| `* * *`  | fundraiser | change a supporter's stage in a single command                                  | updating where things stand after a meeting takes seconds                          |
+| `* *`    | fundraiser | tag supporters with labels of my own                                            | I can group them in ways I did not anticipate when I started                       |
+| `*`      | fundraiser | see how many supporters sit at each stage                                       | I can tell early in the year whether I have enough prospects                       |
+| `*`      | fundraiser | record that a supporter declined, together with a reason                        | I do not approach them again the same way                                          |
+| `*`      | fundraiser | pin a small number of key relationships                                         | the handful my year depends on stay in front of me                                 |
+| `*`      | fundraiser | see supporters marked as giving who have had no interaction this financial year | lapsed givers surface before the year closes                                       |
 
 #### G. Data safety and trust
 
-| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
-|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| `* * *`  | fundraiser                                       | have every change saved automatically                                           | I never lose work by forgetting to save                                            |
-| `* *`    | careless user                                    | undo my last command                                                            | a mistaken delete does not cost me a record I cannot rebuild                       |
-| `*`      | cautious user                                    | be asked to confirm before a command that wipes all my data                     | one stray keystroke cannot empty the list                                          |
-| `*`      | fundraiser handling other people's personal data | keep everything in a file on my own machine with nothing sent anywhere          | supporters' details never leave the charity's laptop                               |
-| `*`      | fundraiser                                       | open and repair my data file in a text editor                                   | a corrupted file does not mean starting again from nothing                         |
-| `*`      | fundraiser                                       | export my supporters to a spreadsheet                                           | I can hand a list to my executive director without giving them the app             |
+| Priority | As a …                                           | I want to …                                                            | So that …                                                              |
+| -------- | ------------------------------------------------ | ---------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `* * *`  | fundraiser                                       | have every change saved automatically                                  | I never lose work by forgetting to save                                |
+| `* *`    | careless user                                    | undo my last command                                                   | a mistaken delete does not cost me a record I cannot rebuild           |
+| `*`      | cautious user                                    | be asked to confirm before a command that wipes all my data            | one stray keystroke cannot empty the list                              |
+| `*`      | fundraiser handling other people's personal data | keep everything in a file on my own machine with nothing sent anywhere | supporters' details never leave the charity's laptop                   |
+| `*`      | fundraiser                                       | open and repair my data file in a text editor                          | a corrupted file does not mean starting again from nothing             |
+| `*`      | fundraiser                                       | export my supporters to a spreadsheet                                  | I can hand a list to my executive director without giving them the app |
 
 #### H. Speed for expert users
 
-| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
-|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| `*`      | expert user                                      | bring back previous commands with the up arrow                                  | I can repeat a near-identical command without retyping it                          |
-| `*`      | expert user                                      | use short aliases for the commands I run most often                             | logging a call costs me a few keystrokes                                           |
-| `*`      | expert user                                      | see the parameters of a command as I type it                                    | I do not have to remember the exact format of a command I use rarely               |
-| `*`      | expert user                                      | delete a range of contacts in one command                                       | clearing up after a campaign does not take twenty commands                         |
-| `*`      | expert user                                      | log one interaction against several contacts at once                            | recording a meeting with three people from one company takes one command           |
+| Priority | As a …      | I want to …                                          | So that …                                                                |
+| -------- | ----------- | ---------------------------------------------------- | ------------------------------------------------------------------------ |
+| `*`      | expert user | bring back previous commands with the up arrow       | I can repeat a near-identical command without retyping it                |
+| `*`      | expert user | use short aliases for the commands I run most often  | logging a call costs me a few keystrokes                                 |
+| `*`      | expert user | see the parameters of a command as I type it         | I do not have to remember the exact format of a command I use rarely     |
+| `*`      | expert user | delete a range of contacts in one command            | clearing up after a campaign does not take twenty commands               |
+| `*`      | expert user | log one interaction against several contacts at once | recording a meeting with three people from one company takes one command |
 
 #### I. Continuity and handover
 
-| Priority | As a …                                           | I want to …                                                                     | So that …                                                                          |
-|----------|--------------------------------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| `*`      | newly hired executive inheriting the role        | read the interaction notes my predecessor left                                  | I am not starting every relationship from zero                                     |
-| `*`      | departing executive                              | hand over a single data file that holds everything                              | what I know about our supporters stays with the charity                            |
-| `*`      | returning user after weeks on an event           | see which relationships have gone stale while I was busy                        | I can pick up where I left off                                                     |
-| `*`      | long-time user                                   | archive supporters I no longer actively cultivate without deleting them         | my working list stays short while the history survives                             |
-| `*`      | fundraiser reporting to the board                | produce a summary of my activity over a period                                  | I can show what I have been doing without rebuilding it from memory                |
+| Priority | As a …                                    | I want to …                                                             | So that …                                                           |
+| -------- | ----------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `*`      | newly hired executive inheriting the role | read the interaction notes my predecessor left                          | I am not starting every relationship from zero                      |
+| `*`      | departing executive                       | hand over a single data file that holds everything                      | what I know about our supporters stays with the charity             |
+| `*`      | returning user after weeks on an event    | see which relationships have gone stale while I was busy                | I can pick up where I left off                                      |
+| `*`      | long-time user                            | archive supporters I no longer actively cultivate without deleting them | my working list stays short while the history survives              |
+| `*`      | fundraiser reporting to the board         | produce a summary of my activity over a period                          | I can show what I have been doing without rebuilding it from memory |
 
 ### Use cases
 
@@ -630,35 +644,30 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **Extensions**
 
-* 1a. User did not provide a name.
+- 1a. User did not provide a name.
+  - 1a1. SupporterBook shows an error message.
 
-    * 1a1. SupporterBook shows an error message.
+    Use case resumes from step 1.
 
-      Use case resumes from step 1.
+- 1b. User provided neither a phone number nor an email.
+  - 1b1. SupporterBook shows an error message stating that at least one is required.
 
-* 1b. User provided neither a phone number nor an email.
+    Use case resumes from step 1.
 
-    * 1b1. SupporterBook shows an error message stating that at least one is required.
+- 1c. User provided a detail that is invalid (e.g. a name with symbols, a phone number with spaces, an unknown stage).
+  - 1c1. SupporterBook shows an error message for that detail.
 
-      Use case resumes from step 1.
+    Use case resumes from step 1.
 
-* 1c. User provided a detail that is invalid (e.g. a name with symbols, a phone number with spaces, an unknown stage).
+- 1d. A supporter with the same name already exists, ignoring capitalisation and extra spaces.
+  - 1d1. SupporterBook shows an error message suggesting a way to tell the two supporters apart.
 
-    * 1c1. SupporterBook shows an error message for that detail.
+    Use case resumes from step 1.
 
-      Use case resumes from step 1.
+- 1e. User gives more than one value for a detail that takes only one value (e.g. two names).
+  - 1e1. SupporterBook shows an error message, indicating the detail with multiple values given.
 
-* 1d. A supporter with the same name already exists, ignoring capitalisation and extra spaces.
-
-    * 1d1. SupporterBook shows an error message suggesting a way to tell the two supporters apart.
-
-      Use case resumes from step 1.
-
-* 1e. User gives more than one value for a detail that takes only one value (e.g. two names).
-
-    * 1e1. SupporterBook shows an error message, indicating the detail with multiple values given.
-
-      Use case resumes from step 1.
+    Use case resumes from step 1.
 
 **Use case: UC02 - List all supporters**
 
@@ -671,34 +680,31 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **Extensions**
 
-* 2a. No supporters have been added yet.
+- 2a. No supporters have been added yet.
+  - 2a1. SupporterBook shows an empty list.
 
-    * 2a1. SupporterBook shows an empty list.
-
-      Use case ends.
+    Use case ends.
 
 **Use case: UC03 - Find supporters by part of a name**
 
 **MSS**
 
 1.  User requests to find supporters whose name contains certain keywords, giving the keyword(s).
-2.  SupporterBook shows the list of every supporter whose name contains at least one of the keywords given, replacing any previous find filter.
+2.  SupporterBook shows every supporter whose name contains any keyword given, ignoring case and matching even part of a word. Results keep their original list order and replace any previous find filter.
 
     Use case ends.
 
 **Extensions**
 
-* 1a. User did not provide any keywords.
+- 1a. User did not provide any keywords.
+  - 1a1. SupporterBook shows an error message with the correct command format.
 
-    * 1a1. SupporterBook shows an error message with the correct command format.
+    Use case resumes from step 1.
 
-      Use case resumes from step 1.
+- 2a. No supporter's name contains any of the keywords given.
+  - 2a1. SupporterBook shows an empty list.
 
-* 2a. No supporter's name contains any of the keywords given.
-
-    * 2a1. SupporterBook shows an empty list.
-
-      Use case ends.
+    Use case ends.
 
 **Use case: UC04 - Edit a supporter**
 
@@ -714,35 +720,30 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **Extensions**
 
-* 1a. The given index is invalid.
+- 1a. The given index is invalid.
+  - 1a1. SupporterBook shows an error message.
 
-    * 1a1. SupporterBook shows an error message.
+    Use case resumes from step 1.
 
-      Use case resumes from step 1.
+- 1b. User does not give a field.
+  - 1b1. SupporterBook shows an error message, suggesting for the user to provide at least one field.
 
-* 1b. User does not give a field.
+    Use case resumes from step 1.
 
-    * 1b1. SupporterBook shows an error message, suggesting for the user to provide at least one field.
+- 1c. User gives multiple values for the same field (excluding the tags field).
+  - 1c1. SupporterBook shows an error message, indicating the field with multiple values given.
 
-      Use case resumes from step 1.
+    Use case resumes from step 1.
 
-* 1c. User gives multiple values for the same field (excluding the tags field).
+- 1d. User gives invalid values for certain fields.
+  - 1d1. SupporterBook shows an error message, indicating the field with invalid value.
 
-    * 1c1. SupporterBook shows an error message, indicating the field with multiple values given.
+    Use case resumes from step 1.
 
-      Use case resumes from step 1.
+- 1e. The new name is the same as another supporter's name, ignoring capitalisation and extra spaces.
+  - 1e1. SupporterBook shows an error message, suggesting a way to tell the two supporters apart.
 
-* 1d. User gives invalid values for certain fields.
-
-    * 1d1. SupporterBook shows an error message, indicating the field with invalid value.
-
-      Use case resumes from step 1.
-
-* 1e. The new name is the same as another supporter's name, ignoring capitalisation and extra spaces.
-
-    * 1e1. SupporterBook shows an error message, suggesting a way to tell the two supporters apart.
-
-      Use case resumes from step 1.
+    Use case resumes from step 1.
 
 **Use case: UC05 - Delete a supporter**
 
@@ -758,17 +759,15 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **Extensions**
 
-* 1a. The given index is invalid.
+- 1a. The given index is invalid.
+  - 1a1. SupporterBook shows an error message.
 
-    * 1a1. SupporterBook shows an error message.
+    Use case resumes from step 1.
 
-      Use case resumes from step 1.
+- 2a. The deleted supporter's details were being shown.
+  - 2a1. SupporterBook stops showing that supporter's details.
 
-* 2a. The deleted supporter's details were being shown.
-
-    * 2a1. SupporterBook stops showing that supporter's details.
-
-      Use case resumes from step 3.
+    Use case resumes from step 3.
 
 **Use case: UC06 - Log an interaction with a supporter**
 
@@ -784,29 +783,25 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **Extensions**
 
-* 1a. The given index is invalid.
+- 1a. The given index is invalid.
+  - 1a1. SupporterBook shows an error message.
 
-    * 1a1. SupporterBook shows an error message.
+    Use case resumes from step 1.
 
-      Use case resumes from step 1.
+- 1b. User does not give a note.
+  - 1b1. SupporterBook shows an error message.
 
-* 1b. User does not give a note.
+    Use case resumes from step 1.
 
-    * 1b1. SupporterBook shows an error message.
+- 1c. The given note is blank or longer than 500 characters.
+  - 1c1. SupporterBook shows an error message stating the rules for a note.
 
-      Use case resumes from step 1.
+    Use case resumes from step 1.
 
-* 1c. The given note is blank or longer than 500 characters.
+- 1d. User gives more than one note.
+  - 1d1. SupporterBook shows an error message, indicating that only one note can be given.
 
-    * 1c1. SupporterBook shows an error message stating the rules for a note.
-
-      Use case resumes from step 1.
-
-* 1d. User gives more than one note.
-
-    * 1d1. SupporterBook shows an error message, indicating that only one note can be given.
-
-      Use case resumes from step 1.
+    Use case resumes from step 1.
 
 **Use case: UC07 - View a supporter's details and interaction history**
 
@@ -821,17 +816,15 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **Extensions**
 
-* 1a. The given index is invalid.
+- 1a. The given index is invalid.
+  - 1a1. SupporterBook shows an error message.
 
-    * 1a1. SupporterBook shows an error message.
+    Use case resumes from step 1.
 
-      Use case resumes from step 1.
+- 2a. The supporter has no logged interactions.
+  - 2a1. SupporterBook shows the supporter's details and indicates that there are no interactions logged yet.
 
-* 2a. The supporter has no logged interactions.
-
-    * 2a1. SupporterBook shows the supporter's details and indicates that there are no interactions logged yet.
-
-      Use case ends.
+    Use case ends.
 
 **Use case: UC08 - Set a supporter's cultivation stage**
 
@@ -847,23 +840,20 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **Extensions**
 
-* 1a. The given index is invalid.
+- 1a. The given index is invalid.
+  - 1a1. SupporterBook shows an error message.
 
-    * 1a1. SupporterBook shows an error message.
+    Use case resumes from step 1.
 
-      Use case resumes from step 1.
+- 1b. The given cultivation stage is invalid.
+  - 1b1. SupporterBook shows an error message indicating the valid cultivation stages.
 
-* 1b. The given cultivation stage is invalid.
+    Use case resumes from step 1.
 
-    * 1b1. SupporterBook shows an error message indicating the valid cultivation stages.
+- 1c. The supporter is already at the requested cultivation stage.
+  - 1c1. SupporterBook informs the user that the supporter is already at that cultivation stage and makes no changes.
 
-      Use case resumes from step 1.
-
-* 1c. The supporter is already at the requested cultivation stage.
-
-    * 1c1. SupporterBook informs the user that the supporter is already at that cultivation stage and makes no changes.
-
-      Use case ends.
+    Use case ends.
 
 ### Non-Functional Requirements
 
@@ -882,26 +872,26 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 ### Glossary
 
-* **CRM (Customer Relationship Management system)**: Software that an organisation uses to keep track of its relationships with customers or supporters. Small charities often cannot afford one.
-* **CSR (Corporate Social Responsibility)**: A company's programme for supporting causes such as charities, e.g. through donations, partnerships or employee volunteering. A _CSR contact_ is the person at a company who manages it.
-* **Cultivation stage**: How far a supporter's relationship with the charity has progressed. Every supporter is at exactly one of these six stages:
-    * **Prospect**: Identified as a possible supporter, not yet approached. This is the stage of a newly added supporter.
-    * **Contacted**: First approach made, with no real conversation yet.
-    * **Cultivating**: In an active relationship or discussion, not yet giving.
-    * **Giving**: Currently donating (an individual) or partnering (a company).
-    * **Lapsed**: Gave before, but is no longer giving.
-    * **Declined**: Said no.
-* **Epic**: A large user need that is broken down into several smaller user stories. The user stories above are grouped by epic.
-* **Find filter**: The shorter list of supporters shown after a `find` command. It stays in place until `list`, `add` or `edit` is run.
-* **Index**: The number shown beside a supporter in the currently displayed list, used by commands to refer to that supporter. The same supporter can have a different index after a `find`.
-* **Interaction**: A dated record of one conversation or other contact with a supporter, with a short note of what happened. A supporter's interactions together form their _interaction history_.
-* **Introduction chain**: A sequence of introductions linking supporters, e.g. a board member introduces a CSR contact, who then introduces a colleague.
-* **IPC (Institution of a Public Character)**: A Singapore charity that is approved to issue tax-deductible receipts to its donors.
-* **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Supporter**: Anyone whose relationship with the charity SupporterBook keeps track of, e.g. an individual donor, a prospective donor, a contact at a partner company, a board member, or a volunteer who makes introductions.
-* **Tier 1 charity**: Under the Code of Governance for Charities and IPCs (2023), a small or medium charity that is not an IPC, with gross annual receipts or total expenditure from $50,000 to under $10 million. Tier 2 covers all IPCs and large non-IPC charities.
+- **CRM (Customer Relationship Management system)**: Software that an organisation uses to keep track of its relationships with customers or supporters. Small charities often cannot afford one.
+- **CSR (Corporate Social Responsibility)**: A company's programme for supporting causes such as charities, e.g. through donations, partnerships or employee volunteering. A _CSR contact_ is the person at a company who manages it.
+- **Cultivation stage**: How far a supporter's relationship with the charity has progressed. Every supporter is at exactly one of these six stages:
+  - **Prospect**: Identified as a possible supporter, not yet approached. This is the stage of a newly added supporter.
+  - **Contacted**: First approach made, with no real conversation yet.
+  - **Cultivating**: In an active relationship or discussion, not yet giving.
+  - **Giving**: Currently donating (an individual) or partnering (a company).
+  - **Lapsed**: Gave before, but is no longer giving.
+  - **Declined**: Said no.
+- **Epic**: A large user need that is broken down into several smaller user stories. The user stories above are grouped by epic.
+- **Find filter**: The shorter list of supporters shown after a `find` command. It stays in place until `list`, `add` or `edit` is run.
+- **Index**: The number shown beside a supporter in the currently displayed list, used by commands to refer to that supporter. The same supporter can have a different index after a `find`.
+- **Interaction**: A dated record of one conversation or other contact with a supporter, with a short note of what happened. A supporter's interactions together form their _interaction history_.
+- **Introduction chain**: A sequence of introductions linking supporters, e.g. a board member introduces a CSR contact, who then introduces a colleague.
+- **IPC (Institution of a Public Character)**: A Singapore charity that is approved to issue tax-deductible receipts to its donors.
+- **Mainstream OS**: Windows, Linux, Unix, or macOS
+- **Supporter**: Anyone whose relationship with the charity SupporterBook keeps track of, e.g. an individual donor, a prospective donor, a contact at a partner company, a board member, or a volunteer who makes introductions.
+- **Tier 1 charity**: Under the Code of Governance for Charities and IPCs (2023), a small or medium charity that is not an IPC, with gross annual receipts or total expenditure from $50,000 to under $10 million. Tier 2 covers all IPCs and large non-IPC charities.
 
---------------------------------------------------------------------------------------------------------------------
+---
 
 ## **Appendix: Instructions for manual testing**
 
@@ -910,31 +900,47 @@ Given below are instructions to test the app manually.
 <box type="info" seamless>
 
 **Note:** These instructions only provide a starting point for testers to work on;
-testers are expected to do more *exploratory* testing.
+testers are expected to do more _exploratory_ testing.
 </box>
 
 ### Launch and shutdown
 
 1. Initial launch
-
    1. Download the JAR file and copy it into an empty folder.
 
    1. Double-click the JAR file.<br>
       Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
 
 1. Saving window preferences
-
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
    1. Relaunch the app by double-clicking the JAR file.<br>
-       Expected: The most recent window size and location are retained.
+      Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
+
+### Finding and listing supporters
+
+1. Prerequisites: The list contains `Tan Wei Ming`, `Tan Ah Kow` and `Weiling Koh`, added in that order.
+
+1. Test case: `find wei`<br>
+   Expected: `Tan Wei Ming` and `Weiling Koh` are shown in that order, numbered 1 and 2. The message is `2 supporter(s) listed!`.
+
+1. Test case: `find tan wei`<br>
+   Expected: All three supporters are shown in their original order, demonstrating OR matching and replacement of the previous filter.
+
+1. Test cases: `find KOH`, then `find weiming`<br>
+   Expected: The first command shows `Weiling Koh`. The second shows an empty list because a keyword cannot cross a space in a name.
+
+1. Test case: `list 123` after a `find`<br>
+   Expected: Every supporter is shown in the order added. The message is `Listed all supporters.` and stored data is unchanged.
+
+1. Test case: `find` without keywords<br>
+   Expected: An invalid-command-format message is shown and the displayed list is unchanged.
 
 ### Deleting a person
 
 1. Deleting a person while all persons are being shown
-
    1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
 
    1. Test case: `delete 1`<br>
@@ -951,7 +957,6 @@ testers are expected to do more *exploratory* testing.
 ### Setting a supporter's stage
 
 1. Changing the stage while all supporters are being shown
-
    1. Prerequisites: List all supporters using the `list` command, with multiple supporters in the list. The 1st supporter is not at stage `Giving`.
 
    1. Test case: `stage 1 giving`<br>
@@ -970,14 +975,12 @@ testers are expected to do more *exploratory* testing.
       Expected: No stage is changed. The status message shows error details.
 
 1. Changing the stage after a `find`
-
    1. Prerequisites: Run a `find` command that shows at least one supporter.
 
    1. Test case: `stage 1 cultivating`<br>
       Expected: The 1st supporter in the results moves to `Cultivating`, and the list still shows only the `find` results.
 
 1. Setting a stage when adding a supporter
-
    1. Test case: `add n/Stage Tester p/91234567 e/tester@example.com a/1 Test Street st/contacted`<br>
       Expected: The new supporter is added with the `Contacted` badge.
 
@@ -987,7 +990,6 @@ testers are expected to do more *exploratory* testing.
 ### Logging an interaction
 
 1. Logging while all supporters are being shown
-
    1. Prerequisites: List all supporters using the `list` command, with at least one supporter in the list.
 
    1. Test case: `log 1 nt/Called to discuss the year-end appeal`<br>
@@ -997,14 +999,12 @@ testers are expected to do more *exploratory* testing.
       Expected: The duplicate is accepted as a separate interaction. Its interaction number is one higher than the previous interaction.
 
 1. Logging after a `find`
-
    1. Prerequisites: Run a `find` command that shows at least one supporter.
 
    1. Test case: `log 1 nt/Followed up after the meeting`<br>
       Expected: The interaction is logged against the 1st supporter in the results, and the list still shows only the `find` results.
 
 1. Invalid interaction logging commands
-
    1. Test case: `log 1 nt/`<br>
       Expected: No interaction is logged. The status message says that an interaction note must not be blank and must be at most 500 characters long.
 
@@ -1017,11 +1017,9 @@ testers are expected to do more *exploratory* testing.
 ### Saving data
 
 1. Dealing with missing/corrupted data files
-
    1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
 
 1. Dealing with an invalid cultivation stage in the data file
-
    1. Prerequisites: Run the app once and close it, so that the data file has been created.
 
    1. Test case: In the data file, change one supporter's `"stage"` value to `"Gave"`, then launch the app.<br>
