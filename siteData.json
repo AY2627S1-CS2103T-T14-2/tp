@@ -58,6 +58,8 @@
         "organisation-field": "Organisation field",
         "interaction-history-field": "Interaction history field",
         "logging-an-interaction": "Logging an interaction",
+        "viewing-a-supporter-s-interaction-summary": "Viewing a supporter's interaction summary",
+        "viewed-supporter-state": "Viewed supporter state",
         "optional-contact-fields": "Optional contact fields",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
@@ -74,6 +76,7 @@
         "deleting-a-person": "Deleting a person",
         "setting-a-supporter-s-stage": "Setting a supporter's stage",
         "logging-an-interaction-2": "Logging an interaction",
+        "viewing-a-supporter-s-interaction-summary-2": "Viewing a supporter's interaction summary",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
@@ -129,6 +132,7 @@
         "finding-supporters-by-part-of-a-name-find": "Finding supporters by part of a name: find",
         "deleting-a-person-delete": "Deleting a person: delete",
         "logging-an-interaction-log": "Logging an interaction: log",
+        "viewing-a-supporter-s-interaction-summary-view": "Viewing a supporter's interaction summary: view",
         "clearing-all-entries-clear": "Clearing all entries: clear",
         "exiting-the-program-exit": "Exiting the program: exit",
         "saving-the-data": "Saving the data",
