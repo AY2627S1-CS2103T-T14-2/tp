@@ -159,6 +159,18 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Startup data-loading warning
+
+`MainApp#initModelManager(Storage, ReadOnlyUserPrefs)` uses the existing storage validation when loading supporter data. A valid file supplies the initial supporters; a missing file supplies sample supporters. Neither case records a warning.
+
+When `Storage#readAddressBook()` throws `DataLoadingException`, `MainApp` starts with an empty `AddressBook` and records a warning containing the data file path, the empty-list fallback and advice to copy the file before another command overwrites it. Startup only reads supporter data, so the unreadable file remains untouched.
+
+`MainApp` passes this initial feedback to `UiManager`, which supplies it to `MainWindow#fillInnerParts(String)`. The warning is set after `ResultDisplay` is created, on the JavaFX application thread. The result display wraps long messages. Existing UI entry points default to empty feedback so normal launches retain their previous behavior.
+
+Later command results and errors replace the warning through the existing command execution path. `LogicManager` continues to save after a command executes successfully, including `list`; a parse or command failure leaves the data file untouched. No storage validators, supporter fields or save rules are changed by the warning.
+
+`MainAppTest` covers valid, empty, missing, malformed, invalid and duplicate data files, verifies that loading preserves the file's bytes, and checks that a subsequent successful command saves normally. UI testing should also verify the initial warning and replacement by command feedback using the scenarios in the manual testing appendix.
+
 ### Finding and listing supporters
 
 `FindCommandParser` rejects missing keywords and splits the input on whitespace. It creates a
@@ -1100,7 +1112,23 @@ Selection retention and clearing are checked by the automated model tests becaus
 ### Saving data
 
 1. Dealing with missing/corrupted data files
-   1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+
+   1. Prerequisites: Use an isolated test folder with the JAR file. Keep a backup of any real supporter data and close the app before editing the test data file.
+
+   1. Test case: Launch the app with no `data/supporterbook.json` in the test folder.<br>
+      Expected: Sample supporters are shown, with no load-failure warning. No supporter data file is created until a command executes successfully.
+
+   1. Test case: Run `list`, close the app, then relaunch it.<br>
+      Expected: The saved supporters load, with no load-failure warning.
+
+   1. Test case: Close the app, replace the test data file's contents with `not json format!`, then relaunch.<br>
+      Expected: The list is empty and the result display warns that the file could not be loaded and that the next command will overwrite it. The invalid file's contents are unchanged at startup.
+
+   1. Test case: After the warning, enter an unknown command.<br>
+      Expected: `Unknown command.` replaces the warning, and the invalid file is unchanged.
+
+   1. Test case: Preserve a copy of the invalid test file, then run `list`.<br>
+      Expected: `Listed all supporters.` replaces the warning. The list remains empty and an empty valid data file replaces the invalid file.
 
 1. Dealing with an invalid cultivation stage in the data file
    1. Prerequisites: Run the app once and close it, so that the data file has been created.

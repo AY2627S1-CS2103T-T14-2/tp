@@ -256,11 +256,27 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after every command. You do not need to save manually.
+SupporterBook automatically saves data after every command that executes successfully. You do not need to save manually.
+
+### Loading data at startup
+
+SupporterBook loads `data/supporterbook.json` from the folder the app is launched from. The data file path is shown in the status bar.
+
+* If the file is missing, the app starts with sample supporters. The file is created after the first command that executes successfully.
+* If the file is valid, the app loads its supporters and lists them all.
+* If the file cannot be loaded, the app starts with an empty list and shows a warning in the result display:
+
+> Could not load data/supporterbook.json because it is not in the expected format. Starting with an empty list. Your next command will overwrite the file, so copy it somewhere safe now if you want to repair it.
+
+The message includes the path of the file that could not be loaded. Invalid JSON, missing required fields, invalid field values or duplicate supporters can cause this warning.
+
+Startup does not overwrite the unreadable file. Copy it somewhere safe before running another command if you want to recover its contents. Even `list` saves data after executing, so it can replace the file with the empty list. A command that fails parsing or validation does not overwrite it.
+
+The next command's result or error replaces the startup warning in the display. To repair the file, close the app, correct the copied data using the rules below, and restore it before relaunching.
 
 ### Editing the data file
 
-AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+SupporterBook data is saved as a JSON file `data/supporterbook.json`, relative to the folder the app is launched from. Advanced users can edit that file while the app is closed.
 
 Each supporter in the data file has a `"stage"`, which records how far the relationship has progressed. It must be one of `Prospect`, `Contacted`, `Cultivating`, `Giving`, `Lapsed` or `Declined` (upper or lower case). A supporter's stage stays the same when you edit their other details.
 
@@ -284,8 +300,8 @@ The array may be empty or left out when the supporter has no interactions. A mis
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid (e.g., a supporter's `"stage"` is missing or is not one of the six stages), AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
-Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+If your changes make the data file invalid (e.g., a supporter's `"stage"` is missing or is not one of the six stages), SupporterBook starts with an empty list and shows the startup warning described above. Back up the file before editing it, and preserve the invalid file before running another command if you need to repair it.<br>
+Edit the data file only if you are confident that you can follow the validation rules.
 </box>
 
 ### Archiving data files `[coming in v2.0]`
