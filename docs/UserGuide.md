@@ -186,20 +186,33 @@ The success message reports the number of matches, for example `3 supporter(s) l
 If nothing matches, the list is empty and the message is `0 supporter(s) listed!`.
 Run `list` to show all supporters again.
 
-### Deleting a person: `delete`
+### Deleting a supporter: `delete`
 
-Deletes the specified person from the address book.
+Permanently removes the specified supporter together with every interaction logged with them.
 
 Format: `delete INDEX`
 
-- Deletes the person at the specified `INDEX`.
-- The index refers to the index number shown in the displayed person list.
+- Deletes the supporter at the specified `INDEX`, including their entire interaction history.
+- The index refers to the index number shown in the displayed supporter list, including after `find`.
 - The index **must be a positive integer** 1, 2, 3, ...
+- The success message reports the number of interactions removed, including `0` when there were none. Identical entries are counted separately.
+- The current find filter is retained, and supporters below the deleted entry move up one number.
+- If the supporter was selected with `view`, their remembered selection is cleared. Deleting another supporter preserves that selection.
+- Other supporters' details and interaction histories are unchanged, including notes that mention the deleted supporter.
 
 Examples:
 
-- `list` followed by `delete 2` deletes the 2nd person in the address book.
-- `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+- `list` followed by `delete 2` deletes the 2nd supporter in the full list.
+- `find Betsy` followed by `delete 1` deletes the 1st supporter in the search results and keeps the filter.
+
+For a supporter with two interactions, the success message has two lines:
+
+```text
+Deleted supporter: Tan Wei Ming; Stage: Prospect; Phone: 91234567
+2 logged interaction(s) were deleted with them.
+```
+
+Deletion has no confirmation prompt or undo in this version. An invalid command or an index beyond the displayed list leaves supporter data, the list and the viewed selection unchanged.
 
 ### Logging an interaction: `log`
 
