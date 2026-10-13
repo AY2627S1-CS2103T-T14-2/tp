@@ -10,6 +10,8 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
@@ -17,7 +19,9 @@ import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Person;
+import seedu.address.testutil.PersonBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) and unit tests for
@@ -25,20 +29,40 @@ import seedu.address.model.person.Person;
  */
 public class DeleteCommandTest {
 
+    private static final Interaction FIRST_INTERACTION =
+            new Interaction(LocalDate.of(2026, 10, 12), "Called about the year-end appeal");
+    private static final Interaction SECOND_INTERACTION =
+            new Interaction(LocalDate.of(2026, 10, 13), "Discussed the volunteering day");
+
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
-    public void execute_validIndexUnfilteredList_success() {
+    public void execute_validIndexUnfilteredList_reportsZeroInteractions() {
         Person personToDelete = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         DeleteCommand deleteCommand = new DeleteCommand(INDEX_FIRST_PERSON);
 
-        String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_PERSON_SUCCESS,
-                Messages.format(personToDelete));
+        String expectedMessage = "Deleted supporter: " + Messages.format(personToDelete)
+                + "\n0 logged interaction(s) were deleted with them.";
 
         ModelManager expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
         expectedModel.deletePerson(personToDelete);
 
         assertCommandSuccess(deleteCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_oneInteraction_reportsOneInteraction() {
+        assertDeleteReportsInteractions(FIRST_INTERACTION);
+    }
+
+    @Test
+    public void execute_multipleInteractions_reportsAllInteractions() {
+        assertDeleteReportsInteractions(FIRST_INTERACTION, SECOND_INTERACTION);
+    }
+
+    @Test
+    public void execute_duplicateInteractions_countsEveryEntry() {
+        assertDeleteReportsInteractions(FIRST_INTERACTION, FIRST_INTERACTION, SECOND_INTERACTION);
     }
 
     @Test
@@ -57,7 +81,7 @@ public class DeleteCommandTest {
         DeleteCommand deleteCommand = new DeleteCommand(INDEX_FIRST_PERSON);
 
         String expectedMessage = String.format(DeleteCommand.MESSAGE_DELETE_PERSON_SUCCESS,
-                Messages.format(personToDelete));
+                Messages.format(personToDelete), personToDelete.getInteractions().size());
 
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
         expectedModel.deletePerson(personToDelete);
@@ -107,6 +131,22 @@ public class DeleteCommandTest {
         DeleteCommand deleteCommand = new DeleteCommand(targetIndex);
         String expected = DeleteCommand.class.getCanonicalName() + "{targetIndex=" + targetIndex + "}";
         assertEquals(expected, deleteCommand.toString());
+    }
+
+    /**
+     * Deletes a supporter with the given history and checks the reported count and remaining data.
+     */
+    private void assertDeleteReportsInteractions(Interaction... interactions) {
+        Person originalPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person personToDelete = new PersonBuilder(originalPerson).withInteractions(interactions).build();
+        model.setPerson(originalPerson, personToDelete);
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.deletePerson(personToDelete);
+        String expectedMessage = "Deleted supporter: " + Messages.format(personToDelete)
+                + "\n" + interactions.length + " logged interaction(s) were deleted with them.";
+
+        assertCommandSuccess(new DeleteCommand(INDEX_FIRST_PERSON), model, expectedMessage, expectedModel);
+        assertFalse(model.hasPerson(personToDelete));
     }
 
     /**

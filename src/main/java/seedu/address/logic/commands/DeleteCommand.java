@@ -12,21 +12,26 @@ import seedu.address.model.Model;
 import seedu.address.model.person.Person;
 
 /**
- * Deletes a person identified using its displayed index from the address book.
+ * Deletes a supporter and their logged interactions using the displayed index.
  */
 public class DeleteCommand extends Command {
 
     public static final String COMMAND_WORD = "delete";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Deletes the supporter identified by the index number used in the displayed supporter list.\n"
+            + ": Deletes the supporter identified by the index number used in the displayed supporter list, "
+            + "together with their logged interactions.\n"
             + "Parameters: INDEX (must be a positive integer)\n"
             + "Example: " + COMMAND_WORD + " 1";
 
-    public static final String MESSAGE_DELETE_PERSON_SUCCESS = "Deleted supporter: %1$s";
+    public static final String MESSAGE_DELETE_PERSON_SUCCESS = "Deleted supporter: %1$s\n"
+            + "%2$d logged interaction(s) were deleted with them.";
 
     private final Index targetIndex;
 
+    /**
+     * Creates a command to delete the supporter at {@code targetIndex} in the displayed list.
+     */
     public DeleteCommand(Index targetIndex) {
         this.targetIndex = targetIndex;
     }
@@ -41,8 +46,11 @@ public class DeleteCommand extends Command {
         }
 
         Person personToDelete = lastShownList.get(targetIndex.getZeroBased());
+        int interactionCount = personToDelete.getInteractions().size();
+
         model.deletePerson(personToDelete);
-        return new CommandResult(String.format(MESSAGE_DELETE_PERSON_SUCCESS, Messages.format(personToDelete)));
+        return new CommandResult(String.format(MESSAGE_DELETE_PERSON_SUCCESS,
+                Messages.format(personToDelete), interactionCount));
     }
 
     @Override
