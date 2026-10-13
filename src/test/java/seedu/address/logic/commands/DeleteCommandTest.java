@@ -11,6 +11,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -67,10 +68,15 @@ public class DeleteCommandTest {
 
     @Test
     public void execute_invalidIndexUnfilteredList_throwsCommandException() {
+        Person originalPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person viewedPerson = new PersonBuilder(originalPerson).withInteractions(FIRST_INTERACTION).build();
+        model.setPerson(originalPerson, viewedPerson);
+        model.setViewedPerson(viewedPerson);
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
         DeleteCommand deleteCommand = new DeleteCommand(outOfBoundIndex);
 
         assertCommandFailure(deleteCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertEquals(Optional.of(viewedPerson), model.getViewedPerson());
     }
 
     @Test
@@ -93,6 +99,8 @@ public class DeleteCommandTest {
     @Test
     public void execute_invalidIndexFilteredList_throwsCommandException() {
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
+        Person viewedPerson = model.getAddressBook().getPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        model.setViewedPerson(viewedPerson);
 
         Index outOfBoundIndex = INDEX_SECOND_PERSON;
         // ensures that outOfBoundIndex is still in bounds of address book list
@@ -101,6 +109,33 @@ public class DeleteCommandTest {
         DeleteCommand deleteCommand = new DeleteCommand(outOfBoundIndex);
 
         assertCommandFailure(deleteCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertEquals(Optional.of(viewedPerson), model.getViewedPerson());
+    }
+
+    @Test
+    public void execute_viewedSupporter_clearsViewedPerson() throws Exception {
+        Person personToDelete = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        showPersonAtIndex(model, INDEX_SECOND_PERSON);
+        new ViewCommand(INDEX_FIRST_PERSON).execute(model);
+
+        new DeleteCommand(INDEX_FIRST_PERSON).execute(model);
+
+        assertEquals(Optional.empty(), model.getViewedPerson());
+        assertFalse(model.hasPerson(personToDelete));
+        assertTrue(model.getFilteredPersonList().isEmpty());
+    }
+
+    @Test
+    public void execute_anotherSupporter_preservesViewedPersonOutsideFilter() throws Exception {
+        Person viewedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        new ViewCommand(INDEX_FIRST_PERSON).execute(model);
+        showPersonAtIndex(model, INDEX_SECOND_PERSON);
+
+        new DeleteCommand(INDEX_FIRST_PERSON).execute(model);
+
+        assertEquals(Optional.of(viewedPerson), model.getViewedPerson());
+        assertTrue(model.hasPerson(viewedPerson));
+        assertTrue(model.getFilteredPersonList().isEmpty());
     }
 
     @Test
