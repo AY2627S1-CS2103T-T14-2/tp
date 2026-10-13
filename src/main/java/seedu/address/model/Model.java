@@ -1,5 +1,6 @@
 package seedu.address.model;
 
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
@@ -59,6 +60,18 @@ public interface Model {
      * The person identity of {@code editedPerson} must not be the same as another existing person in the address book.
      */
     void setPerson(Person target, Person editedPerson);
+
+    /**
+     * Returns the supporter being viewed, or an empty {@code Optional} if none has been selected.
+     */
+    Optional<Person> getViewedPerson();
+
+    /**
+     * Records {@code person} as the supporter being viewed without changing the displayed list or its filter.
+     *
+     * @throws NullPointerException if {@code person} is null.
+     */
+    void setViewedPerson(Person person);
 
     /** Returns an unmodifiable view of the filtered person list */
     ObservableList<Person> getFilteredPersonList();

@@ -382,6 +382,53 @@ Identical interactions are appended normally because two calls or messages with 
   - Pros: Less constructor and field code.
   - Cons: Tests can fail or require changing expected values depending on the day they run.
 
+### Viewing a supporter's interaction summary
+
+The `view INDEX` command selects a supporter from the displayed list and reports their name and number of logged interactions, or indicates that no interactions have been logged yet.
+
+`ViewCommandParser` requires one positive integer, parsed using `ParserUtil#parseIndex(String)`. `ViewCommand` checks that index against `Model#getFilteredPersonList()`, so an index after `find` refers to the search results. Invalid input or an out-of-range index leaves selection unchanged.
+
+On success, `ViewCommand` records the supporter using `Model#setViewedPerson(Person)` and counts `Person#getInteractions()` for the command result. The displayed list, its filter and supporter data remain unchanged.
+
+The current UI shows only the command result. The detail panel, newest-first interaction display and startup prompt will be added in a follow-up PR.
+
+### Viewed supporter state
+
+`ModelManager` stores the viewed supporter as a `Person` reference, independently of the displayed list. `Model#getViewedPerson()` returns an `Optional<Person>`, initially empty, and `Model#setViewedPerson(Person)` requires a non-null supporter. Selection is kept in memory and starts empty each time the app launches.
+
+Selection follows these rules:
+
+* `list`, `find` and `add` retain the viewed supporter, even if they are no longer displayed.
+* `ModelManager#setPerson(Person, Person)` updates selection to the replacement record when the viewed supporter is changed.
+* `ModelManager#deletePerson(Person)` clears selection when the viewed supporter is deleted.
+* `ModelManager#setAddressBook(ReadOnlyAddressBook)` clears selection when the address book is reset, including by `clear`.
+
+Updates to another supporter and failed operations preserve selection. Selection changes happen only after the underlying operation succeeds.
+
+`log` and `stage` update the selected record when they change an already viewed supporter. Automatically selecting their target is deferred to the detail-panel PR.
+
+#### Design considerations:
+
+**Aspect: How to record the viewed supporter**
+
+* **Alternative 1 (current choice):** Store a `Person` reference in `ModelManager`.
+  * Pros: Selection remains associated with the same supporter when the displayed list changes.
+  * Cons: Replacing or deleting that supporter requires updating the stored reference.
+
+* **Alternative 2:** Store the supporter's displayed index.
+  * Pros: Uses the index supplied by the command directly.
+  * Cons: A filter or list change can make that index refer to another supporter, or to no supporter at all.
+
+**Aspect: Where to maintain selection after a supporter changes**
+
+* **Alternative 1 (current choice):** Update selection in the model's replacement, deletion and reset methods.
+  * Pros: Every command using those methods keeps selection consistent, including when a supporter's name changes.
+  * Cons: Those model methods also need to manage selection state.
+
+* **Alternative 2:** Update selection separately in each command that changes supporters.
+  * Pros: Each command controls its own selection behavior.
+  * Cons: The same logic is repeated across commands, and a new command can leave selection pointing to an outdated record.
+
 ### Optional contact fields
 
 A supporter's phone number, email and address are optional, but every supporter has at least one of a phone number and an email, so there is always a way to reach them.
@@ -1013,6 +1060,42 @@ testers are expected to do more _exploratory_ testing.
 
    1. Other incorrect commands to try: `log`, `log 1`, `log 1 Called`, `log 0 nt/Called`, and `log 999 nt/Called` (where `999` is larger than the displayed list size)<br>
       Expected: No interaction is logged. The status message shows error details.
+
+### Viewing a supporter's interaction summary
+
+1. Viewing a supporter with no interactions
+
+   1. Prerequisites: Add a supporter with a unique name using `add n/View Tester p/91234567`, then run `find View Tester`. Ensure exactly one supporter is displayed.
+
+   1. Test case: `view 1`<br>
+      Expected: `Showing View Tester: no interactions logged yet`.
+
+1. Viewing a supporter with interactions
+
+   1. Prerequisites: Keep View Tester as the only displayed supporter. Run `log 1 nt/Called about volunteering` and `log 1 nt/Met to discuss the appeal`.
+
+   1. Test case: `view 1`<br>
+      Expected: `Showing View Tester: 2 interaction(s) logged`.
+
+1. Viewing by the current displayed index
+
+   1. Prerequisites: Run `list` with at least two supporters. Note the name at index 2, then use `find` to show only that supporter.
+
+   1. Test case: `view 1`<br>
+      Expected: The message names the supporter who was previously at index 2.
+
+1. Invalid view commands
+
+   1. Test cases: `view`, `view abc`, `view 0`, `view -1`, `view 1.5`, `view 2147483648` and `view 1 2`<br>
+      Expected: `Invalid command format!` followed by the `view` usage message.
+
+   1. Test case: With exactly one supporter displayed, run `view 2`.<br>
+      Expected: `The supporter index provided is invalid.`
+
+   1. Test case: Run a `find` that returns no supporters, then `view 1`.<br>
+      Expected: `The supporter index provided is invalid.`
+
+Selection retention and clearing are checked by the automated model tests because the current UI does not expose the selected supporter separately from command feedback. No detail panel appears in this version.
 
 ### Saving data
 

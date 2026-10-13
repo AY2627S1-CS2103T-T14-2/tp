@@ -9,12 +9,20 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.FindCommand;
+import seedu.address.logic.commands.ListCommand;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Person;
+import seedu.address.model.person.exceptions.DuplicatePersonException;
+import seedu.address.model.person.exceptions.PersonNotFoundException;
 import seedu.address.testutil.AddressBookBuilder;
+import seedu.address.testutil.PersonBuilder;
 
 public class ModelManagerTest {
 
@@ -66,6 +74,224 @@ public class ModelManagerTest {
     public void hasPerson_personInAddressBook_returnsTrue() {
         modelManager.addPerson(ALICE);
         assertTrue(modelManager.hasPerson(ALICE));
+    }
+
+    @Test
+    public void getViewedPerson_noSelection_returnsEmptyOptional() {
+        assertEquals(Optional.empty(), modelManager.getViewedPerson());
+
+        AddressBook addressBook = new AddressBookBuilder().withPerson(ALICE).build();
+        ModelManager populatedModelManager = new ModelManager(addressBook, new UserPrefs());
+        assertEquals(Optional.empty(), populatedModelManager.getViewedPerson());
+    }
+
+    @Test
+    public void setViewedPerson_validPerson_setsViewedPerson() {
+        modelManager.addPerson(ALICE);
+
+        modelManager.setViewedPerson(ALICE);
+
+        assertEquals(Optional.of(ALICE), modelManager.getViewedPerson());
+    }
+
+    @Test
+    public void setViewedPerson_anotherPerson_switchesViewedPerson() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.setViewedPerson(ALICE);
+
+        modelManager.setViewedPerson(BENSON);
+
+        assertEquals(Optional.of(BENSON), modelManager.getViewedPerson());
+    }
+
+    @Test
+    public void setViewedPerson_nullPerson_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> modelManager.setViewedPerson(null));
+        assertEquals(Optional.empty(), modelManager.getViewedPerson());
+
+        modelManager.addPerson(ALICE);
+        modelManager.setViewedPerson(ALICE);
+
+        assertThrows(NullPointerException.class, () -> modelManager.setViewedPerson(null));
+        assertEquals(Optional.of(ALICE), modelManager.getViewedPerson());
+    }
+
+    @Test
+    public void setViewedPerson_filteredList_preservesAddressBookAndDisplayedList() {
+        AddressBook addressBook = new AddressBookBuilder().withPerson(ALICE).withPerson(BENSON).build();
+        modelManager = new ModelManager(addressBook, new UserPrefs());
+        modelManager.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Alice")));
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+
+        modelManager.setViewedPerson(BENSON);
+
+        assertEquals(Optional.of(BENSON), modelManager.getViewedPerson());
+        assertEquals(addressBook, modelManager.getAddressBook());
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+    }
+
+    @Test
+    public void updateFilteredPersonList_viewedPersonExcluded_retainsViewedPerson() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.setViewedPerson(ALICE);
+
+        modelManager.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Benson")));
+
+        assertEquals(List.of(BENSON), modelManager.getFilteredPersonList());
+        assertEquals(Optional.of(ALICE), modelManager.getViewedPerson());
+
+        modelManager.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+
+        assertEquals(List.of(ALICE, BENSON), modelManager.getFilteredPersonList());
+        assertEquals(Optional.of(ALICE), modelManager.getViewedPerson());
+    }
+
+    @Test
+    public void setPerson_viewedPersonExcludedFromFilter_updatesViewedPerson() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.setViewedPerson(ALICE);
+        modelManager.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Benson")));
+        Person editedAlice = new PersonBuilder(ALICE).withName("Alice Tan").build();
+
+        modelManager.setPerson(new PersonBuilder(ALICE).build(), editedAlice);
+
+        assertEquals(Optional.of(editedAlice), modelManager.getViewedPerson());
+        assertEquals(List.of(BENSON), modelManager.getFilteredPersonList());
+        assertEquals(List.of(editedAlice, BENSON), modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void setPerson_anotherPerson_retainsViewedPerson() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.setViewedPerson(ALICE);
+        Person editedBenson = new PersonBuilder(BENSON).withPhone("91234567").build();
+
+        modelManager.setPerson(BENSON, editedBenson);
+
+        assertEquals(Optional.of(ALICE), modelManager.getViewedPerson());
+        assertEquals(List.of(ALICE, editedBenson), modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void setPerson_duplicatePerson_preservesViewedPerson() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.setViewedPerson(ALICE);
+
+        assertThrows(DuplicatePersonException.class, () -> modelManager.setPerson(ALICE, BENSON));
+
+        assertEquals(Optional.of(ALICE), modelManager.getViewedPerson());
+        assertEquals(List.of(ALICE, BENSON), modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void deletePerson_viewedPerson_clearsViewedPerson() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.setViewedPerson(ALICE);
+
+        modelManager.deletePerson(new PersonBuilder(ALICE).build());
+
+        assertEquals(Optional.empty(), modelManager.getViewedPerson());
+        assertEquals(List.of(BENSON), modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void deletePerson_anotherPerson_retainsViewedPerson() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.setViewedPerson(ALICE);
+
+        modelManager.deletePerson(BENSON);
+
+        assertEquals(Optional.of(ALICE), modelManager.getViewedPerson());
+        assertEquals(List.of(ALICE), modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void deletePerson_missingPerson_preservesViewedPerson() {
+        modelManager.addPerson(ALICE);
+        modelManager.setViewedPerson(ALICE);
+
+        assertThrows(PersonNotFoundException.class, () -> modelManager.deletePerson(BENSON));
+
+        assertEquals(Optional.of(ALICE), modelManager.getViewedPerson());
+        assertEquals(List.of(ALICE), modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void setAddressBook_replacementContainingViewedPerson_clearsViewedPerson() {
+        modelManager.addPerson(ALICE);
+        modelManager.setViewedPerson(ALICE);
+        AddressBook replacement = new AddressBookBuilder().withPerson(ALICE).withPerson(BENSON).build();
+
+        modelManager.setAddressBook(replacement);
+
+        assertEquals(Optional.empty(), modelManager.getViewedPerson());
+        assertEquals(replacement, modelManager.getAddressBook());
+    }
+
+    @Test
+    public void setAddressBook_emptyAddressBook_clearsViewedPerson() {
+        modelManager.addPerson(ALICE);
+        modelManager.setViewedPerson(ALICE);
+
+        modelManager.setAddressBook(new AddressBook());
+
+        assertEquals(Optional.empty(), modelManager.getViewedPerson());
+        assertTrue(modelManager.getAddressBook().getPersonList().isEmpty());
+    }
+
+    @Test
+    public void setAddressBook_nullAddressBook_preservesViewedPerson() {
+        modelManager.addPerson(ALICE);
+        modelManager.setViewedPerson(ALICE);
+
+        assertThrows(NullPointerException.class, () -> modelManager.setAddressBook(null));
+
+        assertEquals(Optional.of(ALICE), modelManager.getViewedPerson());
+        assertEquals(List.of(ALICE), modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void executeList_viewedPersonExcludedFromFilter_retainsViewedPerson() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.setViewedPerson(ALICE);
+        modelManager.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Benson")));
+
+        new ListCommand().execute(modelManager);
+
+        assertEquals(Optional.of(ALICE), modelManager.getViewedPerson());
+        assertEquals(List.of(ALICE, BENSON), modelManager.getFilteredPersonList());
+    }
+
+    @Test
+    public void executeFind_viewedPersonExcludedFromResults_retainsViewedPerson() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.setViewedPerson(ALICE);
+
+        new FindCommand(new NameContainsKeywordsPredicate(List.of("Benson"))).execute(modelManager);
+
+        assertEquals(Optional.of(ALICE), modelManager.getViewedPerson());
+        assertEquals(List.of(BENSON), modelManager.getFilteredPersonList());
+    }
+
+    @Test
+    public void executeAdd_anotherPerson_retainsViewedPerson() throws Exception {
+        modelManager.addPerson(ALICE);
+        modelManager.setViewedPerson(ALICE);
+        modelManager.updateFilteredPersonList(unused -> false);
+
+        new AddCommand(BENSON).execute(modelManager);
+
+        assertEquals(Optional.of(ALICE), modelManager.getViewedPerson());
+        assertEquals(List.of(ALICE, BENSON), modelManager.getFilteredPersonList());
     }
 
     @Test

@@ -3,6 +3,8 @@ package seedu.address.model;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -21,6 +23,7 @@ public class ModelManager implements Model {
     private final AddressBook addressBook;
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
+    private Person viewedPerson = null;
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -62,6 +65,7 @@ public class ModelManager implements Model {
     @Override
     public void setAddressBook(ReadOnlyAddressBook addressBook) {
         this.addressBook.resetData(addressBook);
+        viewedPerson = null;
     }
 
     @Override
@@ -78,6 +82,9 @@ public class ModelManager implements Model {
     @Override
     public void deletePerson(Person target) {
         addressBook.removePerson(target);
+        if (target.equals(viewedPerson)) {
+            viewedPerson = null;
+        }
     }
 
     @Override
@@ -91,6 +98,20 @@ public class ModelManager implements Model {
         requireAllNonNull(target, editedPerson);
 
         addressBook.setPerson(target, editedPerson);
+        if (target.equals(viewedPerson)) {
+            viewedPerson = editedPerson;
+        }
+    }
+
+    @Override
+    public Optional<Person> getViewedPerson() {
+        return Optional.ofNullable(viewedPerson);
+    }
+
+    @Override
+    public void setViewedPerson(Person person) {
+        requireNonNull(person);
+        viewedPerson = person;
     }
 
     //=========== Filtered Person List Accessors =============================================================
@@ -123,7 +144,8 @@ public class ModelManager implements Model {
 
         return addressBook.equals(otherModelManager.addressBook)
                 && userPrefs.equals(otherModelManager.userPrefs)
-                && filteredPersons.equals(otherModelManager.filteredPersons);
+                && filteredPersons.equals(otherModelManager.filteredPersons)
+                && Objects.equals(viewedPerson, otherModelManager.viewedPerson);
     }
 
 }
