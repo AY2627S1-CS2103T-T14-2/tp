@@ -37,11 +37,16 @@ public class MainApp extends Application {
     private static final Logger logger = LogsCenter.getLogger(MainApp.class);
     private static final Path USER_PREFS_FILE_PATH = Paths.get("preferences.json");
     private static final Path ADDRESS_BOOK_FILE_PATH = Paths.get("data", "supporterbook.json");
+    private static final String MESSAGE_DATA_LOAD_FAILURE = "Could not load %s because it is not in the expected "
+            + "format. Starting with an empty list. Your next command will overwrite the file, "
+            + "so copy it somewhere safe now if you want to repair it.";
 
     protected Ui ui;
     protected Logic logic;
     protected Storage storage;
     protected Model model;
+
+    private String startupWarning = "";
 
     @Override
     public void init() throws Exception {
@@ -57,16 +62,18 @@ public class MainApp extends Application {
 
         logic = new LogicManager(model, storage);
 
-        ui = new UiManager(logic, storage.getAddressBookFilePath());
+        ui = new UiManager(logic, storage.getAddressBookFilePath(), startupWarning);
     }
 
     /**
      * Returns a {@code ModelManager} with the data from {@code storage}'s address book and {@code userPrefs}. <br>
      * The data from the sample address book will be used instead if {@code storage}'s address book is not found,
      * or an empty address book will be used instead if errors occur when reading {@code storage}'s address book.
+     * A loading error also records a startup warning for the result display.
      */
-    private Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
+    Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
         logger.info("Using data file : " + storage.getAddressBookFilePath());
+        startupWarning = "";
 
         Optional<ReadOnlyAddressBook> addressBookOptional;
         ReadOnlyAddressBook initialData;
@@ -81,9 +88,17 @@ public class MainApp extends Application {
             logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
                     + " Will be starting with an empty SupporterBook.");
             initialData = new AddressBook();
+            startupWarning = String.format(MESSAGE_DATA_LOAD_FAILURE, storage.getAddressBookFilePath());
         }
 
         return new ModelManager(initialData, userPrefs);
+    }
+
+    /**
+     * Returns the startup loading warning, or an empty string when loading did not fail.
+     */
+    String getStartupWarning() {
+        return startupWarning;
     }
 
     /**
