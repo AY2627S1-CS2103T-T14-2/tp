@@ -12,6 +12,9 @@ import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.logic.Logic;
+import seedu.address.logic.LogicManager;
+import seedu.address.logic.commands.CommandResult;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.UserPrefs;
@@ -103,6 +106,21 @@ public class MainAppTest {
 
         assertEquals(getTypicalAddressBook(), model.getAddressBook());
         assertEquals("", mainApp.getStartupWarning());
+    }
+
+    @Test
+    public void execute_commandAfterLoadingFailure_savesEmptyData() throws Exception {
+        Path dataFile = testFolder.resolve("supporterbook.json");
+        Files.copy(TEST_DATA_FOLDER.resolve("JsonAddressBookStorageTest")
+                .resolve("notJsonFormatAddressBook.json"), dataFile);
+        Storage storage = createStorage(dataFile);
+        Model model = mainApp.initModelManager(storage, new UserPrefs());
+        Logic logic = new LogicManager(model, storage);
+
+        CommandResult result = logic.execute("list");
+
+        assertEquals("Listed all supporters.", result.getFeedbackToUser());
+        assertEquals(new AddressBook(), storage.readAddressBook().orElseThrow());
     }
 
     private Storage createStorage(Path dataFile) {
