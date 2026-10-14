@@ -161,7 +161,9 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Startup data-loading warning
 
-`MainApp#initModelManager(Storage, ReadOnlyUserPrefs)` uses the existing storage validation when loading supporter data. A valid file supplies the initial supporters; a missing file supplies sample supporters. Neither case records a warning.
+`MainApp#initModelManager(Storage, ReadOnlyUserPrefs)` uses the existing storage validation when loading supporter data. A valid file supplies the initial supporters; a missing file supplies the sample supporters from `SampleDataUtil#getSampleAddressBook()`. Neither case records a warning.
+
+Some sample supporters come with dated example interactions, built with the `Person` constructor that takes an interaction list. A new user can therefore try `view` and see a populated history before logging anything.
 
 When `Storage#readAddressBook()` throws `DataLoadingException`, `MainApp` starts with an empty `AddressBook` and records a warning containing the data file path, the empty-list fallback and advice to copy the file before another command overwrites it. Startup only reads supporter data, so the unreadable file remains untouched.
 
@@ -982,7 +984,7 @@ testers are expected to do more _exploratory_ testing.
    1. Download the JAR file and copy it into an empty folder.
 
    1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+      Expected: The GUI opens with a set of sample supporters, some of whom already have logged interactions. The window size may not be optimal.
 
 1. Saving window preferences
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
@@ -1122,6 +1124,13 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: `view 1`<br>
       Expected: The message and detail panel show the supporter who was previously at index 2. Only that supporter remains in the displayed list.
+
+1. Viewing a sample supporter's history
+
+   1. Prerequisites: Launch the app with no `data/supporterbook.json`, so that sample supporters are loaded, then run `list`.
+
+   1. Test case: `view 1`<br>
+      Expected: `Showing Alex Yeoh: 2 interaction(s) logged`. The history shows `#2  12 Sep 2026` before `#1  18 Jul 2026`.
 
 1. Invalid view commands
 
