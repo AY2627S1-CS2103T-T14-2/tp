@@ -186,20 +186,33 @@ The success message reports the number of matches, for example `3 supporter(s) l
 If nothing matches, the list is empty and the message is `0 supporter(s) listed!`.
 Run `list` to show all supporters again.
 
-### Deleting a person: `delete`
+### Deleting a supporter: `delete`
 
-Deletes the specified person from the address book.
+Permanently removes the specified supporter together with every interaction logged with them.
 
 Format: `delete INDEX`
 
-- Deletes the person at the specified `INDEX`.
-- The index refers to the index number shown in the displayed person list.
+- Deletes the supporter at the specified `INDEX`, including their entire interaction history.
+- The index refers to the index number shown in the displayed supporter list, including after `find`.
 - The index **must be a positive integer** 1, 2, 3, ...
+- The success message reports the number of interactions removed, including `0` when there were none. Identical entries are counted separately.
+- The current find filter is retained, and supporters below the deleted entry move up one number.
+- If the supporter was selected with `view`, their remembered selection is cleared. Deleting another supporter preserves that selection.
+- Other supporters' details and interaction histories are unchanged, including notes that mention the deleted supporter.
 
 Examples:
 
-- `list` followed by `delete 2` deletes the 2nd person in the address book.
-- `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+- `list` followed by `delete 2` deletes the 2nd supporter in the full list.
+- `find Betsy` followed by `delete 1` deletes the 1st supporter in the search results and keeps the filter.
+
+For a supporter with two interactions, the success message has two lines:
+
+```text
+Deleted supporter: Tan Wei Ming; Stage: Prospect; Phone: 91234567
+2 logged interaction(s) were deleted with them.
+```
+
+Deletion has no confirmation prompt or undo in this version. An invalid command or an index beyond the displayed list leaves supporter data, the list and the viewed selection unchanged.
 
 ### Logging an interaction: `log`
 
@@ -256,11 +269,27 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after every command. You do not need to save manually.
+SupporterBook automatically saves data after every command that executes successfully. You do not need to save manually.
+
+### Loading data at startup
+
+SupporterBook loads `data/supporterbook.json` from the folder the app is launched from. The data file path is shown in the status bar.
+
+* If the file is missing, the app starts with sample supporters. The file is created after the first command that executes successfully.
+* If the file is valid, the app loads its supporters and lists them all.
+* If the file cannot be loaded, the app starts with an empty list and shows a warning in the result display:
+
+> Could not load data/supporterbook.json because it is not in the expected format. Starting with an empty list. Your next command will overwrite the file, so copy it somewhere safe now if you want to repair it.
+
+The message includes the path of the file that could not be loaded. Invalid JSON, missing required fields, invalid field values or duplicate supporters can cause this warning.
+
+Startup does not overwrite the unreadable file. Copy it somewhere safe before running another command if you want to recover its contents. Even `list` saves data after executing, so it can replace the file with the empty list. A command that fails parsing or validation does not overwrite it.
+
+The next command's result or error replaces the startup warning in the display. To repair the file, close the app, correct the copied data using the rules below, and restore it before relaunching.
 
 ### Editing the data file
 
-AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+SupporterBook data is saved as a JSON file `data/supporterbook.json`, relative to the folder the app is launched from. Advanced users can edit that file while the app is closed.
 
 Each supporter in the data file has a `"stage"`, which records how far the relationship has progressed. It must be one of `Prospect`, `Contacted`, `Cultivating`, `Giving`, `Lapsed` or `Declined` (upper or lower case). A supporter's stage stays the same when you edit their other details.
 
@@ -284,8 +313,8 @@ The array may be empty or left out when the supporter has no interactions. A mis
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid (e.g., a supporter's `"stage"` is missing or is not one of the six stages), AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
-Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+If your changes make the data file invalid (e.g., a supporter's `"stage"` is missing or is not one of the six stages), SupporterBook starts with an empty list and shows the startup warning described above. Back up the file before editing it, and preserve the invalid file before running another command if you need to repair it.<br>
+Edit the data file only if you are confident that you can follow the validation rules.
 </box>
 
 ### Archiving data files `[coming in v2.0]`

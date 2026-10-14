@@ -159,6 +159,18 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Startup data-loading warning
+
+`MainApp#initModelManager(Storage, ReadOnlyUserPrefs)` uses the existing storage validation when loading supporter data. A valid file supplies the initial supporters; a missing file supplies sample supporters. Neither case records a warning.
+
+When `Storage#readAddressBook()` throws `DataLoadingException`, `MainApp` starts with an empty `AddressBook` and records a warning containing the data file path, the empty-list fallback and advice to copy the file before another command overwrites it. Startup only reads supporter data, so the unreadable file remains untouched.
+
+`MainApp` passes this initial feedback to `UiManager`, which supplies it to `MainWindow#fillInnerParts(String)`. The warning is set after `ResultDisplay` is created, on the JavaFX application thread. The result display wraps long messages. Existing UI entry points default to empty feedback so normal launches retain their previous behavior.
+
+Later command results and errors replace the warning through the existing command execution path. `LogicManager` continues to save after a command executes successfully, including `list`; a parse or command failure leaves the data file untouched. No storage validators, supporter fields or save rules are changed by the warning.
+
+`MainAppTest` covers valid, empty, missing, malformed, invalid and duplicate data files, verifies that loading preserves the file's bytes, and checks that a subsequent successful command saves normally. UI testing should also verify the initial warning and replacement by command feedback using the scenarios in the manual testing appendix.
+
 ### Finding and listing supporters
 
 `FindCommandParser` rejects missing keywords and splits the input on whitespace. It creates a
@@ -175,6 +187,18 @@ keywords. Partial matching lets `wei` match `Weiling`, unlike AB3's whole-word m
 `Model#updateFilteredPersonList(Predicate)`. The filtered list preserves the underlying insertion
 order, and the UI numbers its results from 1. `ListCommand#execute(Model)` resets the predicate
 to `Model.PREDICATE_SHOW_ALL_PERSONS`, restoring the full list without changing stored supporters.
+
+### Deleting a supporter and their history
+
+`DeleteCommand#execute(Model)` validates its index against `Model#getFilteredPersonList()`, so deletion after `find` targets the displayed supporter rather than the same index in the full list. It reads `Person#getInteractions().size()` before calling `Model#deletePerson(Person)` and reports that count on the second line of its success message. Every history entry is counted, including identical interactions.
+
+Interactions are stored within each immutable `Person`. Removing that supporter from the address book removes their history from stored data without a separate interaction-deletion loop. `Messages#format(Person)` supplies the deleted supporter's details, preserving the shared formatting of stages and optional fields.
+
+The command retains the existing filter. `ModelManager#deletePerson(Person)` already clears the viewed selection when that supporter is removed and preserves it when another supporter is deleted. The command reuses this model behavior; the current UI has no detail panel, so clearing a visible panel remains part of the detail-panel integration.
+
+`LogicManager` saves the resulting address book after successful execution. Other supporters and their histories remain unchanged, including plain-text notes mentioning the deleted supporter. Failed parsing or index validation leaves data, filtering, viewed selection and the saved file unchanged.
+
+`DeleteCommandTest` checks zero, one, multiple and duplicate interaction counts and selection behavior. `DeleteCommandIntegrationTest` runs `find`, `view` and `delete` through the logic layer, verifies the remaining filter and selection, and reloads saved JSON to check that only the targeted supporter and their history were removed.
 
 ### Duplicate supporters
 
@@ -985,21 +1009,36 @@ testers are expected to do more _exploratory_ testing.
 1. Test case: `find` without keywords<br>
    Expected: An invalid-command-format message is shown and the displayed list is unchanged.
 
-### Deleting a person
+### Deleting a supporter
 
-1. Deleting a person while all persons are being shown
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+1. Deleting a supporter without interactions
+   1. Prerequisites: Use isolated test data. Run `list` with multiple supporters, where the 1st supporter has no logged interactions.
 
    1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+      Expected: The 1st supporter disappears. The result shows their details followed by `0 logged interaction(s) were deleted with them.` on a second line. Other supporters keep their original order.
+
+1. Deleting a supporter with interactions after a find
+   1. Prerequisites: Add two test supporters named `DeleteTestOne` and `DeleteTestTwo`, each with a phone number. Run `find DeleteTest`. Log two interactions against index 1, and one note mentioning `DeleteTestOne` against index 2.
+
+   1. Test case: Run `view 1`, then `delete 1`.<br>
+      Expected: The message names `DeleteTestOne` and reports `2 logged interaction(s) were deleted with them.` The find results now contain only `DeleteTestTwo`, numbered 1.
+
+   1. Test case: Run `view 1`, then close and relaunch the app.<br>
+      Expected: The view result reports one interaction for `DeleteTestTwo`. After relaunch, `DeleteTestOne` is absent, and `DeleteTestTwo` and their history are retained. Their saved note still mentions `DeleteTestOne` unchanged.
+
+1. Invalid deletion commands
+   1. Prerequisites: Run a `find` showing exactly one supporter.
 
    1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+      Expected: An invalid-command-format message is shown. No supporter or history is deleted, and the list is unchanged.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+   1. Test case: `delete 2`<br>
+      Expected: `The supporter index provided is invalid.` is shown, even if the full address book has more supporters. The displayed list and data are unchanged.
 
-1. _{ more test cases … }_
+   1. Other incorrect commands to try: `delete`, `delete abc`, `delete -1` and `delete 1 2`.<br>
+      Expected: An invalid-command-format message, with no data or list changes.
+
+Viewed-selection clearing and retention are checked by the command and integration tests because this version has no visible detail panel.
 
 ### Setting a supporter's stage
 
@@ -1100,7 +1139,23 @@ Selection retention and clearing are checked by the automated model tests becaus
 ### Saving data
 
 1. Dealing with missing/corrupted data files
-   1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+
+   1. Prerequisites: Use an isolated test folder with the JAR file. Keep a backup of any real supporter data and close the app before editing the test data file.
+
+   1. Test case: Launch the app with no `data/supporterbook.json` in the test folder.<br>
+      Expected: Sample supporters are shown, with no load-failure warning. No supporter data file is created until a command executes successfully.
+
+   1. Test case: Run `list`, close the app, then relaunch it.<br>
+      Expected: The saved supporters load, with no load-failure warning.
+
+   1. Test case: Close the app, replace the test data file's contents with `not json format!`, then relaunch.<br>
+      Expected: The list is empty and the result display warns that the file could not be loaded and that the next command will overwrite it. The invalid file's contents are unchanged at startup.
+
+   1. Test case: After the warning, enter an unknown command.<br>
+      Expected: `Unknown command.` replaces the warning, and the invalid file is unchanged.
+
+   1. Test case: Preserve a copy of the invalid test file, then run `list`.<br>
+      Expected: `Listed all supporters.` replaces the warning. The list remains empty and an empty valid data file replaces the invalid file.
 
 1. Dealing with an invalid cultivation stage in the data file
    1. Prerequisites: Run the app once and close it, so that the data file has been created.

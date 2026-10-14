@@ -1,5 +1,7 @@
 package seedu.address.ui;
 
+import static java.util.Objects.requireNonNull;
+
 import java.nio.file.Path;
 import java.util.logging.Logger;
 
@@ -114,10 +116,20 @@ public class MainWindow extends UiPart<Stage> {
      * Fills up all the placeholders of this window.
      */
     void fillInnerParts() {
+        fillInnerParts("");
+    }
+
+    /**
+     * Fills the placeholders and shows {@code initialFeedback} in the result display.
+     */
+    void fillInnerParts(String initialFeedback) {
+        requireNonNull(initialFeedback);
+
         personListPanel = new PersonListPanel(logic.getFilteredPersonList());
         personListPanelPlaceholder.getChildren().add(personListPanel.getRoot());
 
         resultDisplay = new ResultDisplay();
+        resultDisplay.setFeedbackToUser(initialFeedback);
         resultDisplayPlaceholder.getChildren().add(resultDisplay.getRoot());
 
         StatusBarFooter statusBarFooter = new StatusBarFooter(dataFilePath);

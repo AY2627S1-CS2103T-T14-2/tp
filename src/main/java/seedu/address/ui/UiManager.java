@@ -1,5 +1,7 @@
 package seedu.address.ui;
 
+import static java.util.Objects.requireNonNull;
+
 import java.nio.file.Path;
 import java.util.logging.Logger;
 
@@ -25,6 +27,7 @@ public class UiManager implements Ui {
 
     private Logic logic;
     private Path dataFilePath;
+    private final String initialFeedback;
     private MainWindow mainWindow;
 
     /**
@@ -32,8 +35,17 @@ public class UiManager implements Ui {
      * to show in the status bar.
      */
     public UiManager(Logic logic, Path dataFilePath) {
+        this(logic, dataFilePath, "");
+    }
+
+    /**
+     * Creates a {@code UiManager} with the given {@code Logic}, data file path,
+     * and initial feedback to show in the result display when the UI starts.
+     */
+    public UiManager(Logic logic, Path dataFilePath, String initialFeedback) {
         this.logic = logic;
         this.dataFilePath = dataFilePath;
+        this.initialFeedback = requireNonNull(initialFeedback);
     }
 
     @Override
@@ -46,7 +58,7 @@ public class UiManager implements Ui {
         try {
             mainWindow = new MainWindow(primaryStage, logic, dataFilePath);
             mainWindow.show(); //This should be called before creating other UI parts
-            mainWindow.fillInnerParts();
+            mainWindow.fillInnerParts(initialFeedback);
 
         } catch (Throwable e) {
             logger.severe(StringUtil.getDetails(e));
