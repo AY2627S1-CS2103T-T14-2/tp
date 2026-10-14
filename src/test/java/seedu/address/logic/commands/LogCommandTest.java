@@ -73,6 +73,17 @@ public class LogCommandTest {
     }
 
     @Test
+    public void execute_singleDigitDay_dateHasLeadingZero() throws Exception {
+        Clock singleDigitDayClock = Clock.fixed(Instant.parse("2026-08-05T12:00:00Z"), ZoneOffset.UTC);
+        Person personToUpdate = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+
+        CommandResult result = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, singleDigitDayClock).execute(model);
+
+        assertEquals(String.format(LogCommand.MESSAGE_SUCCESS, 1, personToUpdate.getName(),
+                "05 Aug 2026", VALID_NOTE), result.getFeedbackToUser());
+    }
+
+    @Test
     public void execute_anotherSupporterViewed_selectsUpdatedTarget() throws Exception {
         Person previouslyViewedPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
         model.setViewedPerson(previouslyViewedPerson);

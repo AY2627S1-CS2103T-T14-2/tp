@@ -35,7 +35,7 @@ public class LogCommand extends Command {
     public static final String MESSAGE_SUCCESS = "Logged interaction #%1$d with %2$s (%3$s): %4$s.";
 
     private static final DateTimeFormatter DATE_FORMATTER =
-            DateTimeFormatter.ofPattern("d MMM uuuu", Locale.ENGLISH);
+            DateTimeFormatter.ofPattern("dd MMM uuuu", Locale.ENGLISH);
 
     private final Index targetIndex;
     private final String note;
