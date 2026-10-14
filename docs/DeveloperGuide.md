@@ -194,7 +194,7 @@ to `Model.PREDICATE_SHOW_ALL_PERSONS`, restoring the full list without changing 
 
 Interactions are stored within each immutable `Person`. Removing that supporter from the address book removes their history from stored data without a separate interaction-deletion loop. `Messages#format(Person)` supplies the deleted supporter's details, preserving the shared formatting of stages and optional fields.
 
-The command retains the existing filter. `ModelManager#deletePerson(Person)` already clears the viewed selection when that supporter is removed and preserves it when another supporter is deleted. The command reuses this model behavior; the current UI has no detail panel, so clearing a visible panel remains part of the detail-panel integration.
+The command retains the existing filter. `ModelManager#deletePerson(Person)` clears the viewed selection when that supporter is removed and preserves it when another supporter is deleted. After execution, `MainWindow` refreshes the detail panel from this model state. Deleting the displayed supporter removes their details and history and restores the startup prompt.
 
 `LogicManager` saves the resulting address book after successful execution. Other supporters and their histories remain unchanged, including plain-text notes mentioning the deleted supporter. Failed parsing or index validation leaves data, filtering, viewed selection and the saved file unchanged.
 
@@ -406,15 +406,18 @@ Identical interactions are appended normally because two calls or messages with 
   - Pros: Less constructor and field code.
   - Cons: Tests can fail or require changing expected values depending on the day they run.
 
-### Viewing a supporter's interaction summary
+### Viewing a supporter's details and interaction history
 
 The `view INDEX` command selects a supporter from the displayed list and reports their name and number of logged interactions, or indicates that no interactions have been logged yet.
 
-`ViewCommandParser` requires one positive integer, parsed using `ParserUtil#parseIndex(String)`. `ViewCommand` checks that index against `Model#getFilteredPersonList()`, so an index after `find` refers to the search results. Invalid input or an out-of-range index leaves selection unchanged.
+On successful index validation, `ViewCommand` records the supporter using `Model#setViewedPerson(Person)` and counts `Person#getInteractions()` for the command result. The displayed list, its filter and supporter data remain unchanged.
 
-On success, `ViewCommand` records the supporter using `Model#setViewedPerson(Person)` and counts `Person#getInteractions()` for the command result. The displayed list, its filter and supporter data remain unchanged.
+`SupporterDetailData` prepares the display values without a JavaFX dependency:
 
-The current UI shows only the command result. The detail panel, newest-first interaction display and startup prompt will be added in a follow-up PR.
+* Optional fields and empty tags become `-`. Tag names are sorted alphabetically and joined with commas.
+* Each immutable `InteractionEntry` is sorted by `LocalDate` descending and entry number descending, preserving duplicate interactions and the stored logging order.
+
+`SupporterDetailPanel#setSupporter(Optional<Person>)` skips rendering when the supporter record is unchanged, preserving the scroll position through `list`, `find` and `add`. Switching supporters or changing the displayed record rebuilds the history and returns scrolling to the top.
 
 ### Viewed supporter state
 
@@ -423,13 +426,12 @@ The current UI shows only the command result. The detail panel, newest-first int
 Selection follows these rules:
 
 * `list`, `find` and `add` retain the viewed supporter, even if they are no longer displayed.
+* Successful `view`, `log` and `stage` commands select their target. `log` selects the replacement record after appending its interaction. `stage` selects the replacement record after a stage change, or the existing record when the requested stage is already set.
 * `ModelManager#setPerson(Person, Person)` updates selection to the replacement record when the viewed supporter is changed.
 * `ModelManager#deletePerson(Person)` clears selection when the viewed supporter is deleted.
 * `ModelManager#setAddressBook(ReadOnlyAddressBook)` clears selection when the address book is reset, including by `clear`.
 
-Updates to another supporter and failed operations preserve selection. Selection changes happen only after the underlying operation succeeds.
-
-`log` and `stage` update the selected record when they change an already viewed supporter. Automatically selecting their target is deferred to the detail-panel PR.
+Editing or deleting another supporter preserves selection. Parsing and index-validation failures also preserve it.
 
 #### Design considerations:
 
@@ -1038,18 +1040,16 @@ testers are expected to do more _exploratory_ testing.
    1. Other incorrect commands to try: `delete`, `delete abc`, `delete -1` and `delete 1 2`.<br>
       Expected: An invalid-command-format message, with no data or list changes.
 
-Viewed-selection clearing and retention are checked by the command and integration tests because this version has no visible detail panel.
-
 ### Setting a supporter's stage
 
 1. Changing the stage while all supporters are being shown
    1. Prerequisites: List all supporters using the `list` command, with multiple supporters in the list. The 1st supporter is not at stage `Giving`.
 
    1. Test case: `stage 1 giving`<br>
-      Expected: The 1st supporter's badge changes to `Giving`. The status message shows the old and new stages.
+      Expected: The 1st supporter's badge changes to `Giving`. The status message shows the old and new stages, and the detail panel switches to that supporter with stage `Giving`.
 
    1. Test case: `stage 1 giving` again<br>
-      Expected: Nothing is changed. The status message says the supporter is already at stage `Giving`, and is not shown as an error.
+      Expected: The record is unchanged. The status message says the supporter is already at stage `Giving`, and is not shown as an error. The detail panel shows that supporter even if another supporter was viewed before the command.
 
    1. Test case: `stage 1 GIVING`, then `stage 1 lapsed`<br>
       Expected: Upper case is accepted; the 1st supporter moves to `Lapsed`.
@@ -1079,7 +1079,7 @@ Viewed-selection clearing and retention are checked by the command and integrati
    1. Prerequisites: List all supporters using the `list` command, with at least one supporter in the list.
 
    1. Test case: `log 1 nt/Called to discuss the year-end appeal`<br>
-      Expected: An interaction dated today is logged against the 1st supporter. The status message shows the interaction number, supporter, date and note. The displayed list does not change.
+      Expected: An interaction dated today is logged against the 1st supporter. The status message shows the interaction number, supporter, date and note. The displayed list does not change. The detail panel switches to that supporter and shows the new entry in the sorted history.
 
    1. Test case: Repeat `log 1 nt/Called to discuss the year-end appeal`<br>
       Expected: The duplicate is accepted as a separate interaction. Its interaction number is one higher than the previous interaction.
@@ -1100,28 +1100,28 @@ Viewed-selection clearing and retention are checked by the command and integrati
    1. Other incorrect commands to try: `log`, `log 1`, `log 1 Called`, `log 0 nt/Called`, and `log 999 nt/Called` (where `999` is larger than the displayed list size)<br>
       Expected: No interaction is logged. The status message shows error details.
 
-### Viewing a supporter's interaction summary
+### Viewing a supporter's details and interaction history
 
 1. Viewing a supporter with no interactions
 
    1. Prerequisites: Add a supporter with a unique name using `add n/View Tester p/91234567`, then run `find View Tester`. Ensure exactly one supporter is displayed.
 
    1. Test case: `view 1`<br>
-      Expected: `Showing View Tester: no interactions logged yet`.
+      Expected: `Showing View Tester: no interactions logged yet`. The panel shows the name, stage and phone, with organisation, email, address and tags shown as `-`. The history area reads `No interactions yet. Log one with: log INDEX nt/NOTE.` The list and filter are unchanged.
 
 1. Viewing a supporter with interactions
 
    1. Prerequisites: Keep View Tester as the only displayed supporter. Run `log 1 nt/Called about volunteering` and `log 1 nt/Met to discuss the appeal`.
 
    1. Test case: `view 1`<br>
-      Expected: `Showing View Tester: 2 interaction(s) logged`.
+      Expected: `Showing View Tester: 2 interaction(s) logged`. The panel shows `#2` before `#1` because both entries have today's date. Each row shows its number, date and complete note, with no list or filter change.
 
 1. Viewing by the current displayed index
 
    1. Prerequisites: Run `list` with at least two supporters. Note the name at index 2, then use `find` to show only that supporter.
 
    1. Test case: `view 1`<br>
-      Expected: The message names the supporter who was previously at index 2.
+      Expected: The message and detail panel show the supporter who was previously at index 2. Only that supporter remains in the displayed list.
 
 1. Invalid view commands
 
@@ -1134,7 +1134,46 @@ Viewed-selection clearing and retention are checked by the command and integrati
    1. Test case: Run a `find` that returns no supporters, then `view 1`.<br>
       Expected: `The supporter index provided is invalid.`
 
-Selection retention and clearing are checked by the automated model tests because the current UI does not expose the selected supporter separately from command feedback. No detail panel appears in this version.
+   Invalid view commands must also leave the detail panel unchanged.
+
+1. Startup and selection retention
+
+   1. Test case: Restart the app.<br>
+      Expected: The panel reads `Type view INDEX to see a supporter's details and history.`, even if a supporter was selected before exiting.
+
+   1. Prerequisites: Run `list` with at least two supporters, then `view 1`. Note the displayed supporter's name.
+
+   1. Test case: Run `find` with a name that excludes the viewed supporter, then `list`, then `add n/Panel Retention Tester p/91234567` using a unique name.<br>
+      Expected: The list changes after each command, but the panel keeps showing the original supporter and retains its history scroll position.
+
+1. Switching and clearing selection
+
+   1. Prerequisites: Run `list` with at least two supporters and `view 1`.
+
+   1. Test case: `log 2 nt/Panel switch test`<br>
+      Expected: The panel switches to supporter 2 and shows their updated history.
+
+   1. Test case: Run `view 1`, then `stage 2 giving`. Run `view 1` again, then repeat `stage 2 giving`.<br>
+      Expected: Both stage commands switch the panel to supporter 2 with stage `Giving`, including the second command that reports no record change.
+
+   1. Test case: Delete supporter 1 while supporter 2 is displayed in the panel.<br>
+      Expected: The panel still shows the same supporter, whose displayed list index is now 1.
+
+   1. Test case: `delete 1`<br>
+      Expected: The displayed supporter is deleted, the panel removes their details and history, and the startup prompt returns.
+
+   1. Test case: View a remaining supporter, then run `clear`.<br>
+      Expected: The list is empty and the panel shows the startup prompt.
+
+1. Long notes, scrolling and resizing
+
+   1. Prerequisites: Use a test supporter with enough logged interactions to exceed the history area's height. Include a note close to the 500-character limit.
+
+   1. Test case: View that supporter, scroll to the oldest entry, and resize the window or move the divider.<br>
+      Expected: Notes wrap within the history area without truncation or horizontal scrolling. All entries remain reachable by vertical scrolling, and their numbers are unchanged. The list and panel stay side by side.
+
+   1. Test case: While scrolled down, run `list` or `find`.<br>
+      Expected: The same supporter and scroll position remain visible. A subsequent `log` for that supporter refreshes the history and returns it to the top.
 
 ### Saving data
 
