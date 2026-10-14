@@ -125,7 +125,7 @@ How the parsing works:
 
 The `Model` component,
 
-- stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+- stores the supporter data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
 - stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 - stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 - does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -145,7 +145,7 @@ The `Model` component,
 
 The `Storage` component,
 
-- can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
+- can save both supporter data and user preference data in JSON format, and read them back into corresponding objects.
 - is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 - depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
@@ -194,11 +194,11 @@ to `Model.PREDICATE_SHOW_ALL_PERSONS`, restoring the full list without changing 
 
 `DeleteCommand#execute(Model)` validates its index against `Model#getFilteredPersonList()`, so deletion after `find` targets the displayed supporter rather than the same index in the full list. It reads `Person#getInteractions().size()` before calling `Model#deletePerson(Person)` and reports that count on the second line of its success message. Every history entry is counted, including identical interactions.
 
-Interactions are stored within each immutable `Person`. Removing that supporter from the address book removes their history from stored data without a separate interaction-deletion loop. `Messages#format(Person)` supplies the deleted supporter's details, preserving the shared formatting of stages and optional fields.
+Interactions are stored within each immutable `Person`. Removing that supporter from the `AddressBook` removes their history from stored data without a separate interaction-deletion loop. `Messages#format(Person)` supplies the deleted supporter's details, preserving the shared formatting of stages and optional fields.
 
 The command retains the existing filter. `ModelManager#deletePerson(Person)` clears the viewed selection when that supporter is removed and preserves it when another supporter is deleted. After execution, `MainWindow` refreshes the detail panel from this model state. Deleting the displayed supporter removes their details and history and restores the startup prompt.
 
-`LogicManager` saves the resulting address book after successful execution. Other supporters and their histories remain unchanged, including plain-text notes mentioning the deleted supporter. Failed parsing or index validation leaves data, filtering, viewed selection and the saved file unchanged.
+`LogicManager` saves the resulting supporter data after successful execution. Other supporters and their histories remain unchanged, including plain-text notes mentioning the deleted supporter. Failed parsing or index validation leaves data, filtering, viewed selection and the saved file unchanged.
 
 `DeleteCommandTest` checks zero, one, multiple and duplicate interaction counts and selection behavior. `DeleteCommandIntegrationTest` runs `find`, `view` and `delete` through the logic layer, verifies the remaining filter and selection, and reloads saved JSON to check that only the targeted supporter and their history were removed.
 
@@ -431,7 +431,7 @@ Selection follows these rules:
 * Successful `view`, `log` and `stage` commands select their target. `log` selects the replacement record after appending its interaction. `stage` selects the replacement record after a stage change, or the existing record when the requested stage is already set.
 * `ModelManager#setPerson(Person, Person)` updates selection to the replacement record when the viewed supporter is changed.
 * `ModelManager#deletePerson(Person)` clears selection when the viewed supporter is deleted.
-* `ModelManager#setAddressBook(ReadOnlyAddressBook)` clears selection when the address book is reset, including by `clear`.
+* `ModelManager#setAddressBook(ReadOnlyAddressBook)` clears selection when all supporter data is replaced, including by `clear`.
 
 Editing or deleting another supporter preserves selection. Parsing and index-validation failures also preserve it.
 
@@ -1037,7 +1037,7 @@ testers are expected to do more _exploratory_ testing.
       Expected: An invalid-command-format message is shown. No supporter or history is deleted, and the list is unchanged.
 
    1. Test case: `delete 2`<br>
-      Expected: `The supporter index provided is invalid.` is shown, even if the full address book has more supporters. The displayed list and data are unchanged.
+      Expected: `The supporter index provided is invalid.` is shown, even if the full supporter list has more supporters. The displayed list and data are unchanged.
 
    1. Other incorrect commands to try: `delete`, `delete abc`, `delete -1` and `delete 1 2`.<br>
       Expected: An invalid-command-format message, with no data or list changes.
