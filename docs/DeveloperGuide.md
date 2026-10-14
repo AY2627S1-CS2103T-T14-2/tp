@@ -188,6 +188,18 @@ keywords. Partial matching lets `wei` match `Weiling`, unlike AB3's whole-word m
 order, and the UI numbers its results from 1. `ListCommand#execute(Model)` resets the predicate
 to `Model.PREDICATE_SHOW_ALL_PERSONS`, restoring the full list without changing stored supporters.
 
+### Deleting a supporter and their history
+
+`DeleteCommand#execute(Model)` validates its index against `Model#getFilteredPersonList()`, so deletion after `find` targets the displayed supporter rather than the same index in the full list. It reads `Person#getInteractions().size()` before calling `Model#deletePerson(Person)` and reports that count on the second line of its success message. Every history entry is counted, including identical interactions.
+
+Interactions are stored within each immutable `Person`. Removing that supporter from the address book removes their history from stored data without a separate interaction-deletion loop. `Messages#format(Person)` supplies the deleted supporter's details, preserving the shared formatting of stages and optional fields.
+
+The command retains the existing filter. `ModelManager#deletePerson(Person)` already clears the viewed selection when that supporter is removed and preserves it when another supporter is deleted. The command reuses this model behavior; the current UI has no detail panel, so clearing a visible panel remains part of the detail-panel integration.
+
+`LogicManager` saves the resulting address book after successful execution. Other supporters and their histories remain unchanged, including plain-text notes mentioning the deleted supporter. Failed parsing or index validation leaves data, filtering, viewed selection and the saved file unchanged.
+
+`DeleteCommandTest` checks zero, one, multiple and duplicate interaction counts and selection behavior. `DeleteCommandIntegrationTest` runs `find`, `view` and `delete` through the logic layer, verifies the remaining filter and selection, and reloads saved JSON to check that only the targeted supporter and their history were removed.
+
 ### Duplicate supporters
 
 Two supporters count as the same supporter if their names match, ignoring case and extra spaces. No other field is compared.
@@ -997,21 +1009,36 @@ testers are expected to do more _exploratory_ testing.
 1. Test case: `find` without keywords<br>
    Expected: An invalid-command-format message is shown and the displayed list is unchanged.
 
-### Deleting a person
+### Deleting a supporter
 
-1. Deleting a person while all persons are being shown
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+1. Deleting a supporter without interactions
+   1. Prerequisites: Use isolated test data. Run `list` with multiple supporters, where the 1st supporter has no logged interactions.
 
    1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+      Expected: The 1st supporter disappears. The result shows their details followed by `0 logged interaction(s) were deleted with them.` on a second line. Other supporters keep their original order.
+
+1. Deleting a supporter with interactions after a find
+   1. Prerequisites: Add two test supporters named `DeleteTestOne` and `DeleteTestTwo`, each with a phone number. Run `find DeleteTest`. Log two interactions against index 1, and one note mentioning `DeleteTestOne` against index 2.
+
+   1. Test case: Run `view 1`, then `delete 1`.<br>
+      Expected: The message names `DeleteTestOne` and reports `2 logged interaction(s) were deleted with them.` The find results now contain only `DeleteTestTwo`, numbered 1.
+
+   1. Test case: Run `view 1`, then close and relaunch the app.<br>
+      Expected: The view result reports one interaction for `DeleteTestTwo`. After relaunch, `DeleteTestOne` is absent, and `DeleteTestTwo` and their history are retained. Their saved note still mentions `DeleteTestOne` unchanged.
+
+1. Invalid deletion commands
+   1. Prerequisites: Run a `find` showing exactly one supporter.
 
    1. Test case: `delete 0`<br>
-      Expected: No person is deleted. The status message shows error details.
+      Expected: An invalid-command-format message is shown. No supporter or history is deleted, and the list is unchanged.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+   1. Test case: `delete 2`<br>
+      Expected: `The supporter index provided is invalid.` is shown, even if the full address book has more supporters. The displayed list and data are unchanged.
 
-1. _{ more test cases … }_
+   1. Other incorrect commands to try: `delete`, `delete abc`, `delete -1` and `delete 1 2`.<br>
+      Expected: An invalid-command-format message, with no data or list changes.
+
+Viewed-selection clearing and retention are checked by the command and integration tests because this version has no visible detail panel.
 
 ### Setting a supporter's stage
 
