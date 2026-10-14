@@ -56,6 +56,7 @@ public class StageCommand extends Command {
 
         // the user's intention is already true, so this is reported as a normal result rather than an error
         if (oldStage == stage) {
+            model.setViewedPerson(personToUpdate);
             return new CommandResult(String.format(MESSAGE_ALREADY_AT_STAGE, personToUpdate.getName(), stage));
         }
 
@@ -63,6 +64,7 @@ public class StageCommand extends Command {
                 personToUpdate.getEmail(), personToUpdate.getAddress(), personToUpdate.getOrganisation(), stage,
                 personToUpdate.getInteractions(), personToUpdate.getTags());
         model.setPerson(personToUpdate, updatedPerson);
+        model.setViewedPerson(updatedPerson);
 
         return new CommandResult(String.format(MESSAGE_STAGE_CHANGED, personToUpdate.getName(), oldStage, stage));
     }
