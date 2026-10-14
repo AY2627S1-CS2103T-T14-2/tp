@@ -18,23 +18,27 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 1. Ensure that Java `25` or later is installed on your computer.<br>
    **Mac users:** Ensure you have the precise JDK version prescribed [here](https://se-education.org/guides/tutorials/javaInstallationMac.html).
 
-1. Download the latest `.jar` file from [here](https://github.com/se-edu/addressbook-level3/releases).
+1. Download the latest `supporterbook.jar` file from [here](https://github.com/AY2627S1-CS2103T-T14-2/tp/releases).
 
-1. Copy the file to the folder you want to use as the _home folder_ for your AddressBook.
+1. Copy the file to the folder you want to use as the _home folder_ for SupporterBook. Your data is saved in a `data` folder inside it.
 
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
-   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
+1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar supporterbook.jar`.<br>
+   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample supporters.<br>
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
-   - `list` : Lists all contacts.
+   - `list` : Lists all supporters.
 
-   - `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a contact named `John Doe` to the Address Book.
+   - `add n/Tan Wei Ming p/91234567 e/weiming@dbs.com o/DBS Bank` : Adds a supporter named `Tan Wei Ming` from `DBS Bank`.
 
-   - `delete 3` : Deletes the 3rd contact shown in the current list.
+   - `log 1 nt/Called about the year-end appeal` : Logs an interaction with the 1st supporter shown in the current list.
 
-   - `clear` : Deletes all contacts.
+   - `view 1` : Shows the 1st supporter's interaction history.
+
+   - `stage 1 contacted` : Sets the 1st supporter's cultivation stage to `Contacted`.
+
+   - `delete 3` : Deletes the 3rd supporter shown in the current list, together with their interactions.
 
    - `exit` : Exits the app.
 
