@@ -60,7 +60,7 @@
         "organisation-field": "Organisation field",
         "interaction-history-field": "Interaction history field",
         "logging-an-interaction": "Logging an interaction",
-        "viewing-a-supporter-s-interaction-summary": "Viewing a supporter's interaction summary",
+        "viewing-a-supporter-s-details-and-interaction-history": "Viewing a supporter's details and interaction history",
         "viewed-supporter-state": "Viewed supporter state",
         "optional-contact-fields": "Optional contact fields",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
@@ -78,7 +78,7 @@
         "deleting-a-supporter": "Deleting a supporter",
         "setting-a-supporter-s-stage": "Setting a supporter's stage",
         "logging-an-interaction-2": "Logging an interaction",
-        "viewing-a-supporter-s-interaction-summary-2": "Viewing a supporter's interaction summary",
+        "viewing-a-supporter-s-details-and-interaction-history-2": "Viewing a supporter's details and interaction history",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
@@ -134,7 +134,7 @@
         "finding-supporters-by-part-of-a-name-find": "Finding supporters by part of a name: find",
         "deleting-a-supporter-delete": "Deleting a supporter: delete",
         "logging-an-interaction-log": "Logging an interaction: log",
-        "viewing-a-supporter-s-interaction-summary-view": "Viewing a supporter's interaction summary: view",
+        "viewing-a-supporter-s-details-and-interaction-history-view": "Viewing a supporter's details and interaction history: view",
         "clearing-all-entries-clear": "Clearing all entries: clear",
         "exiting-the-program-exit": "Exiting the program: exit",
         "saving-the-data": "Saving the data",
