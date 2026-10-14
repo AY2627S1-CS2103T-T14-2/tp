@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -66,8 +67,23 @@ public class LogCommandTest {
                 "16 Sep 2026", VALID_NOTE);
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(personToUpdate, updatedPerson);
+        expectedModel.setViewedPerson(updatedPerson);
 
         assertCommandSuccess(logCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_anotherSupporterViewed_selectsUpdatedTarget() throws Exception {
+        Person previouslyViewedPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        model.setViewedPerson(previouslyViewedPerson);
+        Person personToUpdate = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person updatedPerson = new PersonBuilder(personToUpdate)
+                .withInteractions(new Interaction(FIXED_DATE, VALID_NOTE))
+                .build();
+
+        new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, FIXED_CLOCK).execute(model);
+
+        assertEquals(Optional.of(updatedPerson), model.getViewedPerson());
     }
 
     @Test
@@ -108,8 +124,11 @@ public class LogCommandTest {
     public void execute_invalidIndexUnfilteredList_throwsCommandException() {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
         LogCommand logCommand = new LogCommand(outOfBoundIndex, VALID_NOTE, FIXED_CLOCK);
+        Person previouslyViewedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        model.setViewedPerson(previouslyViewedPerson);
 
         assertCommandFailure(logCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertEquals(Optional.of(previouslyViewedPerson), model.getViewedPerson());
     }
 
     @Test
@@ -126,6 +145,7 @@ public class LogCommandTest {
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         showPersonAtIndex(expectedModel, INDEX_SECOND_PERSON);
         expectedModel.setPerson(personToUpdate, updatedPerson);
+        expectedModel.setViewedPerson(updatedPerson);
 
         assertCommandSuccess(logCommand, model, expectedMessage, expectedModel);
         assertEquals(List.of(updatedPerson), model.getFilteredPersonList());
@@ -133,6 +153,8 @@ public class LogCommandTest {
 
     @Test
     public void execute_invalidIndexFilteredList_throwsCommandException() {
+        Person previouslyViewedPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        model.setViewedPerson(previouslyViewedPerson);
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
 
         // supporter exists in the full list but is not displayed
@@ -141,6 +163,7 @@ public class LogCommandTest {
         LogCommand logCommand = new LogCommand(outOfBoundIndex, VALID_NOTE, FIXED_CLOCK);
 
         assertCommandFailure(logCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertEquals(Optional.of(previouslyViewedPerson), model.getViewedPerson());
     }
 
     @Test

@@ -77,6 +77,7 @@ public class LogCommand extends Command {
                 personToUpdate.getEmail(), personToUpdate.getAddress(), personToUpdate.getOrganisation(),
                 personToUpdate.getStage(), updatedInteractions, personToUpdate.getTags());
         model.setPerson(personToUpdate, updatedPerson);
+        model.setViewedPerson(updatedPerson);
 
         return new CommandResult(String.format(MESSAGE_SUCCESS, updatedInteractions.size(), personToUpdate.getName(),
                 interaction.getDate().format(DATE_FORMATTER), interaction.getNote()));
