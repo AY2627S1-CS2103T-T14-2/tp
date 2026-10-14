@@ -209,7 +209,7 @@ Format: `delete INDEX`
 Examples:
 
 - `list` followed by `delete 2` deletes the 2nd supporter in the full list.
-- `find Betsy` followed by `delete 1` deletes the 1st supporter in the search results and keeps the filter.
+- `find Tan` followed by `delete 1` deletes the 1st supporter in the search results and keeps the filter.
 
 For a supporter with two interactions, the success message has two lines:
 
@@ -329,10 +329,6 @@ If your changes make the data file invalid (e.g., a supporter's `"stage"` is mis
 Edit the data file only if you are confident that you can follow the validation rules.
 </box>
 
-### Archiving data files `[coming in v2.0]`
-
-_Details coming soon ..._
-
 ---
 
 ## FAQ
@@ -363,3 +359,4 @@ Action     | Format, Examples
 **Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
+**Exit**   | `exit`

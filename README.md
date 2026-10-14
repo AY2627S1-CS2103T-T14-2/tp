@@ -3,7 +3,7 @@
 
 ![Ui](docs/images/Ui.png)
 
-* The image above shows the current UI mock-up of `SupporterBook`.
+* The image above shows the user interface of `SupporterBook`.
 * `SupporterBook` is a desktop application for fundraising and outreach staff at small charities to manage donor and corporate supporter relationships.
 * It keeps supporter details and relationship histories in one place, with fast command-based retrieval and updates.
 * For the detailed documentation of this project, see the **[SupporterBook Product Website](https://ay2627s1-cs2103t-t14-2.github.io/tp/)**.
