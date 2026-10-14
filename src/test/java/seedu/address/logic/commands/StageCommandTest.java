@@ -50,6 +50,7 @@ public class StageCommandTest {
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(personToUpdate, updatedPerson);
+        expectedModel.setViewedPerson(updatedPerson);
 
         assertCommandSuccess(stageCommand, model, expectedMessage, expectedModel);
     }
@@ -66,8 +67,21 @@ public class StageCommandTest {
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(personToUpdate, updatedPerson);
+        expectedModel.setViewedPerson(updatedPerson);
 
         assertCommandSuccess(stageCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_anotherSupporterViewed_selectsUpdatedTarget() throws Exception {
+        Person previouslyViewedPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        model.setViewedPerson(previouslyViewedPerson);
+        Person personToUpdate = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person updatedPerson = new PersonBuilder(personToUpdate).withStage("cultivating").build();
+
+        new StageCommand(INDEX_FIRST_PERSON, Stage.CULTIVATING).execute(model);
+
+        assertEquals(updatedPerson, model.getViewedPerson().orElseThrow());
     }
 
     @Test
@@ -98,11 +112,14 @@ public class StageCommandTest {
 
     @Test
     public void execute_sameStage_successWithoutChange() {
+        Person previouslyViewedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        model.setViewedPerson(previouslyViewedPerson);
         Person person = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
         StageCommand stageCommand = new StageCommand(INDEX_SECOND_PERSON, Stage.GIVING);
 
         String expectedMessage = String.format(StageCommand.MESSAGE_ALREADY_AT_STAGE, person.getName(), Stage.GIVING);
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        expectedModel.setViewedPerson(person);
 
         assertCommandSuccess(stageCommand, model, expectedMessage, expectedModel);
     }
@@ -120,8 +137,11 @@ public class StageCommandTest {
     public void execute_invalidIndexUnfilteredList_throwsCommandException() {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
         StageCommand stageCommand = new StageCommand(outOfBoundIndex, Stage.GIVING);
+        Person previouslyViewedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        model.setViewedPerson(previouslyViewedPerson);
 
         assertCommandFailure(stageCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertEquals(previouslyViewedPerson, model.getViewedPerson().orElseThrow());
     }
 
     @Test
@@ -138,6 +158,7 @@ public class StageCommandTest {
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         showPersonAtIndex(expectedModel, INDEX_FIRST_PERSON);
         expectedModel.setPerson(personToUpdate, updatedPerson);
+        expectedModel.setViewedPerson(updatedPerson);
 
         assertCommandSuccess(stageCommand, model, expectedMessage, expectedModel);
         assertEquals(1, model.getFilteredPersonList().size());
@@ -145,6 +166,8 @@ public class StageCommandTest {
 
     @Test
     public void execute_invalidIndexFilteredList_throwsCommandException() {
+        Person previouslyViewedPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        model.setViewedPerson(previouslyViewedPerson);
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
 
         // supporter exists in the full list but is not displayed
@@ -154,6 +177,7 @@ public class StageCommandTest {
         StageCommand stageCommand = new StageCommand(outOfBoundIndex, Stage.GIVING);
 
         assertCommandFailure(stageCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertEquals(previouslyViewedPerson, model.getViewedPerson().orElseThrow());
     }
 
     @Test

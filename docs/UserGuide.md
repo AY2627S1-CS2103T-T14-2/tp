@@ -146,7 +146,8 @@ Format: `stage INDEX STAGE`
 - Sets the stage of the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list. The index **must be a positive integer** 1, 2, 3, ...
 - `STAGE` must be one of the six stages below. Upper and lower case are both accepted. No prefix is needed before it.
 - Any stage can be changed to any other stage, e.g. a lapsed donor can be moved back to `cultivating`.
-- If the supporter is already at that stage, nothing is changed and a message says so.
+- If the supporter is already at that stage, their record is unchanged and a message says so.
+- On success, the detail panel switches to this supporter and shows their current stage, including when they are already at the requested stage.
 - The displayed list stays the same, so a `find` result is kept.
 
 | Stage         | Meaning                                                                            |
@@ -202,7 +203,7 @@ Format: `delete INDEX`
 - The index **must be a positive integer** 1, 2, 3, ...
 - The success message reports the number of interactions removed, including `0` when there were none. Identical entries are counted separately.
 - The current find filter is retained, and supporters below the deleted entry move up one number.
-- If the supporter was selected with `view`, their remembered selection is cleared. Deleting another supporter preserves that selection.
+- If the supporter is shown in the detail panel, their details and history are cleared and the startup prompt returns. Deleting another supporter preserves the panel's displayed supporter.
 - Other supporters' details and interaction histories are unchanged, including notes that mention the deleted supporter.
 
 Examples:
@@ -231,6 +232,7 @@ Format: `log INDEX nt/NOTE`
 - Interactions are numbered in the order they are logged, starting from `#1` for each supporter.
 - Identical notes logged on the same day are accepted as separate interactions.
 - On success, the result display shows the interaction number, supporter, date and note.
+- The detail panel switches to this supporter and shows their updated history, with the newest interaction first.
 - Logging an interaction does not change the supporter's cultivation stage or the currently displayed list. A `find` result therefore remains in place.
 
 Examples:
@@ -243,17 +245,22 @@ Examples:
 If a note contains a space followed by `nt/`, that text is treated as a second note prefix and the command is rejected. Rephrase the note to avoid `nt/`.
 </box>
 
-### Viewing a supporter's interaction summary: `view`
+### Viewing a supporter's details and interaction history: `view`
 
-Selects a supporter and shows their name and the number of logged interactions in the result display.
+Shows a supporter's full record and every logged interaction in the detail panel beside the supporter list. The result display reports their name and interaction count.
 
 Format: `view INDEX`
 
 * `INDEX` is required and must be a positive integer from the currently displayed supporter list. After a `find`, use the index shown in the search results.
 * Supply exactly one index, with no additional arguments.
 * Viewing a supporter preserves the displayed list, its filter and all supporter data.
-* The app remembers the viewed supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. A successful `view` selects another supporter. Deleting the viewed supporter or running `clear` clears the selection; restarting the app starts with no selection.
-* This version shows the interaction summary only. The detail panel containing supporter details and individual interaction entries will be added in a future release.
+* The panel shows the name, stage, organisation, phone, email, address and tags. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically.
+* Interactions appear newest first, one entry per row, for example `#4  16 Sep 2026  Sent partnership deck by email`. Entries on the same date appear in descending entry-number order. Entry numbers are based on the order in which interactions were logged.
+* The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
+* A successful `view`, `log` or `stage` switches the panel to its target. Changes to the displayed supporter's record are reflected.
+* Invalid commands leave the displayed supporter unchanged.
+* Deleting the displayed supporter or running `clear` clears the details and history. Deleting another supporter keeps the panel unchanged.
+* Selection is not remembered after restarting the app.
 
 Examples:
 

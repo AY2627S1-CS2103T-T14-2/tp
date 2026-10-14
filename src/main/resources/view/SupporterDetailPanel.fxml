@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox id="supporterDetailPanel" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      minWidth="0" spacing="10" styleClass="pane-with-border">
+  <padding>
+    <Insets top="12" right="12" bottom="12" left="12" />
+  </padding>
+
+  <Label fx:id="startupMessage" text="Type view INDEX to see a supporter's details and history."
+         styleClass="label-bright" wrapText="true" minWidth="0" maxWidth="Infinity" />
+
+  <VBox fx:id="detailsContainer" visible="false" managed="false" spacing="0" minWidth="0" VBox.vgrow="ALWAYS">
+    <Label fx:id="supporterName" text="-" styleClass="label-bright"
+           wrapText="true" minWidth="0" maxWidth="Infinity">
+      <minHeight>
+        <Region fx:constant="USE_PREF_SIZE" />
+      </minHeight>
+    </Label>
+
+    <GridPane hgap="8" vgap="0" minWidth="0">
+      <minHeight>
+        <Region fx:constant="USE_PREF_SIZE" />
+      </minHeight>
+      <columnConstraints>
+        <ColumnConstraints minWidth="100" prefWidth="100" maxWidth="100" hgrow="NEVER" />
+        <ColumnConstraints minWidth="0" hgrow="ALWAYS" />
+      </columnConstraints>
+      <rowConstraints>
+        <RowConstraints valignment="TOP" />
+        <RowConstraints valignment="TOP" />
+        <RowConstraints valignment="TOP" />
+        <RowConstraints valignment="TOP" />
+        <RowConstraints valignment="TOP" />
+        <RowConstraints valignment="TOP" />
+      </rowConstraints>
+      <Label text="Stage:" styleClass="label-bright" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+      <Label fx:id="supporterStage" text="-" styleClass="label-bright" wrapText="true"
+             minWidth="0" maxWidth="Infinity" GridPane.rowIndex="0" GridPane.columnIndex="1" />
+      <Label text="Organisation:" styleClass="label-bright" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+      <Label fx:id="supporterOrganisation" text="-" styleClass="label-bright" wrapText="true"
+             minWidth="0" maxWidth="Infinity" GridPane.rowIndex="1" GridPane.columnIndex="1" />
+      <Label text="Phone:" styleClass="label-bright" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+      <Label fx:id="supporterPhone" text="-" styleClass="label-bright" wrapText="true"
+             minWidth="0" maxWidth="Infinity" GridPane.rowIndex="2" GridPane.columnIndex="1" />
+      <Label text="Email:" styleClass="label-bright" GridPane.rowIndex="3" GridPane.columnIndex="0" />
+      <Label fx:id="supporterEmail" text="-" styleClass="label-bright" wrapText="true"
+             minWidth="0" maxWidth="Infinity" GridPane.rowIndex="3" GridPane.columnIndex="1" />
+      <Label text="Address:" styleClass="label-bright" GridPane.rowIndex="4" GridPane.columnIndex="0" />
+      <Label fx:id="supporterAddress" text="-" styleClass="label-bright" wrapText="true"
+             minWidth="0" maxWidth="Infinity" GridPane.rowIndex="4" GridPane.columnIndex="1" />
+      <Label text="Tags:" styleClass="label-bright" GridPane.rowIndex="5" GridPane.columnIndex="0" />
+      <Label fx:id="supporterTags" text="-" styleClass="label-bright" wrapText="true"
+             minWidth="0" maxWidth="Infinity" GridPane.rowIndex="5" GridPane.columnIndex="1" />
+    </GridPane>
+
+    <Separator>
+      <VBox.margin>
+        <Insets top="8" right="0" bottom="8" left="0" />
+      </VBox.margin>
+    </Separator>
+    <Label fx:id="historyHeading" text="Interactions (0) - newest first" styleClass="label-bright"
+           wrapText="true" minWidth="0" maxWidth="Infinity">
+      <minHeight>
+        <Region fx:constant="USE_PREF_SIZE" />
+      </minHeight>
+    </Label>
+
+    <ScrollPane fx:id="historyScrollPane" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+                minWidth="0" minHeight="0" VBox.vgrow="ALWAYS"
+                style="-fx-background-color: transparent; -fx-background: #383838;">
+      <content>
+        <VBox spacing="10" minWidth="0" styleClass="background">
+          <padding>
+            <Insets top="0" right="8" bottom="5" left="0" />
+          </padding>
+          <Label fx:id="historyPlaceholder" text="No interactions yet. Log one with: log INDEX nt/NOTE."
+                 styleClass="label-bright" wrapText="true" minWidth="0" maxWidth="Infinity" />
+          <!-- The controller adds numbered entries with wrapping note labels here. -->
+          <VBox fx:id="interactionEntries" spacing="12" minWidth="0" />
+        </VBox>
+      </content>
+    </ScrollPane>
+  </VBox>
+</VBox>
