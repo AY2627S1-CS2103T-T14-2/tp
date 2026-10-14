@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <fx:root type="javafx.stage.Stage" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-         title="SupporterBook" minWidth="450" minHeight="600" onCloseRequest="#handleExit">
+         title="SupporterBook" minWidth="740" minHeight="600" onCloseRequest="#handleExit">
   <icons>
     <Image url="@/images/address_book_32.png" />
   </icons>
@@ -46,12 +46,19 @@
           </padding>
         </StackPane>
 
-        <VBox fx:id="personList" styleClass="pane-with-border" minWidth="340" prefWidth="340" VBox.vgrow="ALWAYS">
-          <padding>
-            <Insets top="10" right="10" bottom="10" left="10" />
-          </padding>
-          <StackPane fx:id="personListPanelPlaceholder" VBox.vgrow="ALWAYS"/>
-        </VBox>
+        <SplitPane fx:id="supporterSplitPane" orientation="HORIZONTAL" dividerPositions="0.5"
+                   minHeight="0" VBox.vgrow="ALWAYS">
+          <items>
+            <VBox fx:id="personList" styleClass="pane-with-border" minWidth="340" prefWidth="340">
+              <padding>
+                <Insets top="10" right="10" bottom="10" left="10" />
+              </padding>
+              <StackPane fx:id="personListPanelPlaceholder" VBox.vgrow="ALWAYS" />
+            </VBox>
+            <StackPane fx:id="supporterDetailPanelPlaceholder" minWidth="340" prefWidth="380"
+                       minHeight="0" styleClass="pane-with-border" />
+          </items>
+        </SplitPane>
 
         <StackPane fx:id="statusbarPlaceholder" VBox.vgrow="NEVER" />
       </VBox>
