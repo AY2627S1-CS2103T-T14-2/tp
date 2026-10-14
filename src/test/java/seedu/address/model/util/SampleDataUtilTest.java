@@ -23,6 +23,19 @@ public class SampleDataUtilTest {
     }
 
     @Test
+    public void getSamplePersons_interactions_someSupportersHaveMultipleInteractions() {
+        long supportersWithInteractions = samplePersons.stream()
+                .filter(person -> !person.getInteractions().isEmpty())
+                .count();
+
+        assertTrue(supportersWithInteractions >= 2);
+        assertTrue(supportersWithInteractions <= 4);
+        assertTrue(samplePersons.stream()
+                .filter(person -> !person.getInteractions().isEmpty())
+                .allMatch(person -> person.getInteractions().size() >= 2));
+    }
+
+    @Test
     public void getSampleAddressBook_noDuplicates_containsAllSamplePersons() {
         ReadOnlyAddressBook sampleAddressBook = SampleDataUtil.getSampleAddressBook();
         assertEquals(samplePersons, sampleAddressBook.getPersonList());
