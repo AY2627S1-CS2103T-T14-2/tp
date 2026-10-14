@@ -132,6 +132,17 @@
     -fx-text-fill: #010504;
 }
 
+#supporterDetailPanel .label {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 13px;
+    -fx-font-weight: normal;
+}
+
+#supporterDetailPanel #supporterName,
+#supporterDetailPanel #historyHeading {
+    -fx-font-weight: bold;
+}
+
 .stack-pane {
      -fx-background-color: derive(#1d1d1d, 20%);
 }
