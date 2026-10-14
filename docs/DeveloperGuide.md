@@ -125,7 +125,7 @@ How the parsing works:
 
 The `Model` component,
 
-- stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+- stores the supporter data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
 - stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 - stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 - does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -145,7 +145,7 @@ The `Model` component,
 
 The `Storage` component,
 
-- can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
+- can save both supporter data and user preference data in JSON format, and read them back into corresponding objects.
 - is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 - depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
@@ -161,7 +161,9 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Startup data-loading warning
 
-`MainApp#initModelManager(Storage, ReadOnlyUserPrefs)` uses the existing storage validation when loading supporter data. A valid file supplies the initial supporters; a missing file supplies sample supporters. Neither case records a warning.
+`MainApp#initModelManager(Storage, ReadOnlyUserPrefs)` uses the existing storage validation when loading supporter data. A valid file supplies the initial supporters; a missing file supplies the sample supporters from `SampleDataUtil#getSampleAddressBook()`. Neither case records a warning.
+
+Some sample supporters come with dated example interactions, built with the `Person` constructor that takes an interaction list. A new user can therefore try `view` and see a populated history before logging anything.
 
 When `Storage#readAddressBook()` throws `DataLoadingException`, `MainApp` starts with an empty `AddressBook` and records a warning containing the data file path, the empty-list fallback and advice to copy the file before another command overwrites it. Startup only reads supporter data, so the unreadable file remains untouched.
 
@@ -192,11 +194,11 @@ to `Model.PREDICATE_SHOW_ALL_PERSONS`, restoring the full list without changing 
 
 `DeleteCommand#execute(Model)` validates its index against `Model#getFilteredPersonList()`, so deletion after `find` targets the displayed supporter rather than the same index in the full list. It reads `Person#getInteractions().size()` before calling `Model#deletePerson(Person)` and reports that count on the second line of its success message. Every history entry is counted, including identical interactions.
 
-Interactions are stored within each immutable `Person`. Removing that supporter from the address book removes their history from stored data without a separate interaction-deletion loop. `Messages#format(Person)` supplies the deleted supporter's details, preserving the shared formatting of stages and optional fields.
+Interactions are stored within each immutable `Person`. Removing that supporter from the `AddressBook` removes their history from stored data without a separate interaction-deletion loop. `Messages#format(Person)` supplies the deleted supporter's details, preserving the shared formatting of stages and optional fields.
 
 The command retains the existing filter. `ModelManager#deletePerson(Person)` clears the viewed selection when that supporter is removed and preserves it when another supporter is deleted. After execution, `MainWindow` refreshes the detail panel from this model state. Deleting the displayed supporter removes their details and history and restores the startup prompt.
 
-`LogicManager` saves the resulting address book after successful execution. Other supporters and their histories remain unchanged, including plain-text notes mentioning the deleted supporter. Failed parsing or index validation leaves data, filtering, viewed selection and the saved file unchanged.
+`LogicManager` saves the resulting supporter data after successful execution. Other supporters and their histories remain unchanged, including plain-text notes mentioning the deleted supporter. Failed parsing or index validation leaves data, filtering, viewed selection and the saved file unchanged.
 
 `DeleteCommandTest` checks zero, one, multiple and duplicate interaction counts and selection behavior. `DeleteCommandIntegrationTest` runs `find`, `view` and `delete` through the logic layer, verifies the remaining filter and selection, and reloads saved JSON to check that only the targeted supporter and their history were removed.
 
@@ -429,7 +431,7 @@ Selection follows these rules:
 * Successful `view`, `log` and `stage` commands select their target. `log` selects the replacement record after appending its interaction. `stage` selects the replacement record after a stage change, or the existing record when the requested stage is already set.
 * `ModelManager#setPerson(Person, Person)` updates selection to the replacement record when the viewed supporter is changed.
 * `ModelManager#deletePerson(Person)` clears selection when the viewed supporter is deleted.
-* `ModelManager#setAddressBook(ReadOnlyAddressBook)` clears selection when the address book is reset, including by `clear`.
+* `ModelManager#setAddressBook(ReadOnlyAddressBook)` clears selection when all supporter data is replaced, including by `clear`.
 
 Editing or deleting another supporter preserves selection. Parsing and index-validation failures also preserve it.
 
@@ -982,7 +984,7 @@ testers are expected to do more _exploratory_ testing.
    1. Download the JAR file and copy it into an empty folder.
 
    1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+      Expected: The GUI opens with a set of sample supporters, some of whom already have logged interactions. The window size may not be optimal.
 
 1. Saving window preferences
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
@@ -1035,7 +1037,7 @@ testers are expected to do more _exploratory_ testing.
       Expected: An invalid-command-format message is shown. No supporter or history is deleted, and the list is unchanged.
 
    1. Test case: `delete 2`<br>
-      Expected: `The supporter index provided is invalid.` is shown, even if the full address book has more supporters. The displayed list and data are unchanged.
+      Expected: `The supporter index provided is invalid.` is shown, even if the full supporter list has more supporters. The displayed list and data are unchanged.
 
    1. Other incorrect commands to try: `delete`, `delete abc`, `delete -1` and `delete 1 2`.<br>
       Expected: An invalid-command-format message, with no data or list changes.
@@ -1122,6 +1124,13 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: `view 1`<br>
       Expected: The message and detail panel show the supporter who was previously at index 2. Only that supporter remains in the displayed list.
+
+1. Viewing a sample supporter's history
+
+   1. Prerequisites: Launch the app with no `data/supporterbook.json`, so that sample supporters are loaded, then run `list`.
+
+   1. Test case: `view 1`<br>
+      Expected: `Showing Alex Yeoh: 2 interaction(s) logged`. The history shows `#2  12 Sep 2026` before `#1  18 Jul 2026`.
 
 1. Invalid view commands
 

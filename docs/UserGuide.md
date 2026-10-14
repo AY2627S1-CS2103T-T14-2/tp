@@ -4,9 +4,9 @@
   pageNav: 3
 ---
 
-# AB-3 User Guide
+# SupporterBook User Guide
 
-AddressBook Level 3 (AB3) is a **desktop application for managing contacts, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). If you type quickly, AB3 can help you manage contacts faster than traditional GUI applications.
+SupporterBook is a **desktop application for fundraising and outreach staff at small charities to manage donor and corporate supporter relationships, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). It keeps supporter details, cultivation stages and interaction histories in one place. If you type quickly, SupporterBook can help you find and update supporter records faster than traditional GUI applications.
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -23,7 +23,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 1. Copy the file to the folder you want to use as the _home folder_ for SupporterBook. Your data is saved in a `data` folder inside it.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar supporterbook.jar`.<br>
-   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample supporters.<br>
+   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample supporters. A few already have logged interactions, which you can see with `view`.<br>
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
@@ -269,7 +269,7 @@ Examples:
 
 ### Clearing all entries: `clear`
 
-Clears all entries from the address book.
+Deletes all supporters, together with their logged interactions.
 
 Format: `clear`
 
@@ -334,7 +334,7 @@ Edit the data file only if you are confident that you can follow the validation 
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous AddressBook home folder.
+**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous SupporterBook home folder.
 
 ---
 
