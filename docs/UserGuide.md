@@ -222,27 +222,30 @@ Deletion has no confirmation prompt or undo in this version. An invalid command 
 
 ### Logging an interaction: `log`
 
-Records an interaction with a supporter, dated today.
+Records an interaction with a supporter, dated today or on a specified past date.
 
-Format: `log INDEX nt/NOTE`
+Format: `log INDEX nt/NOTE [dt/DATE]`
 
 - Logs the interaction against the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and must be a positive integer.
 - `NOTE` records what happened. It can contain any characters, must not be blank, and can be at most 500 characters long. Leading and trailing spaces are removed.
-- The interaction is automatically dated using the computer's current date.
+- Without `dt/`, the interaction is dated using the computer's current date when the command runs.
+- `DATE` must be a valid calendar date in `yyyy-MM-dd` format, for example `2024-02-29`. Today and past dates are accepted; future dates are rejected based on the computer's current date. An empty `dt/` is invalid.
+- `nt/` and `dt/` can appear in either order. Each prefix may only be supplied once.
 - Interactions are numbered in the order they are logged, starting from `#1` for each supporter.
 - Identical notes logged on the same day are accepted as separate interactions.
 - On success, the result display shows the interaction number, supporter, date and note.
-- The detail panel switches to this supporter and shows their updated history, with the newest interaction first.
+- The detail panel switches to this supporter and shows their updated history, sorted by interaction date, newest first. For equal dates, the higher entry number appears first. A back-dated entry may therefore appear further down the history, while keeping its newly assigned logging-order number.
 - Logging an interaction does not change the supporter's cultivation stage or the currently displayed list. A `find` result therefore remains in place.
 
 Examples:
 
 - `log 2 nt/Coffee at Raffles Place, keen on a Q4 volunteering day`
+- `log 2 nt/Meeting entered later dt/2024-02-29` records a meeting on 29 February 2024.
 - `find Tan` followed by `log 1 nt/Left voicemail about the year-end appeal` logs the interaction against the 1st supporter in the search results.
 
 <box type="warning" seamless>
 
-If a note contains a space followed by `nt/`, that text is treated as a second note prefix and the command is rejected. Rephrase the note to avoid `nt/`.
+A space followed by `nt/` or `dt/` inside a note is interpreted as a parameter prefix, not note text. This may split the note or cause a validation error. Rephrase the note to avoid these sequences.
 </box>
 
 ### Viewing a supporter's details and interaction history: `view`
@@ -355,7 +358,7 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t/TAG]... `<br> e.g., `edit 2 p/91234567 a/1 HarbourFront Avenue`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei`
 **List**   | `list`
-**Log**    | `log INDEX nt/NOTE`<br> e.g., `log 2 nt/Called to discuss the year-end appeal`
+**Log**    | `log INDEX nt/NOTE [dt/DATE]`<br> e.g., `log 2 nt/Called to discuss the year-end appeal`
 **Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
