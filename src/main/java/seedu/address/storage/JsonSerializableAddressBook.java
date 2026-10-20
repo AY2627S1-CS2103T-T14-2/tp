@@ -59,7 +59,7 @@ class JsonSerializableAddressBook {
             addressBook.addPerson(person);
         }
 
-        // checked after every supporter is added, since an introducer may appear later in the file
+        // checked after all supporters are added, since an introducer may appear later in the file
         for (Person person : addressBook.getPersonList()) {
             Optional<Name> introducer = person.getIntroducer();
             if (introducer.isPresent() && !hasPersonNamed(addressBook, introducer.get())) {
