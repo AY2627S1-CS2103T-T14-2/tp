@@ -167,28 +167,6 @@ Examples:
 - `stage 2 cultivating` moves the 2nd supporter in the displayed list to stage `Cultivating`.
 - `find Tan` followed by `stage 1 GIVING` moves the 1st supporter in the results of the `find` command to stage `Giving`.
 
-### Recording who introduced a supporter: `intro`
-
-Records which supporter introduced another, e.g. the board member who introduced you to a company's CSR lead. This lets you see whose goodwill created each relationship, and everyone a given person has introduced you to.
-
-Format: `intro INDEX by/[INTRODUCER_INDEX]`
-
-- `INDEX` is the supporter who was introduced, and `INTRODUCER_INDEX` is the supporter who introduced them. Both refer to the index numbers shown in the displayed supporter list and **must be positive integers** 1, 2, 3, ...
-- Both supporters must be in the displayed list. If one of them is hidden by a `find` filter, use `find` with both names, e.g. `find tan lim`, or run `list` first.
-- Running `intro` again for the same supporter replaces their introducer. Each supporter has at most one introducer.
-- Leave out `INTRODUCER_INDEX` to remove the record, e.g. `intro 3 by/`.
-- A supporter cannot be their own introducer.
-- If nothing would change (the same introducer again, or removing a record that does not exist), a message says so and the record is unchanged.
-- On success, the detail panel switches to the introduced supporter. The displayed list stays the same, so a `find` result is kept.
-- The detail panel shows each supporter's `Introducer`, and under `Introduced`, everyone they introduced.
-- Renaming an introducer with `edit` keeps their introductions. Deleting an introducer removes them as the introducer of everyone they introduced.
-
-Examples:
-
-- `intro 3 by/1` records that the 1st supporter in the displayed list introduced the 3rd.
-- `find tan lim` followed by `intro 2 by/1` records an introduction between the two supporters shown.
-- `intro 3 by/` removes the 3rd supporter's introducer.
-
 ### Finding supporters by part of a name: `find`
 
 Shows supporters whose names contain at least one of the given keywords.
@@ -290,6 +268,28 @@ Examples:
 
 * `view 2` selects the 2nd supporter in the displayed list.
 * `find Priya` followed by `view 1` selects the 1st supporter in the search results.
+
+### Recording who introduced a supporter: `intro`
+
+Records which supporter introduced another, e.g. the board member who introduced you to a company's CSR lead. This lets you see whose goodwill created each relationship, and everyone a given person has introduced you to.
+
+Format: `intro INDEX by/[INTRODUCER_INDEX]`
+
+- `INDEX` is the supporter who was introduced, and `INTRODUCER_INDEX` is the supporter who introduced them. Both refer to the index numbers shown in the displayed supporter list and **must be positive integers** 1, 2, 3, ...
+- Both supporters must be in the displayed list. If one of them is hidden by a `find` filter, use `find` with both names, e.g. `find tan lim`, or run `list` first.
+- Running `intro` again for the same supporter replaces their introducer. Each supporter has at most one introducer.
+- Leave out `INTRODUCER_INDEX` to remove the record, e.g. `intro 3 by/`.
+- A supporter cannot be their own introducer.
+- If nothing would change (the same introducer again, or removing a record that does not exist), a message says so and the record is unchanged.
+- On success, the detail panel switches to the introduced supporter. The displayed list stays the same, so a `find` result is kept.
+- The detail panel shows each supporter's `Introducer`, and under `Introduced`, everyone they introduced.
+- Renaming an introducer with `edit` keeps their introductions. Deleting an introducer removes them as the introducer of everyone they introduced.
+
+Examples:
+
+- `intro 3 by/1` records that the 1st supporter in the displayed list introduced the 3rd.
+- `find tan lim` followed by `intro 2 by/1` records an introduction between the two supporters shown.
+- `intro 3 by/` removes the 3rd supporter's introducer.
 
 ### Clearing all entries: `clear`
 
