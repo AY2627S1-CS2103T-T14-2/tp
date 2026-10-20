@@ -293,7 +293,7 @@ SupporterBook loads `data/supporterbook.json` from the folder the app is launche
 
 > Could not load data/supporterbook.json because it is not in the expected format. Starting with an empty list. Your next command will overwrite the file, so copy it somewhere safe now if you want to repair it.
 
-The message includes the path of the file that could not be loaded. Invalid JSON, missing required fields, invalid field values or duplicate supporters can cause this warning.
+The message includes the path of the file that could not be loaded. Invalid JSON, missing required fields, invalid field values, duplicate supporters or an introducer who is not in the file can cause this warning.
 
 Startup does not overwrite the unreadable file. Copy it somewhere safe before running another command if you want to recover its contents. Even `list` saves data after executing, so it can replace the file with the empty list. A command that fails parsing or validation does not overwrite it.
 
@@ -310,6 +310,8 @@ A supporter's `"phone"`, `"email"` and `"address"` keys can each be left out if 
 A supporter may also have an `"organisation"`, such as the company a CSR contact works for. Leave the key out if the supporter has no organisation. If present, it must not be blank and must be at most 100 characters long.
 
 Each supporter card in the list shows the supporter's organisation, or `(no organisation)` if they have none.
+
+A supporter may also have an `"introducer"`, the name of the supporter who introduced them, e.g. a board member. Leave the key out if no introducer is recorded. If present, it must be the name of another supporter in the same file (capital letters and extra spaces are ignored), and cannot be the supporter's own name.
 
 A supporter's `"interactions"` array stores their interaction history in logging order. Each entry has a `"date"` in `yyyy-MM-dd` format and a non-blank `"note"` of at most 500 characters. For example:
 
