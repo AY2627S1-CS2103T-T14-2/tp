@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
@@ -145,6 +146,26 @@ public class Person {
      */
     public Optional<Name> getIntroducer() {
         return Optional.ofNullable(introducer);
+    }
+
+    /**
+     * Returns true if the supporter called {@code name} is recorded as this supporter's introducer.
+     * Names are compared ignoring case and extra spaces.
+     */
+    public boolean isIntroducedBy(Name name) {
+        requireNonNull(name);
+        return introducer != null && introducer.isSameName(name);
+    }
+
+    /**
+     * Returns a copy of this supporter with {@code newIntroducer} as their introducer, or with none if it is empty.
+     * Every other detail is unchanged.
+     *
+     * @throws IllegalArgumentException if {@code newIntroducer} is this supporter's own name.
+     */
+    public Person withIntroducer(Optional<Name> newIntroducer) {
+        return new Person(name, getPhone(), getEmail(), getAddress(), getOrganisation(), newIntroducer, stage,
+                interactions, tags);
     }
 
     public Stage getStage() {

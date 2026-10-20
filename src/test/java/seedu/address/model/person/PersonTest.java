@@ -247,6 +247,29 @@ public class PersonTest {
     }
 
     @Test
+    public void isIntroducedBy() {
+        Person aliceByBenson = new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName).build();
+
+        // recorded introducer, in any case -> returns true
+        assertTrue(aliceByBenson.isIntroducedBy(BENSON.getName()));
+        assertTrue(aliceByBenson.isIntroducedBy(new Name(BENSON.getName().fullName.toLowerCase())));
+
+        // someone else -> returns false
+        assertFalse(aliceByBenson.isIntroducedBy(BOB.getName()));
+
+        // no introducer -> returns false
+        assertFalse(ALICE.isIntroducedBy(BENSON.getName()));
+    }
+
+    @Test
+    public void withIntroducer_keepsOtherDetails() {
+        Person aliceByBenson = ALICE.withIntroducer(Optional.of(BENSON.getName()));
+        assertEquals(new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName).build(), aliceByBenson);
+        assertEquals(ALICE, aliceByBenson.withIntroducer(Optional.empty()));
+        assertThrows(IllegalArgumentException.class, () -> ALICE.withIntroducer(Optional.of(ALICE.getName())));
+    }
+
+    @Test
     public void isValidIntroducer() {
         // no introducer -> returns true
         assertTrue(Person.isValidIntroducer(ALICE.getName(), Optional.empty()));
