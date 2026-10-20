@@ -28,6 +28,7 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ORGANISATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
@@ -43,10 +44,8 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
-import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
-import seedu.address.model.person.Organisation;
 import seedu.address.model.person.Phone;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
@@ -92,9 +91,6 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1" + INVALID_NAME_DESC, Name.MESSAGE_CONSTRAINTS); // invalid name
         assertParseFailure(parser, "1" + INVALID_PHONE_DESC, Phone.MESSAGE_CONSTRAINTS); // invalid phone
         assertParseFailure(parser, "1" + INVALID_EMAIL_DESC, Email.MESSAGE_CONSTRAINTS); // invalid email
-        assertParseFailure(parser, "1" + INVALID_ADDRESS_DESC, Address.MESSAGE_CONSTRAINTS); // invalid address
-        assertParseFailure(parser, "1" + INVALID_ORGANISATION_DESC,
-                Organisation.MESSAGE_CONSTRAINTS); // blank organisation
         assertParseFailure(parser, "1" + INVALID_TAG_DESC, Tag.MESSAGE_CONSTRAINTS); // invalid tag
 
         // invalid phone followed by valid email
@@ -212,6 +208,37 @@ public class EditCommandParserTest {
 
         assertParseFailure(parser, userInput,
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS));
+    }
+
+    @Test
+    public void parse_clearOptionalFields_success() {
+        Index targetIndex = INDEX_FIRST_PERSON;
+
+        // each optional field on its own
+        assertParseSuccess(parser, targetIndex.getOneBased() + " " + PREFIX_PHONE,
+                new EditCommand(targetIndex, new EditPersonDescriptorBuilder().withoutPhone().build()));
+        assertParseSuccess(parser, targetIndex.getOneBased() + " " + PREFIX_EMAIL,
+                new EditCommand(targetIndex, new EditPersonDescriptorBuilder().withoutEmail().build()));
+        assertParseSuccess(parser, targetIndex.getOneBased() + " " + PREFIX_ADDRESS,
+                new EditCommand(targetIndex, new EditPersonDescriptorBuilder().withoutAddress().build()));
+        assertParseSuccess(parser, targetIndex.getOneBased() + " " + PREFIX_ORGANISATION,
+                new EditCommand(targetIndex, new EditPersonDescriptorBuilder().withoutOrganisation().build()));
+
+        // only spaces after the prefix also clears it
+        assertParseSuccess(parser, targetIndex.getOneBased() + INVALID_ORGANISATION_DESC,
+                new EditCommand(targetIndex, new EditPersonDescriptorBuilder().withoutOrganisation().build()));
+
+        // cleared fields together with an edited one
+        String userInput = targetIndex.getOneBased() + INVALID_ADDRESS_DESC + PHONE_DESC_AMY + " " + PREFIX_EMAIL;
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutAddress()
+                .withPhone(VALID_PHONE_AMY).withoutEmail().build();
+        assertParseSuccess(parser, userInput, new EditCommand(targetIndex, descriptor));
+    }
+
+    @Test
+    public void parse_clearName_failure() {
+        // the name is required, so it cannot be cleared
+        assertParseFailure(parser, "1 " + PREFIX_NAME, Name.MESSAGE_CONSTRAINTS);
     }
 
     @Test
