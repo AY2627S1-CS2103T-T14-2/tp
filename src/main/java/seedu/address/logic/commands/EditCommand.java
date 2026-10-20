@@ -108,9 +108,11 @@ public class EditCommand extends Command {
                 editPersonDescriptor.getOrganisation().or(personToEdit::getOrganisation);
         Set<Tag> updatedTags = editPersonDescriptor.getTags().orElse(personToEdit.getTags());
 
-        // stage and interaction history are changed with their own commands, so edit carries them over unchanged
+        // introducer, stage and interaction history are changed with their own commands,
+        // so edit carries them over unchanged
         return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedOrganisation,
-                personToEdit.getStage(), personToEdit.getInteractions(), updatedTags);
+                personToEdit.getIntroducer(), personToEdit.getStage(), personToEdit.getInteractions(),
+                updatedTags);
     }
 
     @Override

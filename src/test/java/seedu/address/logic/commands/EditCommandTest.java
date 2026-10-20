@@ -155,6 +155,22 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_editSupporterWithIntroducer_introducerPreserved() throws Exception {
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person secondPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        Person introducedPerson = new PersonBuilder(firstPerson)
+                .withIntroducer(secondPerson.getName().fullName)
+                .build();
+        model.setPerson(firstPerson, introducedPerson);
+
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build();
+        new EditCommand(INDEX_FIRST_PERSON, descriptor).execute(model);
+
+        Person editedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        assertEquals(introducedPerson.getIntroducer(), editedPerson.getIntroducer());
+    }
+
+    @Test
     public void execute_noFieldSpecifiedUnfilteredList_success() {
         EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptor());
         Person editedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
