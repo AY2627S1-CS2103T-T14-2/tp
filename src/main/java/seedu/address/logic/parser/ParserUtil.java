@@ -24,6 +24,8 @@ import seedu.address.model.tag.Tag;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+    public static final String MESSAGE_INVALID_INTERACTION_INDICES =
+            "Provide exactly two positive integer indices: INDEX ENTRY.";
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
@@ -36,6 +38,42 @@ public class ParserUtil {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
         return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+    }
+
+    /**
+     * Parses {@code INDEX ENTRY} into a supporter index and an interaction index.
+     * Accepts leading, trailing and separating whitespace. Does not check either index against model data.
+     * Command parsers should wrap a failure with their own invalid-format usage message.
+     *
+     * @throws ParseException if there are not exactly two valid positive integer indices.
+     */
+    public static InteractionIndices parseInteractionIndices(String indices) throws ParseException {
+        requireNonNull(indices);
+        String[] parts = indices.trim().split("\\s+");
+        if (parts.length != 2) {
+            throw new ParseException(MESSAGE_INVALID_INTERACTION_INDICES);
+        }
+        try {
+            return new InteractionIndices(parseIndex(parts[0]), parseIndex(parts[1]));
+        } catch (ParseException e) {
+            throw new ParseException(MESSAGE_INVALID_INTERACTION_INDICES, e);
+        }
+    }
+
+    /**
+     * The supporter and interaction indices supplied to an interaction-editing or deletion command.
+     *
+     * @param supporterIndex index in the displayed supporter list.
+     * @param interactionIndex entry number in that supporter's interaction history.
+     */
+    public record InteractionIndices(Index supporterIndex, Index interactionIndex) {
+        /**
+         * Creates a pair of non-null supporter and interaction indices.
+         */
+        public InteractionIndices {
+            requireNonNull(supporterIndex);
+            requireNonNull(interactionIndex);
+        }
     }
 
     /**

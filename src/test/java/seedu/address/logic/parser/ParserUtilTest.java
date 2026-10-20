@@ -11,6 +11,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
+import seedu.address.logic.parser.ParserUtil.InteractionIndices;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
@@ -56,6 +58,50 @@ public class ParserUtilTest {
 
         // Leading and trailing whitespaces
         assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseIndex("  1  "));
+    }
+
+    @Test
+    public void parseInteractionIndices_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseInteractionIndices(null));
+    }
+
+    @Test
+    public void parseInteractionIndices_validInput_returnsNamedIndices() throws Exception {
+        InteractionIndices indices = ParserUtil.parseInteractionIndices("2 3");
+        assertEquals(Index.fromOneBased(2), indices.supporterIndex());
+        assertEquals(Index.fromOneBased(3), indices.interactionIndex());
+    }
+
+    @Test
+    public void parseInteractionIndices_whitespaceAndLeadingZeros_success() throws Exception {
+        InteractionIndices expected = new InteractionIndices(Index.fromOneBased(2), Index.fromOneBased(3));
+        assertEquals(expected, ParserUtil.parseInteractionIndices(WHITESPACE + "02 \t 003" + WHITESPACE));
+        assertEquals(expected, ParserUtil.parseInteractionIndices("2\n3"));
+    }
+
+    @Test
+    public void parseInteractionIndices_maximumIndices_success() throws Exception {
+        InteractionIndices expected = new InteractionIndices(Index.fromOneBased(Integer.MAX_VALUE),
+                Index.fromOneBased(Integer.MAX_VALUE));
+        assertEquals(expected, ParserUtil.parseInteractionIndices("2147483647 2147483647"));
+    }
+
+    @Test
+    public void parseInteractionIndices_wrongNumberOfParts_throwsParseException() {
+        for (String input : List.of("", WHITESPACE, "1", "1 2 3", "1 2 extra", "1,2")) {
+            assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES, () ->
+                    ParserUtil.parseInteractionIndices(input));
+        }
+    }
+
+    @Test
+    public void parseInteractionIndices_invalidIndexInEitherPosition_throwsParseException() {
+        for (String invalid : List.of("0", "-1", "+1", "1.5", "abc", "2147483648", "99999999999999999999")) {
+            assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES, () ->
+                    ParserUtil.parseInteractionIndices(invalid + " 1"));
+            assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES, () ->
+                    ParserUtil.parseInteractionIndices("1 " + invalid));
+        }
     }
 
     @Test
