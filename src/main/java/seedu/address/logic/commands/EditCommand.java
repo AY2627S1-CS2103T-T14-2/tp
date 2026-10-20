@@ -84,12 +84,21 @@ public class EditCommand extends Command {
         }
 
         Person personToEdit = lastShownList.get(index.getZeroBased());
-        Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
+        Name updatedName = editPersonDescriptor.getName().orElse(personToEdit.getName());
 
-        if (!personToEdit.isSamePerson(editedPerson) && model.hasPerson(editedPerson)) {
-            throw new CommandException(
-                    Messages.getErrorMessageForDuplicatePerson(model.getAddressBook().getPersonList(), editedPerson));
+        // checked before the edited supporter is created: renaming them to their introducer's name clashes
+        // with the introducer, and would otherwise be rejected by Person as a self-introduction
+        if (!personToEdit.getName().isSameName(updatedName)) {
+            Optional<Person> namesake = model.getAddressBook().getPersonList().stream()
+                    .filter(person -> person.getName().isSameName(updatedName))
+                    .findFirst();
+            if (namesake.isPresent()) {
+                throw new CommandException(
+                        String.format(Messages.MESSAGE_DUPLICATE_PERSON, namesake.get().getName()));
+            }
         }
+
+        Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
 
         model.setPerson(personToEdit, editedPerson);
         if (!personToEdit.getName().equals(editedPerson.getName())) {

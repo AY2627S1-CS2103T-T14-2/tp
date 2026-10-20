@@ -275,6 +275,24 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_renameToOwnIntroducer_failure() {
+        // the new name clashes with the introducer, so this is a duplicate rather than a self-introduction
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person secondPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        Person introducedPerson = new PersonBuilder(firstPerson)
+                .withIntroducer(secondPerson.getName().fullName)
+                .build();
+        model.setPerson(firstPerson, introducedPerson);
+
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withName(secondPerson.getName().fullName.toLowerCase()).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+
+        String expectedMessage = String.format(Messages.MESSAGE_DUPLICATE_PERSON, secondPerson.getName());
+        assertCommandFailure(editCommand, model, expectedMessage);
+    }
+
+    @Test
     public void execute_noFieldSpecifiedUnfilteredList_success() {
         EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptor());
         Person editedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
