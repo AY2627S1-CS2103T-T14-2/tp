@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
@@ -39,6 +40,7 @@ public class LogCommand extends Command {
 
     private final Index targetIndex;
     private final String note;
+    private final Optional<LocalDate> date;
     private final Clock clock;
 
     /**
@@ -49,13 +51,28 @@ public class LogCommand extends Command {
     }
 
     /**
+     * Creates a {@code LogCommand} with a validated explicit date, or today's date at execution if absent.
+     */
+    public LogCommand(Index targetIndex, String note, Optional<LocalDate> date) {
+        this(targetIndex, note, date, Clock.systemDefaultZone());
+    }
+
+    /**
      * Creates a {@code LogCommand} that dates the interaction using {@code clock}.
      */
     LogCommand(Index targetIndex, String note, Clock clock) {
-        requireAllNonNull(targetIndex, note, clock);
+        this(targetIndex, note, Optional.empty(), clock);
+    }
+
+    /**
+     * Creates a {@code LogCommand} with a validated explicit date, falling back to {@code clock} at execution.
+     */
+    LogCommand(Index targetIndex, String note, Optional<LocalDate> date, Clock clock) {
+        requireAllNonNull(targetIndex, note, date, clock);
         checkArgument(Interaction.isValidNote(note), Interaction.MESSAGE_CONSTRAINTS);
         this.targetIndex = targetIndex;
         this.note = note.trim();
+        this.date = date;
         this.clock = clock;
     }
 
@@ -69,7 +86,7 @@ public class LogCommand extends Command {
         }
 
         Person personToUpdate = lastShownList.get(targetIndex.getZeroBased());
-        Interaction interaction = new Interaction(LocalDate.now(clock), note);
+        Interaction interaction = new Interaction(date.orElseGet(() -> LocalDate.now(clock)), note);
         List<Interaction> updatedInteractions = new ArrayList<>(personToUpdate.getInteractions());
         updatedInteractions.add(interaction);
 
@@ -95,7 +112,8 @@ public class LogCommand extends Command {
         }
 
         return targetIndex.equals(otherLogCommand.targetIndex)
-                && note.equals(otherLogCommand.note);
+                && note.equals(otherLogCommand.note)
+                && date.equals(otherLogCommand.date);
     }
 
     @Override
@@ -103,6 +121,7 @@ public class LogCommand extends Command {
         return new ToStringBuilder(this)
                 .add("targetIndex", targetIndex)
                 .add("note", note)
+                .add("date", date)
                 .toString();
     }
 }

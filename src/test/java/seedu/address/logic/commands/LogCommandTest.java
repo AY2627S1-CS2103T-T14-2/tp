@@ -46,7 +46,9 @@ public class LogCommandTest {
     public void constructor_nullArguments_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new LogCommand(null, VALID_NOTE));
         assertThrows(NullPointerException.class, () -> new LogCommand(INDEX_FIRST_PERSON, null));
-        assertThrows(NullPointerException.class, () -> new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, null));
+        assertThrows(NullPointerException.class, () -> new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, (Clock) null));
+        assertThrows(NullPointerException.class, () ->
+                new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, (Optional<LocalDate>) null));
     }
 
     @Test
@@ -70,6 +72,64 @@ public class LogCommandTest {
         expectedModel.setViewedPerson(updatedPerson);
 
         assertCommandSuccess(logCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_explicitPastDate_appendsAndPreservesSupporter() {
+        Person originalPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Interaction existingInteraction = new Interaction(FIXED_DATE, "Existing meeting");
+        Person personToUpdate = new PersonBuilder(originalPerson).withInteractions(existingInteraction).build();
+        model.setPerson(originalPerson, personToUpdate);
+        LocalDate pastDate = FIXED_DATE.minusDays(10);
+        Person updatedPerson = new PersonBuilder(personToUpdate)
+                .withInteractions(existingInteraction, new Interaction(pastDate, VALID_NOTE)).build();
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        expectedModel.setPerson(personToUpdate, updatedPerson);
+        expectedModel.setViewedPerson(updatedPerson);
+
+        LogCommand command = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, Optional.of(pastDate), FIXED_CLOCK);
+        String expectedMessage = String.format(LogCommand.MESSAGE_SUCCESS, 2, personToUpdate.getName(),
+                "06 Sep 2026", VALID_NOTE);
+
+        assertCommandSuccess(command, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_explicitToday_usesSpecifiedDate() throws Exception {
+        new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, Optional.of(FIXED_DATE), FIXED_CLOCK).execute(model);
+
+        assertEquals(List.of(new Interaction(FIXED_DATE, VALID_NOTE)),
+                model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased()).getInteractions());
+    }
+
+    @Test
+    public void execute_emptyDate_usesClockAtExecution() throws Exception {
+        // the clock must only be consulted when execute is called, not when the command is constructed
+        boolean[] executing = {false};
+        Clock executionClock = new Clock() {
+
+            @Override
+            public java.time.ZoneId getZone() {
+                return ZoneOffset.UTC;
+            }
+
+            @Override
+            public Clock withZone(java.time.ZoneId zone) {
+                return FIXED_CLOCK.withZone(zone);
+            }
+
+            @Override
+            public Instant instant() {
+                assertTrue(executing[0]);
+                return FIXED_CLOCK.instant();
+            }
+        };
+        LogCommand command = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, Optional.empty(), executionClock);
+        executing[0] = true;
+        command.execute(model);
+
+        assertEquals(List.of(new Interaction(FIXED_DATE, VALID_NOTE)),
+                model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased()).getInteractions());
     }
 
     @Test
@@ -190,6 +250,12 @@ public class LogCommandTest {
         // same values -> returns true
         assertTrue(logFirstCommand.equals(logFirstCommandCopy));
 
+        LogCommand datedCommand = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, Optional.of(FIXED_DATE));
+        assertTrue(datedCommand.equals(new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, Optional.of(FIXED_DATE))));
+        assertFalse(datedCommand.equals(logFirstCommand));
+        assertFalse(datedCommand.equals(new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE,
+                Optional.of(FIXED_DATE.minusDays(1)))));
+
         // different types -> returns false
         assertFalse(logFirstCommand.equals(1));
 
@@ -207,7 +273,15 @@ public class LogCommandTest {
     public void toStringMethod() {
         LogCommand logCommand = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, FIXED_CLOCK);
         String expected = LogCommand.class.getCanonicalName() + "{targetIndex=" + INDEX_FIRST_PERSON
-                + ", note=" + VALID_NOTE + "}";
+                + ", note=" + VALID_NOTE + ", date=Optional.empty}";
         assertEquals(expected, logCommand.toString());
     }
+    @Test
+    public void toStringMethod_explicitDate() {
+        LogCommand command = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, Optional.of(FIXED_DATE));
+        String expected = LogCommand.class.getCanonicalName() + "{targetIndex=" + INDEX_FIRST_PERSON
+                + ", note=" + VALID_NOTE + ", date=Optional[2026-09-16]}";
+        assertEquals(expected, command.toString());
+    }
+
 }
