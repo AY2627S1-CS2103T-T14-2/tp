@@ -128,6 +128,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t
 - To remove all of a supporter's tags, enter `t/` without a tag after it.
 - A supporter's stage cannot be changed with `edit`, and stays the same when other details are edited. Use the `stage` command instead.
 - A supporter's logged interactions are kept when their details are edited.
+- A supporter's introducer is kept when their details are edited. If you rename a supporter who introduced others, those supporters show the new name as their introducer.
 - A supporter's name cannot be changed to the name of another supporter, using the same comparison as `add`. Changing only the capitalisation of their own name is allowed.
 - After editing, the list shows all supporters (any `find` filter is cleared).
 
@@ -165,6 +166,28 @@ Examples:
 
 - `stage 2 cultivating` moves the 2nd supporter in the displayed list to stage `Cultivating`.
 - `find Tan` followed by `stage 1 GIVING` moves the 1st supporter in the results of the `find` command to stage `Giving`.
+
+### Recording who introduced a supporter: `intro`
+
+Records which supporter introduced another, e.g. the board member who introduced you to a company's CSR lead. This lets you see whose goodwill created each relationship, and everyone a given person has introduced you to.
+
+Format: `intro INDEX by/[INTRODUCER_INDEX]`
+
+- `INDEX` is the supporter who was introduced, and `INTRODUCER_INDEX` is the supporter who introduced them. Both refer to the index numbers shown in the displayed supporter list and **must be positive integers** 1, 2, 3, ...
+- Both supporters must be in the displayed list. If one of them is hidden by a `find` filter, use `find` with both names, e.g. `find tan lim`, or run `list` first.
+- Running `intro` again for the same supporter replaces their introducer. Each supporter has at most one introducer.
+- Leave out `INTRODUCER_INDEX` to remove the record, e.g. `intro 3 by/`.
+- A supporter cannot be their own introducer.
+- If nothing would change (the same introducer again, or removing a record that does not exist), a message says so and the record is unchanged.
+- On success, the detail panel switches to the introduced supporter. The displayed list stays the same, so a `find` result is kept.
+- The detail panel shows each supporter's `Introducer`, and under `Introduced`, everyone they introduced.
+- Renaming an introducer with `edit` keeps their introductions. Deleting an introducer removes them as the introducer of everyone they introduced.
+
+Examples:
+
+- `intro 3 by/1` records that the 1st supporter in the displayed list introduced the 3rd.
+- `find tan lim` followed by `intro 2 by/1` records an introduction between the two supporters shown.
+- `intro 3 by/` removes the 3rd supporter's introducer.
 
 ### Finding supporters by part of a name: `find`
 
@@ -205,6 +228,7 @@ Format: `delete INDEX`
 - The current find filter is retained, and supporters below the deleted entry move up one number.
 - If the supporter is shown in the detail panel, their details and history are cleared and the startup prompt returns. Deleting another supporter preserves the panel's displayed supporter.
 - Other supporters' details and interaction histories are unchanged, including notes that mention the deleted supporter.
+- If the deleted supporter introduced others, they are removed as those supporters' introducer, and the success message says how many supporters this affected.
 
 Examples:
 
@@ -254,7 +278,7 @@ Format: `view INDEX`
 * `INDEX` is required and must be a positive integer from the currently displayed supporter list. After a `find`, use the index shown in the search results.
 * Supply exactly one index, with no additional arguments.
 * Viewing a supporter preserves the displayed list, its filter and all supporter data.
-* The panel shows the name, stage, organisation, phone, email, address and tags. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically.
+* The panel shows the name, stage, organisation, phone, email, address, tags, introducer and the supporters they introduced. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically.
 * Interactions appear newest first, one entry per row, for example `#4  16 Sep 2026  Sent partnership deck by email`. Entries on the same date appear in descending entry-number order. Entry numbers are based on the order in which interactions were logged.
 * The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
 * A successful `view`, `log` or `stage` switches the panel to its target. Changes to the displayed supporter's record are reflected.
@@ -355,6 +379,7 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t/TAG]... `<br> e.g., `edit 2 p/91234567 a/1 HarbourFront Avenue`
+**Intro**  | `intro INDEX by/[INTRODUCER_INDEX]`<br> e.g., `intro 3 by/1`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei`
 **List**   | `list`
 **Log**    | `log INDEX nt/NOTE`<br> e.g., `log 2 nt/Called to discuss the year-end appeal`
