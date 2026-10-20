@@ -3,6 +3,8 @@ package seedu.address.model.tag;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.util.Comparator;
+
 /**
  * Represents a Tag in the address book.
  * Guarantees: immutable; name is valid as declared in {@link #isValidTagName(String)}
@@ -11,6 +13,11 @@ public class Tag {
 
     public static final String MESSAGE_CONSTRAINTS = "Tag names should be alphanumeric";
     public static final String VALIDATION_REGEX = "\\p{Alnum}+";
+
+    /** Orders tags alphabetically ignoring case, with tags differing only in case in a fixed order. */
+    public static final Comparator<Tag> ALPHABETICAL_ORDER = Comparator
+            .comparing((Tag tag) -> tag.tagName, String.CASE_INSENSITIVE_ORDER)
+            .thenComparing(tag -> tag.tagName);
 
     public final String tagName;
 
@@ -30,6 +37,13 @@ public class Tag {
      */
     public static boolean isValidTagName(String test) {
         return test.matches(VALIDATION_REGEX);
+    }
+
+    /**
+     * Returns true if both tags have the same name, ignoring case.
+     */
+    public boolean isSameTag(Tag otherTag) {
+        return otherTag != null && tagName.equalsIgnoreCase(otherTag.tagName);
     }
 
     @Override

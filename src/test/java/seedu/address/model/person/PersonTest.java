@@ -19,9 +19,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
 public class PersonTest {
@@ -267,6 +269,13 @@ public class PersonTest {
         assertEquals(new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName).build(), aliceByBenson);
         assertEquals(ALICE, aliceByBenson.withIntroducer(Optional.empty()));
         assertThrows(IllegalArgumentException.class, () -> ALICE.withIntroducer(Optional.of(ALICE.getName())));
+    }
+
+    @Test
+    public void withTags_keepsOtherDetails() {
+        Person aliceByBenson = new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName).build();
+        Person retagged = aliceByBenson.withTags(Set.of(new Tag(VALID_TAG_HUSBAND)));
+        assertEquals(new PersonBuilder(aliceByBenson).withTags(VALID_TAG_HUSBAND).build(), retagged);
     }
 
     @Test
