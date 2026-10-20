@@ -126,6 +126,9 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t
 - Existing values will be updated to the input values. Each value follows the same rules as in `add`.
 - When editing tags, all of the supporter's existing tags are removed; adding tags is not cumulative.
 - To remove all of a supporter's tags, enter `t/` without a tag after it.
+- To clear a supporter's address or organisation, enter `a/` or `o/` with nothing after it.
+- To clear a supporter's phone number or email, enter `p/` or `e/` with nothing after it. This works only if the supporter keeps the other one, since every supporter needs a way to be reached. You can clear one and give a new value for the other in the same command, e.g. `edit 1 e/ p/91234567`.
+- A supporter's name cannot be cleared.
 - A supporter's stage cannot be changed with `edit`, and stays the same when other details are edited. Use the `stage` command instead.
 - A supporter's logged interactions are kept when their details are edited.
 - A supporter's introducer is kept when their details are edited. If you rename a supporter who introduced others, those supporters show the new name as their introducer.
@@ -137,6 +140,8 @@ Examples:
 - `edit 1 p/91234567 e/weiming@dbs.com` Edits the phone number and email address of the 1st supporter to be `91234567` and `weiming@dbs.com` respectively.
 - `edit 2 n/Tan Wei Ming DBS t/` Edits the name of the 2nd supporter to be `Tan Wei Ming DBS` and clears all existing tags.
 - `edit 3 o/OCBC Bank` Changes the organisation of the 3rd supporter to `OCBC Bank`, e.g. after they change jobs.
+- `edit 4 a/ o/` Clears the address and organisation of the 4th supporter, e.g. after they retire and move.
+- `edit 5 p/` Clears the phone number of the 5th supporter, who keeps their email.
 
 ### Setting a supporter's stage: `stage`
 
