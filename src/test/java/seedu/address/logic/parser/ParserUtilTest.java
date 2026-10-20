@@ -6,6 +6,10 @@ import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 
@@ -22,6 +26,9 @@ import seedu.address.model.person.Stage;
 import seedu.address.model.tag.Tag;
 
 public class ParserUtilTest {
+    private static final Clock INTERACTION_CLOCK = Clock.fixed(
+            Instant.parse("2026-10-19T16:30:00Z"), ZoneId.of("Asia/Singapore"));
+
     private static final String INVALID_NAME = "R@chel";
     private static final String INVALID_PHONE = "+651234";
     private static final String INVALID_ADDRESS = " ";
@@ -191,6 +198,66 @@ public class ParserUtilTest {
     public void parseInteractionNote_validValueWithWhitespace_returnsTrimmedNote() throws Exception {
         String noteWithWhitespace = WHITESPACE + VALID_INTERACTION_NOTE + WHITESPACE;
         assertEquals(VALID_INTERACTION_NOTE, ParserUtil.parseInteractionNote(noteWithWhitespace));
+    }
+
+    @Test
+    public void parseInteractionDate_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseInteractionDate(null));
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseInteractionDate("2026-10-20", null));
+    }
+
+    @Test
+    public void parseInteractionDate_invalidFormat_throwsParseException() {
+        for (String date : List.of("", WHITESPACE, "2026-1-01", "2026-01-1", "26-01-01", "2026/01/01",
+                "01-01-2026", "+2026-01-01", "10000-01-01", "2026-01-01T12:00:00", "2026- 01-01")) {
+            assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_DATE, () ->
+                    ParserUtil.parseInteractionDate(date, INTERACTION_CLOCK));
+        }
+    }
+
+    @Test
+    public void parseInteractionDate_invalidCalendarDate_throwsParseException() {
+        for (String date : List.of("2026-02-29", "2024-02-30", "2026-04-31", "2026-00-10",
+                "2026-13-10", "2026-01-00", "2026-01-32")) {
+            assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_DATE, () ->
+                    ParserUtil.parseInteractionDate(date, INTERACTION_CLOCK));
+        }
+    }
+
+    @Test
+    public void parseInteractionDate_pastDate_returnsDate() throws Exception {
+        assertEquals(LocalDate.of(2026, 10, 19),
+                ParserUtil.parseInteractionDate("2026-10-19", INTERACTION_CLOCK));
+    }
+
+    @Test
+    public void parseInteractionDate_leapDay_returnsDate() throws Exception {
+        assertEquals(LocalDate.of(2024, 2, 29),
+                ParserUtil.parseInteractionDate("2024-02-29", INTERACTION_CLOCK));
+    }
+
+    @Test
+    public void parseInteractionDate_surroundingWhitespace_returnsDate() throws Exception {
+        assertEquals(LocalDate.of(2026, 10, 19),
+                ParserUtil.parseInteractionDate(WHITESPACE + "2026-10-19" + WHITESPACE, INTERACTION_CLOCK));
+    }
+
+    @Test
+    public void parseInteractionDate_todayInClockZone_returnsDate() throws Exception {
+        // It is already 20 October in Singapore, although the UTC date is still 19 October.
+        assertEquals(LocalDate.of(2026, 10, 20),
+                ParserUtil.parseInteractionDate("2026-10-20", INTERACTION_CLOCK));
+    }
+
+    @Test
+    public void parseInteractionDate_futureDate_throwsParseException() {
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_FUTURE_INTERACTION_DATE, () ->
+                ParserUtil.parseInteractionDate("2026-10-21", INTERACTION_CLOCK));
+    }
+
+    @Test
+    public void parseInteractionDate_withoutClock_returnsPastDate() throws Exception {
+        assertEquals(LocalDate.of(2000, 1, 1), ParserUtil.parseInteractionDate("2000-01-01"));
     }
 
     @Test
