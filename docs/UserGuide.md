@@ -228,13 +228,14 @@ Format: `log INDEX nt/NOTE [dt/DATE]`
 
 - Logs the interaction against the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and must be a positive integer.
 - `NOTE` records what happened. It can contain any characters, must not be blank, and can be at most 500 characters long. Leading and trailing spaces are removed.
-- Without `dt/`, the interaction is dated using the computer's current date when the command runs.
-- `DATE` must be a valid calendar date in `yyyy-MM-dd` format, for example `2024-02-29`. Today and past dates are accepted; future dates are rejected based on the computer's current date. An empty `dt/` is invalid.
+- Without `dt/`, the date defaults to today when the command runs, using the computer's clock.
+- `DATE` must be a valid date in `yyyy-MM-dd` format, e.g. `2024-02-29`. Empty or future dates are rejected, using the computer's clock to determine today.
 - `nt/` and `dt/` can appear in either order. Each prefix may only be supplied once.
-- Interactions are numbered in the order they are logged, starting from `#1` for each supporter.
+- Each supporter's oldest interaction is `#1`; the newest has the largest number. On equal dates, the later-logged entry has the larger number and appears first.
+- Back-dating can renumber existing entries; entry numbers are not permanent IDs.
 - Identical notes logged on the same day are accepted as separate interactions.
-- On success, the result display shows the interaction number, supporter, date and note.
-- The detail panel switches to this supporter and shows their updated history, sorted by interaction date, newest first. For equal dates, the higher entry number appears first. A back-dated entry may therefore appear further down the history, while keeping its newly assigned logging-order number.
+- The success message shows the supporter, date, note and entry number matching the panel.
+- The panel switches to this supporter and displays entries newest first.
 - Logging an interaction does not change the supporter's cultivation stage or the currently displayed list. A `find` result therefore remains in place.
 
 Examples:
@@ -242,6 +243,16 @@ Examples:
 - `log 2 nt/Coffee at Raffles Place, keen on a Q4 volunteering day`
 - `log 2 nt/Meeting entered later dt/2024-02-29` records a meeting on 29 February 2024.
 - `find Tan` followed by `log 1 nt/Left voicemail about the year-end appeal` logs the interaction against the 1st supporter in the search results.
+
+Logging 10 March, then 20 February, then 29 February 2024 gives:
+
+```text
+#3  10 Mar 2024  Recent call
+#2  29 Feb 2024  Middle meeting
+#1  20 Feb 2024  First meeting
+```
+
+The last command reports `#2`. Adding that entry renumbers the 10 March entry from `#2` to `#3`.
 
 <box type="warning" seamless>
 
@@ -258,7 +269,7 @@ Format: `view INDEX`
 * Supply exactly one index, with no additional arguments.
 * Viewing a supporter preserves the displayed list, its filter and all supporter data.
 * The panel shows the name, stage, organisation, phone, email, address and tags. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically.
-* Interactions appear newest first, one entry per row, for example `#4  16 Sep 2026  Sent partnership deck by email`. Entries on the same date appear in descending entry-number order. Entry numbers are based on the order in which interactions were logged.
+* Interactions appear newest first, e.g. `#4  16 Sep 2026  Sent partnership deck by email`. Numbers descend to `#1`, the oldest entry. On equal dates, later-logged entries appear first.
 * The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
 * A successful `view`, `log` or `stage` switches the panel to its target. Changes to the displayed supporter's record are reflected.
 * Invalid commands leave the displayed supporter unchanged.
@@ -314,7 +325,7 @@ A supporter may also have an `"organisation"`, such as the company a CSR contact
 
 Each supporter card in the list shows the supporter's organisation, or `(no organisation)` if they have none.
 
-A supporter's `"interactions"` array stores their interaction history in logging order. Each entry has a `"date"` in `yyyy-MM-dd` format and a non-blank `"note"` of at most 500 characters. For example:
+A supporter's `"interactions"` array stores entries in logging order. Each entry has a `"date"` in `yyyy-MM-dd` format and a non-blank `"note"` of at most 500 characters. For example:
 
 ```json
 "interactions" : [ {
