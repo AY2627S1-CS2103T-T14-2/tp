@@ -5,7 +5,6 @@ import static java.util.Objects.requireNonNull;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -97,7 +96,7 @@ public final class SupporterDetailData {
     }
 
     /**
-     * Returns immutable entries ordered by date descending, then by original entry number descending.
+     * Returns immutable entries displayed newest first, numbered from oldest (#1) to newest.
      */
     public List<InteractionEntry> getInteractionEntries() {
         return interactionEntries;
@@ -106,18 +105,14 @@ public final class SupporterDetailData {
     private static List<InteractionEntry> createInteractionEntries(Person person) {
         List<Interaction> interactions = person.getInteractions();
         List<InteractionEntry> entries = new ArrayList<>();
-        for (int i = 0; i < interactions.size(); i++) {
-            // Assign numbers from logging order before sorting the display entries.
-            entries.add(new InteractionEntry(i + 1, interactions.get(i)));
+        for (int storedIndex : person.getInteractionIndicesInDisplayOrder()) {
+            entries.add(new InteractionEntry(interactions.size() - entries.size(), interactions.get(storedIndex)));
         }
-        entries.sort(Comparator.comparing((InteractionEntry entry) -> entry.date)
-                .thenComparingInt(InteractionEntry::getNumber)
-                .reversed());
         return List.copyOf(entries);
     }
 
     /**
-     * An immutable display entry that retains an interaction's original number, date and complete note.
+     * An immutable display entry that contains an interaction's displayed number, date and complete note.
      */
     public static final class InteractionEntry {
 
@@ -132,7 +127,7 @@ public final class SupporterDetailData {
         }
 
         /**
-         * Returns the interaction's one-based position in the stored logging order.
+         * Returns the interaction's one-based chronological position, with the oldest interaction numbered 1.
          */
         public int getNumber() {
             return number;

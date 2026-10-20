@@ -88,7 +88,7 @@ public class LogCommandTest {
         expectedModel.setViewedPerson(updatedPerson);
 
         LogCommand command = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, Optional.of(pastDate), FIXED_CLOCK);
-        String expectedMessage = String.format(LogCommand.MESSAGE_SUCCESS, 2, personToUpdate.getName(),
+        String expectedMessage = String.format(LogCommand.MESSAGE_SUCCESS, 1, personToUpdate.getName(),
                 "06 Sep 2026", VALID_NOTE);
 
         assertCommandSuccess(command, model, expectedMessage, expectedModel);

@@ -37,18 +37,21 @@ public class LogCommandIntegrationTest {
         CommandResult firstResult = parser.parseCommand("log 1 nt/Earlier meeting dt/2024-02-29").execute(model);
         Person firstUpdate = model.getViewedPerson().orElseThrow();
         SupporterDetailData firstDisplay = new SupporterDetailData(model.getViewedPerson());
-        assertEquals("Logged interaction #2 with " + target.getName() + " (29 Feb 2024): Earlier meeting.",
+        assertEquals("Logged interaction #1 with " + target.getName() + " (29 Feb 2024): Earlier meeting.",
                 firstResult.getFeedbackToUser());
-        assertEquals(List.of(1, 2), firstDisplay.getInteractionEntries().stream()
+        assertEquals(List.of(2, 1), firstDisplay.getInteractionEntries().stream()
                 .map(InteractionEntry::getNumber).toList());
         assertEquals(List.of("Recent call", "Earlier meeting"), firstDisplay.getInteractionEntries().stream()
                 .map(InteractionEntry::getNote).toList());
 
-        // another entry on the same past date refreshes the selected history and uses the higher number first
-        parser.parseCommand("log 1 dt/2024-02-29 nt/Second earlier meeting").execute(model);
+        // another entry on the same past date refreshes the selected history and shows the later-logged entry first
+        CommandResult secondResult = parser.parseCommand("log 1 dt/2024-02-29 nt/Second earlier meeting")
+                .execute(model);
+        assertEquals("Logged interaction #2 with " + target.getName() + " (29 Feb 2024): Second earlier meeting.",
+                secondResult.getFeedbackToUser());
         Person secondUpdate = model.getViewedPerson().orElseThrow();
         SupporterDetailData secondDisplay = new SupporterDetailData(model.getViewedPerson());
-        assertEquals(List.of(1, 3, 2), secondDisplay.getInteractionEntries().stream()
+        assertEquals(List.of(3, 2, 1), secondDisplay.getInteractionEntries().stream()
                 .map(InteractionEntry::getNumber).toList());
         assertEquals(List.of("10 Mar 2024", "29 Feb 2024", "29 Feb 2024"),
                 secondDisplay.getInteractionEntries().stream().map(InteractionEntry::getDate).toList());
@@ -56,11 +59,20 @@ public class LogCommandIntegrationTest {
                 secondDisplay.getInteractionEntries().stream().map(InteractionEntry::getNote).toList());
         assertEquals("Interactions (3) - newest first", secondDisplay.getHistoryHeading());
 
+        // a new latest interaction gets the largest number and is displayed first
+        CommandResult latestResult = parser.parseCommand("log 1 nt/Latest call dt/2024-03-11").execute(model);
+        assertEquals("Logged interaction #4 with " + target.getName() + " (11 Mar 2024): Latest call.",
+                latestResult.getFeedbackToUser());
+        SupporterDetailData latestDisplay = new SupporterDetailData(model.getViewedPerson());
+        assertEquals(List.of(4, 3, 2, 1), latestDisplay.getInteractionEntries().stream()
+                .map(InteractionEntry::getNumber).toList());
+        assertEquals("Latest call", latestDisplay.getInteractionEntries().get(0).getNote());
+
         // display sorting leaves stored logging order and the current supporter filter unchanged
         assertEquals(List.of(recentInteraction, new Interaction(LocalDate.of(2024, 2, 29), "Earlier meeting"),
                 new Interaction(LocalDate.of(2024, 2, 29), "Second earlier meeting")),
                 secondUpdate.getInteractions());
-        assertEquals(List.of(secondUpdate), model.getFilteredPersonList());
+        assertEquals(List.of(model.getViewedPerson().orElseThrow()), model.getFilteredPersonList());
         assertEquals(2, firstUpdate.getInteractions().size());
         assertEquals(other, model.getAddressBook().getPersonList().get(1));
     }

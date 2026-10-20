@@ -27,6 +27,24 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonTest {
 
     @Test
+    public void getInteractionIndicesInDisplayOrder_emptyHistory_returnsEmptyList() {
+        assertTrue(new PersonBuilder().build().getInteractionIndicesInDisplayOrder().isEmpty());
+    }
+
+    @Test
+    public void getInteractionIndicesInDisplayOrder_mixedDatesAndDuplicates_preservesStoredPositions() {
+        Interaction earlier = new Interaction(LocalDate.of(2024, 2, 29), "Earlier meeting");
+        Interaction later = new Interaction(LocalDate.of(2024, 3, 10), "Later meeting");
+        Person person = new PersonBuilder().withInteractions(earlier, later, earlier).build();
+
+        // equal entries remain distinct through their stored positions, with the later-logged entry first
+        List<Integer> indices = person.getInteractionIndicesInDisplayOrder();
+        assertEquals(List.of(1, 2, 0), indices);
+        assertEquals(List.of(earlier, later, earlier), person.getInteractions());
+        assertThrows(UnsupportedOperationException.class, () -> indices.add(3));
+    }
+
+    @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
         Person person = new PersonBuilder().build();
         assertThrows(UnsupportedOperationException.class, () -> person.getTags().remove(0));
