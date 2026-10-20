@@ -28,9 +28,10 @@ public class LogCommand extends Command {
     public static final String COMMAND_WORD = "log";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Logs an interaction, dated today, with the supporter identified by the index "
+            + ": Logs an interaction with the supporter identified by the index "
             + "number used in the displayed supporter list.\n"
-            + "Parameters: INDEX (must be a positive integer) nt/NOTE\n"
+            + "Parameters: INDEX (must be a positive integer) nt/NOTE [dt/DATE]\n"
+            + "DATE must be a valid date in yyyy-MM-dd format, not in the future; defaults to today.\n"
             + "Example: " + COMMAND_WORD + " 2 nt/Coffee at Raffles Place, keen on a Q4 volunteering day";
 
     public static final String MESSAGE_SUCCESS = "Logged interaction #%1$d with %2$s (%3$s): %4$s.";
