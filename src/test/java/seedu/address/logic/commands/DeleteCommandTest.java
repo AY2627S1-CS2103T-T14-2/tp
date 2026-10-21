@@ -67,6 +67,25 @@ public class DeleteCommandTest {
     }
 
     @Test
+    public void execute_deleteIntroducer_clearsIntroductionsAndReportsCount() {
+        Person personToDelete = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person secondPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        Person introducedPerson = new PersonBuilder(secondPerson)
+                .withIntroducer(personToDelete.getName().fullName)
+                .build();
+        model.setPerson(secondPerson, introducedPerson);
+
+        String expectedMessage = "Deleted supporter: " + Messages.format(personToDelete)
+                + "\n0 logged interaction(s) were deleted with them."
+                + "\nThey were also removed as the introducer of 1 supporter(s).";
+        ModelManager expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.deletePerson(personToDelete);
+        expectedModel.setPerson(introducedPerson, secondPerson);
+
+        assertCommandSuccess(new DeleteCommand(INDEX_FIRST_PERSON), model, expectedMessage, expectedModel);
+    }
+
+    @Test
     public void execute_invalidIndexUnfilteredList_throwsCommandException() {
         Person originalPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Person viewedPerson = new PersonBuilder(originalPerson).withInteractions(FIRST_INTERACTION).build();

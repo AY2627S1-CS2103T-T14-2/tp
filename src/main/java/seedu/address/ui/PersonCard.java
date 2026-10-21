@@ -25,8 +25,7 @@ public class PersonCard extends UiPart<Region> {
      *
      * @see <a href="https://github.com/se-edu/addressbook-level4/issues/336">The issue on AddressBook level 4</a>
      */
-
-    public final Person person;
+    private final Person person;
 
     @FXML
     private HBox cardPane;
@@ -43,6 +42,8 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label organisation;
     @FXML
+    private Label lastContact;
+    @FXML
     private Label stage;
     @FXML
     private FlowPane tags;
@@ -58,6 +59,7 @@ public class PersonCard extends UiPart<Region> {
         stage.setText(person.getStage().toString());
         stage.getStyleClass().add("stage_" + person.getStage().name().toLowerCase());
         organisation.setText(person.getOrganisation().map(org -> org.value).orElse(NO_ORGANISATION));
+        lastContact.setText(LastContactFormatter.format(person.getLastInteractionDate()));
         showIfPresent(phone, person.getPhone().map(p -> p.value));
         showIfPresent(address, person.getAddress().map(a -> a.value));
         showIfPresent(email, person.getEmail().map(e -> e.value));

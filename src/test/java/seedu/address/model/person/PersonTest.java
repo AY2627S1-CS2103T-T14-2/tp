@@ -19,12 +19,32 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
 public class PersonTest {
+
+    @Test
+    public void getInteractionIndicesInDisplayOrder_emptyHistory_returnsEmptyList() {
+        assertTrue(new PersonBuilder().build().getInteractionIndicesInDisplayOrder().isEmpty());
+    }
+
+    @Test
+    public void getInteractionIndicesInDisplayOrder_mixedDatesAndDuplicates_preservesStoredPositions() {
+        Interaction earlier = new Interaction(LocalDate.of(2024, 2, 29), "Earlier meeting");
+        Interaction later = new Interaction(LocalDate.of(2024, 3, 10), "Later meeting");
+        Person person = new PersonBuilder().withInteractions(earlier, later, earlier).build();
+
+        // equal entries remain distinct through their stored positions, with the later-logged entry first
+        List<Integer> indices = person.getInteractionIndicesInDisplayOrder();
+        assertEquals(List.of(1, 2, 0), indices);
+        assertEquals(List.of(earlier, later, earlier), person.getInteractions());
+        assertThrows(UnsupportedOperationException.class, () -> indices.add(3));
+    }
 
     @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
@@ -212,6 +232,48 @@ public class PersonTest {
     }
 
     @Test
+    public void getLastInteractionDate_emptyHistory_returnsEmpty() {
+        Person person = new PersonBuilder().build();
+
+        assertEquals(Optional.empty(), person.getLastInteractionDate());
+    }
+
+    @Test
+    public void getLastInteractionDate_singleInteraction_returnsDate() {
+        LocalDate date = LocalDate.of(2026, 10, 3);
+        Person person = new PersonBuilder()
+                .withInteractions(new Interaction(date, "Called"))
+                .build();
+
+        assertEquals(Optional.of(date), person.getLastInteractionDate());
+    }
+
+    @Test
+    public void getLastInteractionDate_outOfOrderDates_returnsLatestDateAndPreservesHistory() {
+        Interaction firstInteraction = new Interaction(LocalDate.of(2026, 9, 30), "Met");
+        Interaction latestInteraction = new Interaction(LocalDate.of(2027, 1, 1), "Called");
+        Interaction lastLoggedInteraction = new Interaction(LocalDate.of(2026, 10, 3), "Emailed");
+        Person person = new PersonBuilder()
+                .withInteractions(firstInteraction, latestInteraction, lastLoggedInteraction)
+                .build();
+
+        assertEquals(Optional.of(LocalDate.of(2027, 1, 1)), person.getLastInteractionDate());
+        assertEquals(List.of(firstInteraction, latestInteraction, lastLoggedInteraction), person.getInteractions());
+    }
+
+    @Test
+    public void getLastInteractionDate_duplicateLatestDates_returnsLatestDate() {
+        LocalDate latestDate = LocalDate.of(2026, 10, 3);
+        Person person = new PersonBuilder()
+                .withInteractions(new Interaction(latestDate, "Called"),
+                        new Interaction(latestDate, "Emailed"),
+                        new Interaction(LocalDate.of(2026, 9, 30), "Met"))
+                .build();
+
+        assertEquals(Optional.of(latestDate), person.getLastInteractionDate());
+    }
+
+    @Test
     public void constructor_nullStage_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new Person(ALICE.getName(), ALICE.getPhone().get(),
                 ALICE.getEmail().get(), ALICE.getAddress().get(), null, ALICE.getTags()));
@@ -244,6 +306,38 @@ public class PersonTest {
         assertThrows(IllegalArgumentException.class, Person.MESSAGE_SELF_INTRODUCTION, () -> new Person(
                 ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(), ALICE.getOrganisation(),
                 Optional.of(ownNameInOtherCase), ALICE.getStage(), ALICE.getInteractions(), ALICE.getTags()));
+    }
+
+    @Test
+    public void isIntroducedBy() {
+        Person aliceByBenson = new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName).build();
+
+        // recorded introducer, in any case -> returns true
+        assertTrue(aliceByBenson.isIntroducedBy(BENSON.getName()));
+        assertTrue(aliceByBenson.isIntroducedBy(new Name(BENSON.getName().fullName.toLowerCase())));
+
+        // someone else -> returns false
+        assertFalse(aliceByBenson.isIntroducedBy(BOB.getName()));
+
+        // no introducer -> returns false
+        assertFalse(ALICE.isIntroducedBy(BENSON.getName()));
+    }
+
+    @Test
+    public void withIntroducer_keepsOtherDetails() {
+        Person aliceByBenson = ALICE.withIntroducer(Optional.of(BENSON.getName()));
+        assertEquals(new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName).build(), aliceByBenson);
+        assertEquals(ALICE, aliceByBenson.withIntroducer(Optional.empty()));
+        assertThrows(IllegalArgumentException.class, () -> ALICE.withIntroducer(Optional.of(ALICE.getName())));
+    }
+
+    @Test
+    public void withTags_keepsOtherDetails() {
+        Person aliceByBenson = new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName)
+                .withInteractions(new Interaction(LocalDate.of(2026, 9, 16), "Called")).build();
+        Person retagged = aliceByBenson.withTags(Set.of(new Tag(VALID_TAG_HUSBAND)));
+        assertEquals(new PersonBuilder(aliceByBenson).withTags(VALID_TAG_HUSBAND).build(), retagged);
+        assertEquals(aliceByBenson.getInteractions(), retagged.getInteractions());
     }
 
     @Test

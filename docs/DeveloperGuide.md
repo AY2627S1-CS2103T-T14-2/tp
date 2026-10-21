@@ -312,7 +312,7 @@ In the `Storage` component, `JsonAdaptedPerson` saves the organisation as an `"o
 
 In tests, `PersonBuilder` builds a `Person` with no organisation unless `PersonBuilder#withOrganisation(String)` is called.
 
-**Setting an organisation:** `AddCommandParser` and `EditCommandParser` accept an optional `o/ORGANISATION` prefix (`CliSyntax.PREFIX_ORGANISATION`) and parse it with `ParserUtil#parseOrganisation(String)`, which gives the organisation error message for a blank or overlong value. In `add`, leaving out the prefix creates a supporter with no organisation. In `edit`, `EditPersonDescriptor` holds the new organisation, and leaving out the prefix keeps the existing one. Giving `o/` more than once is reported as a repeated prefix, as for the other single-valued fields.
+**Setting an organisation:** `AddCommandParser` and `EditCommandParser` accept an optional `o/ORGANISATION` prefix (`CliSyntax.PREFIX_ORGANISATION`) and parse it with `ParserUtil#parseOrganisation(String)`, which gives the organisation error message for a blank or overlong value. In `add`, leaving out the prefix creates a supporter with no organisation. In `edit`, `EditPersonDescriptor` holds the new organisation, and leaving out the prefix keeps the existing one. An `o/` with nothing after it is not parsed as an organisation: `EditCommandParser` calls `EditPersonDescriptor#clearOrganisation()` instead, which removes the supporter's organisation. Giving `o/` more than once is reported as a repeated prefix, as for the other single-valued fields.
 
 **Showing an organisation:** `PersonCard` shows the organisation under the supporter's name, or `(no organisation)` when there is none. `Messages#format(Person)` adds `Organisation: ...` to command result messages only when the supporter has one.
 
@@ -376,15 +376,20 @@ In tests, `PersonBuilder` builds a `Person` with an empty history unless `Person
 
 ### Logging an interaction
 
-`AddressBookParser` routes `log` arguments to `LogCommandParser`. The command parser requires one `nt/NOTE`, rejects a repeated `nt/` prefix, and uses `ParserUtil` to parse the displayed index and validate the interaction note. It then creates a `LogCommand` with the parsed values.
+**Parsing `log INDEX nt/NOTE [dt/DATE]`:** The command is parsed by `LogCommandParser` as follows.
+
+1. `AddressBookParser` passes the arguments after the command word to `LogCommandParser#parse(String)`.
+2. The parser requires `INDEX` and `nt/NOTE`, and accepts optional `dt/DATE` in either prefix order. It parses the index with `ParserUtil#parseIndex(String)`, reporting an invalid command format if it fails, then rejects repeated prefixes.
+3. It validates the note with `ParserUtil#parseInteractionNote(String)` and any supplied date with `ParserUtil#parseInteractionDate(String)`. Dates must be valid calendar dates in `yyyy-MM-dd` format, from `1900-01-01` through today (inclusive), using the computer's clock. The lower bound allows historical records while rejecting implausibly old dates and likely year-entry mistakes.
+4. It creates a `LogCommand` with the parsed index, note and an `Optional<LocalDate>`. An omitted date remains empty until execution.
 
 `LogCommand` performs the model update as follows.
 
 1. `LogCommand#execute(Model)` obtains the currently displayed supporters from `Model#getFilteredPersonList()` and checks the given index against that list. An out-of-range index gives the same invalid-index error as the other index-based commands.
-2. It creates an `Interaction` using the note and today's date. The public constructor uses the computer's default clock, while tests can supply a fixed `Clock` so that their expected dates do not depend on when they run.
-3. It copies the supporter's existing interactions in logging order and appends the new interaction. The size of this updated list is the new interaction's stable number.
-4. It creates a replacement `Person` with the updated history and copies every other field unchanged, including the cultivation stage and tags. It then calls `Model#setPerson(Person, Person)`.
-5. It returns a `CommandResult` that identifies the interaction number, supporter, date and note.
+2. It creates an `Interaction` using the supplied date, or today's date at execution if none was supplied. The default uses the computer's clock; tests can supply a fixed `Clock`.
+3. It copies the supporter's existing interactions in logging order and appends the new interaction. The new entry's zero-based stored index is the updated list size minus one.
+4. It creates a replacement `Person` with the updated history and copies every other field unchanged, including the cultivation stage and tags. It then calls `Model#setPerson(Person, Person)` and selects the updated supporter with `Model#setViewedPerson(Person)`.
+5. It finds the new entry's position in `Person#getInteractionIndicesInDisplayOrder()`. Subtracting that zero-based display position from the history size gives its chronological number: oldest is `#1`, newest is largest. The returned `CommandResult` reports this number, supporter, date and note.
 
 Identical interactions are appended normally because two calls or messages with the same note can happen on the same day. `LogCommand` also does not call `Model#updateFilteredPersonList(Predicate)`, so logging against a supporter in a `find` result keeps that filter in place.
 
@@ -400,7 +405,7 @@ Identical interactions are appended normally because two calls or messages with 
   - Pros: Only the new interaction needs to be added.
   - Cons: It breaks `Person`'s immutability and can bypass the observable-list replacement that informs other components of a changed supporter.
 
-**Aspect: How to obtain today's date**
+**Aspect: How to obtain today's date when `dt/` is omitted**
 
 - **Alternative 1 (current choice):** Store a `Clock` in `LogCommand`, using the system-default clock in production and a fixed clock in tests.
   - Pros: The command follows the computer's date in normal use while date-dependent tests remain deterministic.
@@ -419,7 +424,9 @@ On successful index validation, `ViewCommand` records the supporter using `Model
 `SupporterDetailData` prepares the display values without a JavaFX dependency:
 
 * Optional fields and empty tags become `-`. Tag names are sorted alphabetically and joined with commas.
-* Each immutable `InteractionEntry` is sorted by `LocalDate` descending and entry number descending, preserving duplicate interactions and the stored logging order.
+* `Person#getInteractionIndicesInDisplayOrder()` returns zero-based stored indices sorted by date descending, then logging position descending. Using indices keeps identical interactions distinct without reordering stored history.
+* `SupporterDetailData` follows those indices to create immutable `InteractionEntry` objects. Numbers descend from the history size to `#1`, so the oldest entry has the smallest number. On equal dates, the later-logged entry appears first and has the larger number.
+* Back-dating can renumber existing entries. The panel and `LogCommand` use the same ordering method so displayed numbers match success messages.
 
 `SupporterDetailPanel#setSupporter(Optional<Person>)` skips rendering when the supporter record is unchanged, preserving the scroll position through `list`, `find` and `add`. Switching supporters or changing the displayed record rebuilds the history and returns scrolling to the top.
 
@@ -466,7 +473,7 @@ A supporter's phone number, email and address are optional, but every supporter 
 - `Person` stores a missing field as `null` internally, and `Person#getPhone()`, `Person#getEmail()` and `Person#getAddress()` return an `Optional`, in the same way as `Person#getOrganisation()`.
 - The main `Person` constructor takes each optional field as an `Optional`, and throws an `IllegalArgumentException` if both the phone number and the email are empty. `Person#isValidContact(Optional, Optional)` holds this rule so that other components can check it first.
 - `AddCommandParser` requires only `n/NAME`. If neither `p/PHONE` nor `e/EMAIL` is given, it reports `AddCommand.MESSAGE_MISSING_CONTACT`, which names the two prefixes so the user knows how to fix the command.
-- `EditCommand` keeps a field's current value, which may be empty, when the edit leaves it out. As `edit` cannot remove a field, an edit can never leave a supporter without a phone number and an email.
+- `EditCommand` keeps a field's current value, which may be empty, when the edit leaves it out. A prefix with nothing after it (`p/`, `e/`, `a/` or `o/`) clears that field: `EditCommandParser` marks it with `EditPersonDescriptor#clearPhone()` and the like. Before creating the edited `Person`, `EditCommand` checks `Person#isValidContact(Optional, Optional)` and reports `EditCommand.MESSAGE_NO_CONTACT_LEFT` if the edit would leave neither a phone number nor an email.
 - `JsonAdaptedPerson` leaves out the keys of missing fields when saving. When loading, a missing key means the field is empty, and a supporter with neither a phone number nor an email makes the whole data file invalid.
 - `Messages#format(Person)` and `PersonCard` show only the fields a supporter has. `PersonCard` hides the label of a missing field, so it takes up no space.
 

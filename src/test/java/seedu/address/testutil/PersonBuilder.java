@@ -141,6 +141,14 @@ public class PersonBuilder {
     }
 
     /**
+     * Removes the {@code Organisation} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withoutOrganisation() {
+        this.organisation = Optional.empty();
+        return this;
+    }
+
+    /**
      * Sets the introducer of the {@code Person} that we are building to the supporter called {@code introducer}.
      */
     public PersonBuilder withIntroducer(String introducer) {
