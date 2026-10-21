@@ -82,10 +82,12 @@ public class UnlogCommand extends Command {
         if (other == this) {
             return true;
         }
+
         // instanceof handles nulls
         if (!(other instanceof UnlogCommand otherUnlogCommand)) {
             return false;
         }
+
         return targetIndex.equals(otherUnlogCommand.targetIndex)
                 && interactionIndex.equals(otherUnlogCommand.interactionIndex);
     }
