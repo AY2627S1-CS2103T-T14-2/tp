@@ -128,7 +128,7 @@ How the parsing works:
 The `Model` component,
 
 - stores the supporter data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
-- stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
+- stores the `Person` objects selected by the current filter in a `FilteredList`, wrapped by a `SortedList` for optional display ordering. It exposes the sorted view as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so both filter and order changes update the UI without reordering stored data.
 - stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 - does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
@@ -191,6 +191,34 @@ keywords. Partial matching lets `wei` match `Weiling`, unlike AB3's whole-word m
 `Model#updateFilteredPersonList(Predicate)`. The filtered list preserves the underlying insertion
 order, and the UI numbers its results from 1. `ListCommand#execute(Model)` resets the predicate
 to `Model.PREDICATE_SHOW_ALL_PERSONS`, restoring the full list without changing stored supporters.
+
+### Finding quiet supporters
+
+`QuietCommandParser` accepts no arguments for the default 60-day threshold, or exactly one positive
+integer up to `Integer.MAX_VALUE`. Invalid input produces the usage message without executing a
+command. `AddressBookParser` dispatches the `quiet` command to this parser.
+
+`QuietCommand` obtains today's local date from its `Clock` at execution. Tests inject a fixed clock.
+Its predicate excludes `Stage.DECLINED` and includes a supporter when
+`Person#getLastInteractionDate()` is empty or the elapsed calendar days exceed the threshold.
+Counting elapsed days with `ChronoUnit.DAYS.between` avoids date-subtraction overflow for large
+thresholds. A contact exactly DAYS days ago does not qualify. The captured date stays fixed until
+another quiet command is run; changes to supporter data still reevaluate the predicate.
+
+`ModelManager` wraps its `FilteredList<Person>` in a `SortedList<Person>` and exposes that same
+observable sorted view through `getFilteredPersonList()`. The quiet command calls
+`updateSortedPersonList(Predicate, Comparator)`, ordering absent dates first and then latest-contact
+dates ascending. Equal dates retain source order. The underlying `VersionedAddressBook` list is
+unchanged, so display sorting changes neither JSON order nor undo history.
+
+`updateFilteredPersonList(Predicate)` clears the comparator as well as updating the predicate.
+Existing `list`, `find`, `add`, `edit`, `undo` and `redo` paths therefore restore normal ordering
+without command-specific reset logic. Index-based commands already use `getFilteredPersonList()`
+and consequently operate on the displayed quiet indices. Replacing an immutable `Person` after a
+log, unlog or stage change updates both filtering and sorting automatically.
+
+`QuietCommandTest` covers boundaries, exclusions, missing interactions, ties and backdated history.
+`QuietCommandIntegrationTest` checks indexed commands, stored order, selection and undo/redo.
 
 ### Deleting a supporter and their history
 
