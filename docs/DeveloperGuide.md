@@ -491,7 +491,7 @@ Undo and redo are facilitated by `VersionedAddressBook`, which extends `AddressB
 - `VersionedAddressBook#redo()` -- Restores a previously undone state from the history.
 - `VersionedAddressBook#canUndo()` and `VersionedAddressBook#canRedo()` -- Check whether there is a state to move to.
 
-These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()`, `Model#redoAddressBook()`, `Model#canUndoAddressBook()` and `Model#canRedoAddressBook()`. Only `ModelManager` knows that its address book is versioned; the rest of the app, including storage, still sees a `ReadOnlyAddressBook`.
+These operations are exposed in the `Model` interface as `Model#commitAddressBookIfChanged()`, `Model#undoAddressBook()`, `Model#redoAddressBook()`, `Model#canUndoAddressBook()` and `Model#canRedoAddressBook()`. Only `ModelManager` knows that its address book is versioned; the rest of the app, including storage, still sees a `ReadOnlyAddressBook`.
 
 Each saved state is a separate `AddressBook` created with the copy constructor, so later changes to the current data never alter it. The copies share `Person` objects, which is safe because `Person` is immutable: `edit`, `log` and `stage` replace a supporter with a new `Person` rather than changing the old one. A deleted supporter's interactions are stored inside their `Person`, so undoing `delete` restores the interaction history too.
 
@@ -501,17 +501,17 @@ Step 1. The user launches the application. The `VersionedAddressBook` is initial
 
 <puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
 
-Step 2. The user executes `delete 2` to delete the 2nd supporter in the displayed list. After deleting the supporter, `DeleteCommand` calls `Model#commitAddressBook()`, which saves the data as it is after the deletion into the `addressBookStateList` and shifts the `currentStatePointer` to the new state.
+Step 2. The user executes `delete 2` to delete the 2nd supporter in the displayed list. After the command succeeds, `LogicManager` calls `Model#commitAddressBookIfChanged()`, which saves the data as it is after the deletion into the `addressBookStateList` and shifts the `currentStatePointer` to the new state.
 
 <puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
 
-Step 3. The user executes `log 1 nt/Called` to log an interaction with the 1st supporter. `LogCommand` also calls `Model#commitAddressBook()`, causing another state to be saved into the `addressBookStateList`.
+Step 3. The user executes `log 1 nt/Called` to log an interaction with the 1st supporter. This also changes the data, so `LogicManager` commits again, causing another state to be saved into the `addressBookStateList`.
 
 <puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
 
 <box type="info" seamless>
 
-**Note:** Every command that changes supporter data (`add`, `edit`, `delete`, `clear`, `log` and `stage`) calls `Model#commitAddressBook()` once, after the change succeeds. A command that fails, or a `stage` command that leaves the stage unchanged, does not commit, so no state is saved for it.
+**Note:** Commands do not commit themselves. `ModelManager` marks the data as changed whenever `addPerson`, `setPerson`, `deletePerson` or `setAddressBook` is called, and `Model#commitAddressBookIfChanged()` saves a state only if that mark is set, then clears it. So every command that changes supporter data saves exactly one state, while a command that fails, or a `stage` command that leaves the stage unchanged, saves none.
 </box>
 
 Step 4. The user decides that logging the interaction was a mistake, and executes `undo`. `UndoCommand` calls `Model#undoAddressBook()`, which shifts the `currentStatePointer` once to the left and copies that state back into the current data with `AddressBook#resetData()`.
@@ -532,7 +532,7 @@ The following sequence diagram shows how an undo operation goes through the `Log
 **Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
 </box>
 
-After restoring the data, `UndoCommand` shows all supporters, so that a restored supporter is visible even if a `find` filter was active. `LogicManager` then saves the restored data to the data file, as it does after every successful command.
+After restoring the data, `UndoCommand` shows all supporters, so that a restored supporter is visible even if a `find` filter was active. Restoring a state does not mark the data as changed, so `Model#commitAddressBookIfChanged()` saves no new state for `undo` itself. `LogicManager` then saves the restored data to the data file, as it does after every successful command.
 
 Similarly, how an undo operation goes through the `Model` component is shown below:
 
@@ -547,11 +547,11 @@ The `redo` command does the opposite: it calls `Model#redoAddressBook()`, which 
 **Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest state, then there are no undone states to restore. `RedoCommand` uses `Model#canRedoAddressBook()` to check if this is the case. If so, it shows an error to the user rather than attempting to perform the redo.
 </box>
 
-Step 5. The user then executes `list`. Commands that do not change supporter data, such as `list`, `find` and `view`, do not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
+Step 5. The user then executes `list`. Commands such as `list`, `find` and `view` do not change supporter data, so `Model#commitAddressBookIfChanged()` saves nothing for them. Thus, the `addressBookStateList` remains unchanged.
 
 <puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
 
-Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all states after the `currentStatePointer` are purged. Reason: It no longer makes sense to redo the `log 1 nt/Called` command. This is the behavior that most modern desktop applications follow.
+Step 6. The user executes `clear`, which changes the data, so a new state is committed. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all states after the `currentStatePointer` are purged. Reason: It no longer makes sense to redo the `log 1 nt/Called` command. This is the behavior that most modern desktop applications follow.
 
 <puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
 
@@ -575,12 +575,16 @@ The history is kept in memory only, so it starts again from the loaded data each
 
 **Aspect: Where states are committed:**
 
-- **Alternative 1 (current choice):** Each command that changes data calls `Model#commitAddressBook()` itself.
-  - Pros: Commands that change nothing, such as `list` or a `stage` command that leaves the stage unchanged, create no undo step.
-  - Cons: A new command that changes data must remember to commit. `UndoableCommandsTest` checks that each such command commits exactly once.
+- **Alternative 1 (current choice):** `ModelManager` marks the data as changed in `addPerson`, `setPerson`, `deletePerson` and `setAddressBook`, and `LogicManager` calls `Model#commitAddressBookIfChanged()` after every successful command.
+  - Pros: New commands that change data, such as `intro`, `editlog` and `unlog`, are undoable without any extra code, since every data change goes through those four methods. Commands that change nothing, such as `list` or a `stage` command that leaves the stage unchanged, create no undo step.
+  - Cons: A new `Model` method that changes data must also mark the data as changed. `UndoableCommandsTest` checks each data-changing command through `LogicManager`.
 
-- **Alternative 2:** `LogicManager` commits after every successful command.
-  - Pros: No command can forget to commit.
+- **Alternative 2:** Each command that changes data calls a commit method itself.
+  - Pros: The commit is visible in each command's code.
+  - Cons: Every new command must remember to commit. Forgetting gives no error; undo just skips that command or reverts it together with the next one.
+
+- **Alternative 3:** `LogicManager` commits after every successful command, without checking for changes.
+  - Pros: Simplest; no flag is needed.
   - Cons: Read-only commands would create empty undo steps, so `undo` would sometimes appear to do nothing.
 
 ### \[Proposed\] Data archiving

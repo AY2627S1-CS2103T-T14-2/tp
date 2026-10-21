@@ -53,6 +53,12 @@ deactivate UndoCommand
 UndoCommand -[hidden]-> LogicManager : result
 destroy UndoCommand
 
+LogicManager -> Model : commitAddressBookIfChanged()
+activate Model
+
+Model --> LogicManager
+deactivate Model
+
 LogicManager -> Model : save data
 activate Model
 
