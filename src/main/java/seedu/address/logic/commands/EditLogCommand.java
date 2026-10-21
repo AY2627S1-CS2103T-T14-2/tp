@@ -83,7 +83,9 @@ public class EditLogCommand extends Command {
                 personToUpdate.getEmail(), personToUpdate.getAddress(), personToUpdate.getOrganisation(),
                 personToUpdate.getIntroducer(), personToUpdate.getStage(), updatedInteractions,
                 personToUpdate.getTags());
-        model.setPerson(personToUpdate, updatedPerson);
+        if (!updatedPerson.equals(personToUpdate)) {
+            model.setPerson(personToUpdate, updatedPerson);
+        }
         model.setViewedPerson(updatedPerson);
 
         int displayedEntryNumber = updatedInteractions.size()
