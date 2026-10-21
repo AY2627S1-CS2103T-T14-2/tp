@@ -78,7 +78,7 @@ public interface Model {
 
     /**
      * Saves the current address book state to the undo/redo history if supporter data has changed since the
-     * last saved state.
+     * last saved state. Any undone states are then discarded, so they can no longer be redone.
      */
     void commitAddressBookIfChanged();
 
