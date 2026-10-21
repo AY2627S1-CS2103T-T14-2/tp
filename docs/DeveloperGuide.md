@@ -177,20 +177,36 @@ Later command results and errors replace the warning through the existing comman
 
 ### Finding and listing supporters
 
-`FindCommandParser` rejects missing keywords and splits the input on whitespace. It creates a
-`NameContainsKeywordsPredicate`, which compares each keyword with the supporter's name using
-case-insensitive substring matching. Both strings are converted to lower case with `Locale.ROOT`
-so matching does not depend on the computer's locale. Keywords are matched literally, rather
-than as regular expressions, and spaces in names are retained.
+`FindCommandParser` reads name keywords from the preamble and uses `ArgumentTokenizer` to read
+repeatable `o/`, `t/`, `st/`, `p/` and `e/` filters. Name keywords must precede the first prefix;
+each prefix value extends up to the next recognized prefix. Whitespace is normalized before
+tokenization, allowing multiword organisation values and whitespace between prefixes.
 
-The predicate uses OR matching: a supporter is included if any keyword matches. This allows
-`find tan wei` to show both `Tan Ah Kow` and `Weiling Koh`, even though neither contains both
-keywords. Partial matching lets `wei` match `Weiling`, unlike AB3's whole-word matching.
+The parser rejects missing criteria and empty prefix values. Stage values use
+`ParserUtil#parseStage(String)` so invalid or partial stage names produce the existing stage error.
+Phone queries must contain digits after removing plus signs, spaces and hyphens, and may not
+contain other characters. They are search fragments rather than complete `Phone` values, so the
+phone-number length constraints do not apply to queries.
+
+`PersonMatchesSearchPredicate` defensively copies its criteria and normalizes text with
+`Locale.ROOT`. Names, organisations, tags and emails use literal, case-insensitive substring
+matching; stages match exactly. `normalizePhone(String)` removes formatting from both phone
+criteria and stored numbers before substring matching. Missing optional fields do not satisfy
+criteria on those fields.
+
+Alternatives within a field use OR and different field groups use AND. For example,
+`find tan lim o/DBS o/OCBC st/giving` requires any name keyword, any organisation alternative and
+the Giving stage to match. Name-only searches retain the existing partial-match OR behavior.
 
 `FindCommand#execute(Model)` replaces the current filter using
 `Model#updateFilteredPersonList(Predicate)`. The filtered list preserves the underlying insertion
 order, and the UI numbers its results from 1. `ListCommand#execute(Model)` resets the predicate
 to `Model.PREDICATE_SHOW_ALL_PERSONS`, restoring the full list without changing stored supporters.
+
+Searching leaves the viewed supporter unchanged and does not mark address-book data as changed.
+`LogicManager` therefore creates no undo point and retains any redo history. Parser and predicate
+unit tests cover the criteria; `FindCommandIntegrationTest` exercises filtering, displayed
+indices, stored data, selection and undo/redo through `LogicManager`.
 
 ### Deleting a supporter and their history
 
