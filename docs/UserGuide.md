@@ -297,6 +297,35 @@ The last command reports `#2`. Adding that entry renumbers the 10 March entry fr
 A space followed by `nt/` or `dt/` inside a note is interpreted as a parameter prefix, not note text. This may split the note or cause a validation error. Rephrase the note to avoid these sequences.
 </box>
 
+### Deleting an interaction: `unlog`
+
+Permanently removes one logged interaction, keeping the supporter and their other interactions.
+
+Format: `unlog INDEX ENTRY`
+
+- Supply exactly two positive integers. `INDEX` is the supporter index in the displayed list; after `find`, use the search-result index.
+- `ENTRY` is the number beside the interaction in the detail panel, not its row position. Use `view INDEX` to check it first.
+- Only the selected entry is removed, even if other entries have identical dates and notes.
+- Remaining entries are renumbered without gaps: oldest is `#1`, newest has the largest number. They remain displayed newest first; equal dates keep later-logged entries first.
+- The success message identifies the removed entry by its number before deletion, date and note. Check the refreshed numbers before another deletion.
+- The panel switches to the updated supporter. Deleting their last interaction shows the empty-history message; last contact updates to the latest remaining date, or `No interactions yet`.
+- Other supporter details and the current list filter are preserved. Invalid commands leave data and selection unchanged.
+
+Example: after `view 1`, suppose the panel shows:
+
+```text
+#3  10 Mar 2024  Recent call
+#2  29 Feb 2024  Middle meeting
+#1  20 Feb 2024  First meeting
+```
+
+`unlog 1 2` removes `Middle meeting`. The panel then shows:
+
+```text
+#2  10 Mar 2024  Recent call
+#1  20 Feb 2024  First meeting
+```
+
 ### Viewing a supporter's details and interaction history: `view`
 
 Shows a supporter's full record and every logged interaction in the detail panel beside the supporter list. The result display reports their name and interaction count.
@@ -310,7 +339,7 @@ Format: `view INDEX`
 * Above the interaction history, the panel shows the same last-contact line as the supporter card, for example `Last contact: 03 Oct 2026`, or `No interactions yet` if there are no logged interactions. The line updates when the displayed supporter's interaction history changes.
 * Interactions appear newest first, e.g. `#4  16 Sep 2026  Sent partnership deck by email`. Numbers descend to `#1`, the oldest entry. On equal dates, later-logged entries appear first.
 * The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
-* A successful `view`, `log`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
+* A successful `view`, `log`, `unlog`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
 * Invalid commands leave the displayed supporter unchanged.
 * Deleting the displayed supporter or running `clear` clears the details and history. Deleting another supporter keeps the panel unchanged.
 * Selection is not remembered after restarting the app.
@@ -474,6 +503,7 @@ Action     | Format, Examples
 **Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei`
 **List**   | `list`
 **Log**    | `log INDEX nt/NOTE [dt/DATE]`<br> e.g., `log 2 nt/Called about the year-end appeal dt/2026-10-01`
+**Unlog**  | `unlog INDEX ENTRY`<br> e.g., `unlog 2 1`
 **Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`
 **Stats**  | `stats`
 **View**   | `view INDEX`<br> e.g., `view 2`
