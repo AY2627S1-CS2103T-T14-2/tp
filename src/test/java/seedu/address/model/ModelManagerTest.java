@@ -342,6 +342,49 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void canUndoAddressBook_noCommits_returnsFalse() {
+        assertFalse(modelManager.canUndoAddressBook());
+        assertFalse(modelManager.canRedoAddressBook());
+    }
+
+    @Test
+    public void undoAddressBook_afterCommit_restoresPreviousData() {
+        modelManager.addPerson(ALICE);
+        modelManager.commitAddressBook();
+
+        modelManager.undoAddressBook();
+
+        assertEquals(List.of(), modelManager.getAddressBook().getPersonList());
+        assertEquals(List.of(), modelManager.getFilteredPersonList());
+        assertFalse(modelManager.canUndoAddressBook());
+        assertTrue(modelManager.canRedoAddressBook());
+    }
+
+    @Test
+    public void redoAddressBook_afterUndo_restoresUndoneData() {
+        modelManager.addPerson(ALICE);
+        modelManager.commitAddressBook();
+        modelManager.undoAddressBook();
+
+        modelManager.redoAddressBook();
+
+        assertEquals(List.of(ALICE), modelManager.getAddressBook().getPersonList());
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+        assertTrue(modelManager.canUndoAddressBook());
+        assertFalse(modelManager.canRedoAddressBook());
+    }
+
+    @Test
+    public void undoAddressBook_noEarlierState_throwsIllegalStateException() {
+        assertThrows(IllegalStateException.class, () -> modelManager.undoAddressBook());
+    }
+
+    @Test
+    public void redoAddressBook_noLaterState_throwsIllegalStateException() {
+        assertThrows(IllegalStateException.class, () -> modelManager.redoAddressBook());
+    }
+
+    @Test
     public void getFilteredPersonList_modifyList_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> modelManager.getFilteredPersonList().remove(0));
     }
