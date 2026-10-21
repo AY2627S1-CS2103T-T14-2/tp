@@ -35,7 +35,7 @@ public class UntagCommand extends Command {
     public static final String MESSAGE_NOTHING_REMOVED = "%1$s has none of these tags: %2$s. Nothing was changed.";
 
     private final Index targetIndex;
-    private final Set<Tag> tagsToRemove;
+    private final List<Tag> tagsToRemove;
 
     /**
      * Creates a command that removes {@code tagsToRemove} from the supporter at {@code targetIndex}.
@@ -44,7 +44,8 @@ public class UntagCommand extends Command {
         requireAllNonNull(targetIndex, tagsToRemove);
         assert !tagsToRemove.isEmpty() : "at least one tag must be given";
         this.targetIndex = targetIndex;
-        this.tagsToRemove = new HashSet<>(tagsToRemove);
+        // tags differing only in case count as one, so t/VIP t/vip never reports one of them as skipped
+        this.tagsToRemove = Tag.sortedDistinctIgnoringCase(tagsToRemove);
     }
 
     @Override
@@ -60,7 +61,7 @@ public class UntagCommand extends Command {
         Set<Tag> updatedTags = new HashSet<>(target.getTags());
         List<Tag> removedTags = new ArrayList<>();
         List<Tag> skippedTags = new ArrayList<>();
-        for (Tag tag : tagsToRemove.stream().sorted(Tag.ALPHABETICAL_ORDER).toList()) {
+        for (Tag tag : tagsToRemove) {
             // the message shows removed tags as the supporter had them, e.g. [VIP] for t/vip
             List<Tag> matchingTags = updatedTags.stream().filter(tag::isSameTag).toList();
             if (matchingTags.isEmpty()) {

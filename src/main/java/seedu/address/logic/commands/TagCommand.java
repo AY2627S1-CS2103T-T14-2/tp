@@ -35,7 +35,7 @@ public class TagCommand extends Command {
     public static final String MESSAGE_NOTHING_ADDED = "%1$s already has these tags: %2$s. Nothing was changed.";
 
     private final Index targetIndex;
-    private final Set<Tag> tagsToAdd;
+    private final List<Tag> tagsToAdd;
 
     /**
      * Creates a command that adds {@code tagsToAdd} to the supporter at {@code targetIndex}.
@@ -44,7 +44,8 @@ public class TagCommand extends Command {
         requireAllNonNull(targetIndex, tagsToAdd);
         assert !tagsToAdd.isEmpty() : "at least one tag must be given";
         this.targetIndex = targetIndex;
-        this.tagsToAdd = new HashSet<>(tagsToAdd);
+        // tags differing only in case count as one, so t/VIP t/vip never reports one of them as skipped
+        this.tagsToAdd = Tag.sortedDistinctIgnoringCase(tagsToAdd);
     }
 
     @Override
@@ -60,8 +61,7 @@ public class TagCommand extends Command {
         Set<Tag> updatedTags = new HashSet<>(target.getTags());
         List<Tag> addedTags = new ArrayList<>();
         List<Tag> skippedTags = new ArrayList<>();
-        // a fixed order, so that of t/vip and t/VIP the same one is always added and the other skipped
-        for (Tag tag : tagsToAdd.stream().sorted(Tag.ALPHABETICAL_ORDER).toList()) {
+        for (Tag tag : tagsToAdd) {
             if (updatedTags.stream().anyMatch(tag::isSameTag)) {
                 skippedTags.add(tag);
             } else {

@@ -328,6 +328,7 @@ Format: `tag INDEX t/TAG [t/TAG]...`
 - Tags the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and **must be a positive integer** 1, 2, 3, ...
 - At least one `t/TAG` must be given. Each `TAG` must be alphanumeric, with no spaces, as in `add`.
 - Tags the supporter already has are skipped. Capital letters are ignored when checking, so `t/vip` is skipped if the supporter is tagged `VIP`, and the existing tag keeps its capitalisation.
+- Tags given more than once in different capitalisation, e.g. `t/vip t/VIP`, count as one tag. The same applies to `untag`.
 - The result display lists the tags added and the tags skipped. If every tag is skipped, nothing is changed and a message says so.
 - On success, the detail panel switches to this supporter. The displayed list stays the same, so a `find` result is kept.
 

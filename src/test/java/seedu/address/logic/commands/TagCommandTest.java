@@ -94,13 +94,12 @@ public class TagCommandTest {
     }
 
     @Test
-    public void execute_sameTagInTwoCases_addsOneAndSkipsOther() {
-        // third typical person has no tags
+    public void execute_sameTagInTwoCases_addedOnceWithoutSkipping() {
+        // third typical person has no tags; t/vip and t/VIP count as one tag
         Person target = personAt(INDEX_THIRD_PERSON);
         Person expectedPerson = new PersonBuilder(target).withTags("VIP").build();
 
-        String expectedMessage = String.format(TagCommand.MESSAGE_TAGS_ADDED, target.getName(), "[VIP]") + "\n"
-                + String.format(TagCommand.MESSAGE_TAGS_SKIPPED, "[vip]");
+        String expectedMessage = String.format(TagCommand.MESSAGE_TAGS_ADDED, target.getName(), "[VIP]");
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(target, expectedPerson);
         expectedModel.setViewedPerson(expectedPerson);
@@ -156,6 +155,10 @@ public class TagCommandTest {
 
         // different tags -> returns false
         assertFalse(tagFirst.equals(new TagCommand(INDEX_FIRST_PERSON, tags("donor"))));
+
+        // same tag in two cases counts as one -> returns true
+        assertTrue(new TagCommand(INDEX_FIRST_PERSON, tags("VIP", "vip"))
+                .equals(new TagCommand(INDEX_FIRST_PERSON, tags("VIP"))));
 
         // same tags but untag -> returns false
         assertFalse(tagFirst.equals(new UntagCommand(INDEX_FIRST_PERSON, tags("vip"))));

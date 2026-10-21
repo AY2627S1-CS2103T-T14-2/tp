@@ -3,7 +3,10 @@ package seedu.address.model.tag;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * Represents a Tag in the address book.
@@ -37,6 +40,21 @@ public class Tag {
      */
     public static boolean isValidTagName(String test) {
         return test.matches(VALIDATION_REGEX);
+    }
+
+    /**
+     * Returns {@code tags} in {@link #ALPHABETICAL_ORDER}, keeping only the first of any tags that differ only in
+     * case, so that e.g. {@code [VIP]} and {@code [vip]} given together count as one tag.
+     */
+    public static List<Tag> sortedDistinctIgnoringCase(Collection<Tag> tags) {
+        requireNonNull(tags);
+        List<Tag> distinctTags = new ArrayList<>();
+        for (Tag tag : tags.stream().sorted(ALPHABETICAL_ORDER).toList()) {
+            if (distinctTags.stream().noneMatch(tag::isSameTag)) {
+                distinctTags.add(tag);
+            }
+        }
+        return distinctTags;
     }
 
     /**

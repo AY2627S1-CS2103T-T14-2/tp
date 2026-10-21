@@ -107,6 +107,23 @@ public class UntagCommandTest {
     }
 
     @Test
+    public void execute_sameTagInTwoCases_removedWithoutSkipping() {
+        // t/VIP and t/vip count as one tag, so neither is reported as skipped
+        Person target = personAt(INDEX_THIRD_PERSON);
+        Person taggedVip = new PersonBuilder(target).withTags("VIP").build();
+        model.setPerson(target, taggedVip);
+        Person expectedPerson = new PersonBuilder(target).withTags().build();
+
+        String expectedMessage = String.format(UntagCommand.MESSAGE_TAGS_REMOVED, target.getName(), "[VIP]");
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        expectedModel.setPerson(taggedVip, expectedPerson);
+        expectedModel.setViewedPerson(expectedPerson);
+
+        assertCommandSuccess(new UntagCommand(INDEX_THIRD_PERSON, tags("VIP", "vip")), model, expectedMessage,
+                expectedModel);
+    }
+
+    @Test
     public void execute_tagsDifferingOnlyInCase_removesBoth() {
         Person target = personAt(INDEX_THIRD_PERSON);
         Person taggedTwice = new PersonBuilder(target).withTags("VIP", "vip", "donor").build();
