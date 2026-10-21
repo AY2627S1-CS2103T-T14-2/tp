@@ -111,6 +111,21 @@ public class StageCommandTest {
     }
 
     @Test
+    public void execute_supporterWithIntroducer_introducerPreserved() throws Exception {
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person secondPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        Person introducedPerson = new PersonBuilder(firstPerson)
+                .withIntroducer(secondPerson.getName().fullName)
+                .build();
+        model.setPerson(firstPerson, introducedPerson);
+
+        new StageCommand(INDEX_FIRST_PERSON, Stage.LAPSED).execute(model);
+
+        Person updatedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        assertEquals(introducedPerson.getIntroducer(), updatedPerson.getIntroducer());
+    }
+
+    @Test
     public void execute_sameStage_successWithoutChange() {
         Person previouslyViewedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         model.setViewedPerson(previouslyViewedPerson);

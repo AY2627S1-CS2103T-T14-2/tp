@@ -1,0 +1,13 @@
+{
+  "persons": [ {
+    "name": "Alice Pauline",
+    "phone": "94351253",
+    "email": "alice@example.com",
+    "stage": "Prospect"
+  }, {
+    "name": "Benson Meier",
+    "phone": "98765432",
+    "introducer": "Carl Kurz",
+    "stage": "Contacted"
+  } ]
+}

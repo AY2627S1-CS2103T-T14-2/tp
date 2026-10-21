@@ -132,6 +132,21 @@ public class LogCommandTest {
     }
 
     @Test
+    public void execute_supporterWithIntroducer_introducerPreserved() throws Exception {
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person secondPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        Person introducedPerson = new PersonBuilder(firstPerson)
+                .withIntroducer(secondPerson.getName().fullName)
+                .build();
+        model.setPerson(firstPerson, introducedPerson);
+
+        new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, FIXED_CLOCK).execute(model);
+
+        Person updatedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        assertEquals(introducedPerson.getIntroducer(), updatedPerson.getIntroducer());
+    }
+
+    @Test
     public void execute_invalidIndexUnfilteredList_throwsCommandException() {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
         LogCommand logCommand = new LogCommand(outOfBoundIndex, VALID_NOTE, FIXED_CLOCK);
