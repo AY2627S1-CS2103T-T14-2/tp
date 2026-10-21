@@ -68,6 +68,12 @@
         <Insets top="8" right="0" bottom="8" left="0" />
       </VBox.margin>
     </Separator>
+    <Label fx:id="lastContact" text="-" styleClass="label-bright"
+           wrapText="true" minWidth="0" maxWidth="Infinity">
+      <minHeight>
+        <Region fx:constant="USE_PREF_SIZE" />
+      </minHeight>
+    </Label>
     <Label fx:id="historyHeading" text="Interactions (0) - newest first" styleClass="label-bright"
            wrapText="true" minWidth="0" maxWidth="Infinity">
       <minHeight>
