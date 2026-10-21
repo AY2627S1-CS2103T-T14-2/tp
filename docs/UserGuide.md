@@ -91,6 +91,8 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 - `STAGE` is the supporter's cultivation stage, and must be one of `prospect`, `contacted`, `cultivating`, `giving`, `lapsed` or `declined`. Upper and lower case are both accepted.
 - If `st/STAGE` is left out, the new supporter starts at stage `Prospect`.
 - `PHONE` must contain only digits, and be between 3 and 15 digits long.
+- `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'`), hyphens (`-`) and periods (`.`), e.g. `O'Brien`, `Lee-Tan` and `J. Tan`.
+- `NAME` can also contain `s/o` or `d/o` as separate words, e.g. `Ravi s/o Kumar` and `Priya d/o Kumar`. Upper and lower case are both accepted.
 - Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`.
 - Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
 - After adding, the list shows all supporters (any `find` filter is cleared), with the new supporter at the bottom.
@@ -103,6 +105,8 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 Examples:
 
 - `add n/Aisha Rahman e/aisha.r@gmail.com` adds an online donor who gave only an email.
+- `add n/J. O'Brien-Tan p/91234567` adds a supporter whose name contains periods, apostrophes and hyphens.
+- `add n/Ravi s/o Kumar p/81112222 a/Bedok North Ave 1 st/contacted` adds a supporter named `Ravi s/o Kumar` at stage `Contacted`.
 - `add n/John Lim p/81112222 e/johnlim@example.com a/Bedok North Ave 1 st/lapsed` adds a past donor at stage `Lapsed`.
 - `add n/Tan Wei Ming p/91234567 e/weiming@dbs.com a/12 Marina Boulevard o/DBS Bank t/boardIntro` adds a CSR contact at DBS Bank who was introduced by a board member.
 
@@ -139,6 +143,7 @@ Examples:
 
 - `edit 1 p/91234567 e/weiming@dbs.com` Edits the phone number and email address of the 1st supporter to be `91234567` and `weiming@dbs.com` respectively.
 - `edit 2 n/Tan Wei Ming DBS t/` Edits the name of the 2nd supporter to be `Tan Wei Ming DBS` and clears all existing tags.
+- `edit 2 n/Priya d/o Kumar` Edits the name of the 2nd supporter to be `Priya d/o Kumar`.
 - `edit 3 o/OCBC Bank` Changes the organisation of the 3rd supporter to `OCBC Bank`, e.g. after they change jobs.
 - `edit 4 a/ o/` Clears the address and organisation of the 4th supporter, e.g. after they retire and move.
 - `edit 5 p/` Clears the phone number of the 5th supporter, who keeps their email.
@@ -396,6 +401,7 @@ Edit the data file only if you are confident that you can follow the validation 
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+3. **Names containing `a/l` or `a/p` are not supported.** In `add` and `edit`, a space followed by `a/` is treated as an address prefix, so names such as `Ravi a/l Kumar` cannot be entered as intended.
 
 ---
 
