@@ -224,6 +224,11 @@ public class AddCommandTest {
         }
 
         @Override
+        public void commitAddressBook() {
+            // no history is kept by this stub
+        }
+
+        @Override
         public ReadOnlyAddressBook getAddressBook() {
             return new AddressBook();
         }

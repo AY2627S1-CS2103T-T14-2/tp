@@ -65,6 +65,7 @@ public class StageCommand extends Command {
                 personToUpdate.getIntroducer(), stage, personToUpdate.getInteractions(),
                 personToUpdate.getTags());
         model.setPerson(personToUpdate, updatedPerson);
+        model.commitAddressBook();
         model.setViewedPerson(updatedPerson);
 
         return new CommandResult(String.format(MESSAGE_STAGE_CHANGED, personToUpdate.getName(), oldStage, stage));

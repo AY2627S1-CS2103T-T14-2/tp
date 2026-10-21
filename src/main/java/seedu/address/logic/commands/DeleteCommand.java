@@ -49,6 +49,7 @@ public class DeleteCommand extends Command {
         int interactionCount = personToDelete.getInteractions().size();
 
         model.deletePerson(personToDelete);
+        model.commitAddressBook();
         return new CommandResult(String.format(MESSAGE_DELETE_PERSON_SUCCESS,
                 Messages.format(personToDelete), interactionCount));
     }
