@@ -475,6 +475,22 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void equals_differentDisplayedOrder_returnsFalse() {
+        AddressBook addressBook = new AddressBookBuilder().withPerson(ALICE).withPerson(BENSON).build();
+        modelManager = new ModelManager(addressBook, new UserPrefs());
+        ModelManager otherModel = new ModelManager(addressBook, new UserPrefs());
+        Comparator<Person> reverseNameOrder = Comparator.comparing((Person person) -> person.getName().fullName)
+                .reversed();
+        modelManager.updateSortedPersonList(PREDICATE_SHOW_ALL_PERSONS, reverseNameOrder);
+
+        assertFalse(modelManager.equals(otherModel));
+        assertFalse(otherModel.equals(modelManager));
+
+        otherModel.updateSortedPersonList(PREDICATE_SHOW_ALL_PERSONS, reverseNameOrder);
+        assertEquals(modelManager, otherModel);
+    }
+
+    @Test
     public void equals() {
         AddressBook addressBook = new AddressBookBuilder().withPerson(ALICE).withPerson(BENSON).build();
         AddressBook differentAddressBook = new AddressBook();

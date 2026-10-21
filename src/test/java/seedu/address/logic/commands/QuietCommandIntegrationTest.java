@@ -42,10 +42,10 @@ public class QuietCommandIntegrationTest {
     @TempDir
     private Path temporaryFolder;
 
-    private final Person recent = supporter("Recent", 10);
-    private final Person old = supporter("Old", 100);
+    private final Person recent = createSupporter("Recent", 10);
+    private final Person old = createSupporter("Old", 100);
     private final Person never = new PersonBuilder().withName("Never").build();
-    private final Person older = supporter("Older", 200);
+    private final Person older = createSupporter("Older", 200);
     private AddressBook original;
     private Model model;
     private Logic logic;
@@ -218,7 +218,7 @@ public class QuietCommandIntegrationTest {
         model.commitAddressBookIfChanged();
     }
 
-    private Person supporter(String name, int daysAgo) {
+    private Person createSupporter(String name, int daysAgo) {
         return new PersonBuilder().withName(name)
                 .withInteractions(new Interaction(TODAY.minusDays(daysAgo), "Contact")).build();
     }
