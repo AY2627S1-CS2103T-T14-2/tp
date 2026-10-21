@@ -43,12 +43,14 @@ public class CommandHistory {
 
     /**
      * Moves forward to the next command and returns it.
-     * Returns an empty string once past the newest command.
+     * Returns an empty string when moving past the newest command, or an empty {@code Optional} if already
+     * past it, so text typed without browsing the history is kept.
      */
-    public String next() {
-        if (cursor < commands.size()) {
-            cursor++;
+    public Optional<String> next() {
+        if (cursor >= commands.size()) {
+            return Optional.empty();
         }
-        return cursor == commands.size() ? "" : commands.get(cursor);
+        cursor++;
+        return Optional.of(cursor == commands.size() ? "" : commands.get(cursor));
     }
 }

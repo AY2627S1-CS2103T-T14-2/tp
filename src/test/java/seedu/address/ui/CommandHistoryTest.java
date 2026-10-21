@@ -17,8 +17,15 @@ public class CommandHistoryTest {
     }
 
     @Test
-    public void next_noCommands_returnsEmptyString() {
-        assertEquals("", history.next());
+    public void next_noCommands_returnsEmpty() {
+        assertEquals(Optional.empty(), history.next());
+    }
+
+    @Test
+    public void next_notBrowsing_returnsEmpty() {
+        history.add("list");
+
+        assertEquals(Optional.empty(), history.next());
     }
 
     @Test
@@ -47,16 +54,24 @@ public class CommandHistoryTest {
         history.previous();
         history.previous();
 
-        assertEquals("delete 1", history.next());
+        assertEquals(Optional.of("delete 1"), history.next());
     }
 
     @Test
-    public void next_pastNewestCommand_returnsEmptyString() {
+    public void next_fromNewestCommand_returnsEmptyString() {
         history.add("list");
         history.previous();
 
-        assertEquals("", history.next());
-        assertEquals("", history.next());
+        assertEquals(Optional.of(""), history.next());
+    }
+
+    @Test
+    public void next_alreadyPastNewestCommand_returnsEmpty() {
+        history.add("list");
+        history.previous();
+        history.next();
+
+        assertEquals(Optional.empty(), history.next());
     }
 
     @Test
@@ -76,7 +91,7 @@ public class CommandHistoryTest {
 
         assertEquals(Optional.of("list"), history.previous());
         assertEquals(Optional.of("list"), history.previous());
-        assertEquals("", history.next());
+        assertEquals(Optional.of(""), history.next());
     }
 
     @Test

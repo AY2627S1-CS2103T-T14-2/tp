@@ -43,7 +43,7 @@ public class CommandBox extends UiPart<Region> {
             commandHistory.previous().ifPresent(this::showCommand);
             event.consume();
         } else if (event.getCode() == KeyCode.DOWN) {
-            showCommand(commandHistory.next());
+            commandHistory.next().ifPresent(this::showCommand);
             event.consume();
         }
     }
