@@ -199,7 +199,7 @@ public class Person {
                 .map(Interaction::getDate)
                 .max(LocalDate::compareTo);
     }
-    
+
     /**
      * Returns an immutable list of zero-based stored interaction indices in display order.
      * Interactions are ordered by date descending, then by logging position descending for equal dates.
