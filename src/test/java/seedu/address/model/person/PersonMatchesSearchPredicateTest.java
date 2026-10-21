@@ -137,4 +137,51 @@ public class PersonMatchesSearchPredicateTest {
         assertFalse(predicate.equals(new PersonMatchesSearchPredicate(List.of(), List.of("tan"),
                 List.of(), List.of(), List.of(), List.of())));
     }
+
+    @Test
+    public void equals_differentFieldCriteria_returnsFalse() {
+        PersonMatchesSearchPredicate predicate = new PersonMatchesSearchPredicate(List.of("tan"), List.of("dbs"),
+                List.of("board"), List.of(Stage.GIVING), List.of("9123"), List.of("@dbs"));
+        List<PersonMatchesSearchPredicate> differentPredicates = List.of(
+                new PersonMatchesSearchPredicate(List.of("lim"), List.of("dbs"), List.of("board"),
+                        List.of(Stage.GIVING), List.of("9123"), List.of("@dbs")),
+                new PersonMatchesSearchPredicate(List.of("tan"), List.of("ocbc"), List.of("board"),
+                        List.of(Stage.GIVING), List.of("9123"), List.of("@dbs")),
+                new PersonMatchesSearchPredicate(List.of("tan"), List.of("dbs"), List.of("donor"),
+                        List.of(Stage.GIVING), List.of("9123"), List.of("@dbs")),
+                new PersonMatchesSearchPredicate(List.of("tan"), List.of("dbs"), List.of("board"),
+                        List.of(Stage.LAPSED), List.of("9123"), List.of("@dbs")),
+                new PersonMatchesSearchPredicate(List.of("tan"), List.of("dbs"), List.of("board"),
+                        List.of(Stage.GIVING), List.of("8111"), List.of("@dbs")),
+                new PersonMatchesSearchPredicate(List.of("tan"), List.of("dbs"), List.of("board"),
+                        List.of(Stage.GIVING), List.of("9123"), List.of("@ocbc")));
+
+        for (PersonMatchesSearchPredicate differentPredicate : differentPredicates) {
+            assertFalse(predicate.equals(differentPredicate));
+            assertFalse(differentPredicate.equals(predicate));
+        }
+    }
+
+    @Test
+    public void equals_equivalentNormalizedCriteria_returnsTrue() {
+        PersonMatchesSearchPredicate predicate = new PersonMatchesSearchPredicate(List.of("tan"), List.of("dbs"),
+                List.of("board"), List.of(Stage.GIVING), List.of("659123"), List.of("@dbs"));
+        PersonMatchesSearchPredicate equivalent = new PersonMatchesSearchPredicate(List.of("TAN"), List.of("DBS"),
+                List.of("BOARD"), List.of(Stage.GIVING), List.of("+65 91-23"), List.of("@DBS"));
+
+        assertEquals(predicate, equivalent);
+        assertEquals(equivalent, predicate);
+        assertEquals(predicate.hashCode(), equivalent.hashCode());
+    }
+
+    @Test
+    public void toStringMethod() {
+        PersonMatchesSearchPredicate predicate = new PersonMatchesSearchPredicate(List.of("TAN"), List.of("DBS"),
+                List.of("BOARD"), List.of(Stage.GIVING), List.of("+65 91-23"), List.of("@DBS"));
+        String expected = PersonMatchesSearchPredicate.class.getCanonicalName()
+                + "{nameKeywords=[tan], organisationKeywords=[dbs], tagKeywords=[board], "
+                + "stages=[Giving], phoneKeywords=[659123], emailKeywords=[@dbs]}";
+
+        assertEquals(expected, predicate.toString());
+    }
 }
