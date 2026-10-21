@@ -178,6 +178,15 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_formattedPhone_success() {
+        String formattedPhone = "+65-9123 4567";
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(formattedPhone).build();
+
+        assertParseSuccess(parser, "1 " + PREFIX_PHONE + formattedPhone,
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
     public void parse_oneFieldSpecified_success() {
         // name
         Index targetIndex = INDEX_THIRD_PERSON;

@@ -90,7 +90,7 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 - `ORGANISATION` can contain any characters (e.g. `Procter & Gamble`), must not be blank, and can be at most 100 characters long. Extra spaces are removed.
 - `STAGE` is the supporter's cultivation stage, and must be one of `prospect`, `contacted`, `cultivating`, `giving`, `lapsed` or `declined`. Upper and lower case are both accepted.
 - If `st/STAGE` is left out, the new supporter starts at stage `Prospect`.
-- `PHONE` must contain only digits, and be between 3 and 15 digits long.
+- `PHONE` may start with `+` and must contain between 3 and 15 digits. Digit groups may be separated by single spaces or hyphens, including a mixture of both. For example, `+65 9123 4567`, `+65-9123-4567` and `+65 9123-4567` are accepted. Consecutive separators such as `+65  9123` or `+65- 9123` are not accepted. Your formatting is preserved when the number is displayed and saved.
 - `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'`), hyphens (`-`) and periods (`.`), e.g. `O'Brien`, `Lee-Tan` and `J. Tan`.
 - `NAME` can also contain `s/o` or `d/o` as separate words, e.g. `Ravi s/o Kumar` and `Priya d/o Kumar`. Upper and lower case are both accepted.
 - SupporterBook only checks which characters a name uses, not whether it looks like a real name. For example, `s/o Kumar` or a name with only initials is accepted.
@@ -106,6 +106,7 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 Examples:
 
 - `add n/Aisha Rahman e/aisha.r@gmail.com` adds an online donor who gave only an email.
+- `add n/Marie Laurent p/+33 1 42 68 53 00` adds a supporter with an international phone number.
 - `add n/J. O'Brien-Tan p/91234567` adds a supporter whose name contains periods, apostrophes and hyphens.
 - `add n/Ravi s/o Kumar p/81112222 a/Bedok North Ave 1 st/contacted` adds a supporter named `Ravi s/o Kumar` at stage `Contacted`.
 - `add n/John Lim p/81112222 e/johnlim@example.com a/Bedok North Ave 1 st/lapsed` adds a past donor at stage `Lapsed`.
@@ -145,6 +146,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t
 Examples:
 
 - `edit 1 p/91234567 e/weiming@dbs.com` Edits the phone number and email address of the 1st supporter to be `91234567` and `weiming@dbs.com` respectively.
+- `edit 1 p/+65-9123-4567` Changes the 1st supporter's phone number using an international country code.
 - `edit 2 n/Tan Wei Ming DBS t/` Edits the name of the 2nd supporter to be `Tan Wei Ming DBS` and clears all existing tags.
 - `edit 2 n/Priya d/o Kumar` Edits the name of the 2nd supporter to be `Priya d/o Kumar`.
 - `edit 3 o/OCBC Bank` Changes the organisation of the 3rd supporter to `OCBC Bank`, e.g. after they change jobs.

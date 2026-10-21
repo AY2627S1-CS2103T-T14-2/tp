@@ -113,6 +113,15 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_formattedPhone_success() {
+        String formattedPhone = "+65 9123-4567";
+        Person expectedPerson = new PersonBuilder(AMY).withPhone(formattedPhone).build();
+
+        assertParseSuccess(parser, NAME_DESC_AMY + " " + PREFIX_PHONE + formattedPhone + EMAIL_DESC_AMY
+                + ADDRESS_DESC_AMY + STAGE_DESC_AMY + TAG_DESC_FRIEND, new AddCommand(expectedPerson));
+    }
+
+    @Test
     public void parse_stageCaseAndWhitespace_success() {
         Person expectedPerson = new PersonBuilder(BOB).withStage("lapsed").build();
 

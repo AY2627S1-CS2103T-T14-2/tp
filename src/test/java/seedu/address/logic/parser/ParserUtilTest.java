@@ -32,7 +32,7 @@ public class ParserUtilTest {
             Instant.parse("2026-10-19T16:30:00Z"), ZoneId.of("Asia/Singapore"));
 
     private static final String INVALID_NAME = "R@chel";
-    private static final String INVALID_PHONE = "+651234";
+    private static final String INVALID_PHONE = "+65 123--4";
     private static final String INVALID_ADDRESS = " ";
     private static final String INVALID_EMAIL = "example.com";
     private static final String INVALID_TAG = "#friend";
