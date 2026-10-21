@@ -431,6 +431,19 @@ Exits the program.
 
 Format: `exit`
 
+### Recalling previous commands
+
+Press <kbd>Up</kbd> in the command box to bring back the commands you have entered, newest first, so that you can run a similar command again without retyping it. Press <kbd>Down</kbd> to move forward again.
+
+- Every command you entered is remembered, including commands that failed, so you can fix a typo and try again.
+- Pressing <kbd>Up</kbd> at the oldest command keeps it in the box.
+- Pressing <kbd>Down</kbd> past the newest command leaves the box empty.
+- Pressing <kbd>Down</kbd> while typing a new command, without having pressed <kbd>Up</kbd>, keeps what you typed.
+- Entering the same command several times in a row stores it only once.
+- The command history is cleared when you close the app. It is not saved to the data file.
+
+Example: after `log 2 nt/Called about the gala`, press <kbd>Up</kbd>, change the index and note, and press <kbd>Enter</kbd> to log a similar interaction with another supporter.
+
 ### Saving the data
 
 SupporterBook automatically saves data after every command that executes successfully. You do not need to save manually.
