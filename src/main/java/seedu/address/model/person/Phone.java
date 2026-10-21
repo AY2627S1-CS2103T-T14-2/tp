@@ -14,10 +14,11 @@ public class Phone {
                     + "between digit groups, including a mixture of both. "
                     + "They must contain between 3 and 15 digits";
 
+    public static final String VALIDATION_REGEX = "\\+?\\d+(?:[ -]\\d+)*";
+
     /*
      * 3 digits allows short hotlines, and 15 digits is the longest a phone number can be internationally.
      */
-    public static final String VALIDATION_REGEX = "\\+?\\d+(?:[ -]\\d+)*";
     private static final int MIN_DIGITS = 3;
     private static final int MAX_DIGITS = 15;
     public final String value;
