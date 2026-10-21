@@ -36,6 +36,15 @@ public class SampleDataUtilTest {
     }
 
     @Test
+    public void getSamplePersons_introducers_nameOtherSampleSupporters() {
+        assertTrue(samplePersons.stream().anyMatch(person -> person.getIntroducer().isPresent()));
+        samplePersons.stream()
+                .flatMap(person -> person.getIntroducer().stream())
+                .forEach(introducer -> assertTrue(samplePersons.stream()
+                        .anyMatch(other -> other.getName().isSameName(introducer))));
+    }
+
+    @Test
     public void getSampleAddressBook_noDuplicates_containsAllSamplePersons() {
         ReadOnlyAddressBook sampleAddressBook = SampleDataUtil.getSampleAddressBook();
         assertEquals(samplePersons, sampleAddressBook.getPersonList());

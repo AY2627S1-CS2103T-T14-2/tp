@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonRootName;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 
 /**
@@ -20,6 +22,8 @@ import seedu.address.model.person.Person;
 class JsonSerializableAddressBook {
 
     public static final String MESSAGE_DUPLICATE_PERSON = "Supporters list contains duplicate supporter(s).";
+    public static final String MESSAGE_UNKNOWN_INTRODUCER =
+            "Supporters list contains an introducer who is not a supporter.";
 
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
 
@@ -54,7 +58,23 @@ class JsonSerializableAddressBook {
             }
             addressBook.addPerson(person);
         }
+
+        // checked after all supporters are added, since an introducer may appear later in the file
+        for (Person person : addressBook.getPersonList()) {
+            Optional<Name> introducer = person.getIntroducer();
+            if (introducer.isPresent() && !hasPersonNamed(addressBook, introducer.get())) {
+                throw new IllegalValueException(MESSAGE_UNKNOWN_INTRODUCER);
+            }
+        }
         return addressBook;
+    }
+
+    /**
+     * Returns true if {@code addressBook} has a supporter called {@code name}, ignoring case and extra spaces.
+     */
+    private static boolean hasPersonNamed(AddressBook addressBook, Name name) {
+        return addressBook.getPersonList().stream()
+                .anyMatch(person -> person.getName().isSameName(name));
     }
 
 }

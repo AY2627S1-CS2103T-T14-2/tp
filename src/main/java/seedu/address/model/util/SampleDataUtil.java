@@ -27,7 +27,8 @@ public class SampleDataUtil {
         return new Person[] {
             new Person(new Name("Alex Yeoh"), Optional.of(new Phone("87438807")),
                 Optional.of(new Email("alexyeoh@example.com")),
-                Optional.of(new Address("Blk 30 Geylang Street 29, #06-40")), Optional.empty(), Stage.GIVING,
+                Optional.of(new Address("Blk 30 Geylang Street 29, #06-40")), Optional.empty(), Optional.empty(),
+                Stage.GIVING,
                 List.of(
                     new Interaction(LocalDate.of(2026, 7, 18), "Thanked him for his recurring donation"),
                     new Interaction(LocalDate.of(2026, 9, 12),
@@ -36,7 +37,7 @@ public class SampleDataUtil {
             new Person(new Name("Bernice Yu"), Optional.of(new Phone("99272758")),
                 Optional.of(new Email("berniceyu@example.com")),
                 Optional.of(new Address("Blk 30 Lorong 3 Serangoon Gardens, #07-18")),
-                Optional.of(new Organisation("DBS Bank")), Stage.CULTIVATING,
+                Optional.of(new Organisation("DBS Bank")), Optional.empty(), Stage.CULTIVATING,
                 List.of(
                     new Interaction(LocalDate.of(2026, 8, 5), "Discussed DBS employee giving programme"),
                     new Interaction(LocalDate.of(2026, 9, 16),
@@ -48,10 +49,11 @@ public class SampleDataUtil {
             new Person(new Name("Charlotte Oliveiro"), Optional.empty(),
                 Optional.of(new Email("charlotte@example.com")), Optional.empty(), Optional.empty(),
                 Stage.PROSPECT, getTagSet("onlineDonor")),
-            // a corporate contact whose postal address is not known
+            // a corporate contact whose postal address is not known, introduced by another supporter
             new Person(new Name("David Li"), Optional.of(new Phone("91031282")),
                 Optional.of(new Email("lidavid@example.com")), Optional.empty(),
-                Optional.of(new Organisation("Keppel Corporation")), Stage.CONTACTED,
+                Optional.of(new Organisation("Keppel Corporation")), Optional.of(new Name("Bernice Yu")),
+                Stage.CONTACTED,
                 List.of(
                     new Interaction(LocalDate.of(2026, 8, 21), "Sent the community outreach sponsorship deck"),
                     new Interaction(LocalDate.of(2026, 9, 25),

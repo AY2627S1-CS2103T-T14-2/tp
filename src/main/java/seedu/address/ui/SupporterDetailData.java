@@ -27,13 +27,24 @@ public final class SupporterDetailData {
             DateTimeFormatter.ofPattern("dd MMM uuuu", Locale.ENGLISH);
 
     private final Optional<Person> viewedPerson;
+    private final List<Person> introducedPersons;
     private final List<InteractionEntry> interactionEntries;
 
     /**
-     * Creates display data for {@code viewedPerson}, or the startup state when no supporter is selected.
+     * Creates display data for {@code viewedPerson}, or the startup state when no supporter is selected,
+     * with no introductions made by them.
      */
     public SupporterDetailData(Optional<Person> viewedPerson) {
+        this(viewedPerson, List.of());
+    }
+
+    /**
+     * Creates display data for {@code viewedPerson}, or the startup state when no supporter is selected.
+     * {@code introducedPersons} are the supporters whom {@code viewedPerson} introduced.
+     */
+    public SupporterDetailData(Optional<Person> viewedPerson, List<Person> introducedPersons) {
         this.viewedPerson = requireNonNull(viewedPerson);
+        this.introducedPersons = List.copyOf(requireNonNull(introducedPersons));
         interactionEntries = viewedPerson.map(SupporterDetailData::createInteractionEntries).orElseGet(List::of);
     }
 
@@ -67,6 +78,26 @@ public final class SupporterDetailData {
 
     public String getAddress() {
         return viewedPerson.flatMap(Person::getAddress).map(address -> address.value).orElse(UNSET_FIELD);
+    }
+
+    /**
+     * Returns the name of the supporter who introduced the viewed supporter, or {@code -} when none is recorded.
+     */
+    public String getIntroducer() {
+        return viewedPerson.flatMap(Person::getIntroducer).map(name -> name.fullName).orElse(UNSET_FIELD);
+    }
+
+    /**
+     * Returns the names of the supporters whom the viewed supporter introduced, separated by commas,
+     * or {@code -} when there are none.
+     */
+    public String getIntroductions() {
+        if (!hasSupporter() || introducedPersons.isEmpty()) {
+            return UNSET_FIELD;
+        }
+        return introducedPersons.stream()
+                .map(person -> person.getName().fullName)
+                .collect(Collectors.joining(", "));
     }
 
     /**

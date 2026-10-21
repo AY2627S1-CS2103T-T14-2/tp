@@ -93,7 +93,8 @@ public class LogCommand extends Command {
 
         Person updatedPerson = new Person(personToUpdate.getName(), personToUpdate.getPhone(),
                 personToUpdate.getEmail(), personToUpdate.getAddress(), personToUpdate.getOrganisation(),
-                personToUpdate.getStage(), updatedInteractions, personToUpdate.getTags());
+                personToUpdate.getIntroducer(), personToUpdate.getStage(), updatedInteractions,
+                personToUpdate.getTags());
         model.setPerson(personToUpdate, updatedPerson);
         model.setViewedPerson(updatedPerson);
 
