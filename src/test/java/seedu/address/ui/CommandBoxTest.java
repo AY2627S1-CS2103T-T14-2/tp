@@ -86,6 +86,31 @@ public class CommandBoxTest {
     }
 
     @Test
+    public void pressDown_noCommandsEntered_keepsTypedText() throws Exception {
+        runOnFxThread(() -> {
+            TextField textField = createCommandBoxField();
+            textField.setText("lis");
+
+            press(textField, KeyCode.DOWN);
+
+            assertEquals("lis", textField.getText());
+        });
+    }
+
+    @Test
+    public void pressDown_typingWithoutBrowsing_keepsTypedText() throws Exception {
+        runOnFxThread(() -> {
+            TextField textField = createCommandBoxField();
+            submit(textField, "list");
+            textField.setText("view 2");
+
+            press(textField, KeyCode.DOWN);
+
+            assertEquals("view 2", textField.getText());
+        });
+    }
+
+    @Test
     public void pressUp_repeatedCommand_storedOnce() throws Exception {
         runOnFxThread(() -> {
             TextField textField = createCommandBoxField();
