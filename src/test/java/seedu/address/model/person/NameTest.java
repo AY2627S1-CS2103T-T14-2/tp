@@ -41,6 +41,72 @@ public class NameTest {
     }
 
     @Test
+    public void isValidName_supportedPunctuation_returnsTrue() {
+        assertTrue(Name.isValidName("O'Brien"));
+        assertTrue(Name.isValidName("Lee-Tan"));
+        assertTrue(Name.isValidName("J. Tan"));
+        assertTrue(Name.isValidName("J. O'Brien-Tan"));
+        assertTrue(Name.isValidName("2nd Lee-Tan"));
+        assertTrue(Name.isValidName("Tan'-.."));
+    }
+
+    @Test
+    public void isValidName_nonAlphanumericStart_returnsFalse() {
+        assertFalse(Name.isValidName("'Tan"));
+        assertFalse(Name.isValidName("-Tan"));
+        assertFalse(Name.isValidName(".Tan"));
+        assertFalse(Name.isValidName("  .Tan  "));
+        assertFalse(Name.isValidName("'-."));
+    }
+
+    @Test
+    public void isValidName_supportedSlashWords_returnsTrue() {
+        assertTrue(Name.isValidName("Ravi s/o Kumar"));
+        assertTrue(Name.isValidName("Priya d/o Kumar"));
+        assertTrue(Name.isValidName("Ravi S/O Kumar"));
+        assertTrue(Name.isValidName("Priya D/O Kumar"));
+        assertTrue(Name.isValidName("Ravi s/O Kumar"));
+        assertTrue(Name.isValidName("Priya D/o Kumar"));
+        assertTrue(Name.isValidName("s/o Kumar"));
+        assertTrue(Name.isValidName("d/o Kumar"));
+        assertTrue(Name.isValidName("Ravi s/o"));
+        assertTrue(Name.isValidName("Priya d/o"));
+        assertTrue(Name.isValidName("s/o"));
+        assertTrue(Name.isValidName("d/o"));
+        assertTrue(Name.isValidName("  Ravi   s/o\tKumar  "));
+        assertTrue(Name.isValidName("J. O'Brien-Tan d/o Kumar"));
+    }
+
+    @Test
+    public void isValidName_unsupportedSlashForms_returnsFalse() {
+        assertFalse(Name.isValidName("Tan/Lim"));
+        assertFalse(Name.isValidName("Ravi a/l Kumar"));
+        assertFalse(Name.isValidName("Priya a/p Kumar"));
+        assertFalse(Name.isValidName("Ravi s/ Kumar"));
+        assertFalse(Name.isValidName("Priya d/ Kumar"));
+        assertFalse(Name.isValidName("Ravi s/ o Kumar"));
+        assertFalse(Name.isValidName("Ravis/o Kumar"));
+        assertFalse(Name.isValidName("Priyad/o Kumar"));
+        assertFalse(Name.isValidName("Ravi s/oKumar"));
+        assertFalse(Name.isValidName("Priya d/oKumar"));
+        assertFalse(Name.isValidName("Ravi-s/o Kumar"));
+        assertFalse(Name.isValidName("Priya d/o.Kumar"));
+        assertFalse(Name.isValidName("Ravi s//o Kumar"));
+        assertFalse(Name.isValidName("Ravi / Kumar"));
+    }
+
+    @Test
+    public void constructor_supportedName_preservesPunctuationAndCase() {
+        assertEquals("J. O'Brien-Tan D/O Kumar", new Name("J. O'Brien-Tan D/O Kumar").fullName);
+    }
+
+    @Test
+    public void constructor_supportedNameWithExtraSpaces_spacesNormalised() {
+        assertEquals("Ravi s/o Kumar", new Name("  Ravi   s/o\tKumar  ").fullName);
+        assertEquals("J. O'Brien-Tan", new Name("  J.   O'Brien-Tan  ").fullName);
+    }
+
+    @Test
     public void constructor_extraSpaces_spacesNormalised() {
         assertEquals("Tan Wei Ming", new Name("  Tan   Wei Ming ").fullName);
         assertEquals(new Name("Tan Wei Ming"), new Name("Tan  Wei  Ming"));
