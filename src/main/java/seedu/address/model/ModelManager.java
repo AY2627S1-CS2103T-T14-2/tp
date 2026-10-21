@@ -20,7 +20,7 @@ import seedu.address.model.person.Person;
 public class ModelManager implements Model {
     private static final Logger logger = LogsCenter.getLogger(ModelManager.class);
 
-    private final AddressBook addressBook;
+    private final VersionedAddressBook versionedAddressBook;
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
     private Person viewedPerson = null;
@@ -33,9 +33,9 @@ public class ModelManager implements Model {
 
         logger.fine("Initializing with address book: " + addressBook + " and user prefs " + userPrefs);
 
-        this.addressBook = new AddressBook(addressBook);
+        this.versionedAddressBook = new VersionedAddressBook(addressBook);
         this.userPrefs = new UserPrefs(userPrefs);
-        filteredPersons = new FilteredList<>(this.addressBook.getPersonList());
+        filteredPersons = new FilteredList<>(this.versionedAddressBook.getPersonList());
     }
 
     public ModelManager() {
@@ -64,24 +64,24 @@ public class ModelManager implements Model {
 
     @Override
     public void setAddressBook(ReadOnlyAddressBook addressBook) {
-        this.addressBook.resetData(addressBook);
+        versionedAddressBook.resetData(addressBook);
         viewedPerson = null;
     }
 
     @Override
     public ReadOnlyAddressBook getAddressBook() {
-        return addressBook;
+        return versionedAddressBook;
     }
 
     @Override
     public boolean hasPerson(Person person) {
         requireNonNull(person);
-        return addressBook.hasPerson(person);
+        return versionedAddressBook.hasPerson(person);
     }
 
     @Override
     public void deletePerson(Person target) {
-        addressBook.removePerson(target);
+        versionedAddressBook.removePerson(target);
         if (target.equals(viewedPerson)) {
             viewedPerson = null;
         }
@@ -89,7 +89,7 @@ public class ModelManager implements Model {
 
     @Override
     public void addPerson(Person person) {
-        addressBook.addPerson(person);
+        versionedAddressBook.addPerson(person);
         updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
     }
 
@@ -97,7 +97,7 @@ public class ModelManager implements Model {
     public void setPerson(Person target, Person editedPerson) {
         requireAllNonNull(target, editedPerson);
 
-        addressBook.setPerson(target, editedPerson);
+        versionedAddressBook.setPerson(target, editedPerson);
         if (target.equals(viewedPerson)) {
             viewedPerson = editedPerson;
         }
@@ -118,7 +118,7 @@ public class ModelManager implements Model {
 
     /**
      * Returns an unmodifiable view of the list of {@code Person} backed by the internal list of
-     * {@code addressBook}
+     * {@code versionedAddressBook}
      */
     @Override
     public ObservableList<Person> getFilteredPersonList() {
@@ -142,7 +142,7 @@ public class ModelManager implements Model {
             return false;
         }
 
-        return addressBook.equals(otherModelManager.addressBook)
+        return versionedAddressBook.equals(otherModelManager.versionedAddressBook)
                 && userPrefs.equals(otherModelManager.userPrefs)
                 && filteredPersons.equals(otherModelManager.filteredPersons)
                 && Objects.equals(viewedPerson, otherModelManager.viewedPerson);
