@@ -27,6 +27,35 @@ public class SupporterDetailDataTest {
     }
 
     @Test
+    public void constructor_nullIntroductions_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new SupporterDetailData(Optional.empty(), null));
+    }
+
+    @Test
+    public void constructor_introducerAndIntroductions_showsBoth() {
+        Person person = new PersonBuilder().withName("Lim Mei Hua").withIntroducer("Ong Kai Wen").build();
+        Person firstIntroduced = new PersonBuilder().withName("Tan Wei Ming").build();
+        Person secondIntroduced = new PersonBuilder().withName("David Li").build();
+        SupporterDetailData data = new SupporterDetailData(Optional.of(person),
+                List.of(firstIntroduced, secondIntroduced));
+
+        assertEquals("Ong Kai Wen", data.getIntroducer());
+        assertEquals("Tan Wei Ming, David Li", data.getIntroductions());
+    }
+
+    @Test
+    public void constructor_noIntroducerOrIntroductions_showsUnsetMarkers() {
+        SupporterDetailData data = new SupporterDetailData(Optional.of(new PersonBuilder().build()));
+        assertEquals("-", data.getIntroducer());
+        assertEquals("-", data.getIntroductions());
+
+        // introductions are not shown when no supporter is selected
+        SupporterDetailData noSelection = new SupporterDetailData(Optional.empty(),
+                List.of(new PersonBuilder().build()));
+        assertEquals("-", noSelection.getIntroductions());
+    }
+
+    @Test
     public void constructor_noSelection_showsStartupState() {
         SupporterDetailData data = new SupporterDetailData(Optional.empty());
 

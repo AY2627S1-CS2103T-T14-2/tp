@@ -130,6 +130,14 @@ public class PersonTest {
                 .withInteractions(new Interaction(LocalDate.of(2026, 9, 16), "Called"))
                 .build();
         assertFalse(ALICE.equals(editedAlice));
+
+        // introducer added -> returns false
+        editedAlice = new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName).build();
+        assertFalse(ALICE.equals(editedAlice));
+
+        // different introducer -> returns false
+        Person introducedByBob = new PersonBuilder(editedAlice).withIntroducer(VALID_NAME_BOB).build();
+        assertFalse(editedAlice.equals(introducedByBob));
     }
 
     @Test
@@ -189,7 +197,7 @@ public class PersonTest {
         Interaction interaction = new Interaction(LocalDate.of(2026, 9, 16), "Called");
         List<Interaction> interactions = new ArrayList<>(List.of(interaction));
         Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
-                ALICE.getOrganisation(), ALICE.getStage(), interactions, ALICE.getTags());
+                ALICE.getOrganisation(), Optional.empty(), ALICE.getStage(), interactions, ALICE.getTags());
 
         interactions.clear();
         assertEquals(List.of(interaction), person.getInteractions());
@@ -252,11 +260,78 @@ public class PersonTest {
     }
 
     @Test
+    public void constructor_withoutIntroducer_hasNoIntroducer() {
+        Person person = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
+                ALICE.getOrganisation(), ALICE.getStage(), ALICE.getTags());
+        assertTrue(person.getIntroducer().isEmpty());
+    }
+
+    @Test
+    public void constructor_withIntroducer_hasIntroducer() {
+        Person person = new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName).build();
+        assertEquals(Optional.of(BENSON.getName()), person.getIntroducer());
+    }
+
+    @Test
+    public void constructor_nullIntroducer_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new Person(ALICE.getName(), ALICE.getPhone(),
+                ALICE.getEmail(), ALICE.getAddress(), ALICE.getOrganisation(), null, ALICE.getStage(),
+                ALICE.getInteractions(), ALICE.getTags()));
+    }
+
+    @Test
+    public void constructor_ownNameAsIntroducer_throwsIllegalArgumentException() {
+        // names are compared ignoring case and extra spaces, as for duplicate supporters
+        Name ownNameInOtherCase = new Name(ALICE.getName().fullName.toUpperCase());
+        assertThrows(IllegalArgumentException.class, Person.MESSAGE_SELF_INTRODUCTION, () -> new Person(
+                ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(), ALICE.getOrganisation(),
+                Optional.of(ownNameInOtherCase), ALICE.getStage(), ALICE.getInteractions(), ALICE.getTags()));
+    }
+
+    @Test
+    public void isIntroducedBy() {
+        Person aliceByBenson = new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName).build();
+
+        // recorded introducer, in any case -> returns true
+        assertTrue(aliceByBenson.isIntroducedBy(BENSON.getName()));
+        assertTrue(aliceByBenson.isIntroducedBy(new Name(BENSON.getName().fullName.toLowerCase())));
+
+        // someone else -> returns false
+        assertFalse(aliceByBenson.isIntroducedBy(BOB.getName()));
+
+        // no introducer -> returns false
+        assertFalse(ALICE.isIntroducedBy(BENSON.getName()));
+    }
+
+    @Test
+    public void withIntroducer_keepsOtherDetails() {
+        Person aliceByBenson = ALICE.withIntroducer(Optional.of(BENSON.getName()));
+        assertEquals(new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName).build(), aliceByBenson);
+        assertEquals(ALICE, aliceByBenson.withIntroducer(Optional.empty()));
+        assertThrows(IllegalArgumentException.class, () -> ALICE.withIntroducer(Optional.of(ALICE.getName())));
+    }
+
+    @Test
+    public void isValidIntroducer() {
+        // no introducer -> returns true
+        assertTrue(Person.isValidIntroducer(ALICE.getName(), Optional.empty()));
+
+        // another supporter -> returns true
+        assertTrue(Person.isValidIntroducer(ALICE.getName(), Optional.of(BENSON.getName())));
+
+        // own name, in any case -> returns false
+        assertFalse(Person.isValidIntroducer(ALICE.getName(), Optional.of(ALICE.getName())));
+        assertFalse(Person.isValidIntroducer(ALICE.getName(),
+                Optional.of(new Name(ALICE.getName().fullName.toLowerCase()))));
+    }
+
+    @Test
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName()
                 + ", phone=" + ALICE.getPhone().orElse(null) + ", email=" + ALICE.getEmail().orElse(null)
                 + ", address=" + ALICE.getAddress().orElse(null)
-                + ", organisation=" + ALICE.getOrganisation().orElse(null) + ", stage=" + ALICE.getStage()
+                + ", organisation=" + ALICE.getOrganisation().orElse(null)
+                + ", introducer=" + ALICE.getIntroducer().orElse(null) + ", stage=" + ALICE.getStage()
                 + ", interactions=" + ALICE.getInteractions() + ", tags=" + ALICE.getTags() + "}";
         assertEquals(expected, ALICE.toString());
     }

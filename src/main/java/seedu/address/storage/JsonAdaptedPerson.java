@@ -38,6 +38,8 @@ class JsonAdaptedPerson {
     private final String address;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String organisation;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private final String introducer;
     private final String stage;
     private final List<JsonAdaptedInteraction> interactions = new ArrayList<>();
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
@@ -48,7 +50,8 @@ class JsonAdaptedPerson {
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("address") String address,
-            @JsonProperty("organisation") String organisation, @JsonProperty("stage") String stage,
+            @JsonProperty("organisation") String organisation, @JsonProperty("introducer") String introducer,
+            @JsonProperty("stage") String stage,
             @JsonProperty("interactions") List<JsonAdaptedInteraction> interactions,
             @JsonProperty("tags") List<JsonAdaptedTag> tags) {
         this.name = name;
@@ -56,6 +59,7 @@ class JsonAdaptedPerson {
         this.email = email;
         this.address = address;
         this.organisation = organisation;
+        this.introducer = introducer;
         this.stage = stage;
         if (interactions != null) {
             this.interactions.addAll(interactions);
@@ -74,6 +78,7 @@ class JsonAdaptedPerson {
         email = source.getEmail().map(e -> e.value).orElse(null);
         address = source.getAddress().map(a -> a.value).orElse(null);
         organisation = source.getOrganisation().map(org -> org.value).orElse(null);
+        introducer = source.getIntroducer().map(introducerName -> introducerName.fullName).orElse(null);
         stage = source.getStage().toString();
         interactions.addAll(source.getInteractions().stream()
                 .map(JsonAdaptedInteraction::new)
@@ -137,6 +142,15 @@ class JsonAdaptedPerson {
         }
         final Optional<Organisation> modelOrganisation = Optional.ofNullable(organisation).map(Organisation::new);
 
+        // introducer is optional; whether it names an existing supporter is checked for the whole address book
+        if (introducer != null && !Name.isValidName(introducer)) {
+            throw new IllegalValueException(Name.MESSAGE_CONSTRAINTS);
+        }
+        final Optional<Name> modelIntroducer = Optional.ofNullable(introducer).map(Name::new);
+        if (!Person.isValidIntroducer(modelName, modelIntroducer)) {
+            throw new IllegalValueException(Person.MESSAGE_SELF_INTRODUCTION);
+        }
+
         if (stage == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Stage.class.getSimpleName()));
         }
@@ -146,8 +160,8 @@ class JsonAdaptedPerson {
         final Stage modelStage = Stage.fromString(stage);
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
-        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelOrganisation, modelStage,
-                personInteractions, modelTags);
+        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelOrganisation, modelIntroducer,
+                modelStage, personInteractions, modelTags);
     }
 
 }

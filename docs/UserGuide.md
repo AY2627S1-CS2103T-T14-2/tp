@@ -64,7 +64,7 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 - Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
 
-- Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
+- Extraneous parameters for commands that take no parameters, such as `help`, `list`, `stats`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
 - If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -128,8 +128,12 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t
 - Existing values will be updated to the input values. Each value follows the same rules as in `add`.
 - When editing tags, all of the supporter's existing tags are removed; adding tags is not cumulative.
 - To remove all of a supporter's tags, enter `t/` without a tag after it.
+- To clear a supporter's address or organisation, enter `a/` or `o/` with nothing after it.
+- To clear a supporter's phone number or email, enter `p/` or `e/` with nothing after it. This works only if the supporter keeps the other one, since every supporter needs a way to be reached. You can clear one and give a new value for the other in the same command, e.g. `edit 1 e/ p/91234567`.
+- A supporter's name cannot be cleared.
 - A supporter's stage cannot be changed with `edit`, and stays the same when other details are edited. Use the `stage` command instead.
 - A supporter's logged interactions are kept when their details are edited.
+- A supporter's introducer is kept when their details are edited. If you rename a supporter who introduced others, those supporters show the new name as their introducer.
 - A supporter's name cannot be changed to the name of another supporter, using the same comparison as `add`. Changing only the capitalisation of their own name is allowed.
 - After editing, the list shows all supporters (any `find` filter is cleared).
 
@@ -138,6 +142,8 @@ Examples:
 - `edit 1 p/91234567 e/weiming@dbs.com` Edits the phone number and email address of the 1st supporter to be `91234567` and `weiming@dbs.com` respectively.
 - `edit 2 n/Tan Wei Ming DBS t/` Edits the name of the 2nd supporter to be `Tan Wei Ming DBS` and clears all existing tags.
 - `edit 3 o/OCBC Bank` Changes the organisation of the 3rd supporter to `OCBC Bank`, e.g. after they change jobs.
+- `edit 4 a/ o/` Clears the address and organisation of the 4th supporter, e.g. after they retire and move.
+- `edit 5 p/` Clears the phone number of the 5th supporter, who keeps their email.
 
 ### Setting a supporter's stage: `stage`
 
@@ -167,6 +173,29 @@ Examples:
 
 - `stage 2 cultivating` moves the 2nd supporter in the displayed list to stage `Cultivating`.
 - `find Tan` followed by `stage 1 GIVING` moves the 1st supporter in the results of the `find` command to stage `Giving`.
+
+### Counting supporters by stage: `stats`
+
+Shows how many supporters are at each cultivation stage, e.g. to check whether there are enough prospects early in the year.
+
+Format: `stats`
+
+- Every supporter is counted, including those hidden by a `find` filter.
+- All six stages are listed in order, including stages with no supporters.
+- The displayed list and the detail panel do not change.
+- Anything typed after the command word is ignored; `stats 123` behaves as `stats`.
+
+For example, with four supporters:
+
+```text
+Supporters by stage (4 in total):
+Prospect: 1
+Contacted: 0
+Cultivating: 0
+Giving: 2
+Lapsed: 1
+Declined: 0
+```
 
 ### Finding supporters by part of a name: `find`
 
@@ -207,6 +236,7 @@ Format: `delete INDEX`
 - The current find filter is retained, and supporters below the deleted entry move up one number.
 - If the supporter is shown in the detail panel, their details and history are cleared and the startup prompt returns. Deleting another supporter preserves the panel's displayed supporter.
 - Other supporters' details and interaction histories are unchanged, including notes that mention the deleted supporter.
+- If the deleted supporter introduced others, they are removed as those supporters' introducer, and the success message says how many supporters this affected.
 
 Examples:
 
@@ -256,7 +286,7 @@ Format: `view INDEX`
 * `INDEX` is required and must be a positive integer from the currently displayed supporter list. After a `find`, use the index shown in the search results.
 * Supply exactly one index, with no additional arguments.
 * Viewing a supporter preserves the displayed list, its filter and all supporter data.
-* The panel shows the name, stage, organisation, phone, email, address and tags. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically.
+* The panel shows the name, stage, organisation, phone, email, address, tags, introducer and the supporters they introduced. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically.
 * Above the interaction history, the panel shows the same last-contact line as the supporter card, for example `Last contact: 3 Oct 2026`, or `No interactions yet` if there are no logged interactions. The line updates when the displayed supporter's interaction history changes.
 * Interactions appear newest first, one entry per row, for example `#4  16 Sep 2026  Sent partnership deck by email`. Entries on the same date appear in descending entry-number order. Entry numbers are based on the order in which interactions were logged.
 * The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
@@ -269,6 +299,28 @@ Examples:
 
 * `view 2` selects the 2nd supporter in the displayed list.
 * `find Priya` followed by `view 1` selects the 1st supporter in the search results.
+
+### Recording who introduced a supporter: `intro`
+
+Records which supporter introduced another, e.g. the board member who introduced you to a company's CSR lead. This lets you see whose goodwill created each relationship, and everyone a given person has introduced you to.
+
+Format: `intro INDEX by/[INTRODUCER_INDEX]`
+
+- `INDEX` is the supporter who was introduced, and `INTRODUCER_INDEX` is the supporter who introduced them. Both refer to the index numbers shown in the displayed supporter list and **must be positive integers** 1, 2, 3, ...
+- Both supporters must be in the displayed list. If one of them is hidden by a `find` filter, use `find` with both names, e.g. `find tan lim`, or run `list` first.
+- Running `intro` again for the same supporter replaces their introducer. Each supporter has at most one introducer.
+- Leave out `INTRODUCER_INDEX` to remove the record, e.g. `intro 3 by/`.
+- A supporter cannot be their own introducer.
+- If nothing would change (the same introducer again, or removing a record that does not exist), a message says so and the record is unchanged.
+- On success, the detail panel switches to the introduced supporter. The displayed list stays the same, so a `find` result is kept.
+- The detail panel shows each supporter's `Introducer`, and under `Introduced`, everyone they introduced.
+- Renaming an introducer with `edit` keeps their introductions. Deleting an introducer removes them as the introducer of everyone they introduced.
+
+Examples:
+
+- `intro 3 by/1` records that the 1st supporter in the displayed list introduced the 3rd.
+- `find tan lim` followed by `intro 2 by/1` records an introduction between the two supporters shown.
+- `intro 3 by/` removes the 3rd supporter's introducer.
 
 ### Clearing all entries: `clear`
 
@@ -296,7 +348,7 @@ SupporterBook loads `data/supporterbook.json` from the folder the app is launche
 
 > Could not load data/supporterbook.json because it is not in the expected format. Starting with an empty list. Your next command will overwrite the file, so copy it somewhere safe now if you want to repair it.
 
-The message includes the path of the file that could not be loaded. Invalid JSON, missing required fields, invalid field values or duplicate supporters can cause this warning.
+The message includes the path of the file that could not be loaded. Invalid JSON, missing required fields, invalid field values, duplicate supporters or an introducer who is not in the file can cause this warning.
 
 Startup does not overwrite the unreadable file. Copy it somewhere safe before running another command if you want to recover its contents. Even `list` saves data after executing, so it can replace the file with the empty list. A command that fails parsing or validation does not overwrite it.
 
@@ -313,6 +365,8 @@ A supporter's `"phone"`, `"email"` and `"address"` keys can each be left out if 
 A supporter may also have an `"organisation"`, such as the company a CSR contact works for. Leave the key out if the supporter has no organisation. If present, it must not be blank and must be at most 100 characters long.
 
 Each supporter card in the list shows the supporter's organisation, or `(no organisation)` if they have none.
+
+A supporter may also have an `"introducer"`, the name of the supporter who introduced them, e.g. a board member. Leave the key out if no introducer is recorded. If present, it must be the name of another supporter in the same file (capital letters and extra spaces are ignored), and cannot be the supporter's own name.
 
 A supporter's `"interactions"` array stores their interaction history in logging order. Each entry has a `"date"` in `yyyy-MM-dd` format and a non-blank `"note"` of at most 500 characters. For example:
 
@@ -356,10 +410,12 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t/TAG]... `<br> e.g., `edit 2 p/91234567 a/1 HarbourFront Avenue`
+**Intro**  | `intro INDEX by/[INTRODUCER_INDEX]`<br> e.g., `intro 3 by/1`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei`
 **List**   | `list`
 **Log**    | `log INDEX nt/NOTE`<br> e.g., `log 2 nt/Called to discuss the year-end appeal`
 **Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`
+**Stats**  | `stats`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
 **Exit**   | `exit`

@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
@@ -23,6 +24,7 @@ public class Person {
 
     public static final String MESSAGE_CONSTRAINTS =
             "A supporter must have at least one way to reach them: a phone number, an email, or both.";
+    public static final String MESSAGE_SELF_INTRODUCTION = "A supporter cannot be their own introducer.";
 
     // Identity fields
     private final Name name;
@@ -32,6 +34,7 @@ public class Person {
     // Data fields
     private final Address address; // null if the supporter has no address
     private final Organisation organisation; // null if the supporter has no organisation
+    private final Name introducer; // null if no introducer is recorded for the supporter
     private final Stage stage;
     private final List<Interaction> interactions = new ArrayList<>();
     private final Set<Tag> tags = new HashSet<>();
@@ -61,26 +64,31 @@ public class Person {
      */
     public Person(Name name, Optional<Phone> phone, Optional<Email> email, Optional<Address> address,
             Optional<Organisation> organisation, Stage stage, Set<Tag> tags) {
-        this(name, phone, email, address, organisation, stage, Collections.emptyList(), tags);
+        this(name, phone, email, address, organisation, Optional.empty(), stage, Collections.emptyList(), tags);
     }
 
     /**
-     * Creates a {@code Person} with the given details and interaction history.
+     * Creates a {@code Person} with the given details, introducer and interaction history.
      * Every field must be present and not null. An empty optional field means the supporter does not have it,
      * but at least one of {@code phone} and {@code email} must be present.
+     * {@code introducer} is the name of the supporter who introduced this one, and cannot be their own name.
      *
-     * @throws IllegalArgumentException if both {@code phone} and {@code email} are empty.
+     * @throws IllegalArgumentException if both {@code phone} and {@code email} are empty,
+     *         or if {@code introducer} is the supporter's own name.
      */
     public Person(Name name, Optional<Phone> phone, Optional<Email> email, Optional<Address> address,
-            Optional<Organisation> organisation, Stage stage, List<Interaction> interactions, Set<Tag> tags) {
-        requireAllNonNull(name, phone, email, address, organisation, stage, tags);
+            Optional<Organisation> organisation, Optional<Name> introducer, Stage stage,
+            List<Interaction> interactions, Set<Tag> tags) {
+        requireAllNonNull(name, phone, email, address, organisation, introducer, stage, tags);
         requireAllNonNull(interactions);
         checkArgument(isValidContact(phone, email), MESSAGE_CONSTRAINTS);
+        checkArgument(isValidIntroducer(name, introducer), MESSAGE_SELF_INTRODUCTION);
         this.name = name;
         this.phone = phone.orElse(null);
         this.email = email.orElse(null);
         this.address = address.orElse(null);
         this.organisation = organisation.orElse(null);
+        this.introducer = introducer.orElse(null);
         this.stage = stage;
         this.interactions.addAll(interactions);
         this.tags.addAll(tags);
@@ -91,6 +99,15 @@ public class Person {
      */
     public static boolean isValidContact(Optional<Phone> phone, Optional<Email> email) {
         return phone.isPresent() || email.isPresent();
+    }
+
+    /**
+     * Returns true if {@code introducer} is absent or names someone other than the supporter called {@code name}.
+     * Names are compared ignoring case and extra spaces, as for duplicate supporters.
+     */
+    public static boolean isValidIntroducer(Name name, Optional<Name> introducer) {
+        requireAllNonNull(name, introducer);
+        return introducer.map(introducerName -> !introducerName.isSameName(name)).orElse(true);
     }
 
     public Name getName() {
@@ -123,6 +140,33 @@ public class Person {
      */
     public Optional<Organisation> getOrganisation() {
         return Optional.ofNullable(organisation);
+    }
+
+    /**
+     * Returns the name of the supporter who introduced this one, or an empty {@code Optional} if none is recorded.
+     */
+    public Optional<Name> getIntroducer() {
+        return Optional.ofNullable(introducer);
+    }
+
+    /**
+     * Returns true if the supporter called {@code name} is recorded as this supporter's introducer.
+     * Names are compared ignoring case and extra spaces.
+     */
+    public boolean isIntroducedBy(Name name) {
+        requireNonNull(name);
+        return introducer != null && introducer.isSameName(name);
+    }
+
+    /**
+     * Returns a copy of this supporter with {@code newIntroducer} as their introducer, or with none if it is empty.
+     * Every other detail is unchanged.
+     *
+     * @throws IllegalArgumentException if {@code newIntroducer} is this supporter's own name.
+     */
+    public Person withIntroducer(Optional<Name> newIntroducer) {
+        return new Person(name, getPhone(), getEmail(), getAddress(), getOrganisation(), newIntroducer, stage,
+                interactions, tags);
     }
 
     public Stage getStage() {
@@ -187,6 +231,7 @@ public class Person {
                 && Objects.equals(email, otherPerson.email)
                 && Objects.equals(address, otherPerson.address)
                 && Objects.equals(organisation, otherPerson.organisation)
+                && Objects.equals(introducer, otherPerson.introducer)
                 && stage.equals(otherPerson.stage)
                 && interactions.equals(otherPerson.interactions)
                 && tags.equals(otherPerson.tags);
@@ -195,7 +240,7 @@ public class Person {
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, organisation, stage, interactions, tags);
+        return Objects.hash(name, phone, email, address, organisation, introducer, stage, interactions, tags);
     }
 
     @Override
@@ -206,6 +251,7 @@ public class Person {
                 .add("email", email)
                 .add("address", address)
                 .add("organisation", organisation)
+                .add("introducer", introducer)
                 .add("stage", stage)
                 .add("interactions", interactions)
                 .add("tags", tags)
