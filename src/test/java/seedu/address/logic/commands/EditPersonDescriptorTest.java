@@ -60,6 +60,39 @@ public class EditPersonDescriptorTest {
         // different organisation -> returns false
         editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withOrganisation(VALID_ORGANISATION_BOB).build();
         assertFalse(DESC_AMY.equals(editedAmy));
+
+        // a cleared field differs from the same field left out
+        EditPersonDescriptor emptyDescriptor = new EditPersonDescriptor();
+        assertFalse(emptyDescriptor.equals(new EditPersonDescriptorBuilder().withoutPhone().build()));
+        assertFalse(emptyDescriptor.equals(new EditPersonDescriptorBuilder().withoutEmail().build()));
+        assertFalse(emptyDescriptor.equals(new EditPersonDescriptorBuilder().withoutAddress().build()));
+        assertFalse(emptyDescriptor.equals(new EditPersonDescriptorBuilder().withoutOrganisation().build()));
+
+        // copies keep cleared fields -> returns true
+        EditPersonDescriptor clearedAddress = new EditPersonDescriptorBuilder().withoutAddress().build();
+        assertTrue(clearedAddress.equals(new EditPersonDescriptor(clearedAddress)));
+    }
+
+    @Test
+    public void clearField_afterSet_valueRemoved() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withAddress(VALID_ADDRESS_BOB)
+                .withoutAddress().build();
+        assertTrue(descriptor.isAddressCleared());
+        assertFalse(descriptor.getAddress().isPresent());
+    }
+
+    @Test
+    public void setField_afterClear_clearUndone() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutPhone()
+                .withPhone(VALID_PHONE_BOB).build();
+        assertFalse(descriptor.isPhoneCleared());
+        assertEquals(new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build(), descriptor);
+    }
+
+    @Test
+    public void isAnyFieldEdited_onlyClearedField_returnsTrue() {
+        assertFalse(new EditPersonDescriptor().isAnyFieldEdited());
+        assertTrue(new EditPersonDescriptorBuilder().withoutOrganisation().build().isAnyFieldEdited());
     }
 
     @Test
@@ -71,7 +104,8 @@ public class EditPersonDescriptorTest {
                 + editPersonDescriptor.getEmail().orElse(null) + ", address="
                 + editPersonDescriptor.getAddress().orElse(null) + ", organisation="
                 + editPersonDescriptor.getOrganisation().orElse(null) + ", tags="
-                + editPersonDescriptor.getTags().orElse(null) + "}";
+                + editPersonDescriptor.getTags().orElse(null) + ", isPhoneCleared=false, isEmailCleared=false, "
+                + "isAddressCleared=false, isOrganisationCleared=false}";
         assertEquals(expected, editPersonDescriptor.toString());
     }
 }
