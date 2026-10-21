@@ -60,6 +60,7 @@
         "organisation-field": "Organisation field",
         "interaction-history-field": "Interaction history field",
         "logging-an-interaction": "Logging an interaction",
+        "deleting-an-interaction": "Deleting an interaction",
         "viewing-a-supporter-s-details-and-interaction-history": "Viewing a supporter's details and interaction history",
         "viewed-supporter-state": "Viewed supporter state",
         "optional-contact-fields": "Optional contact fields",
@@ -78,6 +79,7 @@
         "deleting-a-supporter": "Deleting a supporter",
         "setting-a-supporter-s-stage": "Setting a supporter's stage",
         "logging-an-interaction-2": "Logging an interaction",
+        "deleting-an-interaction-2": "Deleting an interaction",
         "viewing-a-supporter-s-details-and-interaction-history-2": "Viewing a supporter's details and interaction history",
         "saving-data": "Saving data"
       },
@@ -135,6 +137,7 @@
         "finding-supporters-by-part-of-a-name-find": "Finding supporters by part of a name: find",
         "deleting-a-supporter-delete": "Deleting a supporter: delete",
         "logging-an-interaction-log": "Logging an interaction: log",
+        "deleting-an-interaction-unlog": "Deleting an interaction: unlog",
         "viewing-a-supporter-s-details-and-interaction-history-view": "Viewing a supporter's details and interaction history: view",
         "recording-who-introduced-a-supporter-intro": "Recording who introduced a supporter: intro",
         "adding-tags-to-a-supporter-tag": "Adding tags to a supporter: tag",
