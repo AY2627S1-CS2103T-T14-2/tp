@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.AMY;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
@@ -84,6 +85,44 @@ public class UndoableCommandsTest {
         logic.execute("stage 1 " + currentStage.toString().toLowerCase());
 
         assertFalse(model.canUndoAddressBook());
+    }
+
+    @Test
+    public void execute_intro_savesOneUndoPoint() throws Exception {
+        assertSavesOneUndoPoint("intro 2 by/1");
+    }
+
+    @Test
+    public void execute_tag_savesOneUndoPoint() throws Exception {
+        assertSavesOneUndoPoint("tag 1 t/vip");
+    }
+
+    @Test
+    public void execute_untag_savesOneUndoPoint() throws Exception {
+        assertSavesOneUndoPoint("untag 1 t/friends");
+    }
+
+    @Test
+    public void execute_introAndTagsUnchanged_saveNoUndoPoint() throws Exception {
+        logic.execute("intro 1 by/");
+        logic.execute("tag 1 t/friends");
+        logic.execute("untag 1 t/vip");
+
+        assertFalse(model.canUndoAddressBook());
+    }
+
+    @Test
+    public void execute_undoDeleteOfIntroducer_restoresSupporterAndIntroductions() throws Exception {
+        logic.execute("intro 2 by/1");
+        logic.execute("intro 3 by/1");
+        AddressBook beforeDelete = new AddressBook(model.getAddressBook());
+        logic.execute("delete 1");
+        assertTrue(model.getPersonsIntroducedBy(ALICE.getName()).isEmpty());
+
+        logic.execute("undo");
+
+        assertEquals(beforeDelete, model.getAddressBook());
+        assertEquals(2, model.getPersonsIntroducedBy(ALICE.getName()).size());
     }
 
     @Test
