@@ -136,7 +136,7 @@ public class AddCommandTest {
         }
 
         @Override
-        public void commitAddressBook() {
+        public void commitAddressBookIfChanged() {
             throw new AssertionError("This method should not be called.");
         }
 

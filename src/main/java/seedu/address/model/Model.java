@@ -77,10 +77,10 @@ public interface Model {
     int replaceIntroducer(Name introducer, Optional<Name> replacement);
 
     /**
-     * Saves the current address book state to the undo/redo history.
-     * Any undone states are discarded, so they can no longer be redone.
+     * Saves the current address book state to the undo/redo history if supporter data has changed since the
+     * last saved state. Any undone states are then discarded, so they can no longer be redone.
      */
-    void commitAddressBook();
+    void commitAddressBookIfChanged();
 
     /**
      * Returns true if there is an earlier address book state to restore.

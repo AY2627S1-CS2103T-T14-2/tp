@@ -348,9 +348,30 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void commitAddressBookIfChanged_noChange_savesNoUndoPoint() {
+        modelManager.setViewedPerson(ALICE);
+        modelManager.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+
+        modelManager.commitAddressBookIfChanged();
+
+        assertFalse(modelManager.canUndoAddressBook());
+    }
+
+    @Test
+    public void commitAddressBookIfChanged_calledTwiceAfterOneChange_savesOneUndoPoint() {
+        modelManager.addPerson(ALICE);
+
+        modelManager.commitAddressBookIfChanged();
+        modelManager.commitAddressBookIfChanged();
+        modelManager.undoAddressBook();
+
+        assertFalse(modelManager.canUndoAddressBook());
+    }
+
+    @Test
     public void undoAddressBook_afterCommit_restoresPreviousData() {
         modelManager.addPerson(ALICE);
-        modelManager.commitAddressBook();
+        modelManager.commitAddressBookIfChanged();
 
         modelManager.undoAddressBook();
 
@@ -363,7 +384,7 @@ public class ModelManagerTest {
     @Test
     public void redoAddressBook_afterUndo_restoresUndoneData() {
         modelManager.addPerson(ALICE);
-        modelManager.commitAddressBook();
+        modelManager.commitAddressBookIfChanged();
         modelManager.undoAddressBook();
 
         modelManager.redoAddressBook();
