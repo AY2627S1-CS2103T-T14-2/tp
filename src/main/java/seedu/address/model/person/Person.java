@@ -168,6 +168,14 @@ public class Person {
                 interactions, tags);
     }
 
+    /**
+     * Returns a copy of this supporter with {@code newTags} as their tags. Every other detail is unchanged.
+     */
+    public Person withTags(Set<Tag> newTags) {
+        return new Person(name, getPhone(), getEmail(), getAddress(), getOrganisation(), getIntroducer(), stage,
+                interactions, newTags);
+    }
+
     public Stage getStage() {
         return stage;
     }
