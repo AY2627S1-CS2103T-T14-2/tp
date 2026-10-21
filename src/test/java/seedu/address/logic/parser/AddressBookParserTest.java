@@ -10,6 +10,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,8 @@ import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.LogCommand;
 import seedu.address.logic.commands.StageCommand;
 import seedu.address.logic.commands.StatsCommand;
+import seedu.address.logic.commands.TagCommand;
+import seedu.address.logic.commands.UntagCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
@@ -34,6 +37,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Stage;
+import seedu.address.model.tag.Tag;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PersonUtil;
@@ -155,6 +159,18 @@ public class AddressBookParserTest {
                 parser.parseCommand(IntroCommand.COMMAND_WORD + " 1 by/2"));
         assertEquals(new IntroCommand(INDEX_FIRST_PERSON, Optional.empty()),
                 parser.parseCommand(IntroCommand.COMMAND_WORD + " 1 by/"));
+    }
+
+    @Test
+    public void parseCommand_tag() throws Exception {
+        assertEquals(new TagCommand(INDEX_FIRST_PERSON, Set.of(new Tag("vip"), new Tag("donor"))),
+                parser.parseCommand(TagCommand.COMMAND_WORD + " 1 t/vip t/donor"));
+    }
+
+    @Test
+    public void parseCommand_untag() throws Exception {
+        assertEquals(new UntagCommand(INDEX_FIRST_PERSON, Set.of(new Tag("vip"))),
+                parser.parseCommand(UntagCommand.COMMAND_WORD + " 1 t/vip"));
     }
 
     @Test

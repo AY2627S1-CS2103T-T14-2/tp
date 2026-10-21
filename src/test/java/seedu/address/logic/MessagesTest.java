@@ -2,9 +2,12 @@ package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.person.Person;
+import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
 public class MessagesTest {
@@ -23,5 +26,12 @@ public class MessagesTest {
         Person emailOnly = new PersonBuilder().withName("Aisha Rahman").withoutPhone().withoutAddress()
                 .withEmail("aisha.r@gmail.com").withTags().build();
         assertEquals("Aisha Rahman; Stage: Prospect; Email: aisha.r@gmail.com", Messages.format(emailOnly));
+    }
+
+    @Test
+    public void formatTags_alphabeticalIgnoringCase() {
+        List<Tag> tags = List.of(new Tag("vip"), new Tag("Donor"), new Tag("boardIntro"));
+        assertEquals("[boardIntro] [Donor] [vip]", Messages.formatTags(tags));
+        assertEquals("", Messages.formatTags(List.of()));
     }
 }

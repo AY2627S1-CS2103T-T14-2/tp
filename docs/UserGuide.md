@@ -124,8 +124,11 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t
 - Edits the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list, including after `find`. The index **must be a positive integer** 1, 2, 3, ...
 - At least one of the optional fields must be provided.
 - Existing values will be updated to the input values. Each value follows the same rules as in `add`.
-- When editing tags, all of the supporter's existing tags are removed; adding tags is not cumulative.
+- When editing tags, all of the supporter's existing tags are removed; adding tags is not cumulative. To add or remove single tags and keep the rest, use `tag` and `untag` instead.
 - To remove all of a supporter's tags, enter `t/` without a tag after it.
+- To clear a supporter's address or organisation, enter `a/` or `o/` with nothing after it.
+- To clear a supporter's phone number or email, enter `p/` or `e/` with nothing after it. This works only if the supporter keeps the other one, since every supporter needs a way to be reached. You can clear one and give a new value for the other in the same command, e.g. `edit 1 e/ p/91234567`.
+- A supporter's name cannot be cleared.
 - A supporter's stage cannot be changed with `edit`, and stays the same when other details are edited. Use the `stage` command instead.
 - A supporter's logged interactions are kept when their details are edited.
 - A supporter's introducer is kept when their details are edited. If you rename a supporter who introduced others, those supporters show the new name as their introducer.
@@ -137,6 +140,8 @@ Examples:
 - `edit 1 p/91234567 e/weiming@dbs.com` Edits the phone number and email address of the 1st supporter to be `91234567` and `weiming@dbs.com` respectively.
 - `edit 2 n/Tan Wei Ming DBS t/` Edits the name of the 2nd supporter to be `Tan Wei Ming DBS` and clears all existing tags.
 - `edit 3 o/OCBC Bank` Changes the organisation of the 3rd supporter to `OCBC Bank`, e.g. after they change jobs.
+- `edit 4 a/ o/` Clears the address and organisation of the 4th supporter, e.g. after they retire and move.
+- `edit 5 p/` Clears the phone number of the 5th supporter, who keeps their email.
 
 ### Setting a supporter's stage: `stage`
 
@@ -296,7 +301,7 @@ Format: `view INDEX`
 * The panel shows the name, stage, organisation, phone, email, address, tags, introducer and the supporters they introduced. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically.
 * Interactions appear newest first, e.g. `#4  16 Sep 2026  Sent partnership deck by email`. Numbers descend to `#1`, the oldest entry. On equal dates, later-logged entries appear first.
 * The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
-* A successful `view`, `log` or `stage` switches the panel to its target. Changes to the displayed supporter's record are reflected.
+* A successful `view`, `log`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
 * Invalid commands leave the displayed supporter unchanged.
 * Deleting the displayed supporter or running `clear` clears the details and history. Deleting another supporter keeps the panel unchanged.
 * Selection is not remembered after restarting the app.
@@ -327,6 +332,43 @@ Examples:
 - `intro 3 by/1` records that the 1st supporter in the displayed list introduced the 3rd.
 - `find tan lim` followed by `intro 2 by/1` records an introduction between the two supporters shown.
 - `intro 3 by/` removes the 3rd supporter's introducer.
+
+### Adding tags to a supporter: `tag`
+
+Adds one or more tags to a supporter, keeping the tags they already have. Use this instead of `edit`, which replaces all of a supporter's tags.
+
+Format: `tag INDEX t/TAG [t/TAG]...`
+
+- Tags the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and **must be a positive integer** 1, 2, 3, ...
+- At least one `t/TAG` must be given. Each `TAG` must be alphanumeric, with no spaces, as in `add`.
+- Tags the supporter already has are skipped. Capital letters are ignored when checking, so `t/vip` is skipped if the supporter is tagged `VIP`, and the existing tag keeps its capitalisation.
+- Tags given more than once in different capitalisation, e.g. `t/vip t/VIP`, count as one tag. The same applies to `untag`.
+- The result display lists the tags added and the tags skipped. If every tag is skipped, nothing is changed and a message says so.
+- On success, the detail panel switches to this supporter. The displayed list stays the same, so a `find` result is kept.
+
+Examples:
+
+- `tag 2 t/vip` adds the tag `vip` to the 2nd supporter in the displayed list.
+- `find Tan` followed by `tag 1 t/boardIntro t/gala2026` adds two tags to the 1st supporter in the search results.
+
+### Removing tags from a supporter: `untag`
+
+Removes one or more tags from a supporter, keeping their other tags.
+
+Format: `untag INDEX t/TAG [t/TAG]...`
+
+- Removes tags from the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and **must be a positive integer** 1, 2, 3, ...
+- At least one `t/TAG` must be given. Each `TAG` must be alphanumeric, with no spaces, as in `add`.
+- Capital letters are ignored, so `untag 1 t/vip` removes the tag `VIP`.
+- Tags the supporter does not have are skipped.
+- The result display lists the tags removed and the tags skipped. If every tag is skipped, nothing is changed and a message says so.
+- On success, the detail panel switches to this supporter. The displayed list stays the same, so a `find` result is kept.
+- To remove all of a supporter's tags at once, use `edit INDEX t/`.
+
+Examples:
+
+- `untag 2 t/vip` removes the tag `vip` from the 2nd supporter in the displayed list.
+- `untag 3 t/lapsed2025 t/gala2025` removes two tags from the 3rd supporter.
 
 ### Clearing all entries: `clear`
 
@@ -417,6 +459,8 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t/TAG]... `<br> e.g., `edit 2 p/91234567 a/1 HarbourFront Avenue`
 **Intro**  | `intro INDEX by/[INTRODUCER_INDEX]`<br> e.g., `intro 3 by/1`
+**Tag**    | `tag INDEX t/TAG [t/TAG]...`<br> e.g., `tag 2 t/vip t/boardIntro`
+**Untag**  | `untag INDEX t/TAG [t/TAG]...`<br> e.g., `untag 2 t/vip`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei`
 **List**   | `list`
 **Log**    | `log INDEX nt/NOTE [dt/DATE]`<br> e.g., `log 2 nt/Called about the year-end appeal dt/2026-10-01`
