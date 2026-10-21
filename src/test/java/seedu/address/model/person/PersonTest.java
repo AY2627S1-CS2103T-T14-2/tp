@@ -19,12 +19,32 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
 public class PersonTest {
+
+    @Test
+    public void getInteractionIndicesInDisplayOrder_emptyHistory_returnsEmptyList() {
+        assertTrue(new PersonBuilder().build().getInteractionIndicesInDisplayOrder().isEmpty());
+    }
+
+    @Test
+    public void getInteractionIndicesInDisplayOrder_mixedDatesAndDuplicates_preservesStoredPositions() {
+        Interaction earlier = new Interaction(LocalDate.of(2024, 2, 29), "Earlier meeting");
+        Interaction later = new Interaction(LocalDate.of(2024, 3, 10), "Later meeting");
+        Person person = new PersonBuilder().withInteractions(earlier, later, earlier).build();
+
+        // equal entries remain distinct through their stored positions, with the later-logged entry first
+        List<Integer> indices = person.getInteractionIndicesInDisplayOrder();
+        assertEquals(List.of(1, 2, 0), indices);
+        assertEquals(List.of(earlier, later, earlier), person.getInteractions());
+        assertThrows(UnsupportedOperationException.class, () -> indices.add(3));
+    }
 
     @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
@@ -309,6 +329,15 @@ public class PersonTest {
         assertEquals(new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName).build(), aliceByBenson);
         assertEquals(ALICE, aliceByBenson.withIntroducer(Optional.empty()));
         assertThrows(IllegalArgumentException.class, () -> ALICE.withIntroducer(Optional.of(ALICE.getName())));
+    }
+
+    @Test
+    public void withTags_keepsOtherDetails() {
+        Person aliceByBenson = new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName)
+                .withInteractions(new Interaction(LocalDate.of(2026, 9, 16), "Called")).build();
+        Person retagged = aliceByBenson.withTags(Set.of(new Tag(VALID_TAG_HUSBAND)));
+        assertEquals(new PersonBuilder(aliceByBenson).withTags(VALID_TAG_HUSBAND).build(), retagged);
+        assertEquals(aliceByBenson.getInteractions(), retagged.getInteractions());
     }
 
     @Test

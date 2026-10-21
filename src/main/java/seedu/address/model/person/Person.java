@@ -7,11 +7,13 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.tag.Tag;
@@ -169,6 +171,14 @@ public class Person {
                 interactions, tags);
     }
 
+    /**
+     * Returns a copy of this supporter with {@code newTags} as their tags. Every other detail is unchanged.
+     */
+    public Person withTags(Set<Tag> newTags) {
+        return new Person(name, getPhone(), getEmail(), getAddress(), getOrganisation(), getIntroducer(), stage,
+                interactions, newTags);
+    }
+
     public Stage getStage() {
         return stage;
     }
@@ -188,6 +198,18 @@ public class Person {
         return interactions.stream()
                 .map(Interaction::getDate)
                 .max(LocalDate::compareTo);
+    }
+    
+    /**
+     * Returns an immutable list of zero-based stored interaction indices in display order.
+     * Interactions are ordered by date descending, then by logging position descending for equal dates.
+     * Keeping indices rather than matching values distinguishes identical interactions.
+     */
+    public List<Integer> getInteractionIndicesInDisplayOrder() {
+        return IntStream.range(0, interactions.size()).boxed()
+                .sorted(Comparator.comparing((Integer index) -> interactions.get(index).getDate())
+                        .thenComparingInt(Integer::intValue).reversed())
+                .toList();
     }
 
     /**

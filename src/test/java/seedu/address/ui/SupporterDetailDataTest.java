@@ -158,7 +158,7 @@ public class SupporterDetailDataTest {
     }
 
     @Test
-    public void getInteractionEntries_mixedDates_sortsByDateThenNumberAndPreservesStoredHistory() {
+    public void getInteractionEntries_mixedDates_numbersByDateThenLoggingOrderAndPreservesStoredHistory() {
         Interaction firstInteraction = new Interaction(LocalDate.of(2026, 9, 2), "First September meeting");
         Interaction secondInteraction = new Interaction(LocalDate.of(2027, 1, 1), "New year call");
         Interaction thirdInteraction = new Interaction(LocalDate.of(2026, 8, 14), "Earlier dated meeting");
@@ -171,7 +171,7 @@ public class SupporterDetailDataTest {
         SupporterDetailData data = new SupporterDetailData(Optional.of(person));
         List<InteractionEntry> entries = data.getInteractionEntries();
 
-        assertEquals(List.of(2, 4, 1, 3), entries.stream().map(InteractionEntry::getNumber).toList());
+        assertEquals(List.of(4, 3, 2, 1), entries.stream().map(InteractionEntry::getNumber).toList());
         assertEquals(List.of("01 Jan 2027", "02 Sep 2026", "02 Sep 2026", "14 Aug 2026"),
                 entries.stream().map(InteractionEntry::getDate).toList());
         assertEquals(List.of("New year call", "Second September meeting",
@@ -183,7 +183,7 @@ public class SupporterDetailDataTest {
     }
 
     @Test
-    public void getInteractionEntries_identicalInteractions_keepsBothWithOriginalNumbers() {
+    public void getInteractionEntries_identicalInteractions_keepsBothWithDisplayNumbers() {
         Interaction interaction = new Interaction(LocalDate.of(2026, 9, 16), "Called");
         Person person = new PersonBuilder().withInteractions(interaction, interaction).build();
         SupporterDetailData data = new SupporterDetailData(Optional.of(person));

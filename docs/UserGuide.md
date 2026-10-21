@@ -126,7 +126,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t
 - Edits the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list, including after `find`. The index **must be a positive integer** 1, 2, 3, ...
 - At least one of the optional fields must be provided.
 - Existing values will be updated to the input values. Each value follows the same rules as in `add`.
-- When editing tags, all of the supporter's existing tags are removed; adding tags is not cumulative.
+- When editing tags, all of the supporter's existing tags are removed; adding tags is not cumulative. To add or remove single tags and keep the rest, use `tag` and `untag` instead.
 - To remove all of a supporter's tags, enter `t/` without a tag after it.
 - To clear a supporter's address or organisation, enter `a/` or `o/` with nothing after it.
 - To clear a supporter's phone number or email, enter `p/` or `e/` with nothing after it. This works only if the supporter keeps the other one, since every supporter needs a way to be reached. You can clear one and give a new value for the other in the same command, e.g. `edit 1 e/ p/91234567`.
@@ -254,27 +254,41 @@ Deletion has no confirmation prompt or undo in this version. An invalid command 
 
 ### Logging an interaction: `log`
 
-Records an interaction with a supporter, dated today.
+Records an interaction with a supporter, dated today or on a specified past date.
 
-Format: `log INDEX nt/NOTE`
+Format: `log INDEX nt/NOTE [dt/DATE]`
 
 - Logs the interaction against the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and must be a positive integer.
 - `NOTE` records what happened. It can contain any characters, must not be blank, and can be at most 500 characters long. Leading and trailing spaces are removed.
-- The interaction is automatically dated using the computer's current date.
-- Interactions are numbered in the order they are logged, starting from `#1` for each supporter.
+- Without `dt/`, the date defaults to today when the command runs, using the computer's clock.
+- `DATE` must be a valid date in `yyyy-MM-dd` format, e.g. `2024-02-29`, from `1900-01-01` through today (inclusive). Empty or out-of-range dates are rejected. Today is determined by the computer's clock.
+- `nt/` and `dt/` can appear in either order. Each prefix may only be supplied once.
+- Each supporter's oldest interaction is `#1`; the newest has the largest number. On equal dates, the later-logged entry has the larger number and appears first.
+- Back-dating can renumber existing entries; entry numbers are not permanent IDs.
 - Identical notes logged on the same day are accepted as separate interactions.
-- On success, the result display shows the interaction number, supporter, date and note.
-- The detail panel switches to this supporter and shows their updated history, with the newest interaction first.
+- The success message shows the supporter, date, note and entry number matching the panel.
+- The panel switches to this supporter and displays entries newest first.
 - Logging an interaction does not change the supporter's cultivation stage or the currently displayed list. A `find` result therefore remains in place.
 
 Examples:
 
 - `log 2 nt/Coffee at Raffles Place, keen on a Q4 volunteering day`
+- `log 2 nt/Meeting entered later dt/2024-02-29` records a meeting on 29 February 2024.
 - `find Tan` followed by `log 1 nt/Left voicemail about the year-end appeal` logs the interaction against the 1st supporter in the search results.
+
+Logging 10 March, then 20 February, then 29 February 2024 gives:
+
+```text
+#3  10 Mar 2024  Recent call
+#2  29 Feb 2024  Middle meeting
+#1  20 Feb 2024  First meeting
+```
+
+The last command reports `#2`. Adding that entry renumbers the 10 March entry from `#2` to `#3`.
 
 <box type="warning" seamless>
 
-If a note contains a space followed by `nt/`, that text is treated as a second note prefix and the command is rejected. Rephrase the note to avoid `nt/`.
+A space followed by `nt/` or `dt/` inside a note is interpreted as a parameter prefix, not note text. This may split the note or cause a validation error. Rephrase the note to avoid these sequences.
 </box>
 
 ### Viewing a supporter's details and interaction history: `view`
@@ -288,9 +302,9 @@ Format: `view INDEX`
 * Viewing a supporter preserves the displayed list, its filter and all supporter data.
 * The panel shows the name, stage, organisation, phone, email, address, tags, introducer and the supporters they introduced. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically.
 * Above the interaction history, the panel shows the same last-contact line as the supporter card, for example `Last contact: 3 Oct 2026`, or `No interactions yet` if there are no logged interactions. The line updates when the displayed supporter's interaction history changes.
-* Interactions appear newest first, one entry per row, for example `#4  16 Sep 2026  Sent partnership deck by email`. Entries on the same date appear in descending entry-number order. Entry numbers are based on the order in which interactions were logged.
+* Interactions appear newest first, e.g. `#4  16 Sep 2026  Sent partnership deck by email`. Numbers descend to `#1`, the oldest entry. On equal dates, later-logged entries appear first.
 * The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
-* A successful `view`, `log` or `stage` switches the panel to its target. Changes to the displayed supporter's record are reflected.
+* A successful `view`, `log`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
 * Invalid commands leave the displayed supporter unchanged.
 * Deleting the displayed supporter or running `clear` clears the details and history. Deleting another supporter keeps the panel unchanged.
 * Selection is not remembered after restarting the app.
@@ -321,6 +335,43 @@ Examples:
 - `intro 3 by/1` records that the 1st supporter in the displayed list introduced the 3rd.
 - `find tan lim` followed by `intro 2 by/1` records an introduction between the two supporters shown.
 - `intro 3 by/` removes the 3rd supporter's introducer.
+
+### Adding tags to a supporter: `tag`
+
+Adds one or more tags to a supporter, keeping the tags they already have. Use this instead of `edit`, which replaces all of a supporter's tags.
+
+Format: `tag INDEX t/TAG [t/TAG]...`
+
+- Tags the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and **must be a positive integer** 1, 2, 3, ...
+- At least one `t/TAG` must be given. Each `TAG` must be alphanumeric, with no spaces, as in `add`.
+- Tags the supporter already has are skipped. Capital letters are ignored when checking, so `t/vip` is skipped if the supporter is tagged `VIP`, and the existing tag keeps its capitalisation.
+- Tags given more than once in different capitalisation, e.g. `t/vip t/VIP`, count as one tag. The same applies to `untag`.
+- The result display lists the tags added and the tags skipped. If every tag is skipped, nothing is changed and a message says so.
+- On success, the detail panel switches to this supporter. The displayed list stays the same, so a `find` result is kept.
+
+Examples:
+
+- `tag 2 t/vip` adds the tag `vip` to the 2nd supporter in the displayed list.
+- `find Tan` followed by `tag 1 t/boardIntro t/gala2026` adds two tags to the 1st supporter in the search results.
+
+### Removing tags from a supporter: `untag`
+
+Removes one or more tags from a supporter, keeping their other tags.
+
+Format: `untag INDEX t/TAG [t/TAG]...`
+
+- Removes tags from the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and **must be a positive integer** 1, 2, 3, ...
+- At least one `t/TAG` must be given. Each `TAG` must be alphanumeric, with no spaces, as in `add`.
+- Capital letters are ignored, so `untag 1 t/vip` removes the tag `VIP`.
+- Tags the supporter does not have are skipped.
+- The result display lists the tags removed and the tags skipped. If every tag is skipped, nothing is changed and a message says so.
+- On success, the detail panel switches to this supporter. The displayed list stays the same, so a `find` result is kept.
+- To remove all of a supporter's tags at once, use `edit INDEX t/`.
+
+Examples:
+
+- `untag 2 t/vip` removes the tag `vip` from the 2nd supporter in the displayed list.
+- `untag 3 t/lapsed2025 t/gala2025` removes two tags from the 3rd supporter.
 
 ### Clearing all entries: `clear`
 
@@ -368,7 +419,7 @@ Each supporter card in the list shows the supporter's organisation, or `(no orga
 
 A supporter may also have an `"introducer"`, the name of the supporter who introduced them, e.g. a board member. Leave the key out if no introducer is recorded. If present, it must be the name of another supporter in the same file (capital letters and extra spaces are ignored), and cannot be the supporter's own name.
 
-A supporter's `"interactions"` array stores their interaction history in logging order. Each entry has a `"date"` in `yyyy-MM-dd` format and a non-blank `"note"` of at most 500 characters. For example:
+A supporter's `"interactions"` array stores entries in logging order. Each entry has a `"date"` in `yyyy-MM-dd` format and a non-blank `"note"` of at most 500 characters. For example:
 
 ```json
 "interactions" : [ {
@@ -411,9 +462,11 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t/TAG]... `<br> e.g., `edit 2 p/91234567 a/1 HarbourFront Avenue`
 **Intro**  | `intro INDEX by/[INTRODUCER_INDEX]`<br> e.g., `intro 3 by/1`
+**Tag**    | `tag INDEX t/TAG [t/TAG]...`<br> e.g., `tag 2 t/vip t/boardIntro`
+**Untag**  | `untag INDEX t/TAG [t/TAG]...`<br> e.g., `untag 2 t/vip`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei`
 **List**   | `list`
-**Log**    | `log INDEX nt/NOTE`<br> e.g., `log 2 nt/Called to discuss the year-end appeal`
+**Log**    | `log INDEX nt/NOTE [dt/DATE]`<br> e.g., `log 2 nt/Called about the year-end appeal dt/2026-10-01`
 **Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`
 **Stats**  | `stats`
 **View**   | `view INDEX`<br> e.g., `view 2`
