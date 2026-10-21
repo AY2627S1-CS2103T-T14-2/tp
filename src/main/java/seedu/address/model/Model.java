@@ -62,9 +62,10 @@ public interface Model {
     void setPerson(Person target, Person editedPerson);
 
     /**
-     * Saves the current address book state to the undo/redo history.
+     * Saves the current address book state to the undo/redo history if supporter data has changed since the
+     * last saved state.
      */
-    void commitAddressBook();
+    void commitAddressBookIfChanged();
 
     /**
      * Returns true if there is an earlier address book state to restore.

@@ -135,7 +135,7 @@ public class AddCommandTest {
         }
 
         @Override
-        public void commitAddressBook() {
+        public void commitAddressBookIfChanged() {
             throw new AssertionError("This method should not be called.");
         }
 
@@ -221,11 +221,6 @@ public class AddCommandTest {
         public void addPerson(Person person) {
             requireNonNull(person);
             personsAdded.add(person);
-        }
-
-        @Override
-        public void commitAddressBook() {
-            // no history is kept by this stub
         }
 
         @Override

@@ -24,6 +24,7 @@ public class ModelManager implements Model {
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
     private Person viewedPerson = null;
+    private boolean hasUncommittedChanges = false;
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -65,6 +66,7 @@ public class ModelManager implements Model {
     @Override
     public void setAddressBook(ReadOnlyAddressBook addressBook) {
         versionedAddressBook.resetData(addressBook);
+        hasUncommittedChanges = true;
         viewedPerson = null;
     }
 
@@ -82,6 +84,7 @@ public class ModelManager implements Model {
     @Override
     public void deletePerson(Person target) {
         versionedAddressBook.removePerson(target);
+        hasUncommittedChanges = true;
         if (target.equals(viewedPerson)) {
             viewedPerson = null;
         }
@@ -90,6 +93,7 @@ public class ModelManager implements Model {
     @Override
     public void addPerson(Person person) {
         versionedAddressBook.addPerson(person);
+        hasUncommittedChanges = true;
         updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
     }
 
@@ -98,14 +102,19 @@ public class ModelManager implements Model {
         requireAllNonNull(target, editedPerson);
 
         versionedAddressBook.setPerson(target, editedPerson);
+        hasUncommittedChanges = true;
         if (target.equals(viewedPerson)) {
             viewedPerson = editedPerson;
         }
     }
 
     @Override
-    public void commitAddressBook() {
+    public void commitAddressBookIfChanged() {
+        if (!hasUncommittedChanges) {
+            return;
+        }
         versionedAddressBook.commit();
+        hasUncommittedChanges = false;
     }
 
     @Override

@@ -30,7 +30,7 @@ public class RedoCommandTest {
     @Test
     public void execute_afterUndo_reappliesChange() throws Exception {
         model.deletePerson(ALICE);
-        model.commitAddressBook();
+        model.commitAddressBookIfChanged();
         new UndoCommand().execute(model);
         Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
         expectedModel.deletePerson(ALICE);
@@ -41,7 +41,7 @@ public class RedoCommandTest {
     @Test
     public void execute_filteredList_showsAllSupporters() throws Exception {
         model.deletePerson(ALICE);
-        model.commitAddressBook();
+        model.commitAddressBookIfChanged();
         new UndoCommand().execute(model);
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
         Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
@@ -53,7 +53,7 @@ public class RedoCommandTest {
     @Test
     public void execute_viewedPersonNotInRedoneData_clearsViewedPerson() throws Exception {
         model.deletePerson(BENSON);
-        model.commitAddressBook();
+        model.commitAddressBookIfChanged();
         new UndoCommand().execute(model);
         model.setViewedPerson(BENSON);
 
@@ -65,10 +65,10 @@ public class RedoCommandTest {
     @Test
     public void execute_newChangeAfterUndo_throwsCommandException() throws Exception {
         model.deletePerson(ALICE);
-        model.commitAddressBook();
+        model.commitAddressBookIfChanged();
         new UndoCommand().execute(model);
         model.addPerson(AMY);
-        model.commitAddressBook();
+        model.commitAddressBookIfChanged();
 
         assertCommandFailure(new RedoCommand(), model, RedoCommand.MESSAGE_NOTHING_TO_REDO);
     }

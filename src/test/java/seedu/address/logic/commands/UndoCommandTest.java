@@ -31,7 +31,7 @@ public class UndoCommandTest {
     @Test
     public void execute_afterChange_restoresPreviousData() {
         model.deletePerson(ALICE);
-        model.commitAddressBook();
+        model.commitAddressBookIfChanged();
         Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
         assertCommandSuccess(new UndoCommand(), model, UndoCommand.MESSAGE_SUCCESS, expectedModel);
@@ -40,7 +40,7 @@ public class UndoCommandTest {
     @Test
     public void execute_filteredList_showsAllSupporters() {
         model.deletePerson(ALICE);
-        model.commitAddressBook();
+        model.commitAddressBookIfChanged();
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
         Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
@@ -52,7 +52,7 @@ public class UndoCommandTest {
         Person editedAlice = new PersonBuilder(ALICE).withPhone("91234567").build();
         model.setPerson(ALICE, editedAlice);
         model.setViewedPerson(editedAlice);
-        model.commitAddressBook();
+        model.commitAddressBookIfChanged();
 
         new UndoCommand().execute(model);
 
@@ -63,7 +63,7 @@ public class UndoCommandTest {
     public void execute_viewedPersonNoLongerExists_clearsViewedPerson() throws Exception {
         model.addPerson(AMY);
         model.setViewedPerson(AMY);
-        model.commitAddressBook();
+        model.commitAddressBookIfChanged();
 
         new UndoCommand().execute(model);
 
@@ -73,7 +73,7 @@ public class UndoCommandTest {
     @Test
     public void execute_allChangesUndone_throwsCommandException() throws Exception {
         model.deletePerson(ALICE);
-        model.commitAddressBook();
+        model.commitAddressBookIfChanged();
         new UndoCommand().execute(model);
 
         assertCommandFailure(new UndoCommand(), model, UndoCommand.MESSAGE_NOTHING_TO_UNDO);
