@@ -28,6 +28,7 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ORGANISATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
@@ -43,10 +44,8 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
-import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
-import seedu.address.model.person.Organisation;
 import seedu.address.model.person.Phone;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
@@ -59,6 +58,50 @@ public class EditCommandParserTest {
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE);
 
     private EditCommandParser parser = new EditCommandParser();
+
+    @Test
+    public void parse_supportedNames_success() {
+        String[] names = {"O'Brien", "Lee-Tan", "J. Tan", "Ravi s/o Kumar", "Priya d/o Kumar",
+            "Ravi S/O Kumar", "Priya D/O Kumar", "J. O'Brien-Tan d/o Kumar"};
+
+        for (String name : names) {
+            EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(name).build();
+
+            assertParseSuccess(parser, "1 " + PREFIX_NAME + name, new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        }
+    }
+
+    @Test
+    public void parse_supportedNamesWithAddress_success() {
+        String[] names = {"Ravi s/o Kumar", "Priya d/o Kumar", "J. O'Brien-Tan D/O Kumar"};
+
+        for (String name : names) {
+            EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(name)
+                    .withAddress(VALID_ADDRESS_AMY).build();
+            EditCommand expectedCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+
+            assertParseSuccess(parser, "1 " + PREFIX_NAME + name + ADDRESS_DESC_AMY, expectedCommand);
+            assertParseSuccess(parser, "1" + ADDRESS_DESC_AMY + " " + PREFIX_NAME + name, expectedCommand);
+        }
+    }
+
+    @Test
+    public void parse_supportedNameWithExtraSpaces_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("J. O'Brien-Tan s/o Kumar")
+                .withAddress(VALID_ADDRESS_AMY).build();
+
+        assertParseSuccess(parser, "1 " + PREFIX_NAME + "  J.   O'Brien-Tan   s/o   Kumar  " + ADDRESS_DESC_AMY,
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_invalidNameForms_failure() {
+        String[] names = {"'Tan", "-Tan", ".Tan", "Tan/Lim", "Ravi s/ Kumar", "Ravis/o Kumar", "Priya d/oKumar"};
+
+        for (String name : names) {
+            assertParseFailure(parser, "1 " + PREFIX_NAME + name + ADDRESS_DESC_AMY, Name.MESSAGE_CONSTRAINTS);
+        }
+    }
 
     @Test
     public void parse_missingParts_failure() {
@@ -92,9 +135,6 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1" + INVALID_NAME_DESC, Name.MESSAGE_CONSTRAINTS); // invalid name
         assertParseFailure(parser, "1" + INVALID_PHONE_DESC, Phone.MESSAGE_CONSTRAINTS); // invalid phone
         assertParseFailure(parser, "1" + INVALID_EMAIL_DESC, Email.MESSAGE_CONSTRAINTS); // invalid email
-        assertParseFailure(parser, "1" + INVALID_ADDRESS_DESC, Address.MESSAGE_CONSTRAINTS); // invalid address
-        assertParseFailure(parser, "1" + INVALID_ORGANISATION_DESC,
-                Organisation.MESSAGE_CONSTRAINTS); // blank organisation
         assertParseFailure(parser, "1" + INVALID_TAG_DESC, Tag.MESSAGE_CONSTRAINTS); // invalid tag
 
         // invalid phone followed by valid email
@@ -212,6 +252,37 @@ public class EditCommandParserTest {
 
         assertParseFailure(parser, userInput,
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS));
+    }
+
+    @Test
+    public void parse_clearOptionalFields_success() {
+        Index targetIndex = INDEX_FIRST_PERSON;
+
+        // each optional field on its own
+        assertParseSuccess(parser, targetIndex.getOneBased() + " " + PREFIX_PHONE,
+                new EditCommand(targetIndex, new EditPersonDescriptorBuilder().withoutPhone().build()));
+        assertParseSuccess(parser, targetIndex.getOneBased() + " " + PREFIX_EMAIL,
+                new EditCommand(targetIndex, new EditPersonDescriptorBuilder().withoutEmail().build()));
+        assertParseSuccess(parser, targetIndex.getOneBased() + " " + PREFIX_ADDRESS,
+                new EditCommand(targetIndex, new EditPersonDescriptorBuilder().withoutAddress().build()));
+        assertParseSuccess(parser, targetIndex.getOneBased() + " " + PREFIX_ORGANISATION,
+                new EditCommand(targetIndex, new EditPersonDescriptorBuilder().withoutOrganisation().build()));
+
+        // only spaces after the prefix also clears it
+        assertParseSuccess(parser, targetIndex.getOneBased() + INVALID_ORGANISATION_DESC,
+                new EditCommand(targetIndex, new EditPersonDescriptorBuilder().withoutOrganisation().build()));
+
+        // cleared fields together with an edited one
+        String userInput = targetIndex.getOneBased() + INVALID_ADDRESS_DESC + PHONE_DESC_AMY + " " + PREFIX_EMAIL;
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutAddress()
+                .withPhone(VALID_PHONE_AMY).withoutEmail().build();
+        assertParseSuccess(parser, userInput, new EditCommand(targetIndex, descriptor));
+    }
+
+    @Test
+    public void parse_clearName_failure() {
+        // the name is required, so it cannot be cleared
+        assertParseFailure(parser, "1 " + PREFIX_NAME, Name.MESSAGE_CONSTRAINTS);
     }
 
     @Test

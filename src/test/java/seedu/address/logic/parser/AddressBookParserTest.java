@@ -6,9 +6,11 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
+import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -21,11 +23,15 @@ import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
+import seedu.address.logic.commands.IntroCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.LogCommand;
 import seedu.address.logic.commands.RedoCommand;
 import seedu.address.logic.commands.StageCommand;
+import seedu.address.logic.commands.StatsCommand;
+import seedu.address.logic.commands.TagCommand;
 import seedu.address.logic.commands.UndoCommand;
+import seedu.address.logic.commands.UntagCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
@@ -33,6 +39,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Stage;
+import seedu.address.model.tag.Tag;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PersonUtil;
@@ -161,9 +168,35 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_intro() throws Exception {
+        assertEquals(new IntroCommand(INDEX_FIRST_PERSON, Optional.of(INDEX_SECOND_PERSON)),
+                parser.parseCommand(IntroCommand.COMMAND_WORD + " 1 by/2"));
+        assertEquals(new IntroCommand(INDEX_FIRST_PERSON, Optional.empty()),
+                parser.parseCommand(IntroCommand.COMMAND_WORD + " 1 by/"));
+    }
+
+    @Test
+    public void parseCommand_tag() throws Exception {
+        assertEquals(new TagCommand(INDEX_FIRST_PERSON, Set.of(new Tag("vip"), new Tag("donor"))),
+                parser.parseCommand(TagCommand.COMMAND_WORD + " 1 t/vip t/donor"));
+    }
+
+    @Test
+    public void parseCommand_untag() throws Exception {
+        assertEquals(new UntagCommand(INDEX_FIRST_PERSON, Set.of(new Tag("vip"))),
+                parser.parseCommand(UntagCommand.COMMAND_WORD + " 1 t/vip"));
+    }
+
+    @Test
     public void parseCommand_list() throws Exception {
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD + " 3") instanceof ListCommand);
+    }
+
+    @Test
+    public void parseCommand_stats() throws Exception {
+        assertTrue(parser.parseCommand(StatsCommand.COMMAND_WORD) instanceof StatsCommand);
+        assertTrue(parser.parseCommand(StatsCommand.COMMAND_WORD + " 3") instanceof StatsCommand);
     }
 
     @Test

@@ -1,15 +1,19 @@
 package seedu.address.model.person;
 
+import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.tag.Tag;
@@ -147,6 +151,34 @@ public class Person {
         return Optional.ofNullable(introducer);
     }
 
+    /**
+     * Returns true if the supporter called {@code name} is recorded as this supporter's introducer.
+     * Names are compared ignoring case and extra spaces.
+     */
+    public boolean isIntroducedBy(Name name) {
+        requireNonNull(name);
+        return introducer != null && introducer.isSameName(name);
+    }
+
+    /**
+     * Returns a copy of this supporter with {@code newIntroducer} as their introducer, or with none if it is empty.
+     * Every other detail is unchanged.
+     *
+     * @throws IllegalArgumentException if {@code newIntroducer} is this supporter's own name.
+     */
+    public Person withIntroducer(Optional<Name> newIntroducer) {
+        return new Person(name, getPhone(), getEmail(), getAddress(), getOrganisation(), newIntroducer, stage,
+                interactions, tags);
+    }
+
+    /**
+     * Returns a copy of this supporter with {@code newTags} as their tags. Every other detail is unchanged.
+     */
+    public Person withTags(Set<Tag> newTags) {
+        return new Person(name, getPhone(), getEmail(), getAddress(), getOrganisation(), getIntroducer(), stage,
+                interactions, newTags);
+    }
+
     public Stage getStage() {
         return stage;
     }
@@ -156,6 +188,28 @@ public class Person {
      */
     public List<Interaction> getInteractions() {
         return Collections.unmodifiableList(interactions);
+    }
+
+    /**
+     * Returns the latest interaction date, or an empty {@code Optional} if there are no interactions.
+     * The result is independent of logging order and does not change the stored history.
+     */
+    public Optional<LocalDate> getLastInteractionDate() {
+        return interactions.stream()
+                .map(Interaction::getDate)
+                .max(LocalDate::compareTo);
+    }
+
+    /**
+     * Returns an immutable list of zero-based stored interaction indices in display order.
+     * Interactions are ordered by date descending, then by logging position descending for equal dates.
+     * Keeping indices rather than matching values distinguishes identical interactions.
+     */
+    public List<Integer> getInteractionIndicesInDisplayOrder() {
+        return IntStream.range(0, interactions.size()).boxed()
+                .sorted(Comparator.comparing((Integer index) -> interactions.get(index).getDate())
+                        .thenComparingInt(Integer::intValue).reversed())
+                .toList();
     }
 
     /**

@@ -49,6 +49,7 @@ public class SupporterDetailPanelTest {
         scene.getStylesheets().add(SupporterDetailPanelTest.class.getResource("/view/DarkTheme.css").toExternalForm());
         Label startup = (Label) panel.getRoot().lookup("#startupMessage");
         VBox details = (VBox) panel.getRoot().lookup("#detailsContainer");
+        Label lastContact = (Label) panel.getRoot().lookup("#lastContact");
         ScrollPane history = (ScrollPane) panel.getRoot().lookup("#historyScrollPane");
         VBox entries = (VBox) history.getContent().lookup("#interactionEntries");
         Label placeholder = (Label) history.getContent().lookup("#historyPlaceholder");
@@ -58,6 +59,7 @@ public class SupporterDetailPanelTest {
         assertTrue(startup.isManaged());
         assertFalse(details.isVisible());
         assertFalse(details.isManaged());
+        assertEquals("-", lastContact.getText());
 
         Person person = new PersonBuilder().withoutAddress().build();
         panel.setSupporter(Optional.of(person));
@@ -73,6 +75,9 @@ public class SupporterDetailPanelTest {
         assertEquals("-", ((Label) panel.getRoot().lookup("#supporterOrganisation")).getText());
         assertEquals("-", ((Label) panel.getRoot().lookup("#supporterTags")).getText());
         assertEquals(SupporterDetailData.MESSAGE_EMPTY_HISTORY, placeholder.getText());
+        assertEquals("No interactions yet", lastContact.getText());
+        assertTrue(lastContact.isVisible());
+        assertTrue(lastContact.isManaged());
         assertTrue(placeholder.isVisible());
         assertTrue(placeholder.isManaged());
         assertTrue(entries.getChildren().isEmpty());
@@ -91,6 +96,9 @@ public class SupporterDetailPanelTest {
         assertEquals(40, entries.getChildren().size());
         Label heading = (Label) panel.getRoot().lookup("#historyHeading");
         assertEquals("Interactions (40) - newest first", heading.getText());
+        assertEquals("Last contact: 16 Sep 2026", lastContact.getText());
+        assertTrue(lastContact.getHeight() > 0);
+        assertTrue(lastContact.getLayoutY() + lastContact.getHeight() <= heading.getLayoutY());
         assertFalse(placeholder.isVisible());
         assertFalse(placeholder.isManaged());
         HBox firstRow = (HBox) entries.getChildren().get(0);
@@ -113,6 +121,19 @@ public class SupporterDetailPanelTest {
         assertEquals(0.0, history.getVvalue());
         assertEquals("Giving", ((Label) panel.getRoot().lookup("#supporterStage")).getText());
 
+        Person updatedHistory = new PersonBuilder(updatedPerson)
+                .withInteractions(new Interaction(LocalDate.of(2026, 10, 3), "Called"),
+                        new Interaction(LocalDate.of(2026, 9, 30), "Met"))
+                .build();
+        panel.setSupporter(Optional.of(updatedHistory));
+        assertEquals("Last contact: 03 Oct 2026", lastContact.getText());
+        HBox updatedFirstRow = (HBox) entries.getChildren().get(0);
+        Label latestHistoryDate = (Label) updatedFirstRow.getChildren().get(1);
+        assertEquals("Last contact: " + latestHistoryDate.getText(), lastContact.getText());
+
+        panel.setSupporter(Optional.of(person));
+        assertEquals("No interactions yet", lastContact.getText());
+
         panel.setSupporter(Optional.empty());
         assertTrue(startup.isVisible());
         assertTrue(startup.isManaged());
@@ -122,5 +143,6 @@ public class SupporterDetailPanelTest {
         assertTrue(entries.getChildren().isEmpty());
         assertEquals("-", ((Label) panel.getRoot().lookup("#supporterName")).getText());
         assertEquals("", placeholder.getText());
+        assertEquals("-", lastContact.getText());
     }
 }

@@ -42,6 +42,8 @@
         <RowConstraints valignment="TOP" />
         <RowConstraints valignment="TOP" />
         <RowConstraints valignment="TOP" />
+        <RowConstraints valignment="TOP" />
+        <RowConstraints valignment="TOP" />
       </rowConstraints>
       <Label text="Stage:" styleClass="label-bright" GridPane.rowIndex="0" GridPane.columnIndex="0" />
       <Label fx:id="supporterStage" text="-" styleClass="label-bright" wrapText="true"
@@ -61,6 +63,12 @@
       <Label text="Tags:" styleClass="label-bright" GridPane.rowIndex="5" GridPane.columnIndex="0" />
       <Label fx:id="supporterTags" text="-" styleClass="label-bright" wrapText="true"
              minWidth="0" maxWidth="Infinity" GridPane.rowIndex="5" GridPane.columnIndex="1" />
+      <Label text="Introducer:" styleClass="label-bright" GridPane.rowIndex="6" GridPane.columnIndex="0" />
+      <Label fx:id="supporterIntroducer" text="-" styleClass="label-bright" wrapText="true"
+             minWidth="0" maxWidth="Infinity" GridPane.rowIndex="6" GridPane.columnIndex="1" />
+      <Label text="Introduced:" styleClass="label-bright" GridPane.rowIndex="7" GridPane.columnIndex="0" />
+      <Label fx:id="supporterIntroductions" text="-" styleClass="label-bright" wrapText="true"
+             minWidth="0" maxWidth="Infinity" GridPane.rowIndex="7" GridPane.columnIndex="1" />
     </GridPane>
 
     <Separator>
@@ -68,6 +76,12 @@
         <Insets top="8" right="0" bottom="8" left="0" />
       </VBox.margin>
     </Separator>
+    <Label fx:id="lastContact" text="-" styleClass="label-bright"
+           wrapText="true" minWidth="0" maxWidth="Infinity">
+      <minHeight>
+        <Region fx:constant="USE_PREF_SIZE" />
+      </minHeight>
+    </Label>
     <Label fx:id="historyHeading" text="Interactions (0) - newest first" styleClass="label-bright"
            wrapText="true" minWidth="0" maxWidth="Infinity">
       <minHeight>

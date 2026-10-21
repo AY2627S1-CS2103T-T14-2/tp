@@ -10,13 +10,16 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Names should only contain alphanumeric characters and spaces, and should not be blank";
+            "Names must start with a letter or digit, and may only contain letters, digits, spaces, "
+                    + "apostrophes ('), hyphens (-), periods (.), and whole words s/o or d/o (case-insensitive)";
 
     /*
-     * The first character of the name must not be a whitespace,
-     * otherwise " " (a blank string) becomes a valid input.
+     * The first character must be a letter or digit after space normalization.
+     * Slashes are allowed only in whole words s/o or d/o, ignoring case.
+     * The lookahead checks the first character without consuming it, allowing s/o or d/o at the start.
      */
-    public static final String VALIDATION_REGEX = "[\\p{Alnum}][\\p{Alnum} ]*";
+    public static final String VALIDATION_REGEX =
+            "(?=\\p{Alnum})(?:[\\p{Alnum} '.-]|(?<!\\S)(?i:[sd]/o)(?!\\S))+";
 
     public final String fullName;
 
@@ -33,7 +36,7 @@ public class Name {
     }
 
     /**
-     * Returns true if a given string is a valid name once its spaces are normalised.
+     * Returns true if a given string is a valid name once its spaces are normalized.
      */
     public static boolean isValidName(String test) {
         return normalise(test).matches(VALIDATION_REGEX);
@@ -45,7 +48,7 @@ public class Name {
 
     /**
      * Returns true if both names are the same, ignoring case.
-     * Spaces need no special handling, as every {@code Name} has its spaces normalised.
+     * Spaces need no special handling, as every {@code Name} has its spaces normalized.
      */
     public boolean isSameName(Name otherName) {
         return otherName != null && fullName.equalsIgnoreCase(otherName.fullName);

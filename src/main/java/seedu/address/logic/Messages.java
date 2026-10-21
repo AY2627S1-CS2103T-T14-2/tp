@@ -1,5 +1,6 @@
 package seedu.address.logic;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -8,6 +9,7 @@ import java.util.stream.Stream;
 import seedu.address.logic.parser.Prefix;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
+import seedu.address.model.tag.Tag;
 
 /**
  * Container for user visible messages.
@@ -47,6 +49,16 @@ public class Messages {
                 .map(Person::getName)
                 .orElse(person.getName());
         return String.format(MESSAGE_DUPLICATE_PERSON, existingName);
+    }
+
+    /**
+     * Formats {@code tags} for display, in alphabetical order ignoring case, e.g. {@code [boardIntro] [vip]}.
+     */
+    public static String formatTags(Collection<Tag> tags) {
+        return tags.stream()
+                .sorted(Tag.ALPHABETICAL_ORDER)
+                .map(Tag::toString)
+                .collect(Collectors.joining(" "));
     }
 
     /**

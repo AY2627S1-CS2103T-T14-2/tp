@@ -27,6 +27,35 @@ public class SupporterDetailDataTest {
     }
 
     @Test
+    public void constructor_nullIntroductions_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new SupporterDetailData(Optional.empty(), null));
+    }
+
+    @Test
+    public void constructor_introducerAndIntroductions_showsBoth() {
+        Person person = new PersonBuilder().withName("Lim Mei Hua").withIntroducer("Ong Kai Wen").build();
+        Person firstIntroduced = new PersonBuilder().withName("Tan Wei Ming").build();
+        Person secondIntroduced = new PersonBuilder().withName("David Li").build();
+        SupporterDetailData data = new SupporterDetailData(Optional.of(person),
+                List.of(firstIntroduced, secondIntroduced));
+
+        assertEquals("Ong Kai Wen", data.getIntroducer());
+        assertEquals("Tan Wei Ming, David Li", data.getIntroductions());
+    }
+
+    @Test
+    public void constructor_noIntroducerOrIntroductions_showsUnsetMarkers() {
+        SupporterDetailData data = new SupporterDetailData(Optional.of(new PersonBuilder().build()));
+        assertEquals("-", data.getIntroducer());
+        assertEquals("-", data.getIntroductions());
+
+        // introductions are not shown when no supporter is selected
+        SupporterDetailData noSelection = new SupporterDetailData(Optional.empty(),
+                List.of(new PersonBuilder().build()));
+        assertEquals("-", noSelection.getIntroductions());
+    }
+
+    @Test
     public void constructor_noSelection_showsStartupState() {
         SupporterDetailData data = new SupporterDetailData(Optional.empty());
 
@@ -100,7 +129,36 @@ public class SupporterDetailDataTest {
     }
 
     @Test
-    public void getInteractionEntries_mixedDates_sortsByDateThenNumberAndPreservesStoredHistory() {
+    public void getLastContact_noSelection_returnsDash() {
+        SupporterDetailData data = new SupporterDetailData(Optional.empty());
+
+        assertEquals("-", data.getLastContact());
+    }
+
+    @Test
+    public void getLastContact_emptyHistory_returnsNoInteractionsMessage() {
+        Person person = new PersonBuilder().build();
+        SupporterDetailData data = new SupporterDetailData(Optional.of(person));
+
+        assertEquals("No interactions yet", data.getLastContact());
+    }
+
+    @Test
+    public void getLastContact_outOfOrderDates_returnsLatestDateText() {
+        Interaction firstInteraction = new Interaction(LocalDate.of(2026, 9, 16), "Called");
+        Interaction latestInteraction = new Interaction(LocalDate.of(2026, 10, 3), "Met");
+        Interaction lastLoggedInteraction = new Interaction(LocalDate.of(2026, 9, 30), "Emailed");
+        Person person = new PersonBuilder()
+                .withInteractions(firstInteraction, latestInteraction, lastLoggedInteraction)
+                .build();
+        SupporterDetailData data = new SupporterDetailData(Optional.of(person));
+
+        assertEquals("Last contact: 03 Oct 2026", data.getLastContact());
+        assertEquals(List.of(firstInteraction, latestInteraction, lastLoggedInteraction), person.getInteractions());
+    }
+
+    @Test
+    public void getInteractionEntries_mixedDates_numbersByDateThenLoggingOrderAndPreservesStoredHistory() {
         Interaction firstInteraction = new Interaction(LocalDate.of(2026, 9, 2), "First September meeting");
         Interaction secondInteraction = new Interaction(LocalDate.of(2027, 1, 1), "New year call");
         Interaction thirdInteraction = new Interaction(LocalDate.of(2026, 8, 14), "Earlier dated meeting");
@@ -113,7 +171,7 @@ public class SupporterDetailDataTest {
         SupporterDetailData data = new SupporterDetailData(Optional.of(person));
         List<InteractionEntry> entries = data.getInteractionEntries();
 
-        assertEquals(List.of(2, 4, 1, 3), entries.stream().map(InteractionEntry::getNumber).toList());
+        assertEquals(List.of(4, 3, 2, 1), entries.stream().map(InteractionEntry::getNumber).toList());
         assertEquals(List.of("01 Jan 2027", "02 Sep 2026", "02 Sep 2026", "14 Aug 2026"),
                 entries.stream().map(InteractionEntry::getDate).toList());
         assertEquals(List.of("New year call", "Second September meeting",
@@ -125,7 +183,7 @@ public class SupporterDetailDataTest {
     }
 
     @Test
-    public void getInteractionEntries_identicalInteractions_keepsBothWithOriginalNumbers() {
+    public void getInteractionEntries_identicalInteractions_keepsBothWithDisplayNumbers() {
         Interaction interaction = new Interaction(LocalDate.of(2026, 9, 16), "Called");
         Person person = new PersonBuilder().withInteractions(interaction, interaction).build();
         SupporterDetailData data = new SupporterDetailData(Optional.of(person));

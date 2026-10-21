@@ -3,6 +3,7 @@ package seedu.address.model;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -12,6 +13,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 
 /**
@@ -106,6 +108,26 @@ public class ModelManager implements Model {
         if (target.equals(viewedPerson)) {
             viewedPerson = editedPerson;
         }
+    }
+
+    @Override
+    public List<Person> getPersonsIntroducedBy(Name introducer) {
+        requireNonNull(introducer);
+        return versionedAddressBook.getPersonList().stream()
+                .filter(person -> person.isIntroducedBy(introducer))
+                .toList();
+    }
+
+    @Override
+    public int replaceIntroducer(Name introducer, Optional<Name> replacement) {
+        requireAllNonNull(introducer, replacement);
+        List<Person> introducedPersons = getPersonsIntroducedBy(introducer);
+        for (Person person : introducedPersons) {
+            // goes through setPerson so that a viewed supporter is kept up to date
+            setPerson(person, person.withIntroducer(replacement));
+        }
+        logger.fine("Replaced introducer " + introducer + " for " + introducedPersons.size() + " supporter(s)");
+        return introducedPersons.size();
     }
 
     @Override

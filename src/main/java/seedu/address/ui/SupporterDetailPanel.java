@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.List;
 import java.util.Optional;
 
 import javafx.fxml.FXML;
@@ -24,6 +25,7 @@ public class SupporterDetailPanel extends UiPart<Region> {
     private static final String FXML = "SupporterDetailPanel.fxml";
 
     private Optional<Person> displayedPerson = Optional.empty();
+    private List<Person> displayedIntroductions = List.of();
 
     @FXML
     private Label startupMessage;
@@ -43,6 +45,12 @@ public class SupporterDetailPanel extends UiPart<Region> {
     private Label supporterAddress;
     @FXML
     private Label supporterTags;
+    @FXML
+    private Label lastContact;
+    @FXML
+    private Label supporterIntroducer;
+    @FXML
+    private Label supporterIntroductions;
     @FXML
     private Label historyHeading;
     @FXML
@@ -66,13 +74,24 @@ public class SupporterDetailPanel extends UiPart<Region> {
      * when the displayed record is unchanged.
      */
     public void setSupporter(Optional<Person> supporter) {
+        setSupporter(supporter, List.of());
+    }
+
+    /**
+     * Shows {@code supporter} and the supporters they introduced, {@code introducedPersons}, or clears the
+     * details and shows the startup prompt when selection is empty.
+     * Scrolling is preserved when neither the displayed record nor the introductions have changed.
+     */
+    public void setSupporter(Optional<Person> supporter, List<Person> introducedPersons) {
         requireNonNull(supporter);
-        if (displayedPerson.equals(supporter)) {
+        requireNonNull(introducedPersons);
+        if (displayedPerson.equals(supporter) && displayedIntroductions.equals(introducedPersons)) {
             return;
         }
 
-        render(new SupporterDetailData(supporter));
+        render(new SupporterDetailData(supporter, introducedPersons));
         displayedPerson = supporter;
+        displayedIntroductions = List.copyOf(introducedPersons);
     }
 
     private void render(SupporterDetailData data) {
@@ -86,6 +105,9 @@ public class SupporterDetailPanel extends UiPart<Region> {
         supporterEmail.setText(data.getEmail());
         supporterAddress.setText(data.getAddress());
         supporterTags.setText(data.getTags());
+        lastContact.setText(data.getLastContact());
+        supporterIntroducer.setText(data.getIntroducer());
+        supporterIntroductions.setText(data.getIntroductions());
         historyHeading.setText(data.getHistoryHeading());
 
         historyPlaceholder.setText(data.hasSupporter() ? data.getPlaceholderMessage() : "");

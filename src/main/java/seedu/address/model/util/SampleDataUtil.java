@@ -49,10 +49,11 @@ public class SampleDataUtil {
             new Person(new Name("Charlotte Oliveiro"), Optional.empty(),
                 Optional.of(new Email("charlotte@example.com")), Optional.empty(), Optional.empty(),
                 Stage.PROSPECT, getTagSet("onlineDonor")),
-            // a corporate contact whose postal address is not known
+            // a corporate contact whose postal address is not known, introduced by another supporter
             new Person(new Name("David Li"), Optional.of(new Phone("91031282")),
                 Optional.of(new Email("lidavid@example.com")), Optional.empty(),
-                Optional.of(new Organisation("Keppel Corporation")), Optional.empty(), Stage.CONTACTED,
+                Optional.of(new Organisation("Keppel Corporation")), Optional.of(new Name("Bernice Yu")),
+                Stage.CONTACTED,
                 List.of(
                     new Interaction(LocalDate.of(2026, 8, 21), "Sent the community outreach sponsorship deck"),
                     new Interaction(LocalDate.of(2026, 9, 25),
