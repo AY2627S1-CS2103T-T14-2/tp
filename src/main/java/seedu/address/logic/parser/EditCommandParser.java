@@ -52,16 +52,25 @@ public class EditCommandParser implements Parser<EditCommand> {
         if (argMultimap.getValue(PREFIX_NAME).isPresent()) {
             editPersonDescriptor.setName(ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get()));
         }
-        if (argMultimap.getValue(PREFIX_PHONE).isPresent()) {
+        // an optional field given with an empty value, e.g. "a/", is cleared
+        if (isCleared(argMultimap, PREFIX_PHONE)) {
+            editPersonDescriptor.clearPhone();
+        } else if (argMultimap.getValue(PREFIX_PHONE).isPresent()) {
             editPersonDescriptor.setPhone(ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get()));
         }
-        if (argMultimap.getValue(PREFIX_EMAIL).isPresent()) {
+        if (isCleared(argMultimap, PREFIX_EMAIL)) {
+            editPersonDescriptor.clearEmail();
+        } else if (argMultimap.getValue(PREFIX_EMAIL).isPresent()) {
             editPersonDescriptor.setEmail(ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get()));
         }
-        if (argMultimap.getValue(PREFIX_ADDRESS).isPresent()) {
+        if (isCleared(argMultimap, PREFIX_ADDRESS)) {
+            editPersonDescriptor.clearAddress();
+        } else if (argMultimap.getValue(PREFIX_ADDRESS).isPresent()) {
             editPersonDescriptor.setAddress(ParserUtil.parseAddress(argMultimap.getValue(PREFIX_ADDRESS).get()));
         }
-        if (argMultimap.getValue(PREFIX_ORGANISATION).isPresent()) {
+        if (isCleared(argMultimap, PREFIX_ORGANISATION)) {
+            editPersonDescriptor.clearOrganisation();
+        } else if (argMultimap.getValue(PREFIX_ORGANISATION).isPresent()) {
             editPersonDescriptor.setOrganisation(
                     ParserUtil.parseOrganisation(argMultimap.getValue(PREFIX_ORGANISATION).get()));
         }
@@ -72,6 +81,13 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
 
         return new EditCommand(index, editPersonDescriptor);
+    }
+
+    /**
+     * Returns true if {@code prefix} is given with nothing but spaces after it.
+     */
+    private static boolean isCleared(ArgumentMultimap argMultimap, Prefix prefix) {
+        return argMultimap.getValue(prefix).map(String::isBlank).orElse(false);
     }
 
     /**

@@ -7,6 +7,7 @@ import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
+import static seedu.address.testutil.TypicalPersons.CARL;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +18,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.model.person.Name;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.exceptions.DuplicatePersonException;
@@ -186,6 +188,51 @@ public class ModelManagerTest {
 
         assertEquals(Optional.of(ALICE), modelManager.getViewedPerson());
         assertEquals(List.of(ALICE, BENSON), modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void getPersonsIntroducedBy_someIntroduced_returnsThemInOrder() {
+        Person bensonByAlice = new PersonBuilder(BENSON).withIntroducer("alice pauline").build();
+        Person carlByAlice = new PersonBuilder(CARL).withIntroducer(ALICE.getName().fullName).build();
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(bensonByAlice);
+        modelManager.addPerson(carlByAlice);
+        // the filter does not hide anyone from the introductions
+        modelManager.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Alice")));
+
+        assertEquals(List.of(bensonByAlice, carlByAlice), modelManager.getPersonsIntroducedBy(ALICE.getName()));
+        assertEquals(List.of(), modelManager.getPersonsIntroducedBy(BENSON.getName()));
+    }
+
+    @Test
+    public void replaceIntroducer_newName_updatesEveryLinkAndViewedPerson() {
+        Person bensonByAlice = new PersonBuilder(BENSON).withIntroducer(ALICE.getName().fullName).build();
+        Person carlByAlice = new PersonBuilder(CARL).withIntroducer(ALICE.getName().fullName).build();
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(bensonByAlice);
+        modelManager.addPerson(carlByAlice);
+        modelManager.setViewedPerson(bensonByAlice);
+        Name newName = new Name("Alice Tan");
+
+        assertEquals(2, modelManager.replaceIntroducer(ALICE.getName(), Optional.of(newName)));
+
+        Person updatedBenson = new PersonBuilder(BENSON).withIntroducer("Alice Tan").build();
+        Person updatedCarl = new PersonBuilder(CARL).withIntroducer("Alice Tan").build();
+        assertEquals(List.of(ALICE, updatedBenson, updatedCarl), modelManager.getAddressBook().getPersonList());
+        assertEquals(Optional.of(updatedBenson), modelManager.getViewedPerson());
+    }
+
+    @Test
+    public void replaceIntroducer_empty_removesLinks() {
+        Person bensonByAlice = new PersonBuilder(BENSON).withIntroducer(ALICE.getName().fullName).build();
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(bensonByAlice);
+
+        assertEquals(1, modelManager.replaceIntroducer(ALICE.getName(), Optional.empty()));
+        assertEquals(List.of(ALICE, BENSON), modelManager.getAddressBook().getPersonList());
+
+        // nobody left to update
+        assertEquals(0, modelManager.replaceIntroducer(ALICE.getName(), Optional.empty()));
     }
 
     @Test

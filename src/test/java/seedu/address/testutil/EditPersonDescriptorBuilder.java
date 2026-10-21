@@ -82,6 +82,38 @@ public class EditPersonDescriptorBuilder {
     }
 
     /**
+     * Marks the {@code Phone} of the {@code EditPersonDescriptor} that we are building to be cleared.
+     */
+    public EditPersonDescriptorBuilder withoutPhone() {
+        descriptor.clearPhone();
+        return this;
+    }
+
+    /**
+     * Marks the {@code Email} of the {@code EditPersonDescriptor} that we are building to be cleared.
+     */
+    public EditPersonDescriptorBuilder withoutEmail() {
+        descriptor.clearEmail();
+        return this;
+    }
+
+    /**
+     * Marks the {@code Address} of the {@code EditPersonDescriptor} that we are building to be cleared.
+     */
+    public EditPersonDescriptorBuilder withoutAddress() {
+        descriptor.clearAddress();
+        return this;
+    }
+
+    /**
+     * Marks the {@code Organisation} of the {@code EditPersonDescriptor} that we are building to be cleared.
+     */
+    public EditPersonDescriptorBuilder withoutOrganisation() {
+        descriptor.clearOrganisation();
+        return this;
+    }
+
+    /**
      * Parses the {@code tags} into a {@code Set<Tag>} and sets it to the {@code EditPersonDescriptor}
      * that we are building.
      */

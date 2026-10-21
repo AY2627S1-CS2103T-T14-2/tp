@@ -9,7 +9,9 @@ import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.STAGE_DESC_AMY;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.AMY;
+import static seedu.address.testutil.TypicalPersons.BENSON;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -29,6 +31,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -43,12 +46,12 @@ public class LogicManagerTest {
     private Path temporaryFolder;
 
     private Model model = new ModelManager();
+    private JsonAddressBookStorage addressBookStorage;
     private Logic logic;
 
     @BeforeEach
     public void setUp() {
-        JsonAddressBookStorage addressBookStorage =
-                new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        addressBookStorage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
         JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"));
         StorageManager storage = new StorageManager(addressBookStorage, userPrefsStorage);
         logic = new LogicManager(model, storage);
@@ -82,6 +85,32 @@ public class LogicManagerTest {
     public void execute_storageThrowsAdException_throwsCommandException() {
         assertCommandFailureForExceptionFromStorage(dummyAdException, String.format(
                 LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, dummyAdException.getMessage()));
+    }
+
+    @Test
+    public void execute_renameIntroducer_savedIntroductionFollowsNewName() throws Exception {
+        model.addPerson(ALICE);
+        model.addPerson(BENSON);
+        logic.execute("intro 2 by/1");
+        logic.execute("edit 1 n/Alice Tan");
+
+        ReadOnlyAddressBook savedAddressBook = addressBookStorage.readAddressBook().get();
+        assertEquals(model.getAddressBook(), savedAddressBook);
+        Person savedBenson = savedAddressBook.getPersonList().get(1);
+        assertEquals(Optional.of(new Name("Alice Tan")), savedBenson.getIntroducer());
+    }
+
+    @Test
+    public void execute_deleteIntroducer_savedIntroductionRemoved() throws Exception {
+        model.addPerson(ALICE);
+        model.addPerson(BENSON);
+        logic.execute("intro 2 by/1");
+        logic.execute("delete 1");
+
+        ReadOnlyAddressBook savedAddressBook = addressBookStorage.readAddressBook().get();
+        assertEquals(model.getAddressBook(), savedAddressBook);
+        assertEquals(1, savedAddressBook.getPersonList().size());
+        assertEquals(Optional.empty(), savedAddressBook.getPersonList().get(0).getIntroducer());
     }
 
     @Test
