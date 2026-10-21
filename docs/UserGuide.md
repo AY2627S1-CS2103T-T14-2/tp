@@ -297,6 +297,47 @@ The last command reports `#2`. Adding that entry renumbers the 10 March entry fr
 A space followed by `nt/` or `dt/` inside a note is interpreted as a parameter prefix, not note text. This may split the note or cause a validation error. Rephrase the note to avoid these sequences.
 </box>
 
+### Editing an interaction: `editlog`
+
+Corrects a logged interaction's note, date or both.
+
+Format: `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`
+
+- `INDEX` is the supporter index in the displayed list; after `find`, use the search-result index. Both indices must be positive integers.
+- `ENTRY` is the number beside the interaction in the detail panel, not its row position. Use `view INDEX` to check it first.
+- Supply at least one field. Omitted fields remain unchanged; supplying the existing value is allowed.
+- `NOTE` must not be blank and may contain at most 500 characters after trimming leading and trailing spaces.
+- `DATE` must be a valid `yyyy-MM-dd` date from `1900-01-01` through today (inclusive), using the computer's clock. Empty, invalid and out-of-range dates are rejected.
+- `nt/` and `dt/` may appear in either order, but each may appear only once. As with `log`, a space followed by either prefix inside a note is interpreted as a parameter prefix.
+- Date changes can reorder and renumber entries: oldest is `#1`, newest has the largest number, and the panel displays newest first. Equal dates retain the original logging order, with later-logged entries first.
+- The success message reports the edited entry's updated number, date and note. Use the refreshed numbers for subsequent commands.
+- Only the selected entry changes, even when entries have identical dates and notes. Other supporter details and the current list filter are preserved.
+- The panel switches to the updated supporter, and last contact reflects the latest interaction date. Invalid commands leave data and selection unchanged.
+
+Examples:
+
+- `editlog 1 2 nt/Corrected meeting notes` changes only entry #2's note.
+- `editlog 1 2 dt/2024-03-15` changes only its date.
+- `editlog 1 2 nt/Corrected meeting notes dt/2024-03-15` changes both.
+
+Suppose `view 1` shows:
+
+```text
+#3  10 Mar 2024  Recent call
+#2  29 Feb 2024  Middle meeting
+#1  20 Feb 2024  First meeting
+```
+
+After `editlog 1 2 dt/2024-03-15`, the panel shows:
+
+```text
+#3  15 Mar 2024  Middle meeting
+#2  10 Mar 2024  Recent call
+#1  20 Feb 2024  First meeting
+```
+
+The success message reports `#3`. To edit that same meeting again, use `editlog 1 3 ...`.
+
 ### Viewing a supporter's details and interaction history: `view`
 
 Shows a supporter's full record and every logged interaction in the detail panel beside the supporter list. The result display reports their name and interaction count.
@@ -310,7 +351,7 @@ Format: `view INDEX`
 * Above the interaction history, the panel shows the same last-contact line as the supporter card, for example `Last contact: 03 Oct 2026`, or `No interactions yet` if there are no logged interactions. The line updates when the displayed supporter's interaction history changes.
 * Interactions appear newest first, e.g. `#4  16 Sep 2026  Sent partnership deck by email`. Numbers descend to `#1`, the oldest entry. On equal dates, later-logged entries appear first.
 * The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
-* A successful `view`, `log`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
+* A successful `view`, `log`, `editlog`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
 * Invalid commands leave the displayed supporter unchanged.
 * Deleting the displayed supporter or running `clear` clears the details and history. Deleting another supporter keeps the panel unchanged.
 * Selection is not remembered after restarting the app.
@@ -468,6 +509,7 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t/TAG]... `<br> e.g., `edit 2 p/91234567 a/1 HarbourFront Avenue`
+**Editlog** | `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`<br> e.g., `editlog 1 2 nt/Corrected meeting dt/2024-03-15`
 **Intro**  | `intro INDEX by/[INTRODUCER_INDEX]`<br> e.g., `intro 3 by/1`
 **Tag**    | `tag INDEX t/TAG [t/TAG]...`<br> e.g., `tag 2 t/vip t/boardIntro`
 **Untag**  | `untag INDEX t/TAG [t/TAG]...`<br> e.g., `untag 2 t/vip`
