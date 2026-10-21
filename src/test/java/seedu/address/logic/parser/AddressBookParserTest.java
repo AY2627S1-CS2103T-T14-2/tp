@@ -33,6 +33,7 @@ import seedu.address.logic.commands.StageCommand;
 import seedu.address.logic.commands.StatsCommand;
 import seedu.address.logic.commands.TagCommand;
 import seedu.address.logic.commands.UndoCommand;
+import seedu.address.logic.commands.UnlogCommand;
 import seedu.address.logic.commands.UntagCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -111,6 +112,26 @@ public class AddressBookParserTest {
         LogCommand command = (LogCommand) parser.parseCommand(LogCommand.COMMAND_WORD + " "
                 + INDEX_FIRST_PERSON.getOneBased() + " nt/" + note);
         assertEquals(new LogCommand(INDEX_FIRST_PERSON, note), command);
+    }
+
+    @Test
+    public void parseCommand_unlog_returnsUnlogCommand() throws Exception {
+        UnlogCommand expected = new UnlogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON);
+        assertEquals(expected, parser.parseCommand("unlog 1 2"));
+        assertEquals(expected, parser.parseCommand("  unlog\t1  2  "));
+    }
+
+    @Test
+    public void parseCommand_unlogInvalidArguments_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, UnlogCommand.MESSAGE_USAGE);
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("unlog"));
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("unlog 1 abc"));
+    }
+
+    @Test
+    public void parseCommand_unlogWrongCase_throwsParseException() {
+        // command words are case-sensitive
+        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("UNLOG 1 2"));
     }
 
     @Test

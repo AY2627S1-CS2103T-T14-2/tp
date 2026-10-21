@@ -436,6 +436,20 @@ Supplying unchanged values succeeds normally. Date edits can renumber other entr
 
 `EditLogCommandTest` checks command behavior, while parser tests cover input validation. `EditLogCommandIntegrationTest` verifies renumbering and display order from command input through detail-panel data, without starting JavaFX.
 
+### Deleting an interaction
+
+**Parsing `unlog INDEX ENTRY`:** `AddressBookParser` passes the arguments to `UnlogCommandParser`. It uses `ParserUtil#parseInteractionIndices(String)` to require exactly two positive integers and creates an `UnlogCommand`. Parsing failures are reported with the command's usage message.
+
+`UnlogCommand` performs the model update as follows.
+
+1. Validate the supporter index against `Model#getFilteredPersonList()`, then validate the entry number against that supporter's history size. These failures have distinct messages and leave data and selection unchanged.
+2. Convert the chronological entry number to a zero-based display position using `historySize - entryNumber`. Look up that position in `Person#getInteractionIndicesInDisplayOrder()` to obtain the stored index.
+3. Copy the interaction list and remove the entry at that stored index. Removing by position distinguishes identical interactions and preserves the remaining logging order.
+4. Create a replacement `Person`, preserving all other fields, including the introducer. Call `Model#setPerson(Person, Person)` and `Model#setViewedPerson(Person)` without changing the list filter.
+5. Return the removed entry's pre-deletion number, date and note. `SupporterDetailData` derives contiguous chronological numbers from the updated history and supplies the empty-history state when none remain.
+
+`UnlogCommandTest` checks command behavior, while parser tests cover input validation. `UnlogCommandIntegrationTest` verifies renumbering, display order and empty history from command input through detail-panel data, without starting JavaFX.
+
 ### Viewing a supporter's details and interaction history
 
 The `view INDEX` command selects a supporter from the displayed list and reports their name and number of logged interactions, or indicates that no interactions have been logged yet.
@@ -458,7 +472,7 @@ On successful index validation, `ViewCommand` records the supporter using `Model
 Selection follows these rules:
 
 * `list`, `find` and `add` retain the viewed supporter, even if they are no longer displayed.
-* Successful `view`, `log`, `editlog` and `stage` commands select their target. `log` and `editlog` select the replacement record after updating its history. `stage` selects the replacement record after a stage change, or the existing record when the requested stage is already set.
+* Successful `view`, `log`, `editlog`, `unlog` and `stage` commands select their target. `log`, `editlog` and `unlog` select the replacement record after updating its history. `stage` selects the replacement record after a stage change, or the existing record when the requested stage is already set.
 * `ModelManager#setPerson(Person, Person)` updates selection to the replacement record when the viewed supporter is changed.
 * `ModelManager#deletePerson(Person)` clears selection when the viewed supporter is deleted.
 * `ModelManager#setAddressBook(ReadOnlyAddressBook)` clears selection when all supporter data is replaced, including by `clear`.
@@ -1186,6 +1200,30 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test cases: `editlog 2 1 nt/Note` when only one supporter is displayed; `editlog 1 4 nt/Note` when that supporter has three entries<br>
       Expected: Distinct invalid-supporter-index and invalid-interaction-number errors. All invalid commands above leave data, filtering and selection unchanged.
+
+### Deleting an interaction
+
+1. Deleting by chronological number after a `find`
+   1. Prerequisites: Add a supporter with a unique name using `add n/Unlog Tester p/91234567`, then run `find Unlog Tester`. Ensure exactly one supporter is displayed with no interactions. Run these commands in order: `log 1 nt/Middle meeting dt/2024-02-29`, `log 1 nt/First meeting dt/2024-02-20`, `log 1 nt/Recent call dt/2024-03-10`.
+
+   1. Test case: `unlog 1 2`<br>
+      Expected: The success message identifies `Middle meeting` as deleted entry #2. The panel shows `Recent call` as #2 and `First meeting` as #1. The find result and supporter details remain unchanged.
+
+   1. Continuing from the previous test case: `unlog 1 2`, then `unlog 1 1`<br>
+      Expected: `Recent call` is removed first, then `First meeting`. The supporter remains selected with an empty history and `No interactions yet` as last contact.
+
+1. Deleting one of two identical entries
+   1. Prerequisites: With Unlog Tester still the only displayed supporter and their history empty, run `log 1 nt/Meeting dt/2024-02-29`, `log 1 nt/Follow-up dt/2024-02-29`, then `log 1 nt/Meeting dt/2024-02-29`.
+
+   1. Test case: `unlog 1 3`<br>
+      Expected: Only the later `Meeting` entry is removed. The panel shows `Follow-up` as #2 above the remaining `Meeting` as #1.
+
+1. Invalid deletion commands
+   1. Test cases: `unlog`, `unlog 1`, `unlog 1 2 3`, `unlog 0 1` and `unlog 1 abc`<br>
+      Expected: An invalid-format message with unlog usage. Data and selection remain unchanged.
+
+   1. Test cases: `unlog 2 1` when only one supporter is displayed; `unlog 1 3` when that supporter has only two entries<br>
+      Expected: An invalid-supporter-index error for the first command and an invalid-interaction-number error for the second. Neither changes data or selection.
 
 ### Viewing a supporter's details and interaction history
 

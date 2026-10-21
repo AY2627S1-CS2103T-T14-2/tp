@@ -90,7 +90,7 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 - `ORGANISATION` can contain any characters (e.g. `Procter & Gamble`), must not be blank, and can be at most 100 characters long. Extra spaces are removed.
 - `STAGE` is the supporter's cultivation stage, and must be one of `prospect`, `contacted`, `cultivating`, `giving`, `lapsed` or `declined`. Upper and lower case are both accepted.
 - If `st/STAGE` is left out, the new supporter starts at stage `Prospect`.
-- `PHONE` must contain only digits, and be between 3 and 15 digits long.
+- `PHONE` may start with `+` and must contain between 3 and 15 digits. Digit groups may be separated by single spaces or hyphens, including a mixture of both. For example, `+65 9123 4567`, `+65-9123-4567` and `+65 9123-4567` are accepted. Consecutive separators such as `+65  9123` or `+65- 9123` are not accepted. Your formatting is preserved when the number is displayed and saved.
 - `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'`), hyphens (`-`) and periods (`.`), e.g. `O'Brien`, `Lee-Tan` and `J. Tan`.
 - `NAME` can also contain `s/o` or `d/o` as separate words, e.g. `Ravi s/o Kumar` and `Priya d/o Kumar`. Upper and lower case are both accepted.
 - SupporterBook only checks which characters a name uses, not whether it looks like a real name. For example, `s/o Kumar` or a name with only initials is accepted.
@@ -106,6 +106,7 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 Examples:
 
 - `add n/Aisha Rahman e/aisha.r@gmail.com` adds an online donor who gave only an email.
+- `add n/Marie Laurent p/+33 1 42 68 53 00` adds a supporter with an international phone number.
 - `add n/J. O'Brien-Tan p/91234567` adds a supporter whose name contains periods, apostrophes and hyphens.
 - `add n/Ravi s/o Kumar p/81112222 a/Bedok North Ave 1 st/contacted` adds a supporter named `Ravi s/o Kumar` at stage `Contacted`.
 - `add n/John Lim p/81112222 e/johnlim@example.com a/Bedok North Ave 1 st/lapsed` adds a past donor at stage `Lapsed`.
@@ -145,6 +146,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t
 Examples:
 
 - `edit 1 p/91234567 e/weiming@dbs.com` Edits the phone number and email address of the 1st supporter to be `91234567` and `weiming@dbs.com` respectively.
+- `edit 1 p/+65-9123-4567` Changes the 1st supporter's phone number using an international country code.
 - `edit 2 n/Tan Wei Ming DBS t/` Edits the name of the 2nd supporter to be `Tan Wei Ming DBS` and clears all existing tags.
 - `edit 2 n/Priya d/o Kumar` Edits the name of the 2nd supporter to be `Priya d/o Kumar`.
 - `edit 3 o/OCBC Bank` Changes the organisation of the 3rd supporter to `OCBC Bank`, e.g. after they change jobs.
@@ -338,6 +340,36 @@ After `editlog 1 2 dt/2024-03-15`, the panel shows:
 
 The success message reports `#3`. To edit that same meeting again, use `editlog 1 3 ...`.
 
+### Deleting an interaction: `unlog`
+
+Removes one logged interaction, keeping the supporter and their other interactions.
+
+Format: `unlog INDEX ENTRY`
+
+- Supply exactly two positive integers. `INDEX` is the supporter index in the displayed list; after `find`, use the search-result index.
+- `ENTRY` is the number beside the interaction in the detail panel, not its row position. Use `view INDEX` to check it first.
+- Only the selected entry is removed, even if other entries have identical dates and notes.
+- To restore an interaction deleted by mistake, run `undo` immediately afterward. Undo history is available only during the current session.
+- Remaining entries are renumbered without gaps: oldest is `#1`, newest has the largest number. They remain displayed newest first; equal dates keep later-logged entries first.
+- The success message identifies the removed entry by its number before deletion, date and note. Check the refreshed numbers before another deletion.
+- The panel switches to the updated supporter. Deleting their last interaction shows the empty-history message; last contact updates to the latest remaining date, or `No interactions yet`.
+- Other supporter details and the current list filter are preserved. Invalid commands leave data and selection unchanged.
+
+Example: after `view 1`, suppose the panel shows:
+
+```text
+#3  10 Mar 2024  Recent call
+#2  29 Feb 2024  Middle meeting
+#1  20 Feb 2024  First meeting
+```
+
+`unlog 1 2` removes `Middle meeting`. The panel then shows:
+
+```text
+#2  10 Mar 2024  Recent call
+#1  20 Feb 2024  First meeting
+```
+
 ### Viewing a supporter's details and interaction history: `view`
 
 Shows a supporter's full record and every logged interaction in the detail panel beside the supporter list. The result display reports their name and interaction count.
@@ -351,7 +383,7 @@ Format: `view INDEX`
 * Above the interaction history, the panel shows the same last-contact line as the supporter card, for example `Last contact: 03 Oct 2026`, or `No interactions yet` if there are no logged interactions. The line updates when the displayed supporter's interaction history changes.
 * Interactions appear newest first, e.g. `#4  16 Sep 2026  Sent partnership deck by email`. Numbers descend to `#1`, the oldest entry. On equal dates, later-logged entries appear first.
 * The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
-* A successful `view`, `log`, `editlog`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
+* A successful `view`, `log`, `editlog`, `unlog`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
 * Invalid commands leave the displayed supporter unchanged.
 * Deleting the displayed supporter or running `clear` clears the details and history. Deleting another supporter keeps the panel unchanged.
 * After `undo` or `redo`, the panel shows the displayed supporter's restored record, or is cleared if that supporter no longer exists.
@@ -433,7 +465,7 @@ Reverts the most recent change to your supporter data.
 
 Format: `undo`
 
-- These commands can be undone: `add`, `edit`, `delete`, `clear`, `log`, `stage`, `intro`, `tag` and `untag`.
+- These commands can be undone: `add`, `edit`, `delete`, `clear`, `log`, `unlog`, `stage`, `intro`, `tag` and `untag`.
 - Commands that do not change data, such as `list`, `find`, `view`, `stats` and `help`, are skipped. For example, `delete 2`, `find Tan`, `undo` restores the deleted supporter.
 - Running `undo` again reverts the change before that, back to when the app was opened.
 - A command that changes nothing, such as `stage` with the supporter's current stage or `tag` with a tag they already have, is not recorded. Neither is a command that fails. There is nothing to undo for them.
@@ -569,6 +601,7 @@ Action     | Format, Examples
 **Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei`
 **List**   | `list`
 **Log**    | `log INDEX nt/NOTE [dt/DATE]`<br> e.g., `log 2 nt/Called about the year-end appeal dt/2026-10-01`
+**Unlog**  | `unlog INDEX ENTRY`<br> e.g., `unlog 2 1`
 **Redo**   | `redo`
 **Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`
 **Stats**  | `stats`
