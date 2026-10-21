@@ -1,5 +1,6 @@
 package seedu.address.model;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -118,12 +119,20 @@ public interface Model {
      */
     void setViewedPerson(Person person);
 
-    /** Returns an unmodifiable view of the filtered person list */
+    /** Returns an unmodifiable view of the displayed, filtered and optionally sorted person list. */
     ObservableList<Person> getFilteredPersonList();
 
     /**
-     * Updates the filter of the filtered person list to filter by the given {@code predicate}.
+     * Updates the displayed list using {@code predicate} and restores the underlying supporter order.
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredPersonList(Predicate<Person> predicate);
+
+    /**
+     * Updates the displayed list using {@code predicate} and {@code comparator}, without reordering stored data.
+     * Supporters that compare equally retain their underlying supporter order.
+     *
+     * @throws NullPointerException if either argument is null.
+     */
+    void updateSortedPersonList(Predicate<Person> predicate, Comparator<Person> comparator);
 }

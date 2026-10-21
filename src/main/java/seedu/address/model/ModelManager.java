@@ -3,6 +3,7 @@ package seedu.address.model;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -11,6 +12,7 @@ import java.util.logging.Logger;
 
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.model.person.Name;
@@ -25,6 +27,7 @@ public class ModelManager implements Model {
     private final VersionedAddressBook versionedAddressBook;
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
+    private final SortedList<Person> sortedPersons;
     private Person viewedPerson = null;
     private boolean hasUncommittedChanges = false;
 
@@ -39,6 +42,7 @@ public class ModelManager implements Model {
         this.versionedAddressBook = new VersionedAddressBook(addressBook);
         this.userPrefs = new UserPrefs(userPrefs);
         filteredPersons = new FilteredList<>(this.versionedAddressBook.getPersonList());
+        sortedPersons = new SortedList<>(filteredPersons);
     }
 
     public ModelManager() {
@@ -195,13 +199,21 @@ public class ModelManager implements Model {
      */
     @Override
     public ObservableList<Person> getFilteredPersonList() {
-        return filteredPersons;
+        return sortedPersons;
     }
 
     @Override
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
+        sortedPersons.setComparator(null);
         filteredPersons.setPredicate(predicate);
+    }
+
+    @Override
+    public void updateSortedPersonList(Predicate<Person> predicate, Comparator<Person> comparator) {
+        requireAllNonNull(predicate, comparator);
+        filteredPersons.setPredicate(predicate);
+        sortedPersons.setComparator(comparator);
     }
 
     @Override
@@ -218,6 +230,7 @@ public class ModelManager implements Model {
         return versionedAddressBook.equals(otherModelManager.versionedAddressBook)
                 && userPrefs.equals(otherModelManager.userPrefs)
                 && filteredPersons.equals(otherModelManager.filteredPersons)
+                && sortedPersons.equals(otherModelManager.sortedPersons)
                 && Objects.equals(viewedPerson, otherModelManager.viewedPerson);
     }
 
