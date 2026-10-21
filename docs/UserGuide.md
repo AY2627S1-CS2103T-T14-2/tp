@@ -308,6 +308,7 @@ Format: `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`
 - `INDEX` is the supporter index in the displayed list; after `find`, use the search-result index. Both indices must be positive integers.
 - `ENTRY` is the number beside the interaction in the detail panel, not its row position. Use `view INDEX` to check it first.
 - Supply at least one field. Omitted fields remain unchanged; supplying the existing value is allowed.
+- To revert an interaction edited by mistake, run `undo` immediately afterward. Undo history is available only during the current session.
 - `NOTE` must not be blank and may contain at most 500 characters after trimming leading and trailing spaces.
 - `DATE` must be a valid `yyyy-MM-dd` date from `1900-01-01` through today (inclusive), using the computer's clock. Empty, invalid and out-of-range dates are rejected.
 - `nt/` and `dt/` may appear in either order, but each may appear only once. As with `log`, a space followed by either prefix inside a note is interpreted as a parameter prefix.
@@ -465,7 +466,7 @@ Reverts the most recent change to your supporter data.
 
 Format: `undo`
 
-- These commands can be undone: `add`, `edit`, `delete`, `clear`, `log`, `unlog`, `stage`, `intro`, `tag` and `untag`.
+- These commands can be undone: `add`, `edit`, `delete`, `clear`, `log`, `editlog`, `unlog`, `stage`, `intro`, `tag` and `untag`.
 - Commands that do not change data, such as `list`, `find`, `view`, `stats` and `help`, are skipped. For example, `delete 2`, `find Tan`, `undo` restores the deleted supporter.
 - Running `undo` again reverts the change before that, back to when the app was opened.
 - A command that changes nothing, such as `stage` with the supporter's current stage or `tag` with a tag they already have, is not recorded. Neither is a command that fails. There is nothing to undo for them.
