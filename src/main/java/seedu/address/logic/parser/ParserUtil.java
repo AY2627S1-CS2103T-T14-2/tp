@@ -29,7 +29,7 @@ public class ParserUtil {
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
 
     public static final String MESSAGE_INVALID_INTERACTION_DATE =
-            "Interaction dates must be valid dates in yyyy-MM-dd format.";
+            "Interaction dates must be valid dates in yyyy-MM-dd format, e.g. 2026-10-01.";
     public static final String MESSAGE_FUTURE_INTERACTION_DATE = "Interaction dates cannot be in the future.";
 
     /**

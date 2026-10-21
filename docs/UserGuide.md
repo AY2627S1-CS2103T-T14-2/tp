@@ -369,7 +369,7 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t/TAG]... `<br> e.g., `edit 2 p/91234567 a/1 HarbourFront Avenue`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei`
 **List**   | `list`
-**Log**    | `log INDEX nt/NOTE [dt/DATE]`<br> e.g., `log 2 nt/Called to discuss the year-end appeal`
+**Log**    | `log INDEX nt/NOTE [dt/DATE]`<br> e.g., `log 2 nt/Called about the year-end appeal dt/2026-10-01`
 **Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
