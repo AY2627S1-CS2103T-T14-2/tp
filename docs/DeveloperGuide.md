@@ -378,7 +378,7 @@ In tests, `PersonBuilder` builds a `Person` with an empty history unless `Person
 
 1. `AddressBookParser` passes the arguments after the command word to `LogCommandParser#parse(String)`.
 2. The parser requires `INDEX` and `nt/NOTE`, and accepts optional `dt/DATE` in either prefix order. It parses the index with `ParserUtil#parseIndex(String)`, reporting an invalid command format if it fails, then rejects repeated prefixes.
-3. It validates the note with `ParserUtil#parseInteractionNote(String)` and any supplied date with `ParserUtil#parseInteractionDate(String)`. Dates must be valid calendar dates in `yyyy-MM-dd` format and no later than today according to the computer's clock.
+3. It validates the note with `ParserUtil#parseInteractionNote(String)` and any supplied date with `ParserUtil#parseInteractionDate(String)`. Dates must be valid calendar dates in `yyyy-MM-dd` format, from `1900-01-01` through today (inclusive), using the computer's clock. The lower bound allows historical records while rejecting implausibly old dates and likely year-entry mistakes.
 4. It creates a `LogCommand` with the parsed index, note and an `Optional<LocalDate>`. An omitted date remains empty until execution.
 
 `LogCommand` performs the model update as follows.

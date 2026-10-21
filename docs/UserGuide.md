@@ -229,7 +229,7 @@ Format: `log INDEX nt/NOTE [dt/DATE]`
 - Logs the interaction against the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and must be a positive integer.
 - `NOTE` records what happened. It can contain any characters, must not be blank, and can be at most 500 characters long. Leading and trailing spaces are removed.
 - Without `dt/`, the date defaults to today when the command runs, using the computer's clock.
-- `DATE` must be a valid date in `yyyy-MM-dd` format, e.g. `2024-02-29`. Empty or future dates are rejected, using the computer's clock to determine today.
+- `DATE` must be a valid date in `yyyy-MM-dd` format, e.g. `2024-02-29`, from `1900-01-01` through today (inclusive). Empty or out-of-range dates are rejected. Today is determined by the computer's clock.
 - `nt/` and `dt/` can appear in either order. Each prefix may only be supplied once.
 - Each supporter's oldest interaction is `#1`; the newest has the largest number. On equal dates, the later-logged entry has the larger number and appears first.
 - Back-dating can renumber existing entries; entry numbers are not permanent IDs.
