@@ -115,6 +115,8 @@ Format: `list`
 The success message is `Listed all supporters.`, even when the list is empty.
 Anything typed after the command word is ignored; `list 123` behaves as `list`.
 
+Each supporter card shows the last-contact date below the organisation, for example `Last contact: 3 Oct 2026`. If the supporter has no logged interactions, it shows `No interactions yet`. The last-contact date is the latest interaction date, even if an interaction with an earlier date was logged afterwards.
+
 ### Editing a supporter: `edit`
 
 Edits an existing supporter's details, keeping their stage and interaction history.
@@ -255,6 +257,7 @@ Format: `view INDEX`
 * Supply exactly one index, with no additional arguments.
 * Viewing a supporter preserves the displayed list, its filter and all supporter data.
 * The panel shows the name, stage, organisation, phone, email, address and tags. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically.
+* Above the interaction history, the panel shows the same last-contact line as the supporter card, for example `Last contact: 3 Oct 2026`, or `No interactions yet` if there are no logged interactions. The line updates when the displayed supporter's interaction history changes.
 * Interactions appear newest first, one entry per row, for example `#4  16 Sep 2026  Sent partnership deck by email`. Entries on the same date appear in descending entry-number order. Entry numbers are based on the order in which interactions were logged.
 * The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
 * A successful `view`, `log` or `stage` switches the panel to its target. Changes to the displayed supporter's record are reflected.
