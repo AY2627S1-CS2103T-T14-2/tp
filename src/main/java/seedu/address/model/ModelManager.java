@@ -121,11 +121,28 @@ public class ModelManager implements Model {
     @Override
     public void undoAddressBook() {
         versionedAddressBook.undo();
+        refreshViewedPerson();
     }
 
     @Override
     public void redoAddressBook() {
         versionedAddressBook.redo();
+        refreshViewedPerson();
+    }
+
+    /**
+     * Replaces the viewed supporter with their record in the restored data, or clears the selection if they
+     * are no longer in it.
+     */
+    private void refreshViewedPerson() {
+        if (viewedPerson == null) {
+            return;
+        }
+        Person previouslyViewed = viewedPerson;
+        viewedPerson = versionedAddressBook.getPersonList().stream()
+                .filter(previouslyViewed::isSamePerson)
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
