@@ -111,6 +111,14 @@ public final class SupporterDetailData {
         return tags.isEmpty() ? UNSET_FIELD : tags;
     }
 
+    /**
+     * Returns the shared last-contact text, or {@code -} when no supporter is selected.
+     */
+    public String getLastContact() {
+        return viewedPerson.map(person -> LastContactFormatter.format(person.getLastInteractionDate()))
+                .orElse(UNSET_FIELD);
+    }
+
     public String getHistoryHeading() {
         return hasSupporter() ? "Interactions (" + interactionEntries.size() + ") - newest first" : "";
     }

@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -187,6 +188,16 @@ public class Person {
      */
     public List<Interaction> getInteractions() {
         return Collections.unmodifiableList(interactions);
+    }
+
+    /**
+     * Returns the latest interaction date, or an empty {@code Optional} if there are no interactions.
+     * The result is independent of logging order and does not change the stored history.
+     */
+    public Optional<LocalDate> getLastInteractionDate() {
+        return interactions.stream()
+                .map(Interaction::getDate)
+                .max(LocalDate::compareTo);
     }
 
     /**

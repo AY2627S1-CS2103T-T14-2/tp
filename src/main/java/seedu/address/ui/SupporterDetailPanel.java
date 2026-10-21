@@ -46,6 +46,8 @@ public class SupporterDetailPanel extends UiPart<Region> {
     @FXML
     private Label supporterTags;
     @FXML
+    private Label lastContact;
+    @FXML
     private Label supporterIntroducer;
     @FXML
     private Label supporterIntroductions;
@@ -103,6 +105,7 @@ public class SupporterDetailPanel extends UiPart<Region> {
         supporterEmail.setText(data.getEmail());
         supporterAddress.setText(data.getAddress());
         supporterTags.setText(data.getTags());
+        lastContact.setText(data.getLastContact());
         supporterIntroducer.setText(data.getIntroducer());
         supporterIntroductions.setText(data.getIntroductions());
         historyHeading.setText(data.getHistoryHeading());
