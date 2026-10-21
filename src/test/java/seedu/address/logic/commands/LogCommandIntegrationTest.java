@@ -34,46 +34,55 @@ public class LogCommandIntegrationTest {
         AddressBookParser parser = new AddressBookParser();
 
         // a back-dated entry selects the target but appears below the more recent interaction
-        CommandResult firstResult = parser.parseCommand("log 1 nt/Earlier meeting dt/2024-02-29").execute(model);
-        Person firstUpdate = model.getViewedPerson().orElseThrow();
-        SupporterDetailData firstDisplay = new SupporterDetailData(model.getViewedPerson());
+        CommandResult backdatedResult = parser.parseCommand("log 1 nt/Earlier meeting dt/2024-02-29").execute(model);
+        Person supporterAfterBackdatedLog = model.getViewedPerson().orElseThrow();
+        SupporterDetailData displayAfterBackdatedLog = new SupporterDetailData(model.getViewedPerson());
         assertEquals("Logged interaction #1 with " + target.getName() + " (29 Feb 2024): Earlier meeting.",
-                firstResult.getFeedbackToUser());
-        assertEquals(List.of(2, 1), firstDisplay.getInteractionEntries().stream()
-                .map(InteractionEntry::getNumber).toList());
-        assertEquals(List.of("Recent call", "Earlier meeting"), firstDisplay.getInteractionEntries().stream()
-                .map(InteractionEntry::getNote).toList());
+                backdatedResult.getFeedbackToUser());
+        assertHistory(displayAfterBackdatedLog, List.of(2, 1),
+                List.of("10 Mar 2024", "29 Feb 2024"), List.of("Recent call", "Earlier meeting"));
+        assertEquals(2, supporterAfterBackdatedLog.getInteractions().size());
 
         // another entry on the same past date refreshes the selected history and shows the later-logged entry first
-        CommandResult secondResult = parser.parseCommand("log 1 dt/2024-02-29 nt/Second earlier meeting")
+        CommandResult equalDateResult = parser.parseCommand("log 1 dt/2024-02-29 nt/Second earlier meeting")
                 .execute(model);
         assertEquals("Logged interaction #2 with " + target.getName() + " (29 Feb 2024): Second earlier meeting.",
-                secondResult.getFeedbackToUser());
-        Person secondUpdate = model.getViewedPerson().orElseThrow();
-        SupporterDetailData secondDisplay = new SupporterDetailData(model.getViewedPerson());
-        assertEquals(List.of(3, 2, 1), secondDisplay.getInteractionEntries().stream()
-                .map(InteractionEntry::getNumber).toList());
-        assertEquals(List.of("10 Mar 2024", "29 Feb 2024", "29 Feb 2024"),
-                secondDisplay.getInteractionEntries().stream().map(InteractionEntry::getDate).toList());
-        assertEquals(List.of("Recent call", "Second earlier meeting", "Earlier meeting"),
-                secondDisplay.getInteractionEntries().stream().map(InteractionEntry::getNote).toList());
-        assertEquals("Interactions (3) - newest first", secondDisplay.getHistoryHeading());
+                equalDateResult.getFeedbackToUser());
+        Person supporterAfterEqualDateLog = model.getViewedPerson().orElseThrow();
+        SupporterDetailData displayAfterEqualDateLog = new SupporterDetailData(model.getViewedPerson());
+        assertHistory(displayAfterEqualDateLog, List.of(3, 2, 1),
+                List.of("10 Mar 2024", "29 Feb 2024", "29 Feb 2024"),
+                List.of("Recent call", "Second earlier meeting", "Earlier meeting"));
+        assertEquals("Interactions (3) - newest first", displayAfterEqualDateLog.getHistoryHeading());
+
+        // display sorting leaves stored logging order unchanged
+        assertEquals(List.of(recentInteraction, new Interaction(LocalDate.of(2024, 2, 29), "Earlier meeting"),
+                new Interaction(LocalDate.of(2024, 2, 29), "Second earlier meeting")),
+                supporterAfterEqualDateLog.getInteractions());
 
         // a new latest interaction gets the largest number and is displayed first
         CommandResult latestResult = parser.parseCommand("log 1 nt/Latest call dt/2024-03-11").execute(model);
         assertEquals("Logged interaction #4 with " + target.getName() + " (11 Mar 2024): Latest call.",
                 latestResult.getFeedbackToUser());
-        SupporterDetailData latestDisplay = new SupporterDetailData(model.getViewedPerson());
-        assertEquals(List.of(4, 3, 2, 1), latestDisplay.getInteractionEntries().stream()
-                .map(InteractionEntry::getNumber).toList());
-        assertEquals("Latest call", latestDisplay.getInteractionEntries().get(0).getNote());
+        SupporterDetailData displayAfterLatestLog = new SupporterDetailData(model.getViewedPerson());
+        assertHistory(displayAfterLatestLog, List.of(4, 3, 2, 1),
+                List.of("11 Mar 2024", "10 Mar 2024", "29 Feb 2024", "29 Feb 2024"),
+                List.of("Latest call", "Recent call", "Second earlier meeting", "Earlier meeting"));
 
-        // display sorting leaves stored logging order and the current supporter filter unchanged
-        assertEquals(List.of(recentInteraction, new Interaction(LocalDate.of(2024, 2, 29), "Earlier meeting"),
-                new Interaction(LocalDate.of(2024, 2, 29), "Second earlier meeting")),
-                secondUpdate.getInteractions());
+        // the current supporter filter and other supporter remain unchanged
         assertEquals(List.of(model.getViewedPerson().orElseThrow()), model.getFilteredPersonList());
-        assertEquals(2, firstUpdate.getInteractions().size());
         assertEquals(other, model.getAddressBook().getPersonList().get(1));
     }
+
+    /**
+     * Verifies entry numbers, formatted dates and notes in display order.
+     */
+    private void assertHistory(SupporterDetailData display, List<Integer> expectedNumbers,
+            List<String> expectedDates, List<String> expectedNotes) {
+        List<InteractionEntry> entries = display.getInteractionEntries();
+        assertEquals(expectedNumbers, entries.stream().map(InteractionEntry::getNumber).toList());
+        assertEquals(expectedDates, entries.stream().map(InteractionEntry::getDate).toList());
+        assertEquals(expectedNotes, entries.stream().map(InteractionEntry::getNote).toList());
+    }
+
 }
