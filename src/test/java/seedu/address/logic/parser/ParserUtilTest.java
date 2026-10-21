@@ -225,6 +225,20 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void parseInteractionDate_minimumDate_returnsDate() throws Exception {
+        assertEquals(LocalDate.of(1900, 1, 1),
+                ParserUtil.parseInteractionDate("1900-01-01", INTERACTION_CLOCK));
+    }
+
+    @Test
+    public void parseInteractionDate_beforeMinimumDate_throwsParseException() {
+        for (String date : List.of("1899-12-31", "0000-01-01", "0001-01-01")) {
+            assertThrows(ParseException.class, ParserUtil.MESSAGE_EARLY_INTERACTION_DATE, () ->
+                    ParserUtil.parseInteractionDate(date, INTERACTION_CLOCK));
+        }
+    }
+
+    @Test
     public void parseInteractionDate_pastDate_returnsDate() throws Exception {
         assertEquals(LocalDate.of(2026, 10, 19),
                 ParserUtil.parseInteractionDate("2026-10-19", INTERACTION_CLOCK));

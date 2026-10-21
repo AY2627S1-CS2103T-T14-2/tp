@@ -30,6 +30,9 @@ public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INTERACTION_DATE =
             "Interaction dates must be valid dates in yyyy-MM-dd format, e.g. 2026-10-01.";
+    public static final LocalDate MIN_INTERACTION_DATE = LocalDate.of(1900, 1, 1);
+    public static final String MESSAGE_EARLY_INTERACTION_DATE =
+            "Interaction dates must be on or after " + MIN_INTERACTION_DATE + ".";
     public static final String MESSAGE_FUTURE_INTERACTION_DATE = "Interaction dates cannot be in the future.";
 
     /**
@@ -177,6 +180,9 @@ public class ParserUtil {
             parsedDate = LocalDate.parse(trimmedDate);
         } catch (DateTimeParseException e) {
             throw new ParseException(MESSAGE_INVALID_INTERACTION_DATE, e);
+        }
+        if (parsedDate.isBefore(MIN_INTERACTION_DATE)) {
+            throw new ParseException(MESSAGE_EARLY_INTERACTION_DATE);
         }
         if (parsedDate.isAfter(LocalDate.now(clock))) {
             throw new ParseException(MESSAGE_FUTURE_INTERACTION_DATE);

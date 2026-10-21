@@ -146,4 +146,16 @@ public class LogCommandParserTest {
         assertParseSuccess(parser, " 1 nt/" + note, new LogCommand(INDEX_FIRST_PERSON, note));
     }
 
+    @Test
+    public void parse_dateBeforeMinimum_failure() {
+        assertParseFailure(parser, " 1 nt/" + VALID_NOTE + " dt/1899-12-31",
+                ParserUtil.MESSAGE_EARLY_INTERACTION_DATE);
+    }
+
+    @Test
+    public void parse_minimumDate_returnsDatedLogCommand() {
+        assertParseSuccess(parser, " 1 nt/" + VALID_NOTE + " dt/1900-01-01",
+                new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, Optional.of(LocalDate.of(1900, 1, 1))));
+    }
+
 }
