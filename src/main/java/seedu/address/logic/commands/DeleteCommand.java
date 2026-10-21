@@ -3,6 +3,7 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.util.List;
+import java.util.Optional;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
@@ -26,6 +27,8 @@ public class DeleteCommand extends Command {
 
     public static final String MESSAGE_DELETE_PERSON_SUCCESS = "Deleted supporter: %1$s\n"
             + "%2$d logged interaction(s) were deleted with them.";
+    public static final String MESSAGE_INTRODUCTIONS_CLEARED =
+            "\nThey were also removed as the introducer of %1$d supporter(s).";
 
     private final Index targetIndex;
 
@@ -49,8 +52,14 @@ public class DeleteCommand extends Command {
         int interactionCount = personToDelete.getInteractions().size();
 
         model.deletePerson(personToDelete);
-        return new CommandResult(String.format(MESSAGE_DELETE_PERSON_SUCCESS,
-                Messages.format(personToDelete), interactionCount));
+        int clearedIntroductions = model.replaceIntroducer(personToDelete.getName(), Optional.empty());
+
+        String message = String.format(MESSAGE_DELETE_PERSON_SUCCESS, Messages.format(personToDelete),
+                interactionCount);
+        if (clearedIntroductions > 0) {
+            message += String.format(MESSAGE_INTRODUCTIONS_CLEARED, clearedIntroductions);
+        }
+        return new CommandResult(message);
     }
 
     @Override

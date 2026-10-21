@@ -61,8 +61,9 @@ public class StageCommand extends Command {
         }
 
         Person updatedPerson = new Person(personToUpdate.getName(), personToUpdate.getPhone(),
-                personToUpdate.getEmail(), personToUpdate.getAddress(), personToUpdate.getOrganisation(), stage,
-                personToUpdate.getInteractions(), personToUpdate.getTags());
+                personToUpdate.getEmail(), personToUpdate.getAddress(), personToUpdate.getOrganisation(),
+                personToUpdate.getIntroducer(), stage, personToUpdate.getInteractions(),
+                personToUpdate.getTags());
         model.setPerson(personToUpdate, updatedPerson);
         model.setViewedPerson(updatedPerson);
 

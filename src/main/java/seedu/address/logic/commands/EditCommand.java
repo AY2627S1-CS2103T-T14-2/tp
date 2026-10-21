@@ -48,12 +48,16 @@ public class EditCommand extends Command {
             + "[" + PREFIX_ADDRESS + "ADDRESS] "
             + "[" + PREFIX_ORGANISATION + "ORGANISATION] "
             + "[" + PREFIX_TAG + "TAG]...\n"
+            + "Leave " + PREFIX_PHONE + ", " + PREFIX_EMAIL + ", " + PREFIX_ADDRESS + " or " + PREFIX_ORGANISATION
+            + " empty to clear that field. A phone or email can be cleared only if the other remains.\n"
             + "Example: " + COMMAND_WORD + " 2 "
             + PREFIX_PHONE + "91234567 "
             + PREFIX_ADDRESS + "1 HarbourFront Avenue";
 
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited supporter: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
+    public static final String MESSAGE_NO_CONTACT_LEFT = "A supporter needs at least one way to reach them. "
+            + "Keep their phone number or email, or give a new one, when clearing the other.";
 
     private final Index index;
     private final EditPersonDescriptor editPersonDescriptor;
@@ -80,14 +84,27 @@ public class EditCommand extends Command {
         }
 
         Person personToEdit = lastShownList.get(index.getZeroBased());
-        Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
+        Name updatedName = editPersonDescriptor.getName().orElse(personToEdit.getName());
 
-        if (!personToEdit.isSamePerson(editedPerson) && model.hasPerson(editedPerson)) {
-            throw new CommandException(
-                    Messages.getErrorMessageForDuplicatePerson(model.getAddressBook().getPersonList(), editedPerson));
+        // checked before the edited supporter is created: renaming them to their introducer's name clashes
+        // with the introducer, and would otherwise be rejected by Person as a self-introduction
+        if (!personToEdit.getName().isSameName(updatedName)) {
+            Optional<Person> namesake = model.getAddressBook().getPersonList().stream()
+                    .filter(person -> person.getName().isSameName(updatedName))
+                    .findFirst();
+            if (namesake.isPresent()) {
+                throw new CommandException(
+                        String.format(Messages.MESSAGE_DUPLICATE_PERSON, namesake.get().getName()));
+            }
         }
 
+        Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
+
         model.setPerson(personToEdit, editedPerson);
+        if (!personToEdit.getName().equals(editedPerson.getName())) {
+            // supporters introduced by this one keep pointing at them under the new name
+            model.replaceIntroducer(personToEdit.getName(), Optional.of(editedPerson.getName()));
+        }
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
         return new CommandResult(String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)));
     }
@@ -95,22 +112,41 @@ public class EditCommand extends Command {
     /**
      * Creates and returns a {@code Person} with the details of {@code personToEdit}
      * edited with {@code editPersonDescriptor}.
+     *
+     * @throws CommandException if the edit would leave the supporter with neither a phone number nor an email.
      */
-    private static Person createEditedPerson(Person personToEdit, EditPersonDescriptor editPersonDescriptor) {
+    private static Person createEditedPerson(Person personToEdit, EditPersonDescriptor editPersonDescriptor)
+            throws CommandException {
         assert personToEdit != null;
 
         Name updatedName = editPersonDescriptor.getName().orElse(personToEdit.getName());
-        // a field left out of the edit keeps its current value, which may be empty
-        Optional<Phone> updatedPhone = editPersonDescriptor.getPhone().or(personToEdit::getPhone);
-        Optional<Email> updatedEmail = editPersonDescriptor.getEmail().or(personToEdit::getEmail);
-        Optional<Address> updatedAddress = editPersonDescriptor.getAddress().or(personToEdit::getAddress);
-        Optional<Organisation> updatedOrganisation =
-                editPersonDescriptor.getOrganisation().or(personToEdit::getOrganisation);
+        Optional<Phone> updatedPhone = updateField(editPersonDescriptor.getPhone(),
+                editPersonDescriptor.isPhoneCleared(), personToEdit.getPhone());
+        Optional<Email> updatedEmail = updateField(editPersonDescriptor.getEmail(),
+                editPersonDescriptor.isEmailCleared(), personToEdit.getEmail());
+        Optional<Address> updatedAddress = updateField(editPersonDescriptor.getAddress(),
+                editPersonDescriptor.isAddressCleared(), personToEdit.getAddress());
+        Optional<Organisation> updatedOrganisation = updateField(editPersonDescriptor.getOrganisation(),
+                editPersonDescriptor.isOrganisationCleared(), personToEdit.getOrganisation());
         Set<Tag> updatedTags = editPersonDescriptor.getTags().orElse(personToEdit.getTags());
 
-        // stage and interaction history are changed with their own commands, so edit carries them over unchanged
+        if (!Person.isValidContact(updatedPhone, updatedEmail)) {
+            throw new CommandException(MESSAGE_NO_CONTACT_LEFT);
+        }
+
+        // introducer, stage and interaction history are changed with their own commands,
+        // so edit carries them over unchanged
         return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedOrganisation,
-                personToEdit.getStage(), personToEdit.getInteractions(), updatedTags);
+                personToEdit.getIntroducer(), personToEdit.getStage(), personToEdit.getInteractions(),
+                updatedTags);
+    }
+
+    /**
+     * Returns the value an optional field has after the edit: empty if it is cleared,
+     * otherwise {@code newValue}, or {@code currentValue} if the field is left out of the edit.
+     */
+    private static <T> Optional<T> updateField(Optional<T> newValue, boolean isCleared, Optional<T> currentValue) {
+        return isCleared ? Optional.empty() : newValue.or(() -> currentValue);
     }
 
     @Override
@@ -138,7 +174,8 @@ public class EditCommand extends Command {
 
     /**
      * Stores the details to edit the person with. Each non-empty field value will replace the
-     * corresponding field value of the person.
+     * corresponding field value of the person. The phone, email, address and organisation can
+     * instead be cleared, which removes that field from the person.
      */
     public static class EditPersonDescriptor {
         private Name name;
@@ -147,6 +184,10 @@ public class EditCommand extends Command {
         private Address address;
         private Organisation organisation;
         private Set<Tag> tags;
+        private boolean isPhoneCleared;
+        private boolean isEmailCleared;
+        private boolean isAddressCleared;
+        private boolean isOrganisationCleared;
 
         public EditPersonDescriptor() {}
 
@@ -155,19 +196,24 @@ public class EditCommand extends Command {
          * A defensive copy of {@code tags} is used internally.
          */
         public EditPersonDescriptor(EditPersonDescriptor toCopy) {
-            setName(toCopy.name);
-            setPhone(toCopy.phone);
-            setEmail(toCopy.email);
-            setAddress(toCopy.address);
-            setOrganisation(toCopy.organisation);
+            name = toCopy.name;
+            phone = toCopy.phone;
+            email = toCopy.email;
+            address = toCopy.address;
+            organisation = toCopy.organisation;
             setTags(toCopy.tags);
+            isPhoneCleared = toCopy.isPhoneCleared;
+            isEmailCleared = toCopy.isEmailCleared;
+            isAddressCleared = toCopy.isAddressCleared;
+            isOrganisationCleared = toCopy.isOrganisationCleared;
         }
 
         /**
-         * Returns true if at least one field is edited.
+         * Returns true if at least one field is edited or cleared.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, email, address, organisation, tags);
+            return CollectionUtil.isAnyNonNull(name, phone, email, address, organisation, tags)
+                    || isPhoneCleared || isEmailCleared || isAddressCleared || isOrganisationCleared;
         }
 
         public void setName(Name name) {
@@ -180,34 +226,86 @@ public class EditCommand extends Command {
 
         public void setPhone(Phone phone) {
             this.phone = phone;
+            isPhoneCleared = false;
         }
 
         public Optional<Phone> getPhone() {
             return Optional.ofNullable(phone);
         }
 
+        /**
+         * Marks the phone to be removed from the person, replacing any new phone set earlier.
+         */
+        public void clearPhone() {
+            phone = null;
+            isPhoneCleared = true;
+        }
+
+        public boolean isPhoneCleared() {
+            return isPhoneCleared;
+        }
+
         public void setEmail(Email email) {
             this.email = email;
+            isEmailCleared = false;
         }
 
         public Optional<Email> getEmail() {
             return Optional.ofNullable(email);
         }
 
+        /**
+         * Marks the email to be removed from the person, replacing any new email set earlier.
+         */
+        public void clearEmail() {
+            email = null;
+            isEmailCleared = true;
+        }
+
+        public boolean isEmailCleared() {
+            return isEmailCleared;
+        }
+
         public void setAddress(Address address) {
             this.address = address;
+            isAddressCleared = false;
         }
 
         public Optional<Address> getAddress() {
             return Optional.ofNullable(address);
         }
 
+        /**
+         * Marks the address to be removed from the person, replacing any new address set earlier.
+         */
+        public void clearAddress() {
+            address = null;
+            isAddressCleared = true;
+        }
+
+        public boolean isAddressCleared() {
+            return isAddressCleared;
+        }
+
         public void setOrganisation(Organisation organisation) {
             this.organisation = organisation;
+            isOrganisationCleared = false;
         }
 
         public Optional<Organisation> getOrganisation() {
             return Optional.ofNullable(organisation);
+        }
+
+        /**
+         * Marks the organisation to be removed from the person, replacing any new organisation set earlier.
+         */
+        public void clearOrganisation() {
+            organisation = null;
+            isOrganisationCleared = true;
+        }
+
+        public boolean isOrganisationCleared() {
+            return isOrganisationCleared;
         }
 
         /**
@@ -243,7 +341,11 @@ public class EditCommand extends Command {
                     && Objects.equals(email, otherEditPersonDescriptor.email)
                     && Objects.equals(address, otherEditPersonDescriptor.address)
                     && Objects.equals(organisation, otherEditPersonDescriptor.organisation)
-                    && Objects.equals(tags, otherEditPersonDescriptor.tags);
+                    && Objects.equals(tags, otherEditPersonDescriptor.tags)
+                    && isPhoneCleared == otherEditPersonDescriptor.isPhoneCleared
+                    && isEmailCleared == otherEditPersonDescriptor.isEmailCleared
+                    && isAddressCleared == otherEditPersonDescriptor.isAddressCleared
+                    && isOrganisationCleared == otherEditPersonDescriptor.isOrganisationCleared;
         }
 
         @Override
@@ -255,6 +357,10 @@ public class EditCommand extends Command {
                     .add("address", address)
                     .add("organisation", organisation)
                     .add("tags", tags)
+                    .add("isPhoneCleared", isPhoneCleared)
+                    .add("isEmailCleared", isEmailCleared)
+                    .add("isAddressCleared", isAddressCleared)
+                    .add("isOrganisationCleared", isOrganisationCleared)
                     .toString();
         }
     }

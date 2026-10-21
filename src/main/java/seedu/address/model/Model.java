@@ -1,10 +1,12 @@
 package seedu.address.model;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 
 /**
@@ -60,6 +62,19 @@ public interface Model {
      * The person identity of {@code editedPerson} must not be the same as another existing person in the address book.
      */
     void setPerson(Person target, Person editedPerson);
+
+    /**
+     * Returns every supporter whose recorded introducer is the supporter called {@code introducer},
+     * in the order they appear in the address book. Names are compared ignoring case and extra spaces.
+     */
+    List<Person> getPersonsIntroducedBy(Name introducer);
+
+    /**
+     * Replaces the introducer of every supporter introduced by {@code introducer} with {@code replacement},
+     * or removes it if {@code replacement} is empty, and returns how many supporters were changed.
+     * Used to keep introductions correct when a supporter is renamed or deleted.
+     */
+    int replaceIntroducer(Name introducer, Optional<Name> replacement);
 
     /**
      * Returns the supporter being viewed, or an empty {@code Optional} if none has been selected.

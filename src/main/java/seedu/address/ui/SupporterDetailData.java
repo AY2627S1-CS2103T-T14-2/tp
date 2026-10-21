@@ -5,7 +5,6 @@ import static java.util.Objects.requireNonNull;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -28,13 +27,24 @@ public final class SupporterDetailData {
             DateTimeFormatter.ofPattern("dd MMM uuuu", Locale.ENGLISH);
 
     private final Optional<Person> viewedPerson;
+    private final List<Person> introducedPersons;
     private final List<InteractionEntry> interactionEntries;
 
     /**
-     * Creates display data for {@code viewedPerson}, or the startup state when no supporter is selected.
+     * Creates display data for {@code viewedPerson}, or the startup state when no supporter is selected,
+     * with no introductions made by them.
      */
     public SupporterDetailData(Optional<Person> viewedPerson) {
+        this(viewedPerson, List.of());
+    }
+
+    /**
+     * Creates display data for {@code viewedPerson}, or the startup state when no supporter is selected.
+     * {@code introducedPersons} are the supporters whom {@code viewedPerson} introduced.
+     */
+    public SupporterDetailData(Optional<Person> viewedPerson, List<Person> introducedPersons) {
         this.viewedPerson = requireNonNull(viewedPerson);
+        this.introducedPersons = List.copyOf(requireNonNull(introducedPersons));
         interactionEntries = viewedPerson.map(SupporterDetailData::createInteractionEntries).orElseGet(List::of);
     }
 
@@ -71,6 +81,26 @@ public final class SupporterDetailData {
     }
 
     /**
+     * Returns the name of the supporter who introduced the viewed supporter, or {@code -} when none is recorded.
+     */
+    public String getIntroducer() {
+        return viewedPerson.flatMap(Person::getIntroducer).map(name -> name.fullName).orElse(UNSET_FIELD);
+    }
+
+    /**
+     * Returns the names of the supporters whom the viewed supporter introduced, separated by commas,
+     * or {@code -} when there are none.
+     */
+    public String getIntroductions() {
+        if (!hasSupporter() || introducedPersons.isEmpty()) {
+            return UNSET_FIELD;
+        }
+        return introducedPersons.stream()
+                .map(person -> person.getName().fullName)
+                .collect(Collectors.joining(", "));
+    }
+
+    /**
      * Returns alphabetically ordered tag names separated by commas, or {@code -} when none are set.
      */
     public String getTags() {
@@ -97,7 +127,7 @@ public final class SupporterDetailData {
     }
 
     /**
-     * Returns immutable entries ordered by date descending, then by original entry number descending.
+     * Returns immutable entries displayed newest first, numbered from oldest (#1) to newest.
      */
     public List<InteractionEntry> getInteractionEntries() {
         return interactionEntries;
@@ -106,18 +136,14 @@ public final class SupporterDetailData {
     private static List<InteractionEntry> createInteractionEntries(Person person) {
         List<Interaction> interactions = person.getInteractions();
         List<InteractionEntry> entries = new ArrayList<>();
-        for (int i = 0; i < interactions.size(); i++) {
-            // Assign numbers from logging order before sorting the display entries.
-            entries.add(new InteractionEntry(i + 1, interactions.get(i)));
+        for (int storedIndex : person.getInteractionIndicesInDisplayOrder()) {
+            entries.add(new InteractionEntry(interactions.size() - entries.size(), interactions.get(storedIndex)));
         }
-        entries.sort(Comparator.comparing((InteractionEntry entry) -> entry.date)
-                .thenComparingInt(InteractionEntry::getNumber)
-                .reversed());
         return List.copyOf(entries);
     }
 
     /**
-     * An immutable display entry that retains an interaction's original number, date and complete note.
+     * An immutable display entry that contains an interaction's displayed number, date and complete note.
      */
     public static final class InteractionEntry {
 
@@ -132,7 +158,7 @@ public final class SupporterDetailData {
         }
 
         /**
-         * Returns the interaction's one-based position in the stored logging order.
+         * Returns the interaction's one-based chronological position, with the oldest interaction numbered 1.
          */
         public int getNumber() {
             return number;

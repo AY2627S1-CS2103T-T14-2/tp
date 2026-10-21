@@ -33,6 +33,7 @@ public class PersonBuilder {
     private Optional<Email> email;
     private Optional<Address> address;
     private Optional<Organisation> organisation;
+    private Optional<Name> introducer;
     private Stage stage;
     private List<Interaction> interactions;
     private Set<Tag> tags;
@@ -46,6 +47,7 @@ public class PersonBuilder {
         email = Optional.of(new Email(DEFAULT_EMAIL));
         address = Optional.of(new Address(DEFAULT_ADDRESS));
         organisation = Optional.empty();
+        introducer = Optional.empty();
         stage = Stage.DEFAULT_STAGE;
         interactions = new ArrayList<>();
         tags = new HashSet<>();
@@ -60,6 +62,7 @@ public class PersonBuilder {
         email = personToCopy.getEmail();
         address = personToCopy.getAddress();
         organisation = personToCopy.getOrganisation();
+        introducer = personToCopy.getIntroducer();
         stage = personToCopy.getStage();
         interactions = new ArrayList<>(personToCopy.getInteractions());
         tags = new HashSet<>(personToCopy.getTags());
@@ -138,6 +141,22 @@ public class PersonBuilder {
     }
 
     /**
+     * Removes the {@code Organisation} of the {@code Person} that we are building.
+     */
+    public PersonBuilder withoutOrganisation() {
+        this.organisation = Optional.empty();
+        return this;
+    }
+
+    /**
+     * Sets the introducer of the {@code Person} that we are building to the supporter called {@code introducer}.
+     */
+    public PersonBuilder withIntroducer(String introducer) {
+        this.introducer = Optional.of(new Name(introducer));
+        return this;
+    }
+
+    /**
      * Sets the {@code Stage} of the {@code Person} that we are building.
      */
     public PersonBuilder withStage(String stage) {
@@ -154,7 +173,7 @@ public class PersonBuilder {
     }
 
     public Person build() {
-        return new Person(name, phone, email, address, organisation, stage, interactions, tags);
+        return new Person(name, phone, email, address, organisation, introducer, stage, interactions, tags);
     }
 
 }
