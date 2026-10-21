@@ -126,7 +126,10 @@ public class SupporterDetailPanelTest {
                         new Interaction(LocalDate.of(2026, 9, 30), "Met"))
                 .build();
         panel.setSupporter(Optional.of(updatedHistory));
-        assertEquals("Last contact: 3 Oct 2026", lastContact.getText());
+        assertEquals("Last contact: 03 Oct 2026", lastContact.getText());
+        HBox updatedFirstRow = (HBox) entries.getChildren().get(0);
+        Label latestHistoryDate = (Label) updatedFirstRow.getChildren().get(1);
+        assertEquals("Last contact: " + latestHistoryDate.getText(), lastContact.getText());
 
         panel.setSupporter(Optional.of(person));
         assertEquals("No interactions yet", lastContact.getText());

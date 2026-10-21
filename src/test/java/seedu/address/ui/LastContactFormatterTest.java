@@ -26,8 +26,8 @@ public class LastContactFormatterTest {
     }
 
     @Test
-    public void format_singleDigitDay_omitsLeadingZero() {
-        assertEquals("Last contact: 3 Oct 2026",
+    public void format_singleDigitDay_includesLeadingZero() {
+        assertEquals("Last contact: 03 Oct 2026",
                 LastContactFormatter.format(Optional.of(LocalDate.of(2026, 10, 3))));
     }
 
@@ -44,7 +44,7 @@ public class LastContactFormatterTest {
         try {
             Locale.setDefault(Locale.Category.FORMAT, Locale.FRENCH);
 
-            assertEquals("Last contact: 3 Oct 2026",
+            assertEquals("Last contact: 03 Oct 2026",
                     LastContactFormatter.format(Optional.of(LocalDate.of(2026, 10, 3))));
         } finally {
             Locale.setDefault(Locale.Category.FORMAT, originalLocale);

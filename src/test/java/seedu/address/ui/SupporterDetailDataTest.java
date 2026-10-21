@@ -153,7 +153,7 @@ public class SupporterDetailDataTest {
                 .build();
         SupporterDetailData data = new SupporterDetailData(Optional.of(person));
 
-        assertEquals("Last contact: 3 Oct 2026", data.getLastContact());
+        assertEquals("Last contact: 03 Oct 2026", data.getLastContact());
         assertEquals(List.of(firstInteraction, latestInteraction, lastLoggedInteraction), person.getInteractions());
     }
 

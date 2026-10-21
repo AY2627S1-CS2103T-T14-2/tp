@@ -35,7 +35,7 @@ public class PersonCardTest {
                         new Interaction(LocalDate.of(2026, 9, 30), "Met"))
                 .build();
 
-        verifyLastContact(person, "Last contact: 3 Oct 2026");
+        verifyLastContact(person, "Last contact: 03 Oct 2026");
     }
 
     private static void verifyLastContact(Person person, String expectedText) throws Exception {

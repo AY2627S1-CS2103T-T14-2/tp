@@ -13,13 +13,13 @@ import java.util.Optional;
 public final class LastContactFormatter {
 
     private static final DateTimeFormatter DATE_FORMATTER =
-            DateTimeFormatter.ofPattern("d MMM uuuu", Locale.ENGLISH);
+            DateTimeFormatter.ofPattern("dd MMM uuuu", Locale.ENGLISH);
 
     private LastContactFormatter() {
     }
 
     /**
-     * Returns {@code Last contact: d MMM uuuu} using English month abbreviations, or
+     * Returns {@code Last contact: dd MMM uuuu} using English month abbreviations, or
      * {@code No interactions yet} when {@code lastInteractionDate} is empty.
      *
      * @throws NullPointerException if {@code lastInteractionDate} is null.
