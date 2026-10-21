@@ -100,6 +100,35 @@ public class SupporterDetailDataTest {
     }
 
     @Test
+    public void getLastContact_noSelection_returnsDash() {
+        SupporterDetailData data = new SupporterDetailData(Optional.empty());
+
+        assertEquals("-", data.getLastContact());
+    }
+
+    @Test
+    public void getLastContact_emptyHistory_returnsNoInteractionsMessage() {
+        Person person = new PersonBuilder().build();
+        SupporterDetailData data = new SupporterDetailData(Optional.of(person));
+
+        assertEquals("No interactions yet", data.getLastContact());
+    }
+
+    @Test
+    public void getLastContact_outOfOrderDates_returnsLatestDateText() {
+        Interaction firstInteraction = new Interaction(LocalDate.of(2026, 9, 16), "Called");
+        Interaction latestInteraction = new Interaction(LocalDate.of(2026, 10, 3), "Met");
+        Interaction lastLoggedInteraction = new Interaction(LocalDate.of(2026, 9, 30), "Emailed");
+        Person person = new PersonBuilder()
+                .withInteractions(firstInteraction, latestInteraction, lastLoggedInteraction)
+                .build();
+        SupporterDetailData data = new SupporterDetailData(Optional.of(person));
+
+        assertEquals("Last contact: 3 Oct 2026", data.getLastContact());
+        assertEquals(List.of(firstInteraction, latestInteraction, lastLoggedInteraction), person.getInteractions());
+    }
+
+    @Test
     public void getInteractionEntries_mixedDates_sortsByDateThenNumberAndPreservesStoredHistory() {
         Interaction firstInteraction = new Interaction(LocalDate.of(2026, 9, 2), "First September meeting");
         Interaction secondInteraction = new Interaction(LocalDate.of(2027, 1, 1), "New year call");
