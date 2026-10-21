@@ -60,6 +60,50 @@ public class EditCommandParserTest {
     private EditCommandParser parser = new EditCommandParser();
 
     @Test
+    public void parse_supportedNames_success() {
+        String[] names = {"O'Brien", "Lee-Tan", "J. Tan", "Ravi s/o Kumar", "Priya d/o Kumar",
+            "Ravi S/O Kumar", "Priya D/O Kumar", "J. O'Brien-Tan d/o Kumar"};
+
+        for (String name : names) {
+            EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(name).build();
+
+            assertParseSuccess(parser, "1 " + PREFIX_NAME + name, new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        }
+    }
+
+    @Test
+    public void parse_supportedNamesWithAddress_success() {
+        String[] names = {"Ravi s/o Kumar", "Priya d/o Kumar", "J. O'Brien-Tan D/O Kumar"};
+
+        for (String name : names) {
+            EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(name)
+                    .withAddress(VALID_ADDRESS_AMY).build();
+            EditCommand expectedCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+
+            assertParseSuccess(parser, "1 " + PREFIX_NAME + name + ADDRESS_DESC_AMY, expectedCommand);
+            assertParseSuccess(parser, "1" + ADDRESS_DESC_AMY + " " + PREFIX_NAME + name, expectedCommand);
+        }
+    }
+
+    @Test
+    public void parse_supportedNameWithExtraSpaces_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("J. O'Brien-Tan s/o Kumar")
+                .withAddress(VALID_ADDRESS_AMY).build();
+
+        assertParseSuccess(parser, "1 " + PREFIX_NAME + "  J.   O'Brien-Tan   s/o   Kumar  " + ADDRESS_DESC_AMY,
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_invalidNameForms_failure() {
+        String[] names = {"'Tan", "-Tan", ".Tan", "Tan/Lim", "Ravi s/ Kumar", "Ravis/o Kumar", "Priya d/oKumar"};
+
+        for (String name : names) {
+            assertParseFailure(parser, "1 " + PREFIX_NAME + name + ADDRESS_DESC_AMY, Name.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
     public void parse_missingParts_failure() {
         // no index specified
         assertParseFailure(parser, VALID_NAME_AMY, MESSAGE_INVALID_FORMAT);
