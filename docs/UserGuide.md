@@ -64,7 +64,7 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 - Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
 
-- Extraneous parameters for commands that take no parameters, such as `help`, `list`, `stats`, `exit`, and `clear`, are ignored.<br>
+- Extraneous parameters for commands that take no parameters, such as `help`, `list`, `stats`, `exit`, `clear`, `undo` and `redo`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
 - If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -256,7 +256,7 @@ Deleted supporter: Tan Wei Ming; Stage: Prospect; Phone: 91234567
 2 logged interaction(s) were deleted with them.
 ```
 
-Deletion has no confirmation prompt or undo in this version. An invalid command or an index beyond the displayed list leaves supporter data, the list and the viewed selection unchanged.
+Deletion has no confirmation prompt. If you delete the wrong supporter, run [`undo`](#undoing-a-change-undo) straight away to restore them with their interaction history. An invalid command or an index beyond the displayed list leaves supporter data, the list and the viewed selection unchanged.
 
 ### Logging an interaction: `log`
 
@@ -342,6 +342,7 @@ Format: `view INDEX`
 * A successful `view`, `log`, `unlog`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
 * Invalid commands leave the displayed supporter unchanged.
 * Deleting the displayed supporter or running `clear` clears the details and history. Deleting another supporter keeps the panel unchanged.
+* After `undo` or `redo`, the panel shows the displayed supporter's restored record, or is cleared if that supporter no longer exists.
 * Selection is not remembered after restarting the app.
 
 Examples:
@@ -414,11 +415,63 @@ Deletes all supporters, together with their logged interactions.
 
 Format: `clear`
 
+### Undoing a change: `undo`
+
+Reverts the most recent change to your supporter data.
+
+Format: `undo`
+
+- These commands can be undone: `add`, `edit`, `delete`, `clear`, `log`, `stage`, `intro`, `tag` and `untag`.
+- Commands that do not change data, such as `list`, `find`, `view`, `stats` and `help`, are skipped. For example, `delete 2`, `find Tan`, `undo` restores the deleted supporter.
+- Running `undo` again reverts the change before that, back to when the app was opened.
+- A command that changes nothing, such as `stage` with the supporter's current stage or `tag` with a tag they already have, is not recorded. Neither is a command that fails. There is nothing to undo for them.
+- After undoing, all supporters are listed. The detail panel shows the displayed supporter's restored record, or is cleared if that supporter no longer exists.
+- Text after `undo` is ignored.
+- Undo history is kept only while the app is open. After you restart the app, earlier changes cannot be undone.
+
+If there is nothing to undo, the result display shows `There is no change to undo.` and nothing is changed.
+
+Examples:
+
+- `delete 2` followed by `undo` restores the deleted supporter and their interaction history.
+- `clear` followed by `undo` restores every supporter.
+
+### Redoing an undone change: `redo`
+
+Re-applies the change most recently reverted by `undo`.
+
+Format: `redo`
+
+- Running `redo` again re-applies the next undone change, in the order they were undone.
+- Making a new change after `undo` discards the undone changes, so they can no longer be redone.
+- After redoing, all supporters are listed, and the detail panel is updated in the same way as for `undo`.
+- Text after `redo` is ignored.
+
+If there is nothing to redo, the result display shows `There is no undone change to redo.` and nothing is changed.
+
+Examples:
+
+- `delete 2`, `undo`, then `redo` deletes the same supporter again.
+- `delete 2`, `undo`, then `log 1 nt/Called` means the delete can no longer be redone.
+
 ### Exiting the program: `exit`
 
 Exits the program.
 
 Format: `exit`
+
+### Recalling previous commands
+
+Press <kbd>Up</kbd> in the command box to bring back the commands you have entered, newest first, so that you can run a similar command again without retyping it. Press <kbd>Down</kbd> to move forward again.
+
+- Every command you entered is remembered, including commands that failed, so you can fix a typo and try again.
+- Pressing <kbd>Up</kbd> at the oldest command keeps it in the box.
+- Pressing <kbd>Down</kbd> past the newest command leaves the box empty.
+- Pressing <kbd>Down</kbd> while typing a new command, without having pressed <kbd>Up</kbd>, keeps what you typed.
+- Entering the same command several times in a row stores it only once.
+- The command history is cleared when you close the app. It is not saved to the data file.
+
+Example: after `log 2 nt/Called about the gala`, press <kbd>Up</kbd>, change the index and note, and press <kbd>Enter</kbd> to log a similar interaction with another supporter.
 
 ### Saving the data
 
@@ -504,8 +557,10 @@ Action     | Format, Examples
 **List**   | `list`
 **Log**    | `log INDEX nt/NOTE [dt/DATE]`<br> e.g., `log 2 nt/Called about the year-end appeal dt/2026-10-01`
 **Unlog**  | `unlog INDEX ENTRY`<br> e.g., `unlog 2 1`
+**Redo**   | `redo`
 **Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`
 **Stats**  | `stats`
+**Undo**   | `undo`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
 **Exit**   | `exit`
