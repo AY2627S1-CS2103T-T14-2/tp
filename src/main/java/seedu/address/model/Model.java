@@ -78,6 +78,7 @@ public interface Model {
 
     /**
      * Saves the current address book state to the undo/redo history.
+     * Any undone states are discarded, so they can no longer be redone.
      */
     void commitAddressBook();
 
