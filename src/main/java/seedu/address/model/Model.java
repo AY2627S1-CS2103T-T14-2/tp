@@ -77,6 +77,36 @@ public interface Model {
     int replaceIntroducer(Name introducer, Optional<Name> replacement);
 
     /**
+     * Saves the current address book state to the undo/redo history if supporter data has changed since the
+     * last saved state. Any undone states are then discarded, so they can no longer be redone.
+     */
+    void commitAddressBookIfChanged();
+
+    /**
+     * Returns true if there is an earlier address book state to restore.
+     */
+    boolean canUndoAddressBook();
+
+    /**
+     * Returns true if there is a later address book state to restore.
+     */
+    boolean canRedoAddressBook();
+
+    /**
+     * Restores the previous address book state from the undo/redo history.
+     *
+     * @throws IllegalStateException if there is no earlier state.
+     */
+    void undoAddressBook();
+
+    /**
+     * Restores the next undone address book state from the undo/redo history.
+     *
+     * @throws IllegalStateException if there is no later state.
+     */
+    void redoAddressBook();
+
+    /**
      * Returns the supporter being viewed, or an empty {@code Optional} if none has been selected.
      */
     Optional<Person> getViewedPerson();

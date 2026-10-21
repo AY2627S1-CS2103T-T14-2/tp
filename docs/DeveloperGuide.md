@@ -74,6 +74,8 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
+`CommandBox` also keeps a `CommandHistory` of the commands entered this session, which it uses to bring back earlier commands when the user presses Up or Down. `CommandHistory` is plain Java with no JavaFX code, so its behavior is tested without starting the UI. It stays in the `UI` component because it only recalls typed text; it does not affect how commands are parsed or executed.
+
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T14-2/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T14-2/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
 The `UI` component,
@@ -508,45 +510,47 @@ A supporter's phone number, email and address are optional, but every supporter 
   - Pros: Simpler; every supporter can be reached in both ways.
   - Cons: The user would have to invent a phone number or email for many real supporters.
 
-### \[Proposed\] Undo/redo feature
+### Undo/redo feature
 
-#### Proposed Implementation
+#### Implementation
 
-The proposed undo/redo mechanism is facilitated by `VersionedAddressBook`. It extends `AddressBook` with an undo/redo history, stored internally as an `addressBookStateList` and `currentStatePointer`. Additionally, it implements the following operations:
+Undo and redo are facilitated by `VersionedAddressBook`, which extends `AddressBook` with a history of saved states. The history is stored as an `addressBookStateList` of read-only copies, together with a `currentStatePointer` giving the index of the copy that matches the current data. `VersionedAddressBook` adds the following operations:
 
-- `VersionedAddressBook#commit()` -- Saves the current address book state in its history.
-- `VersionedAddressBook#undo()` -- Restores the previous address book state from its history.
-- `VersionedAddressBook#redo()` -- Restores a previously undone address book state from its history.
+- `VersionedAddressBook#commit()` -- Saves a copy of the current supporter data in the history, after discarding any undone states.
+- `VersionedAddressBook#undo()` -- Restores the previous state from the history.
+- `VersionedAddressBook#redo()` -- Restores a previously undone state from the history.
+- `VersionedAddressBook#canUndo()` and `VersionedAddressBook#canRedo()` -- Check whether there is a state to move to.
 
-These operations are exposed in the `Model` interface as `Model#commitAddressBook()`, `Model#undoAddressBook()` and `Model#redoAddressBook()` respectively.
+These operations are exposed in the `Model` interface as `Model#commitAddressBookIfChanged()`, `Model#undoAddressBook()`, `Model#redoAddressBook()`, `Model#canUndoAddressBook()` and `Model#canRedoAddressBook()`. Only `ModelManager` knows that its address book is versioned; the rest of the app, including storage, still sees a `ReadOnlyAddressBook`.
+
+Each saved state is a separate `AddressBook` created with the copy constructor, so later changes to the current data never alter it. The copies share `Person` objects, which is safe because `Person` is immutable: `edit`, `log`, `stage`, `intro`, `tag` and `untag` replace a supporter with a new `Person` rather than changing the old one. A deleted supporter's interactions are stored inside their `Person`, so undoing `delete` restores the interaction history too. Deleting a supporter also removes them as the introducer of other supporters. Since a state is the whole supporter data, one undo brings back the deleted supporter and those introductions together.
 
 Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
 
-Step 1. The user launches the application for the first time. The `VersionedAddressBook` will be initialized with the initial address book state, and the `currentStatePointer` pointing to that single address book state.
+Step 1. The user launches the application. The `VersionedAddressBook` is initialized with a copy of the loaded supporter data as its only state, and the `currentStatePointer` points to that state.
 
 <puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
 
-Step 2. The user executes `delete 5` command to delete the 5th person in the address book. The `delete` command calls `Model#commitAddressBook()`, causing the modified state of the address book after the `delete 5` command executes to be saved in the `addressBookStateList`, and the `currentStatePointer` is shifted to the newly inserted address book state.
+Step 2. The user executes `delete 2` to delete the 2nd supporter in the displayed list. After the command succeeds, `LogicManager` calls `Model#commitAddressBookIfChanged()`, which saves the data as it is after the deletion into the `addressBookStateList` and shifts the `currentStatePointer` to the new state.
 
 <puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
 
-Step 3. The user executes `add n/David …​` to add a new person. The `add` command also calls `Model#commitAddressBook()`, causing another modified address book state to be saved into the `addressBookStateList`.
+Step 3. The user executes `log 1 nt/Called` to log an interaction with the 1st supporter. This also changes the data, so `LogicManager` commits again, causing another state to be saved into the `addressBookStateList`.
 
 <puml src="diagrams/UndoRedoState2.puml" alt="UndoRedoState2" />
 
 <box type="info" seamless>
 
-**Note:** If a command fails its execution, it will not call `Model#commitAddressBook()`, so the address book state will not be saved into the `addressBookStateList`.
+**Note:** Commands do not commit themselves. `ModelManager` marks the data as changed whenever `addPerson`, `setPerson`, `deletePerson` or `setAddressBook` is called, and `Model#commitAddressBookIfChanged()` saves a state only if that mark is set, then clears it. So every command that changes supporter data saves exactly one state, even one that changes several supporters (such as deleting an introducer). A command that fails saves none. Neither does one that changes nothing, such as `stage` with the current stage or `tag` with a tag the supporter already has.
 </box>
 
-Step 4. The user now decides that adding the person was a mistake, and decides to undo that action by executing the `undo` command. The `undo` command will call `Model#undoAddressBook()`, which will shift the `currentStatePointer` once to the left, pointing it to the previous address book state, and restores the address book to that state.
+Step 4. The user decides that logging the interaction was a mistake, and executes `undo`. `UndoCommand` calls `Model#undoAddressBook()`, which shifts the `currentStatePointer` once to the left and copies that state back into the current data with `AddressBook#resetData()`.
 
 <puml src="diagrams/UndoRedoState3.puml" alt="UndoRedoState3" />
 
 <box type="info" seamless>
 
-**Note:** If the `currentStatePointer` is at index 0, pointing to the initial AddressBook state, then there are no previous AddressBook states to restore. The `undo` command uses `Model#canUndoAddressBook()` to check if this is the case. If so, it will return an error to the user rather
-than attempting to perform the undo.
+**Note:** If the `currentStatePointer` is at index 0, pointing to the state the app started with, then there is no earlier state to restore. `UndoCommand` uses `Model#canUndoAddressBook()` to check if this is the case. If so, it shows an error to the user rather than attempting to perform the undo.
 </box>
 
 The following sequence diagram shows how an undo operation goes through the `Logic` component:
@@ -558,22 +562,26 @@ The following sequence diagram shows how an undo operation goes through the `Log
 **Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
 </box>
 
+After restoring the data, `UndoCommand` shows all supporters, so that a restored supporter is visible even if a `find` filter was active. Restoring a state does not mark the data as changed, so `Model#commitAddressBookIfChanged()` saves no new state for `undo` itself. `LogicManager` then saves the restored data to the data file, as it does after every successful command.
+
 Similarly, how an undo operation goes through the `Model` component is shown below:
 
 <puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="UndoSequenceDiagram-Model" />
 
-The `redo` command does the opposite — it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the address book to that state.
+The supporter shown in the detail panel is not part of the saved states. After restoring a state, `ModelManager` replaces the viewed supporter with the supporter of the same name in the restored data, or clears the detail panel if there is none.
+
+The `redo` command does the opposite: it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the data to that state.
 
 <box type="info" seamless>
 
-**Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest address book state, then there are no undone AddressBook states to restore. The `redo` command uses `Model#canRedoAddressBook()` to check if this is the case. If so, it will return an error to the user rather than attempting to perform the redo.
+**Note:** If the `currentStatePointer` is at index `addressBookStateList.size() - 1`, pointing to the latest state, then there are no undone states to restore. `RedoCommand` uses `Model#canRedoAddressBook()` to check if this is the case. If so, it shows an error to the user rather than attempting to perform the redo.
 </box>
 
-Step 5. The user then decides to execute the command `list`. Commands that do not modify the address book, such as `list`, will usually not call `Model#commitAddressBook()`, `Model#undoAddressBook()` or `Model#redoAddressBook()`. Thus, the `addressBookStateList` remains unchanged.
+Step 5. The user then executes `list`. Commands such as `list`, `find` and `view` do not change supporter data, so `Model#commitAddressBookIfChanged()` saves nothing for them. Thus, the `addressBookStateList` remains unchanged.
 
 <puml src="diagrams/UndoRedoState4.puml" alt="UndoRedoState4" />
 
-Step 6. The user executes `clear`, which calls `Model#commitAddressBook()`. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all address book states after the `currentStatePointer` will be purged. Reason: It no longer makes sense to redo the `add n/David …` command. This is the behavior that most modern desktop applications follow.
+Step 6. The user executes `clear`, which changes the data, so a new state is committed. Since the `currentStatePointer` is not pointing at the end of the `addressBookStateList`, all states after the `currentStatePointer` are purged. Reason: It no longer makes sense to redo the `log 1 nt/Called` command. This is the behavior that most modern desktop applications follow.
 
 <puml src="diagrams/UndoRedoState5.puml" alt="UndoRedoState5" />
 
@@ -581,20 +589,33 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 <puml src="diagrams/CommitActivityDiagram.puml" width="250" />
 
+The history is kept in memory only, so it starts again from the loaded data each time the app is launched.
+
 #### Design considerations:
 
 **Aspect: How undo & redo execute:**
 
-- **Alternative 1 (current choice):** Saves the entire address book.
-  - Pros: Easy to implement.
-  - Cons: May have performance issues in terms of memory usage.
+- **Alternative 1 (current choice):** Saves a copy of the entire supporter data after each change.
+  - Pros: Easy to implement, and one mechanism works for every command, including `clear`.
+  - Cons: May have performance issues in terms of memory usage. With the few hundred supporters this product targets, and copies that share immutable `Person` objects, this cost is small.
 
-- **Alternative 2:** Individual command knows how to undo/redo by
-  itself.
-  - Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
-  - Cons: We must ensure that the implementation of each individual command is correct.
+- **Alternative 2:** Individual command knows how to undo/redo by itself (the Command pattern with an `undo()` method on each command).
+  - Pros: Will use less memory (e.g. for `delete`, just save the supporter being deleted).
+  - Cons: We must ensure that the implementation of each individual command is correct. For example, undoing `delete` must put the supporter back at the same position with all their interactions.
 
-_{more aspects and alternatives to be added}_
+**Aspect: Where states are committed:**
+
+- **Alternative 1 (current choice):** `ModelManager` marks the data as changed in `addPerson`, `setPerson`, `deletePerson` and `setAddressBook`, and `LogicManager` calls `Model#commitAddressBookIfChanged()` after every successful command.
+  - Pros: Commands that change data, such as `intro`, `tag` and `untag`, and later ones such as `editlog` and `unlog`, are undoable without any extra code, since every data change goes through those four methods. Commands that change nothing, such as `list` or a `stage` command that leaves the stage unchanged, create no undo step.
+  - Cons: A new `Model` method that changes data must also mark the data as changed. `UndoableCommandsTest` checks each data-changing command through `LogicManager`.
+
+- **Alternative 2:** Each command that changes data calls a commit method itself.
+  - Pros: The commit is visible in each command's code.
+  - Cons: Every new command must remember to commit. Forgetting gives no error; undo just skips that command or reverts it together with the next one.
+
+- **Alternative 3:** `LogicManager` commits after every successful command, without checking for changes.
+  - Pros: Simplest; no flag is needed.
+  - Cons: Read-only commands would create empty undo steps, so `undo` would sometimes appear to do nothing.
 
 ### \[Proposed\] Data archiving
 
