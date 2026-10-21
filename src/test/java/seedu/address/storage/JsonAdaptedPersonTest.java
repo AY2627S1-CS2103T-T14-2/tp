@@ -28,7 +28,7 @@ import seedu.address.testutil.PersonBuilder;
 
 public class JsonAdaptedPersonTest {
     private static final String INVALID_NAME = "R@chel";
-    private static final String INVALID_PHONE = "+651234";
+    private static final String INVALID_PHONE = "+65 123--4";
     private static final String INVALID_ADDRESS = " ";
     private static final String INVALID_EMAIL = "example.com";
     private static final String INVALID_TAG = "#friend";
@@ -78,6 +78,14 @@ public class JsonAdaptedPersonTest {
                         VALID_ORGANISATION, null, VALID_STAGE, VALID_INTERACTIONS, VALID_TAGS);
         String expectedMessage = Phone.MESSAGE_CONSTRAINTS;
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_formattedPhone_preservesFormatting() throws Exception {
+        String formattedPhone = "+65 9123-4567";
+        Person person = new PersonBuilder(BENSON).withPhone(formattedPhone).build();
+
+        assertEquals(person, new JsonAdaptedPerson(person).toModelType());
     }
 
     @Test

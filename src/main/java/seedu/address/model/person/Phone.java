@@ -9,14 +9,18 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public class Phone {
 
-
     public static final String MESSAGE_CONSTRAINTS =
-            "Phone numbers should only contain numbers, and it should be between 3 and 15 digits long";
+            "Phone numbers may start with a plus sign and may use single spaces or hyphens "
+                    + "between digit groups, including a mixture of both. "
+                    + "They must contain between 3 and 15 digits";
+
+    public static final String VALIDATION_REGEX = "\\+?\\d+(?:[ -]\\d+)*";
 
     /*
      * 3 digits allows short hotlines, and 15 digits is the longest a phone number can be internationally.
      */
-    public static final String VALIDATION_REGEX = "\\d{3,15}";
+    private static final int MIN_DIGITS = 3;
+    private static final int MAX_DIGITS = 15;
     public final String value;
 
     /**
@@ -34,7 +38,11 @@ public class Phone {
      * Returns true if a given string is a valid phone number.
      */
     public static boolean isValidPhone(String test) {
-        return test.matches(VALIDATION_REGEX);
+        requireNonNull(test);
+        long digitCount = test.chars().filter(Character::isDigit).count();
+        return test.matches(VALIDATION_REGEX)
+                && digitCount >= MIN_DIGITS
+                && digitCount <= MAX_DIGITS;
     }
 
     @Override

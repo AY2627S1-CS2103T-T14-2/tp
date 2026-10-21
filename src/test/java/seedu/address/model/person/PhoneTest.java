@@ -30,13 +30,30 @@ public class PhoneTest {
         assertFalse(Phone.isValidPhone("91")); // less than 3 numbers
         assertFalse(Phone.isValidPhone("phone")); // non-numeric
         assertFalse(Phone.isValidPhone("9011p041")); // alphabets within digits
-        assertFalse(Phone.isValidPhone("9312 1534")); // spaces within digits
+        assertFalse(Phone.isValidPhone("+")); // plus sign without digits
+        assertFalse(Phone.isValidPhone("++65 9123 4567")); // multiple plus signs
+        assertFalse(Phone.isValidPhone("65+91234567")); // plus sign within number
+        assertFalse(Phone.isValidPhone("+65  9123 4567")); // consecutive spaces
+        assertFalse(Phone.isValidPhone("+65--9123-4567")); // consecutive hyphens
+        assertFalse(Phone.isValidPhone("+65- 9123-4567")); // adjacent separators
+        assertFalse(Phone.isValidPhone("+65 9123 ")); // trailing separator
         assertFalse(Phone.isValidPhone("1242938420331234")); // more than 15 numbers
+        assertFalse(Phone.isValidPhone("+12 4293 8420 3312 34")); // more than 15 formatted digits
+        assertFalse(Phone.isValidPhone("+12-4293 8420-3312 34")); // more than 15 mixed-format digits
 
         // valid phone numbers
         assertTrue(Phone.isValidPhone("911")); // exactly 3 numbers
         assertTrue(Phone.isValidPhone("93121534"));
+        assertTrue(Phone.isValidPhone("+6591234567"));
+        assertTrue(Phone.isValidPhone("+65 9123 4567"));
+        assertTrue(Phone.isValidPhone("+65-9123-4567"));
+        assertTrue(Phone.isValidPhone("+65 9123-4567")); // mixed separator types
+        assertTrue(Phone.isValidPhone("+65-9123 4567")); // mixed separator types in reverse order
+        assertTrue(Phone.isValidPhone("65 9123 4567"));
+        assertTrue(Phone.isValidPhone("65-9123-4567"));
         assertTrue(Phone.isValidPhone("124293842033123")); // exactly 15 numbers
+        assertTrue(Phone.isValidPhone("+12 4293 8420 3312 3")); // exactly 15 formatted digits
+        assertTrue(Phone.isValidPhone("+12-4293 8420-3312 3")); // exactly 15 mixed-format digits
     }
 
     @Test
