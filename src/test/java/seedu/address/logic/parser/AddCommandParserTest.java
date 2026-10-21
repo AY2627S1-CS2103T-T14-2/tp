@@ -60,6 +60,40 @@ public class AddCommandParserTest {
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
+    public void parse_supportedNamesWithOtherFields_success() {
+        String[] names = {"O'Brien", "Lee-Tan", "J. Tan", "Ravi s/o Kumar", "Priya d/o Kumar",
+            "Ravi S/O Kumar", "Priya D/O Kumar", "J. O'Brien-Tan d/o Kumar"};
+        String otherFields = PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + ORGANISATION_DESC_BOB
+                + STAGE_DESC_BOB + TAG_DESC_HUSBAND + TAG_DESC_FRIEND;
+
+        for (String name : names) {
+            Person expectedPerson = new PersonBuilder(BOB).withName(name).build();
+
+            assertParseSuccess(parser, " " + PREFIX_NAME + name + otherFields, new AddCommand(expectedPerson));
+            assertParseSuccess(parser, otherFields + " " + PREFIX_NAME + name, new AddCommand(expectedPerson));
+        }
+    }
+
+    @Test
+    public void parse_supportedNameWithExtraSpaces_success() {
+        Person expectedPerson = new PersonBuilder(BOB).withName("J. O'Brien-Tan s/o Kumar").build();
+
+        assertParseSuccess(parser, " " + PREFIX_NAME + "  J.   O'Brien-Tan   s/o   Kumar  "
+                + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + ORGANISATION_DESC_BOB
+                + STAGE_DESC_BOB + TAG_DESC_HUSBAND + TAG_DESC_FRIEND, new AddCommand(expectedPerson));
+    }
+
+    @Test
+    public void parse_invalidNameForms_failure() {
+        String[] names = {"'Tan", "-Tan", ".Tan", "Tan/Lim", "Ravi s/ Kumar", "Ravis/o Kumar", "Priya d/oKumar"};
+
+        for (String name : names) {
+            assertParseFailure(parser, " " + PREFIX_NAME + name + PHONE_DESC_BOB + ADDRESS_DESC_BOB
+                    + STAGE_DESC_BOB, Name.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
     public void parse_allFieldsPresent_success() {
         Person expectedPerson = new PersonBuilder(BOB).withTags(VALID_TAG_FRIEND).build();
 
