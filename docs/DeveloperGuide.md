@@ -500,7 +500,7 @@ Undo and redo are facilitated by `VersionedAddressBook`, which extends `AddressB
 
 These operations are exposed in the `Model` interface as `Model#commitAddressBookIfChanged()`, `Model#undoAddressBook()`, `Model#redoAddressBook()`, `Model#canUndoAddressBook()` and `Model#canRedoAddressBook()`. Only `ModelManager` knows that its address book is versioned; the rest of the app, including storage, still sees a `ReadOnlyAddressBook`.
 
-Each saved state is a separate `AddressBook` created with the copy constructor, so later changes to the current data never alter it. The copies share `Person` objects, which is safe because `Person` is immutable: `edit`, `log` and `stage` replace a supporter with a new `Person` rather than changing the old one. A deleted supporter's interactions are stored inside their `Person`, so undoing `delete` restores the interaction history too.
+Each saved state is a separate `AddressBook` created with the copy constructor, so later changes to the current data never alter it. The copies share `Person` objects, which is safe because `Person` is immutable: `edit`, `log`, `stage`, `intro`, `tag` and `untag` replace a supporter with a new `Person` rather than changing the old one. A deleted supporter's interactions are stored inside their `Person`, so undoing `delete` restores the interaction history too. Deleting a supporter also removes them as the introducer of other supporters. Since a state is the whole supporter data, one undo brings back the deleted supporter and those introductions together.
 
 Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
 
@@ -518,7 +518,7 @@ Step 3. The user executes `log 1 nt/Called` to log an interaction with the 1st s
 
 <box type="info" seamless>
 
-**Note:** Commands do not commit themselves. `ModelManager` marks the data as changed whenever `addPerson`, `setPerson`, `deletePerson` or `setAddressBook` is called, and `Model#commitAddressBookIfChanged()` saves a state only if that mark is set, then clears it. So every command that changes supporter data saves exactly one state, while a command that fails, or a `stage` command that leaves the stage unchanged, saves none.
+**Note:** Commands do not commit themselves. `ModelManager` marks the data as changed whenever `addPerson`, `setPerson`, `deletePerson` or `setAddressBook` is called, and `Model#commitAddressBookIfChanged()` saves a state only if that mark is set, then clears it. So every command that changes supporter data saves exactly one state, even one that changes several supporters (such as deleting an introducer). A command that fails saves none. Neither does one that changes nothing, such as `stage` with the current stage or `tag` with a tag the supporter already has.
 </box>
 
 Step 4. The user decides that logging the interaction was a mistake, and executes `undo`. `UndoCommand` calls `Model#undoAddressBook()`, which shifts the `currentStatePointer` once to the left and copies that state back into the current data with `AddressBook#resetData()`.
@@ -583,7 +583,7 @@ The history is kept in memory only, so it starts again from the loaded data each
 **Aspect: Where states are committed:**
 
 - **Alternative 1 (current choice):** `ModelManager` marks the data as changed in `addPerson`, `setPerson`, `deletePerson` and `setAddressBook`, and `LogicManager` calls `Model#commitAddressBookIfChanged()` after every successful command.
-  - Pros: New commands that change data, such as `intro`, `editlog` and `unlog`, are undoable without any extra code, since every data change goes through those four methods. Commands that change nothing, such as `list` or a `stage` command that leaves the stage unchanged, create no undo step.
+  - Pros: Commands that change data, such as `intro`, `tag` and `untag`, and later ones such as `editlog` and `unlog`, are undoable without any extra code, since every data change goes through those four methods. Commands that change nothing, such as `list` or a `stage` command that leaves the stage unchanged, create no undo step.
   - Cons: A new `Model` method that changes data must also mark the data as changed. `UndoableCommandsTest` checks each data-changing command through `LogicManager`.
 
 - **Alternative 2:** Each command that changes data calls a commit method itself.
