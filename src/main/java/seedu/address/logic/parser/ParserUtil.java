@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -42,7 +43,8 @@ public class ParserUtil {
 
     /**
      * Parses {@code INDEX ENTRY} into a supporter index and an interaction index.
-     * Accepts leading, trailing and separating whitespace. Does not check either index against model data.
+     * Accepts leading, trailing and separating whitespace. Only parses the indices; commands must check
+     * their bounds and map the displayed interaction number to its stored position.
      * Command parsers should wrap a failure with their own invalid-format usage message.
      *
      * @throws ParseException if there are not exactly two valid positive integer indices.
@@ -62,17 +64,17 @@ public class ParserUtil {
 
     /**
      * The supporter and interaction indices supplied to an interaction-editing or deletion command.
+     * The interaction index identifies the displayed entry number, not its stored list position.
      *
      * @param supporterIndex index in the displayed supporter list.
-     * @param interactionIndex entry number in that supporter's interaction history.
+     * @param interactionIndex chronological entry number shown beside the interaction, with oldest numbered 1.
      */
     public record InteractionIndices(Index supporterIndex, Index interactionIndex) {
         /**
          * Creates a pair of non-null supporter and interaction indices.
          */
         public InteractionIndices {
-            requireNonNull(supporterIndex);
-            requireNonNull(interactionIndex);
+            requireAllNonNull(supporterIndex, interactionIndex);
         }
     }
 
