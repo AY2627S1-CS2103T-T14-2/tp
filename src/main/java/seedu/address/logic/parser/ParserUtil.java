@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -27,6 +28,8 @@ import seedu.address.model.tag.Tag;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+    public static final String MESSAGE_INVALID_INTERACTION_INDICES =
+            "Provide exactly two positive integer indices: INDEX ENTRY.";
 
     public static final String MESSAGE_INVALID_INTERACTION_DATE =
             "Interaction dates must be valid dates in yyyy-MM-dd format, e.g. 2026-10-01.";
@@ -46,6 +49,43 @@ public class ParserUtil {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
         return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+    }
+
+    /**
+     * Parses {@code INDEX ENTRY} into a supporter index and an interaction index.
+     * Accepts leading, trailing and separating whitespace. Only parses the indices; commands must check
+     * their bounds and map the displayed interaction number to its stored position.
+     * Command parsers should wrap a failure with their own invalid-format usage message.
+     *
+     * @throws ParseException if there are not exactly two valid positive integer indices.
+     */
+    public static InteractionIndices parseInteractionIndices(String indices) throws ParseException {
+        requireNonNull(indices);
+        String[] parts = indices.trim().split("\\s+");
+        if (parts.length != 2) {
+            throw new ParseException(MESSAGE_INVALID_INTERACTION_INDICES);
+        }
+        try {
+            return new InteractionIndices(parseIndex(parts[0]), parseIndex(parts[1]));
+        } catch (ParseException e) {
+            throw new ParseException(MESSAGE_INVALID_INTERACTION_INDICES, e);
+        }
+    }
+
+    /**
+     * The supporter and interaction indices supplied to an interaction-editing or deletion command.
+     * The interaction index identifies the displayed entry number, not its stored list position.
+     *
+     * @param supporterIndex index in the displayed supporter list.
+     * @param interactionIndex chronological entry number shown beside the interaction, with oldest numbered 1.
+     */
+    public record InteractionIndices(Index supporterIndex, Index interactionIndex) {
+        /**
+         * Creates a pair of non-null supporter and interaction indices.
+         */
+        public InteractionIndices {
+            requireAllNonNull(supporterIndex, interactionIndex);
+        }
     }
 
     /**
