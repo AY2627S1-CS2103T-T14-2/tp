@@ -64,7 +64,7 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 - Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
 
-- Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
+- Extraneous parameters for commands that take no parameters, such as `help`, `list`, `stats`, `exit`, and `clear`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
 - If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -165,6 +165,29 @@ Examples:
 
 - `stage 2 cultivating` moves the 2nd supporter in the displayed list to stage `Cultivating`.
 - `find Tan` followed by `stage 1 GIVING` moves the 1st supporter in the results of the `find` command to stage `Giving`.
+
+### Counting supporters by stage: `stats`
+
+Shows how many supporters are at each cultivation stage, e.g. to check whether there are enough prospects early in the year.
+
+Format: `stats`
+
+- Every supporter is counted, including those hidden by a `find` filter.
+- All six stages are listed in order, including stages with no supporters.
+- The displayed list and the detail panel do not change.
+- Anything typed after the command word is ignored; `stats 123` behaves as `stats`.
+
+For example, with four supporters:
+
+```text
+Supporters by stage (4 in total):
+Prospect: 1
+Contacted: 0
+Cultivating: 0
+Giving: 2
+Lapsed: 1
+Declined: 0
+```
 
 ### Finding supporters by part of a name: `find`
 
@@ -359,6 +382,7 @@ Action     | Format, Examples
 **List**   | `list`
 **Log**    | `log INDEX nt/NOTE`<br> e.g., `log 2 nt/Called to discuss the year-end appeal`
 **Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`
+**Stats**  | `stats`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
 **Exit**   | `exit`
