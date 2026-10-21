@@ -204,6 +204,48 @@ public class PersonTest {
     }
 
     @Test
+    public void getLastInteractionDate_emptyHistory_returnsEmpty() {
+        Person person = new PersonBuilder().build();
+
+        assertEquals(Optional.empty(), person.getLastInteractionDate());
+    }
+
+    @Test
+    public void getLastInteractionDate_singleInteraction_returnsDate() {
+        LocalDate date = LocalDate.of(2026, 10, 3);
+        Person person = new PersonBuilder()
+                .withInteractions(new Interaction(date, "Called"))
+                .build();
+
+        assertEquals(Optional.of(date), person.getLastInteractionDate());
+    }
+
+    @Test
+    public void getLastInteractionDate_outOfOrderDates_returnsLatestDateAndPreservesHistory() {
+        Interaction firstInteraction = new Interaction(LocalDate.of(2026, 9, 30), "Met");
+        Interaction latestInteraction = new Interaction(LocalDate.of(2027, 1, 1), "Called");
+        Interaction lastLoggedInteraction = new Interaction(LocalDate.of(2026, 10, 3), "Emailed");
+        Person person = new PersonBuilder()
+                .withInteractions(firstInteraction, latestInteraction, lastLoggedInteraction)
+                .build();
+
+        assertEquals(Optional.of(LocalDate.of(2027, 1, 1)), person.getLastInteractionDate());
+        assertEquals(List.of(firstInteraction, latestInteraction, lastLoggedInteraction), person.getInteractions());
+    }
+
+    @Test
+    public void getLastInteractionDate_duplicateLatestDates_returnsLatestDate() {
+        LocalDate latestDate = LocalDate.of(2026, 10, 3);
+        Person person = new PersonBuilder()
+                .withInteractions(new Interaction(latestDate, "Called"),
+                        new Interaction(latestDate, "Emailed"),
+                        new Interaction(LocalDate.of(2026, 9, 30), "Met"))
+                .build();
+
+        assertEquals(Optional.of(latestDate), person.getLastInteractionDate());
+    }
+
+    @Test
     public void constructor_nullStage_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new Person(ALICE.getName(), ALICE.getPhone().get(),
                 ALICE.getEmail().get(), ALICE.getAddress().get(), null, ALICE.getTags()));
