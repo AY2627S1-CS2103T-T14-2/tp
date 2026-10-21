@@ -3,6 +3,8 @@ package seedu.address.ui;
 import static java.util.Objects.requireNonNull;
 
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
@@ -19,6 +21,7 @@ import seedu.address.logic.Logic;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.Person;
 
 /**
  * The Main Window. Provides the basic application layout containing
@@ -134,7 +137,7 @@ public class MainWindow extends UiPart<Stage> {
         personListPanelPlaceholder.getChildren().add(personListPanel.getRoot());
 
         supporterDetailPanel = new SupporterDetailPanel();
-        supporterDetailPanel.setSupporter(logic.getViewedPerson());
+        refreshSupporterDetailPanel();
         supporterDetailPanelPlaceholder.getChildren().add(supporterDetailPanel.getRoot());
 
         resultDisplay = new ResultDisplay();
@@ -217,7 +220,18 @@ public class MainWindow extends UiPart<Stage> {
             resultDisplay.setFeedbackToUser(e.getMessage());
             throw e;
         } finally {
-            supporterDetailPanel.setSupporter(logic.getViewedPerson());
+            refreshSupporterDetailPanel();
         }
+    }
+
+    /**
+     * Shows the viewed supporter, together with the supporters they introduced, in the detail panel.
+     */
+    private void refreshSupporterDetailPanel() {
+        Optional<Person> viewedPerson = logic.getViewedPerson();
+        List<Person> introducedPersons = viewedPerson
+                .map(person -> logic.getPersonsIntroducedBy(person.getName()))
+                .orElseGet(List::of);
+        supporterDetailPanel.setSupporter(viewedPerson, introducedPersons);
     }
 }

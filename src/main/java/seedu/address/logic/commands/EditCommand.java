@@ -97,6 +97,10 @@ public class EditCommand extends Command {
         Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
 
         model.setPerson(personToEdit, editedPerson);
+        if (!personToEdit.getName().equals(editedPerson.getName())) {
+            // supporters introduced by this one keep pointing at them under the new name
+            model.replaceIntroducer(personToEdit.getName(), Optional.of(editedPerson.getName()));
+        }
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
         return new CommandResult(String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)));
     }
