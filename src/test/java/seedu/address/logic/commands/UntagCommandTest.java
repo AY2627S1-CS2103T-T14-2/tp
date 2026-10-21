@@ -43,6 +43,12 @@ public class UntagCommandTest {
     }
 
     @Test
+    public void constructor_noTags_throwsAssertionError() {
+        // the parser requires at least one t/, so an empty set is a programming error
+        assertThrows(AssertionError.class, () -> new UntagCommand(INDEX_FIRST_PERSON, Set.of()));
+    }
+
+    @Test
     public void execute_existingTag_removesTagAndKeepsOthers() {
         // second typical person is tagged "owesMoney" and "friends"
         Person target = personAt(INDEX_SECOND_PERSON);

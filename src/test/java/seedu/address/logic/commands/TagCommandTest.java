@@ -43,6 +43,12 @@ public class TagCommandTest {
     }
 
     @Test
+    public void constructor_noTags_throwsAssertionError() {
+        // the parser requires at least one t/, so an empty set is a programming error
+        assertThrows(AssertionError.class, () -> new TagCommand(INDEX_FIRST_PERSON, Set.of()));
+    }
+
+    @Test
     public void execute_newTags_addsTagsAndKeepsExisting() {
         // first typical person is tagged "friends"
         Person target = personAt(INDEX_FIRST_PERSON);
