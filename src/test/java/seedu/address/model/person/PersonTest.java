@@ -273,9 +273,11 @@ public class PersonTest {
 
     @Test
     public void withTags_keepsOtherDetails() {
-        Person aliceByBenson = new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName).build();
+        Person aliceByBenson = new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName)
+                .withInteractions(new Interaction(LocalDate.of(2026, 9, 16), "Called")).build();
         Person retagged = aliceByBenson.withTags(Set.of(new Tag(VALID_TAG_HUSBAND)));
         assertEquals(new PersonBuilder(aliceByBenson).withTags(VALID_TAG_HUSBAND).build(), retagged);
+        assertEquals(aliceByBenson.getInteractions(), retagged.getInteractions());
     }
 
     @Test
