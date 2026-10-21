@@ -1152,7 +1152,7 @@ testers are expected to do more _exploratory_ testing.
    1. Test case: `unlog 1 2`<br>
       Expected: The success message identifies `Middle meeting` as deleted entry #2. The panel shows `Recent call` as #2 and `First meeting` as #1. The find result and supporter details remain unchanged.
 
-   1. Test case: `unlog 1 2`, then `unlog 1 1`<br>
+   1. Continuing from the previous test case: `unlog 1 2`, then `unlog 1 1`<br>
       Expected: `Recent call` is removed first, then `First meeting`. The supporter remains selected with an empty history and `No interactions yet` as last contact.
 
 1. Deleting one of two identical entries

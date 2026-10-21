@@ -299,13 +299,14 @@ A space followed by `nt/` or `dt/` inside a note is interpreted as a parameter p
 
 ### Deleting an interaction: `unlog`
 
-Permanently removes one logged interaction, keeping the supporter and their other interactions.
+Removes one logged interaction, keeping the supporter and their other interactions.
 
 Format: `unlog INDEX ENTRY`
 
 - Supply exactly two positive integers. `INDEX` is the supporter index in the displayed list; after `find`, use the search-result index.
 - `ENTRY` is the number beside the interaction in the detail panel, not its row position. Use `view INDEX` to check it first.
 - Only the selected entry is removed, even if other entries have identical dates and notes.
+- To restore an interaction deleted by mistake, run `undo` immediately afterward. Undo history is available only during the current session.
 - Remaining entries are renumbered without gaps: oldest is `#1`, newest has the largest number. They remain displayed newest first; equal dates keep later-logged entries first.
 - The success message identifies the removed entry by its number before deletion, date and note. Check the refreshed numbers before another deletion.
 - The panel switches to the updated supporter. Deleting their last interaction shows the empty-history message; last contact updates to the latest remaining date, or `No interactions yet`.
@@ -421,7 +422,7 @@ Reverts the most recent change to your supporter data.
 
 Format: `undo`
 
-- These commands can be undone: `add`, `edit`, `delete`, `clear`, `log`, `stage`, `intro`, `tag` and `untag`.
+- These commands can be undone: `add`, `edit`, `delete`, `clear`, `log`, `unlog`, `stage`, `intro`, `tag` and `untag`.
 - Commands that do not change data, such as `list`, `find`, `view`, `stats` and `help`, are skipped. For example, `delete 2`, `find Tan`, `undo` restores the deleted supporter.
 - Running `undo` again reverts the change before that, back to when the app was opened.
 - A command that changes nothing, such as `stage` with the supporter's current stage or `tag` with a tag they already have, is not recorded. Neither is a command that fails. There is nothing to undo for them.
