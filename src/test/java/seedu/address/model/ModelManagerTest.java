@@ -370,6 +370,41 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void commitAddressBookIfChanged_personReplacedWithSameData_savesNoUndoPoint() {
+        modelManager.addPerson(ALICE);
+        modelManager.commitAddressBookIfChanged();
+
+        modelManager.setPerson(ALICE, new PersonBuilder(ALICE).build());
+        modelManager.commitAddressBookIfChanged();
+        modelManager.undoAddressBook();
+
+        assertFalse(modelManager.canUndoAddressBook());
+    }
+
+    @Test
+    public void commitAddressBookIfChanged_emptyAddressBookCleared_savesNoUndoPoint() {
+        modelManager.setAddressBook(new AddressBook());
+
+        modelManager.commitAddressBookIfChanged();
+
+        assertFalse(modelManager.canUndoAddressBook());
+    }
+
+    @Test
+    public void commitAddressBookIfChanged_noChangeAfterUndo_keepsRedoHistory() {
+        modelManager.addPerson(ALICE);
+        modelManager.commitAddressBookIfChanged();
+        modelManager.undoAddressBook();
+
+        modelManager.setAddressBook(new AddressBook());
+        modelManager.commitAddressBookIfChanged();
+
+        assertTrue(modelManager.canRedoAddressBook());
+        modelManager.redoAddressBook();
+        assertEquals(List.of(ALICE), modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
     public void undoAddressBook_afterCommit_restoresPreviousData() {
         modelManager.addPerson(ALICE);
         modelManager.commitAddressBookIfChanged();

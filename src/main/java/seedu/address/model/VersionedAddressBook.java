@@ -28,6 +28,11 @@ public class VersionedAddressBook extends AddressBook {
         currentStatePointer++;
     }
 
+    /** Returns true if the current data differs from the most recently saved state. */
+    public boolean hasChangesSinceLastCommit() {
+        return !equals(addressBookStateList.get(currentStatePointer));
+    }
+
     /** Returns true if there is an earlier state to restore. */
     public boolean canUndo() {
         return currentStatePointer > 0;
