@@ -63,9 +63,12 @@ public class QuietCommand extends Command {
     public CommandResult execute(Model model) {
         requireNonNull(model);
         LocalDate today = LocalDate.now(clock);
+        // Read current full-list positions so replacing a supporter cannot move them within a tied group.
+        Comparator<Person> quietOrder = LAST_CONTACT_ORDER
+                .thenComparingInt(model.getAddressBook().getPersonList()::indexOf);
         model.updateSortedPersonList(person -> person.getStage() != Stage.DECLINED
                 && person.getLastInteractionDate()
-                        .map(date -> ChronoUnit.DAYS.between(date, today) > days).orElse(true), LAST_CONTACT_ORDER);
+                        .map(date -> ChronoUnit.DAYS.between(date, today) > days).orElse(true), quietOrder);
         return new CommandResult(String.format(MESSAGE_SUCCESS, model.getFilteredPersonList().size(), days));
     }
 

@@ -165,6 +165,68 @@ public class QuietCommandIntegrationTest {
     }
 
     @Test
+    public void execute_tagNeverContactedSupporters_preservesFullListOrderWithinTies() throws Exception {
+        Person secondNever = new PersonBuilder().withName("Second Never").build();
+        Person thirdNever = new PersonBuilder().withName("Third Never").build();
+        model.addPerson(secondNever);
+        model.addPerson(thirdNever);
+        model.commitAddressBookIfChanged();
+        executeQuiet(60);
+        assertEquals(List.of(never, secondNever, thirdNever, older, old), model.getFilteredPersonList());
+
+        logic.execute("tag 1 t/vip");
+        Person taggedNever = new PersonBuilder(never).withTags("vip").build();
+        assertEquals(List.of(taggedNever, secondNever, thirdNever, older, old), model.getFilteredPersonList());
+
+        logic.execute("tag 3 t/boardIntro");
+        Person taggedThirdNever = new PersonBuilder(thirdNever).withTags("boardIntro").build();
+        assertEquals(List.of(taggedNever, secondNever, taggedThirdNever, older, old), model.getFilteredPersonList());
+
+        logic.execute("untag 1 t/vip");
+        assertEquals(List.of(never, secondNever, taggedThirdNever, older, old), model.getFilteredPersonList());
+        assertEquals(List.of(recent, old, never, older, secondNever, taggedThirdNever),
+                model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_tagEqualContactDates_preservesFullListOrderWithinTies() throws Exception {
+        Person secondOld = createSupporter("Second Old", 100);
+        Person thirdOld = createSupporter("Third Old", 100);
+        model.addPerson(secondOld);
+        model.addPerson(thirdOld);
+        model.commitAddressBookIfChanged();
+        executeQuiet(60);
+        assertEquals(List.of(never, older, old, secondOld, thirdOld), model.getFilteredPersonList());
+
+        logic.execute("tag 3 t/vip");
+        Person taggedOld = new PersonBuilder(old).withTags("vip").build();
+        assertEquals(List.of(never, older, taggedOld, secondOld, thirdOld), model.getFilteredPersonList());
+
+        logic.execute("tag 5 t/boardIntro");
+        Person taggedThirdOld = new PersonBuilder(thirdOld).withTags("boardIntro").build();
+        assertEquals(List.of(never, older, taggedOld, secondOld, taggedThirdOld), model.getFilteredPersonList());
+        assertEquals(List.of(recent, taggedOld, never, older, secondOld, taggedThirdOld),
+                model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_logCreatesContactDateTie_reordersUsingFullListPosition() throws Exception {
+        executeQuiet(60);
+        logic.execute("log 2 nt/Follow up dt/" + TODAY.minusDays(100));
+
+        Person updatedOlder = new PersonBuilder(older)
+                .withInteractions(older.getInteractions().get(0),
+                        new Interaction(TODAY.minusDays(100), "Follow up"))
+                .build();
+        assertEquals(List.of(never, old, updatedOlder), model.getFilteredPersonList());
+
+        logic.execute("tag 2 t/vip");
+        Person taggedOld = new PersonBuilder(old).withTags("vip").build();
+        assertEquals(List.of(never, taggedOld, updatedOlder), model.getFilteredPersonList());
+        assertEquals(List.of(recent, taggedOld, never, updatedOlder), model.getAddressBook().getPersonList());
+    }
+
+    @Test
     public void execute_saveDuringQuiet_preservesStoredOrder() throws Exception {
         executeQuiet(60);
         logic.execute("view 1");

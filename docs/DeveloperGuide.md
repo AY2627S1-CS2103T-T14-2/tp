@@ -224,8 +224,9 @@ another quiet command is run; changes to supporter data still reevaluate the pre
 `ModelManager` wraps its `FilteredList<Person>` in a `SortedList<Person>` and exposes that same
 observable sorted view through `getFilteredPersonList()`. The quiet command calls
 `updateSortedPersonList(Predicate, Comparator)`, ordering absent dates first and then latest-contact
-dates ascending. Equal dates retain source order. The underlying `VersionedAddressBook` list is
-unchanged, so display sorting changes neither JSON order nor undo history.
+dates ascending. An explicit tie-breaker reads each supporter's current full-list position, so equal
+dates retain source order even when a tag or other update replaces a supporter record. The underlying
+`VersionedAddressBook` list is unchanged, so display sorting changes neither JSON order nor undo history.
 
 `updateFilteredPersonList(Predicate)` clears the comparator as well as updating the predicate.
 Existing `list`, `find`, `add`, `edit`, `undo` and `redo` paths therefore restore normal ordering
@@ -234,7 +235,8 @@ and consequently operate on the displayed quiet indices. Replacing an immutable 
 log, unlog or stage change updates both filtering and sorting automatically.
 
 `QuietCommandTest` covers boundaries, exclusions, missing interactions, ties and backdated history.
-`QuietCommandIntegrationTest` checks indexed commands, stored order, selection and undo/redo.
+`QuietCommandIntegrationTest` checks indexed commands, stored order, selection and undo/redo. It also
+verifies tied ordering after tag changes and after an interaction update creates an equal-date group.
 
 ### Deleting a supporter and their history
 
