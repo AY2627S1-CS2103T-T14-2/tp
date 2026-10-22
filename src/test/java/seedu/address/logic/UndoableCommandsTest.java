@@ -71,6 +71,34 @@ public class UndoableCommandsTest {
     }
 
     @Test
+    public void execute_editLogUnchangedAfterUndo_preservesRedo() throws Exception {
+        logic.execute("log 1 nt/Original dt/2024-03-10");
+        logic.execute("editlog 1 1 nt/Changed");
+        AddressBook afterEdit = new AddressBook(model.getAddressBook());
+        logic.execute("undo");
+
+        logic.execute("editlog 1 1 nt/Original");
+
+        assertTrue(model.canRedoAddressBook());
+        logic.execute("redo");
+        assertEquals(afterEdit, model.getAddressBook());
+    }
+
+    @Test
+    public void execute_editLogUnchanged_selectsSupporterWithoutSavingUndoPoint() throws Exception {
+        logic.execute("log 1 nt/Original dt/2024-03-10");
+        logic.execute("view 2");
+
+        logic.execute("editlog 1 1 nt/Original dt/2024-03-10");
+
+        assertEquals(model.getFilteredPersonList().get(0), model.getViewedPerson().orElseThrow());
+        // undo the original log directly, without an extra undo for the unchanged edit
+        logic.execute("undo");
+        assertEquals(getTypicalAddressBook(), model.getAddressBook());
+        assertFalse(model.canUndoAddressBook());
+    }
+
+    @Test
     public void execute_stageChanged_savesOneUndoPoint() throws Exception {
         Stage newStage = model.getFilteredPersonList().get(0).getStage() == Stage.GIVING
                 ? Stage.LAPSED

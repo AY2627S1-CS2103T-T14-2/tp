@@ -415,6 +415,27 @@ Identical interactions are appended normally because two calls or messages with 
   - Pros: Less constructor and field code.
   - Cons: Tests can fail or require changing expected values depending on the day they run.
 
+### Editing an interaction
+
+**Parsing `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`:** The command is parsed by `EditLogCommandParser` as follows.
+
+1. `AddressBookParser` passes the arguments to `EditLogCommandParser#parse(String)`, which tokenizes `nt/` and `dt/`.
+2. Parse the preamble with `ParserUtil#parseInteractionIndices(String)`, reporting malformed indices with the command's usage message, then reject duplicate prefixes.
+3. Require at least one edit field. Validate supplied values using `ParserUtil#parseInteractionNote(String)` and `ParserUtil#parseInteractionDate(String)`. The existing note constraints and date range of `1900-01-01` through today apply. Note validation precedes date validation regardless of prefix order.
+4. Create an `EditLogCommand` with the two indices, an `Optional<String>` note and an `Optional<LocalDate>` date. Empty optionals represent omitted fields, not requests to clear them.
+
+`EditLogCommand` performs the model update as follows.
+
+1. Validate the supporter index against `Model#getFilteredPersonList()`, then the entry number against that supporter's history size. These failures have distinct messages and leave data and selection unchanged.
+2. Convert the chronological entry number to a zero-based display position using `historySize - entryNumber`. Look up that position in `Person#getInteractionIndicesInDisplayOrder()` to obtain the stored index.
+3. Create a replacement `Interaction`, taking omitted fields from the original. Replace the entry at its stored index in a copied list. This distinguishes identical entries and preserves logging position for equal-date ordering.
+4. Create a replacement `Person` preserving all other fields, including the introducer. Call `Model#setPerson(Person, Person)` and `Model#setViewedPerson(Person)` without changing the list filter.
+5. Find the stored index in the updated display-order mapping. Subtract its display position from the history size to obtain the edited entry's new chronological number for the success message. `SupporterDetailData` uses the same ordering to refresh the panel.
+
+Supplying unchanged values succeeds normally. Date edits can renumber other entries, but do not reorder the stored list. Last contact remains derived from the latest interaction date.
+
+`EditLogCommandTest` checks command behavior, while parser tests cover input validation. `EditLogCommandIntegrationTest` verifies renumbering and display order from command input through detail-panel data, without starting JavaFX.
+
 ### Deleting an interaction
 
 **Parsing `unlog INDEX ENTRY`:** `AddressBookParser` passes the arguments to `UnlogCommandParser`. It uses `ParserUtil#parseInteractionIndices(String)` to require exactly two positive integers and creates an `UnlogCommand`. Parsing failures are reported with the command's usage message.
@@ -440,7 +461,7 @@ On successful index validation, `ViewCommand` records the supporter using `Model
 * Optional fields and empty tags become `-`. Tag names are sorted alphabetically and joined with commas.
 * `Person#getInteractionIndicesInDisplayOrder()` returns zero-based stored indices sorted by date descending, then logging position descending. Using indices keeps identical interactions distinct without reordering stored history.
 * `SupporterDetailData` follows those indices to create immutable `InteractionEntry` objects. Numbers descend from the history size to `#1`, so the oldest entry has the smallest number. On equal dates, the later-logged entry appears first and has the larger number.
-* Back-dating can renumber existing entries. The panel and `LogCommand` use the same ordering method so displayed numbers match success messages.
+* Back-dating and editing interaction dates can renumber existing entries. The panel, `LogCommand` and `EditLogCommand` use the same ordering method so displayed numbers match success messages.
 
 `SupporterDetailPanel#setSupporter(Optional<Person>)` skips rendering when the supporter record is unchanged, preserving the scroll position through `list`, `find` and `add`. Switching supporters or changing the displayed record rebuilds the history and returns scrolling to the top.
 
@@ -451,7 +472,7 @@ On successful index validation, `ViewCommand` records the supporter using `Model
 Selection follows these rules:
 
 * `list`, `find` and `add` retain the viewed supporter, even if they are no longer displayed.
-* Successful `view`, `log`, `unlog` and `stage` commands select their target. `log` and `unlog` select the replacement record after updating its history. `stage` selects the replacement record after a stage change, or the existing record when the requested stage is already set.
+* Successful `view`, `log`, `editlog`, `unlog` and `stage` commands select their target. `log`, `editlog` and `unlog` select the replacement record after updating its history. `stage` selects the replacement record after a stage change, or the existing record when the requested stage is already set.
 * `ModelManager#setPerson(Person, Person)` updates selection to the replacement record when the viewed supporter is changed.
 * `ModelManager#deletePerson(Person)` clears selection when the viewed supporter is deleted.
 * `ModelManager#setAddressBook(ReadOnlyAddressBook)` clears selection when all supporter data is replaced, including by `clear`.
@@ -1143,6 +1164,42 @@ testers are expected to do more _exploratory_ testing.
 
    1. Other incorrect commands to try: `log`, `log 1`, `log 1 Called`, `log 0 nt/Called`, and `log 999 nt/Called` (where `999` is larger than the displayed list size)<br>
       Expected: No interaction is logged. The status message shows error details.
+
+### Editing an interaction
+
+1. Editing a date and then using the refreshed number
+   1. Prerequisites: Add a supporter with a unique name using `add n/Editlog Tester p/91234567`, then run `find Editlog Tester`. Ensure exactly one supporter is displayed with no interactions. Run `log 1 nt/Middle meeting dt/2024-02-29`, `log 1 nt/First meeting dt/2024-02-20`, then `log 1 nt/Recent call dt/2024-03-10`.
+
+   1. Test case: `editlog 1 2 dt/2024-03-15`<br>
+      Expected: `Middle meeting` moves to #3 above `Recent call` (#2) and `First meeting` (#1). The success message reports #3, and last contact becomes 15 March 2024. The note, supporter details and find result are preserved.
+
+   1. Test case: `editlog 1 3 nt/Corrected meeting`<br>
+      Expected: The same entry's note changes, with its date and number unchanged.
+
+   1. Test case: `editlog 1 3 dt/2024-03-10`<br>
+      Expected: `Recent call` appears as #3 above `Corrected meeting` (#2). Both have the same date, but `Recent call` was logged later. Last contact becomes 10 March 2024.
+
+1. Editing one of two identical entries
+   1. Prerequisites: Add another uniquely named supporter with `add n/Editlog Duplicate Tester p/91234567`, then run `find Duplicate`. Ensure only that supporter is displayed with no interactions. Run `log 1 nt/Meeting dt/2024-02-29`, `log 1 nt/Follow-up dt/2024-02-29`, then `log 1 nt/Meeting dt/2024-02-29`.
+
+   1. Test case: `editlog 1 3 nt/Corrected meeting`<br>
+      Expected: The panel shows `Corrected meeting` (#3), `Follow-up` (#2) and the unchanged `Meeting` (#1).
+
+1. Invalid edit commands
+   1. Test cases: `editlog`, `editlog 1 nt/Note`, `editlog 1 abc nt/Note` and `editlog 1 2 3 nt/Note`<br>
+      Expected: Invalid-command-format feedback with editlog usage.
+
+   1. Test case: `editlog 1 1`<br>
+      Expected: A message requiring at least one field to edit.
+
+   1. Test cases: `editlog 1 1 nt/`, `editlog 1 1 dt/2024-02-30`, `editlog 1 1 dt/1899-12-31`, and a date after today<br>
+      Expected: The corresponding note or date validation error.
+
+   1. Test cases: `editlog 1 1 nt/First nt/Second` and `editlog 1 1 dt/2024-02-29 dt/2024-03-01`<br>
+      Expected: A repeated-prefix error.
+
+   1. Test cases: `editlog 2 1 nt/Note` when only one supporter is displayed; `editlog 1 4 nt/Note` when that supporter has three entries<br>
+      Expected: Distinct invalid-supporter-index and invalid-interaction-number errors. All invalid commands above leave data, filtering and selection unchanged.
 
 ### Deleting an interaction
 
