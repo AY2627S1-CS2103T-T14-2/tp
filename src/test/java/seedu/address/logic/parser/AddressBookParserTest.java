@@ -8,6 +8,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -20,6 +21,7 @@ import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
+import seedu.address.logic.commands.EditLogCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
@@ -38,8 +40,8 @@ import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
-import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.PersonMatchesSearchPredicate;
 import seedu.address.model.person.Stage;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
@@ -80,6 +82,29 @@ public class AddressBookParserTest {
         DeleteCommand command = (DeleteCommand) parser.parseCommand(
                 DeleteCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased());
         assertEquals(new DeleteCommand(INDEX_FIRST_PERSON), command);
+    }
+
+    @Test
+    public void parseCommand_editlog_returnsEditLogCommand() throws Exception {
+        EditLogCommand expected = new EditLogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON,
+                Optional.of("Corrected note"), Optional.of(LocalDate.of(2024, 2, 29)));
+        assertEquals(expected, parser.parseCommand("editlog 1 2 nt/Corrected note dt/2024-02-29"));
+        assertEquals(expected, parser.parseCommand("  editlog\t1 2 dt/2024-02-29 nt/Corrected note  "));
+    }
+
+    @Test
+    public void parseCommand_editlogInvalidArguments_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditLogCommand.MESSAGE_USAGE);
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("editlog"));
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("editlog 1 abc nt/Note"));
+        assertThrows(ParseException.class, EditLogCommand.MESSAGE_NOT_EDITED, () ->
+                parser.parseCommand("editlog 1 2"));
+    }
+
+    @Test
+    public void parseCommand_editlogWrongCase_throwsParseException() {
+        // command words are case-sensitive
+        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("EDITLOG 1 2 nt/Note"));
     }
 
     @Test
@@ -180,7 +205,7 @@ public class AddressBookParserTest {
         List<String> keywords = List.of("foo", "bar", "baz");
         FindCommand command = (FindCommand) parser.parseCommand(
                 FindCommand.COMMAND_WORD + " " + keywords.stream().collect(Collectors.joining(" ")));
-        assertEquals(new FindCommand(new NameContainsKeywordsPredicate(keywords)), command);
+        assertEquals(new FindCommand(new PersonMatchesSearchPredicate(keywords)), command);
     }
 
     @Test

@@ -63,6 +63,7 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 
 - Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
+  For `find`, name keywords must come before the first prefix; its prefixed filters can be in any order.
 
 - Extraneous parameters for commands that take no parameters, such as `help`, `list`, `stats`, `exit`, `clear`, `undo` and `redo`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
@@ -205,20 +206,35 @@ Lapsed: 1
 Declined: 0
 ```
 
-### Finding supporters by part of a name: `find`
+### Finding supporters by name or other fields: `find`
 
-Shows supporters whose names contain at least one of the given keywords.
+Finds supporters by name, organisation, tag, stage, phone number or email. Combine fields to narrow a search.
 
-Format: `find KEYWORD [MORE_KEYWORDS]...`
+Format: `find [KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...`
 
-- The search is case-insensitive; `KOH` matches `Weiling Koh`.
-- A keyword can match any part of a word; `wei` matches both `Tan Wei Ming` and `Weiling Koh`.
-- Supporters matching any keyword are returned (an `OR` search). Keyword order and repeated keywords do not affect the results.
-- Only names are searched. A keyword such as `@` is accepted and simply matches nobody.
-- Keywords are separated by whitespace and cannot span a space in a name: `weiming` does not match `Wei Ming`.
+Supply at least one name keyword or nonempty prefix value. Name keywords are optional when a field filter is given.
+
+| Search field | Input | Matching rule |
+| --- | --- | --- |
+| Name | `KEYWORD` | Case-insensitive substring; `wei` matches `Tan Wei Ming` and `Weiling Koh` |
+| Organisation | `o/ORG` | Case-insensitive substring; `o/dbs` matches `DBS Bank` |
+| Tag | `t/TAG` | Case-insensitive substring of any tag; `t/board` matches `boardIntro` |
+| Stage | `st/STAGE` | Complete stage name, ignoring case; `st/GIVING` matches `Giving`, but `st/giv` is invalid |
+| Phone | `p/PHONE` | Substring after removing `+`, spaces and hyphens from both the query and saved number |
+| Email | `e/EMAIL` | Case-insensitive substring; `e/@gmail` matches an address containing `@gmail` |
+
+- **OR within a field:** any name keyword can match, and repeated values of a prefix are alternatives. For example, `find st/giving st/lapsed` finds supporters at either stage.
+- **AND between fields:** every specified field must match. For example, `find tan o/DBS st/giving` finds supporters whose names contain `tan`, whose organisation contains `DBS`, and whose stage is `Giving`.
+- Repeating an identical value does not duplicate supporters or change the matches.
+- Name keywords must appear before the first prefix, without quotation marks. Use `find tan o/DBS Bank`, not `find o/DBS Bank tan`: the latter searches for the organisation text `DBS Bank tan`.
+- Prefix values may contain multiple words. Each prefix value is one search phrase; `o/DBS Bank` searches for that phrase. Name keywords are separated by whitespace and use OR; `weiming` does not match `Wei Ming`.
+- Prefixed filters can appear in any order. To provide alternatives, repeat the prefix: use `st/giving st/lapsed`, not `st/giving lapsed`.
+- Phone queries can be shorter than a complete number. For example, `p/91-23` matches `91234567`, and `p/659123` matches the same digits in a formatted number such as `+65 9123-4567`. Phone queries must contain at least one digit and can contain only digits, `+`, spaces and hyphens; a query such as `p/+` is rejected.
+- A supporter without an organisation, phone number, email or tags does not match a search on that missing field.
 - Results stay in their original list order and are numbered from 1. Other commands use these displayed indices.
-- A new `find` replaces the previous filter. The filter stays active until `list`, `add` or `edit` is run.
-- At least one keyword is required. `find` with no keywords shows an invalid-command-format message.
+- A new `find` searches all supporters and replaces the previous filter. `list`, `add`, `edit`, `undo` and `redo` show the full list again.
+- Searching preserves the viewed supporter, even when they are absent from the results. It does not change saved supporter data or add an undo point, and it preserves redo history.
+- `find` without criteria and empty filters such as `o/` are rejected. Invalid stage names produce the stage error message. Invalid searches leave the previous results unchanged.
 
 For a list containing `Tan Wei Ming`, `Tan Ah Kow` and `Weiling Koh`:
 
@@ -226,6 +242,13 @@ For a list containing `Tan Wei Ming`, `Tan Ah Kow` and `Weiling Koh`:
 - `find tan wei` returns all three supporters.
 - `find KOH` returns `Weiling Koh`.
 - `find tan tan` returns the same results as `find tan`.
+
+Other examples:
+
+- `find o/DBS Bank` finds supporters whose organisation contains `DBS Bank`.
+- `find t/board t/donor` finds supporters with a tag containing either `board` or `donor`.
+- `find st/giving st/lapsed e/@gmail` finds supporters at either stage whose email contains `@gmail`.
+- `find tan lim o/DBS o/OCBC st/giving` means `(name contains tan OR lim) AND (organisation contains DBS OR OCBC) AND (stage is Giving)`.
 
 The success message reports the number of matches, for example `3 supporter(s) listed!`.
 If nothing matches, the list is empty and the message is `0 supporter(s) listed!`.
@@ -333,6 +356,48 @@ The last command reports `#2`. Adding that entry renumbers the 10 March entry fr
 A space followed by `nt/` or `dt/` inside a note is interpreted as a parameter prefix, not note text. This may split the note or cause a validation error. Rephrase the note to avoid these sequences.
 </box>
 
+### Editing an interaction: `editlog`
+
+Corrects a logged interaction's note, date or both.
+
+Format: `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`
+
+- `INDEX` is the supporter index in the displayed list; after `find`, use the search-result index. Both indices must be positive integers.
+- `ENTRY` is the number beside the interaction in the detail panel, not its row position. Use `view INDEX` to check it first.
+- Supply at least one field. Omitted fields remain unchanged; supplying the existing value is allowed.
+- To revert an interaction edited by mistake, run `undo` immediately afterward. Undo history is available only during the current session.
+- `NOTE` must not be blank and may contain at most 500 characters after trimming leading and trailing spaces.
+- `DATE` must be a valid `yyyy-MM-dd` date from `1900-01-01` through today (inclusive), using the computer's clock. Empty, invalid and out-of-range dates are rejected.
+- `nt/` and `dt/` may appear in either order, but each may appear only once. As with `log`, a space followed by either prefix inside a note is interpreted as a parameter prefix.
+- Date changes can reorder and renumber entries: oldest is `#1`, newest has the largest number, and the panel displays newest first. Equal dates retain the original logging order, with later-logged entries first.
+- The success message reports the edited entry's updated number, date and note. Use the refreshed numbers for subsequent commands.
+- Only the selected entry changes, even when entries have identical dates and notes. Other supporter details and the current list filter are preserved.
+- The panel switches to the updated supporter, and last contact reflects the latest interaction date. Invalid commands leave data and selection unchanged.
+
+Examples:
+
+- `editlog 1 2 nt/Corrected meeting notes` changes only entry #2's note.
+- `editlog 1 2 dt/2024-03-15` changes only its date.
+- `editlog 1 2 nt/Corrected meeting notes dt/2024-03-15` changes both.
+
+Suppose `view 1` shows:
+
+```text
+#3  10 Mar 2024  Recent call
+#2  29 Feb 2024  Middle meeting
+#1  20 Feb 2024  First meeting
+```
+
+After `editlog 1 2 dt/2024-03-15`, the panel shows:
+
+```text
+#3  15 Mar 2024  Middle meeting
+#2  10 Mar 2024  Recent call
+#1  20 Feb 2024  First meeting
+```
+
+The success message reports `#3`. To edit that same meeting again, use `editlog 1 3 ...`.
+
 ### Deleting an interaction: `unlog`
 
 Removes one logged interaction, keeping the supporter and their other interactions.
@@ -376,7 +441,7 @@ Format: `view INDEX`
 * Above the interaction history, the panel shows the same last-contact line as the supporter card, for example `Last contact: 03 Oct 2026`, or `No interactions yet` if there are no logged interactions. The line updates when the displayed supporter's interaction history changes.
 * Interactions appear newest first, e.g. `#4  16 Sep 2026  Sent partnership deck by email`. Numbers descend to `#1`, the oldest entry. On equal dates, later-logged entries appear first.
 * The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
-* A successful `view`, `log`, `unlog`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
+* A successful `view`, `log`, `editlog`, `unlog`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
 * Invalid commands leave the displayed supporter unchanged.
 * Deleting the displayed supporter or running `clear` clears the details and history. Deleting another supporter keeps the panel unchanged.
 * After `undo` or `redo`, the panel shows the displayed supporter's restored record, or is cleared if that supporter no longer exists.
@@ -458,7 +523,7 @@ Reverts the most recent change to your supporter data.
 
 Format: `undo`
 
-- These commands can be undone: `add`, `edit`, `delete`, `clear`, `log`, `unlog`, `stage`, `intro`, `tag` and `untag`.
+- These commands can be undone: `add`, `edit`, `delete`, `clear`, `log`, `editlog`, `unlog`, `stage`, `intro`, `tag` and `untag`.
 - Commands that do not change data, such as `list`, `find`, `view`, `stats` and `help`, are skipped. For example, `delete 2`, `find Tan`, `undo` restores the deleted supporter.
 - Running `undo` again reverts the change before that, back to when the app was opened.
 - A command that changes nothing, such as `stage` with the supporter's current stage or `tag` with a tag they already have, is not recorded. Neither is a command that fails. There is nothing to undo for them.
@@ -587,11 +652,12 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t/TAG]... `<br> e.g., `edit 2 p/91234567 a/1 HarbourFront Avenue`
+**Editlog** | `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`<br> e.g., `editlog 1 2 nt/Corrected meeting dt/2024-03-15`
 **Intro**  | `intro INDEX by/[INTRODUCER_INDEX]`<br> e.g., `intro 3 by/1`
 **Tag**    | `tag INDEX t/TAG [t/TAG]...`<br> e.g., `tag 2 t/vip t/boardIntro`
 **Untag**  | `untag INDEX t/TAG [t/TAG]...`<br> e.g., `untag 2 t/vip`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei`
 **Quiet**  | `quiet [DAYS]`<br> e.g., `quiet 60`
+**Find**   | `find [KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...`<br> e.g., `find tan o/DBS st/giving`
 **List**   | `list`
 **Log**    | `log INDEX nt/NOTE [dt/DATE]`<br> e.g., `log 2 nt/Called about the year-end appeal dt/2026-10-01`
 **Unlog**  | `unlog INDEX ENTRY`<br> e.g., `unlog 2 1`
