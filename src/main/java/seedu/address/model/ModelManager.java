@@ -136,10 +136,10 @@ public class ModelManager implements Model {
 
     @Override
     public void commitAddressBookIfChanged() {
-        if (!hasUncommittedChanges) {
-            return;
+        // a command can write back identical data, e.g. an edit to the same phone number
+        if (hasUncommittedChanges && versionedAddressBook.hasChangesSinceLastCommit()) {
+            versionedAddressBook.commit();
         }
-        versionedAddressBook.commit();
         hasUncommittedChanges = false;
     }
 

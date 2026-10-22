@@ -580,6 +580,7 @@ Undo and redo are facilitated by `VersionedAddressBook`, which extends `AddressB
 - `VersionedAddressBook#undo()` -- Restores the previous state from the history.
 - `VersionedAddressBook#redo()` -- Restores a previously undone state from the history.
 - `VersionedAddressBook#canUndo()` and `VersionedAddressBook#canRedo()` -- Check whether there is a state to move to.
+- `VersionedAddressBook#hasChangesSinceLastCommit()` -- Checks whether the current data differs from the state at the `currentStatePointer`.
 
 These operations are exposed in the `Model` interface as `Model#commitAddressBookIfChanged()`, `Model#undoAddressBook()`, `Model#redoAddressBook()`, `Model#canUndoAddressBook()` and `Model#canRedoAddressBook()`. Only `ModelManager` knows that its address book is versioned; the rest of the app, including storage, still sees a `ReadOnlyAddressBook`.
 
@@ -601,7 +602,7 @@ Step 3. The user executes `log 1 nt/Called` to log an interaction with the 1st s
 
 <box type="info" seamless>
 
-**Note:** Commands do not commit themselves. `ModelManager` marks the data as changed whenever `addPerson`, `setPerson`, `deletePerson` or `setAddressBook` is called, and `Model#commitAddressBookIfChanged()` saves a state only if that mark is set, then clears it. So every command that changes supporter data saves exactly one state, even one that changes several supporters (such as deleting an introducer). A command that fails saves none. Neither does one that changes nothing, such as `stage` with the current stage or `tag` with a tag the supporter already has.
+**Note:** Commands do not commit themselves. `ModelManager` marks the data as changed whenever `addPerson`, `setPerson`, `deletePerson` or `setAddressBook` is called, and `Model#commitAddressBookIfChanged()` saves a state only if that mark is set and `VersionedAddressBook#hasChangesSinceLastCommit()` confirms the data really differs, then clears the mark. So every command that changes supporter data saves exactly one state, even one that changes several supporters (such as deleting an introducer). A command that fails saves none. Neither does one that changes nothing, such as `stage` with the current stage, `tag` with a tag the supporter already has, `edit` with the values the supporter already has, or `clear` on an empty list. Such a command therefore also keeps any undone states available for `redo`.
 </box>
 
 Step 4. The user decides that logging the interaction was a mistake, and executes `undo`. `UndoCommand` calls `Model#undoAddressBook()`, which shifts the `currentStatePointer` once to the left and copies that state back into the current data with `AddressBook#resetData()`.

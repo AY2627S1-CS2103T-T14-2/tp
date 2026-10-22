@@ -50,6 +50,36 @@ public class VersionedAddressBookTest {
     }
 
     @Test
+    public void hasChangesSinceLastCommit_noChange_returnsFalse() {
+        assertFalse(versionedAddressBook.hasChangesSinceLastCommit());
+    }
+
+    @Test
+    public void hasChangesSinceLastCommit_afterChange_returnsTrue() {
+        versionedAddressBook.addPerson(BENSON);
+
+        assertTrue(versionedAddressBook.hasChangesSinceLastCommit());
+    }
+
+    @Test
+    public void hasChangesSinceLastCommit_changeReverted_returnsFalse() {
+        versionedAddressBook.addPerson(BENSON);
+        versionedAddressBook.removePerson(BENSON);
+
+        assertFalse(versionedAddressBook.hasChangesSinceLastCommit());
+    }
+
+    @Test
+    public void hasChangesSinceLastCommit_afterCommitAndUndo_returnsFalse() {
+        versionedAddressBook.addPerson(BENSON);
+        versionedAddressBook.commit();
+        assertFalse(versionedAddressBook.hasChangesSinceLastCommit());
+
+        versionedAddressBook.undo();
+        assertFalse(versionedAddressBook.hasChangesSinceLastCommit());
+    }
+
+    @Test
     public void undo_afterCommit_restoresPreviousState() {
         versionedAddressBook.addPerson(BENSON);
         versionedAddressBook.commit();
