@@ -97,7 +97,7 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 - SupporterBook only checks which characters a name uses, not whether it looks like a real name. For example, `s/o Kumar` or a name with only initials is accepted.
 - Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`.
 - Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
-- After adding, the list shows all supporters (any `find` filter is cleared), with the new supporter at the bottom.
+- After adding, the list shows all supporters in the order they were added (any `find` or `quiet` filter is cleared), with the new supporter at the bottom.
 
 <box type="tip" seamless>
 
@@ -115,7 +115,7 @@ Examples:
 
 ### Listing all supporters: `list`
 
-Shows all supporters in the order they were added, clearing any active `find` filter.
+Shows all supporters in the order they were added, clearing any active `find` or `quiet` filter and its sorting.
 
 Format: `list`
 
@@ -142,7 +142,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t
 - A supporter's logged interactions are kept when their details are edited.
 - A supporter's introducer is kept when their details are edited. If you rename a supporter who introduced others, those supporters show the new name as their introducer.
 - A supporter's name cannot be changed to the name of another supporter, using the same comparison as `add`. Changing only the capitalisation of their own name is allowed.
-- After editing, the list shows all supporters (any `find` filter is cleared).
+- After editing, the list shows all supporters in the order they were added (any `find` or `quiet` filter is cleared).
 
 Examples:
 
@@ -254,6 +254,40 @@ The success message reports the number of matches, for example `3 supporter(s) l
 If nothing matches, the list is empty and the message is `0 supporter(s) listed!`.
 Run `list` to show all supporters again.
 
+### Finding supporters who have gone quiet: `quiet`
+
+Shows supporters needing follow-up, starting with those who have gone longest without contact.
+
+Format: `quiet [DAYS]`
+
+- `quiet` uses a threshold of 60 days. Supply a positive whole number to change it, e.g. `quiet 30`.
+- Supporters with no interactions are included. Supporters at stage `Declined` are excluded, even if they have no interactions.
+- A supporter with interactions is included only if their most recent interaction was **more than** `DAYS` calendar days ago. Someone contacted exactly 60 days ago is excluded from `quiet 60`; someone contacted 61 days ago is included.
+- Last contact is the latest interaction date, regardless of logging order. Logging an older interaction does not replace a more recent last-contact date.
+- Supporters with no interactions appear first, followed by the oldest last-contact date. Ties retain the order in which supporters appear in the full list.
+- The date is taken from the computer's local clock when you run the command. Rerun `quiet` to refresh the threshold after the date changes.
+- Each `quiet` searches all supporters and replaces the previous filter and ordering. It does not narrow a previous `find` result.
+- Other commands use the numbers in this displayed list. For example, `quiet` followed by `view 1` opens the first quiet supporter, and `delete 1` deletes that supporter.
+- Changes to interactions or stages refresh the quiet list. Logging recent contact can remove a supporter; deleting their last interaction can move them to the top. Check the displayed indices again after a change.
+- `list` restores the full list in its normal order. `find` restores normal ordering for its matching results. Successful `add`, `edit`, `undo` and `redo` also restore the full list in normal order.
+- Running `quiet` preserves the viewed supporter, supporter data and saved order. It adds no undo point and preserves redo history.
+- Supply at most one day count, from `1` to `2147483647`. Zero, negatives, decimals, non-numbers, larger values and additional arguments are rejected without changing the current list or selection.
+
+Examples:
+
+- `quiet` lists eligible supporters with no interactions or last contact more than 60 days ago.
+- `quiet 30` uses a shorter threshold for more frequent follow-up.
+- `quiet 90` followed by `view 1` opens the first supporter in that result.
+- `list` restores the normal list when you finish reviewing quiet supporters.
+
+The success message reports the count and threshold, for example:
+
+```text
+3 supporter(s) listed: no interactions or last contacted more than 60 days ago.
+```
+
+No matches produces an empty list and the same message with a count of `0`.
+
 ### Deleting a supporter: `delete`
 
 Permanently removes the specified supporter together with every interaction logged with them.
@@ -299,7 +333,7 @@ Format: `log INDEX nt/NOTE [dt/DATE]`
 - Identical notes logged on the same day are accepted as separate interactions.
 - The success message shows the supporter, date, note and entry number matching the panel.
 - The panel switches to this supporter and displays entries newest first.
-- Logging an interaction does not change the supporter's cultivation stage or the currently displayed list. A `find` result therefore remains in place.
+- Logging an interaction does not change the supporter's cultivation stage or clear the active list filter. A `find` result remains in place; a `quiet` result updates to reflect the new last-contact date, so the supporter may move or disappear from the result.
 
 Examples:
 
@@ -622,6 +656,7 @@ Action     | Format, Examples
 **Intro**  | `intro INDEX by/[INTRODUCER_INDEX]`<br> e.g., `intro 3 by/1`
 **Tag**    | `tag INDEX t/TAG [t/TAG]...`<br> e.g., `tag 2 t/vip t/boardIntro`
 **Untag**  | `untag INDEX t/TAG [t/TAG]...`<br> e.g., `untag 2 t/vip`
+**Quiet**  | `quiet [DAYS]`<br> e.g., `quiet 60`
 **Find**   | `find [KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...`<br> e.g., `find tan o/DBS st/giving`
 **List**   | `list`
 **Log**    | `log INDEX nt/NOTE [dt/DATE]`<br> e.g., `log 2 nt/Called about the year-end appeal dt/2026-10-01`

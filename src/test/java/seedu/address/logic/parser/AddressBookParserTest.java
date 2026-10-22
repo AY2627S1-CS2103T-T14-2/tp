@@ -28,6 +28,7 @@ import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.IntroCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.LogCommand;
+import seedu.address.logic.commands.QuietCommand;
 import seedu.address.logic.commands.RedoCommand;
 import seedu.address.logic.commands.StageCommand;
 import seedu.address.logic.commands.StatsCommand;
@@ -205,6 +206,14 @@ public class AddressBookParserTest {
         FindCommand command = (FindCommand) parser.parseCommand(
                 FindCommand.COMMAND_WORD + " " + keywords.stream().collect(Collectors.joining(" ")));
         assertEquals(new FindCommand(new PersonMatchesSearchPredicate(keywords)), command);
+    }
+
+    @Test
+    public void parseCommand_quiet() throws Exception {
+        assertEquals(new QuietCommand(60), parser.parseCommand("quiet"));
+        assertEquals(new QuietCommand(30), parser.parseCommand("quiet 30"));
+        assertThrows(ParseException.class, () -> parser.parseCommand("quiet 0"));
+        assertThrows(ParseException.class, () -> parser.parseCommand("quiet 30 60"));
     }
 
     @Test
