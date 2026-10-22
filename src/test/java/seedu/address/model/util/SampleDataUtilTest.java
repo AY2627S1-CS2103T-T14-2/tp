@@ -45,6 +45,14 @@ public class SampleDataUtilTest {
     }
 
     @Test
+    public void getSamplePersons_namesAndPhones_includeAcceptedPunctuation() {
+        assertTrue(samplePersons.stream().anyMatch(person -> person.getName().fullName.contains("'")));
+        assertTrue(samplePersons.stream().anyMatch(person -> person.getName().fullName.contains(" s/o ")));
+        assertTrue(samplePersons.stream()
+                .anyMatch(person -> person.getPhone().filter(phone -> phone.value.startsWith("+")).isPresent()));
+    }
+
+    @Test
     public void getSampleAddressBook_noDuplicates_containsAllSamplePersons() {
         ReadOnlyAddressBook sampleAddressBook = SampleDataUtil.getSampleAddressBook();
         assertEquals(samplePersons, sampleAddressBook.getPersonList());
