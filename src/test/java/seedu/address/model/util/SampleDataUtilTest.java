@@ -3,13 +3,16 @@ package seedu.address.model.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.commands.QuietCommand;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Stage;
 
 public class SampleDataUtilTest {
 
@@ -29,7 +32,7 @@ public class SampleDataUtilTest {
                 .count();
 
         assertTrue(supportersWithInteractions >= 2);
-        assertTrue(supportersWithInteractions <= 4);
+        assertTrue(supportersWithInteractions < samplePersons.size());
         assertTrue(samplePersons.stream()
                 .filter(person -> !person.getInteractions().isEmpty())
                 .allMatch(person -> person.getInteractions().size() >= 2));
@@ -42,6 +45,28 @@ public class SampleDataUtilTest {
                 .flatMap(person -> person.getIntroducer().stream())
                 .forEach(introducer -> assertTrue(samplePersons.stream()
                         .anyMatch(other -> other.getName().isSameName(introducer))));
+    }
+
+    @Test
+    public void getSamplePersons_lastContact_someActiveSupporterIsQuiet() {
+        LocalDate quietCutoff = LocalDate.now().minusDays(QuietCommand.DEFAULT_DAYS);
+
+        assertTrue(samplePersons.stream()
+                .filter(person -> person.getStage() != Stage.DECLINED)
+                .anyMatch(person -> person.getLastInteractionDate()
+                        .filter(date -> date.isBefore(quietCutoff)).isPresent()));
+    }
+
+    @Test
+    public void getSamplePersons_names_includeAcceptedPunctuation() {
+        assertTrue(samplePersons.stream().anyMatch(person -> person.getName().fullName.contains("'")));
+        assertTrue(samplePersons.stream().anyMatch(person -> person.getName().fullName.contains(" s/o ")));
+    }
+
+    @Test
+    public void getSamplePersons_phones_includeCountryCode() {
+        assertTrue(samplePersons.stream()
+                .anyMatch(person -> person.getPhone().filter(phone -> phone.value.startsWith("+")).isPresent()));
     }
 
     @Test

@@ -46,11 +46,11 @@ public class SampleDataUtil {
                         "Sent volunteering day details and next steps")),
                 getTagSet("csr", "boardIntro")),
             // an online donor who gave only an email
-            new Person(new Name("Charlotte Oliveiro"), Optional.empty(),
+            new Person(new Name("Charlotte O'Brien"), Optional.empty(),
                 Optional.of(new Email("charlotte@example.com")), Optional.empty(), Optional.empty(),
                 Stage.PROSPECT, getTagSet("onlineDonor")),
             // a corporate contact whose postal address is not known, introduced by another supporter
-            new Person(new Name("David Li"), Optional.of(new Phone("91031282")),
+            new Person(new Name("David Li"), Optional.of(new Phone("+65 9103 1282")),
                 Optional.of(new Email("lidavid@example.com")), Optional.empty(),
                 Optional.of(new Organisation("Keppel Corporation")), Optional.of(new Name("Bernice Yu")),
                 Stage.CONTACTED,
@@ -59,11 +59,19 @@ public class SampleDataUtil {
                     new Interaction(LocalDate.of(2026, 9, 25),
                         "Follow-up call; checking internally on event sponsorship")),
                 getTagSet("csr")),
-            new Person(new Name("Irfan Ibrahim"), new Phone("92492021"), new Email("irfan@example.com"),
-                new Address("Blk 47 Tampines Street 20, #17-35"),
-                Stage.LAPSED, getTagSet("gala2025")),
-            new Person(new Name("Roy Balakrishnan"), Optional.of(new Phone("92624417")),
-                Optional.of(new Email("royb@example.com")),
+            // a past donor who has gone quiet since the last gala
+            new Person(new Name("Irfan Ibrahim"), Optional.of(new Phone("92492021")),
+                Optional.of(new Email("irfan@example.com")),
+                Optional.of(new Address("Blk 47 Tampines Street 20, #17-35")), Optional.empty(), Optional.empty(),
+                Stage.LAPSED,
+                List.of(
+                    new Interaction(LocalDate.of(2025, 11, 29), "Bought a table at the charity gala"),
+                    new Interaction(LocalDate.of(2026, 3, 10),
+                        "Asked about renewing his gala table; no reply yet")),
+                getTagSet("gala2025")),
+            // a corporate contact who declined, so quiet leaves them out
+            new Person(new Name("Rajesh s/o Balakrishnan"), Optional.of(new Phone("92624417")),
+                Optional.of(new Email("rajeshb@example.com")),
                 Optional.of(new Address("Blk 45 Aljunied Street 85, #11-31")),
                 Optional.of(new Organisation("Procter & Gamble")), Stage.DECLINED, getTagSet("csr"))
         };
