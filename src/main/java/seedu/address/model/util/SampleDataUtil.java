@@ -69,6 +69,7 @@ public class SampleDataUtil {
                     new Interaction(LocalDate.of(2026, 3, 10),
                         "Asked about renewing his gala table; no reply yet")),
                 getTagSet("gala2025")),
+            // a corporate contact who declined, so quiet leaves them out
             new Person(new Name("Rajesh s/o Balakrishnan"), Optional.of(new Phone("92624417")),
                 Optional.of(new Email("rajeshb@example.com")),
                 Optional.of(new Address("Blk 45 Aljunied Street 85, #11-31")),
