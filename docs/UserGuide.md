@@ -63,6 +63,7 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 
 - Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
+  For `find`, name keywords must come before the first prefix; its prefixed filters can be in any order.
 
 - Extraneous parameters for commands that take no parameters, such as `help`, `list`, `stats`, `exit`, `clear`, `undo` and `redo`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
@@ -205,20 +206,35 @@ Lapsed: 1
 Declined: 0
 ```
 
-### Finding supporters by part of a name: `find`
+### Finding supporters by name or other fields: `find`
 
-Shows supporters whose names contain at least one of the given keywords.
+Finds supporters by name, organisation, tag, stage, phone number or email. Combine fields to narrow a search.
 
-Format: `find KEYWORD [MORE_KEYWORDS]...`
+Format: `find [KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...`
 
-- The search is case-insensitive; `KOH` matches `Weiling Koh`.
-- A keyword can match any part of a word; `wei` matches both `Tan Wei Ming` and `Weiling Koh`.
-- Supporters matching any keyword are returned (an `OR` search). Keyword order and repeated keywords do not affect the results.
-- Only names are searched. A keyword such as `@` is accepted and simply matches nobody.
-- Keywords are separated by whitespace and cannot span a space in a name: `weiming` does not match `Wei Ming`.
+Supply at least one name keyword or nonempty prefix value. Name keywords are optional when a field filter is given.
+
+| Search field | Input | Matching rule |
+| --- | --- | --- |
+| Name | `KEYWORD` | Case-insensitive substring; `wei` matches `Tan Wei Ming` and `Weiling Koh` |
+| Organisation | `o/ORG` | Case-insensitive substring; `o/dbs` matches `DBS Bank` |
+| Tag | `t/TAG` | Case-insensitive substring of any tag; `t/board` matches `boardIntro` |
+| Stage | `st/STAGE` | Complete stage name, ignoring case; `st/GIVING` matches `Giving`, but `st/giv` is invalid |
+| Phone | `p/PHONE` | Substring after removing `+`, spaces and hyphens from both the query and saved number |
+| Email | `e/EMAIL` | Case-insensitive substring; `e/@gmail` matches an address containing `@gmail` |
+
+- **OR within a field:** any name keyword can match, and repeated values of a prefix are alternatives. For example, `find st/giving st/lapsed` finds supporters at either stage.
+- **AND between fields:** every specified field must match. For example, `find tan o/DBS st/giving` finds supporters whose names contain `tan`, whose organisation contains `DBS`, and whose stage is `Giving`.
+- Repeating an identical value does not duplicate supporters or change the matches.
+- Name keywords must appear before the first prefix, without quotation marks. Use `find tan o/DBS Bank`, not `find o/DBS Bank tan`: the latter searches for the organisation text `DBS Bank tan`.
+- Prefix values may contain multiple words. Each prefix value is one search phrase; `o/DBS Bank` searches for that phrase. Name keywords are separated by whitespace and use OR; `weiming` does not match `Wei Ming`.
+- Prefixed filters can appear in any order. To provide alternatives, repeat the prefix: use `st/giving st/lapsed`, not `st/giving lapsed`.
+- Phone queries can be shorter than a complete number. For example, `p/91-23` matches `91234567`, and `p/659123` matches the same digits in a formatted number such as `+65 9123-4567`. Phone queries must contain at least one digit and can contain only digits, `+`, spaces and hyphens; a query such as `p/+` is rejected.
+- A supporter without an organisation, phone number, email or tags does not match a search on that missing field.
 - Results stay in their original list order and are numbered from 1. Other commands use these displayed indices.
-- A new `find` replaces the previous filter. The filter stays active until `list`, `add` or `edit` is run.
-- At least one keyword is required. `find` with no keywords shows an invalid-command-format message.
+- A new `find` searches all supporters and replaces the previous filter. `list`, `add`, `edit`, `undo` and `redo` show the full list again.
+- Searching preserves the viewed supporter, even when they are absent from the results. It does not change saved supporter data or add an undo point, and it preserves redo history.
+- `find` without criteria and empty filters such as `o/` are rejected. Invalid stage names produce the stage error message. Invalid searches leave the previous results unchanged.
 
 For a list containing `Tan Wei Ming`, `Tan Ah Kow` and `Weiling Koh`:
 
@@ -226,6 +242,13 @@ For a list containing `Tan Wei Ming`, `Tan Ah Kow` and `Weiling Koh`:
 - `find tan wei` returns all three supporters.
 - `find KOH` returns `Weiling Koh`.
 - `find tan tan` returns the same results as `find tan`.
+
+Other examples:
+
+- `find o/DBS Bank` finds supporters whose organisation contains `DBS Bank`.
+- `find t/board t/donor` finds supporters with a tag containing either `board` or `donor`.
+- `find st/giving st/lapsed e/@gmail` finds supporters at either stage whose email contains `@gmail`.
+- `find tan lim o/DBS o/OCBC st/giving` means `(name contains tan OR lim) AND (organisation contains DBS OR OCBC) AND (stage is Giving)`.
 
 The success message reports the number of matches, for example `3 supporter(s) listed!`.
 If nothing matches, the list is empty and the message is `0 supporter(s) listed!`.
@@ -599,7 +622,7 @@ Action     | Format, Examples
 **Intro**  | `intro INDEX by/[INTRODUCER_INDEX]`<br> e.g., `intro 3 by/1`
 **Tag**    | `tag INDEX t/TAG [t/TAG]...`<br> e.g., `tag 2 t/vip t/boardIntro`
 **Untag**  | `untag INDEX t/TAG [t/TAG]...`<br> e.g., `untag 2 t/vip`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find tan wei`
+**Find**   | `find [KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...`<br> e.g., `find tan o/DBS st/giving`
 **List**   | `list`
 **Log**    | `log INDEX nt/NOTE [dt/DATE]`<br> e.g., `log 2 nt/Called about the year-end appeal dt/2026-10-01`
 **Unlog**  | `unlog INDEX ENTRY`<br> e.g., `unlog 2 1`

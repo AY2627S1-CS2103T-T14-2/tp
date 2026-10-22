@@ -9,7 +9,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.FindCommand;
-import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.PersonMatchesSearchPredicate;
+import seedu.address.model.person.Stage;
 
 public class FindCommandParserTest {
 
@@ -24,11 +25,87 @@ public class FindCommandParserTest {
     public void parse_validArgs_returnsFindCommand() {
         // no leading and trailing whitespaces
         FindCommand expectedFindCommand =
-                new FindCommand(new NameContainsKeywordsPredicate(List.of("Alice", "Bob")));
+                new FindCommand(new PersonMatchesSearchPredicate(List.of("Alice", "Bob")));
         assertParseSuccess(parser, "Alice Bob", expectedFindCommand);
 
         // multiple whitespaces between keywords
         assertParseSuccess(parser, " \n Alice \n \t Bob  \t", expectedFindCommand);
+    }
+
+    @Test
+    public void parse_prefixOnly_success() {
+        assertParseSuccess(parser, "o/DBS Bank", new FindCommand(new PersonMatchesSearchPredicate(List.of(),
+                List.of("DBS Bank"), List.of(), List.of(), List.of(), List.of())));
+        assertParseSuccess(parser, "t/board", new FindCommand(new PersonMatchesSearchPredicate(List.of(),
+                List.of(), List.of("board"), List.of(), List.of(), List.of())));
+        assertParseSuccess(parser, "st/GIVING", new FindCommand(new PersonMatchesSearchPredicate(List.of(),
+                List.of(), List.of(), List.of(Stage.GIVING), List.of(), List.of())));
+        assertParseSuccess(parser, "p/9", new FindCommand(new PersonMatchesSearchPredicate(List.of(),
+                List.of(), List.of(), List.of(), List.of("9"), List.of())));
+        assertParseSuccess(parser, "e/@gmail", new FindCommand(new PersonMatchesSearchPredicate(List.of(),
+                List.of(), List.of(), List.of(), List.of(), List.of("@gmail"))));
+    }
+
+    @Test
+    public void parse_allFieldsAndRepeatedPrefixes_success() {
+        FindCommand expectedCommand = new FindCommand(new PersonMatchesSearchPredicate(List.of("tan", "lim"),
+                List.of("DBS Bank", "OCBC"), List.of("board", "vip"), List.of(Stage.GIVING, Stage.LAPSED),
+                List.of("9123", "8111"), List.of("@dbs", "@ocbc")));
+
+        assertParseSuccess(parser, "tan lim o/DBS Bank o/OCBC t/board t/vip st/GIVING st/lapsed"
+                + " p/9123 p/8111 e/@dbs e/@ocbc", expectedCommand);
+        assertParseSuccess(parser, "tan lim e/@dbs p/9123 st/giving t/board o/DBS Bank"
+                + " e/@ocbc p/8111 st/LAPSED t/vip o/OCBC", expectedCommand);
+    }
+
+    @Test
+    public void parse_whitespaceAroundPrefixes_success() {
+        FindCommand expectedCommand = new FindCommand(new PersonMatchesSearchPredicate(List.of("tan", "wei"),
+                List.of("DBS Bank"), List.of(), List.of(Stage.GIVING), List.of(), List.of()));
+
+        assertParseSuccess(parser, " \t tan\nwei\to/ DBS   Bank \tst/ GIVING\t ", expectedCommand);
+    }
+
+    @Test
+    public void parse_textAfterPrefix_belongsToPrefixValue() {
+        assertParseSuccess(parser, "o/DBS Bank tan", new FindCommand(new PersonMatchesSearchPredicate(List.of(),
+                List.of("DBS Bank tan"), List.of(), List.of(), List.of(), List.of())));
+    }
+
+    @Test
+    public void parse_formattedPartialPhone_success() {
+        FindCommand expectedCommand = new FindCommand(new PersonMatchesSearchPredicate(List.of(), List.of(),
+                List.of(), List.of(), List.of("659123"), List.of()));
+
+        assertParseSuccess(parser, "p/+65 91-23", expectedCommand);
+        assertParseSuccess(parser, "p/65-91 23", expectedCommand);
+    }
+
+    @Test
+    public void parse_emptyPrefixValue_failure() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String prefix : List.of("o/", "t/", "p/", "e/")) {
+            assertParseFailure(parser, prefix, expectedMessage);
+            assertParseFailure(parser, "tan " + prefix + "   ", expectedMessage);
+            assertParseFailure(parser, prefix + "valid " + prefix, expectedMessage);
+            assertParseFailure(parser, prefix + " " + prefix + "valid", expectedMessage);
+        }
+    }
+
+    @Test
+    public void parse_invalidStage_failure() {
+        for (String value : List.of("", "giv", "donating", "giving lapsed")) {
+            assertParseFailure(parser, "st/" + value, Stage.MESSAGE_CONSTRAINTS);
+        }
+        assertParseFailure(parser, "st/giving st/donating", Stage.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_invalidPhoneQuery_failure() {
+        for (String value : List.of("+", "-", "+ -", "abc", "912a", "(65)9123")) {
+            assertParseFailure(parser, "p/" + value, FindCommandParser.MESSAGE_INVALID_PHONE_SEARCH);
+        }
+        assertParseFailure(parser, "p/9123 p/+", FindCommandParser.MESSAGE_INVALID_PHONE_SEARCH);
     }
 
 }
