@@ -28,7 +28,7 @@ public class VersionedAddressBook extends AddressBook {
         currentStatePointer++;
     }
 
-    /** Returns true if the current data differs from the most recently saved state. */
+    /** Returns true if the current data differs from the state at {@code currentStatePointer}. */
     public boolean hasChangesSinceLastCommit() {
         return !equals(addressBookStateList.get(currentStatePointer));
     }
