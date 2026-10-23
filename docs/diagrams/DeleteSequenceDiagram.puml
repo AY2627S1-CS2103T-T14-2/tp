@@ -17,13 +17,17 @@ end box
 [-> LogicManager : execute("delete 1")
 activate LogicManager
 
+note over LogicManager, Model
+    Successful delete of an existing supporter.
+    Error paths and Model internals are omitted.
+end note
+
 LogicManager -> AddressBookParser : parseCommand("delete 1")
 activate AddressBookParser
 
 create DeleteCommandParser
-AddressBookParser -> DeleteCommandParser
+AddressBookParser -> DeleteCommandParser : DeleteCommandParser()
 activate DeleteCommandParser
-
 DeleteCommandParser --> AddressBookParser
 deactivate DeleteCommandParser
 
@@ -31,10 +35,9 @@ AddressBookParser -> DeleteCommandParser : parse("1")
 activate DeleteCommandParser
 
 create DeleteCommand
-DeleteCommandParser -> DeleteCommand
+DeleteCommandParser -> DeleteCommand : DeleteCommand(index)
 activate DeleteCommand
-
-DeleteCommand --> DeleteCommandParser :
+DeleteCommand --> DeleteCommandParser
 deactivate DeleteCommand
 
 DeleteCommandParser --> AddressBookParser : d
@@ -49,22 +52,47 @@ deactivate AddressBookParser
 LogicManager -> DeleteCommand : execute(m)
 activate DeleteCommand
 
-DeleteCommand -> Model : deletePerson(1)
+DeleteCommand -> Model : getFilteredPersonList()
 activate Model
+Model --> DeleteCommand : lastShownList
+deactivate Model
 
+note over DeleteCommand
+    Validate the index, select personToDelete,
+    and count their interactions.
+end note
+
+DeleteCommand -> Model : deletePerson(personToDelete)
+activate Model
 Model --> DeleteCommand
 deactivate Model
 
-create CommandResult
-DeleteCommand -> CommandResult
-activate CommandResult
+DeleteCommand -> Model : replaceIntroducer(personToDelete.getName(), Optional.empty())
+activate Model
+Model --> DeleteCommand : clearedIntroductions
+deactivate Model
 
+create CommandResult
+DeleteCommand -> CommandResult : CommandResult(message)
+activate CommandResult
 CommandResult --> DeleteCommand
 deactivate CommandResult
 
 DeleteCommand --> LogicManager : r
 deactivate DeleteCommand
 
-[<--LogicManager
+LogicManager -> Model : commitAddressBookIfChanged()
+activate Model
+Model --> LogicManager
+deactivate Model
+
+note right of LogicManager
+    Before returning, LogicManager saves
+    model.getAddressBook() through Storage.
+    Persistence interactions are omitted.
+end note
+
+[<-- LogicManager : r
 deactivate LogicManager
+
 @enduml
