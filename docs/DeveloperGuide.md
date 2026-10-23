@@ -128,6 +128,7 @@ How the parsing works:
 The `Model` component,
 
 - stores the supporter data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+- stores each supporter's optional introducer as the introducer's `Name`, not as a reference to their `Person` object. Names are unique, so the `Name` identifies one supporter, and it stays valid when that supporter's immutable `Person` object is replaced by a change. When the introducer is renamed with `edit`, `ModelManager#replaceIntroducer(...)` updates every link to the new name, and when they are deleted, it clears those links.
 - stores the `Person` objects selected by the current filter in a `FilteredList`, wrapped by a `SortedList` for optional display ordering. It exposes the sorted view as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so both filter and order changes update the UI without reordering stored data.
 - stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 - does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
