@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <fx:root type="javafx.stage.Stage" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-         title="SupporterBook" minWidth="680" minHeight="600" onCloseRequest="#handleExit">
+         title="SupporterBook" minWidth="680" minHeight="450" onCloseRequest="#handleExit">
   <icons>
     <Image url="@/images/address_book_32.png" />
   </icons>
@@ -55,8 +55,9 @@
               </padding>
               <StackPane fx:id="personListPanelPlaceholder" VBox.vgrow="ALWAYS" />
             </VBox>
+            <!-- top-aligned so that a short window cuts off the bottom of the panel, not the name -->
             <StackPane fx:id="supporterDetailPanelPlaceholder" minWidth="320" prefWidth="380"
-                       minHeight="0" styleClass="pane-with-border" />
+                       minHeight="0" alignment="TOP_LEFT" styleClass="pane-with-border" />
           </items>
         </SplitPane>
 

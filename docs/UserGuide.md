@@ -638,9 +638,9 @@ Edit the data file only if you are confident that you can follow the validation 
 
 ## Known issues
 
-1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
-3. **Names containing `a/l` or `a/p` are not supported.** In `add` and `edit`, a space followed by `a/` is treated as an address prefix, so names such as `Ravi a/l Kumar` cannot be entered as intended.
+1. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+2. **Names containing `a/l` or `a/p` are not supported.** In `add` and `edit`, a space followed by `a/` is treated as an address prefix, so names such as `Ravi a/l Kumar` cannot be entered as intended.
+3. **On small screens with high display scaling**, e.g. 1280x720 at 150%, the window fits on the screen, but the detail panel may not have room to show the interaction history below a supporter's details. The remedy is to maximise the window, or use a lower display scaling.
 
 ---
 
