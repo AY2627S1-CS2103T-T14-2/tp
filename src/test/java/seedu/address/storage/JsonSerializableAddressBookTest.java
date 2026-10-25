@@ -25,6 +25,8 @@ public class JsonSerializableAddressBookTest {
     private static final Path VALID_INTRODUCER_FILE = TEST_DATA_FOLDER.resolve("validIntroducerAddressBook.json");
     private static final Path UNKNOWN_INTRODUCER_FILE =
             TEST_DATA_FOLDER.resolve("unknownIntroducerAddressBook.json");
+    private static final Path INTRODUCTION_LOOP_FILE =
+            TEST_DATA_FOLDER.resolve("introductionLoopAddressBook.json");
 
     @Test
     public void toModelType_typicalPersonsFile_success() throws Exception {
@@ -64,6 +66,14 @@ public class JsonSerializableAddressBookTest {
         JsonSerializableAddressBook dataFromFile = JsonUtil.readJsonFile(UNKNOWN_INTRODUCER_FILE,
                 JsonSerializableAddressBook.class).get();
         assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_UNKNOWN_INTRODUCER,
+                dataFromFile::toModelType);
+    }
+
+    @Test
+    public void toModelType_introductionLoop_throwsIllegalValueException() throws Exception {
+        JsonSerializableAddressBook dataFromFile = JsonUtil.readJsonFile(INTRODUCTION_LOOP_FILE,
+                JsonSerializableAddressBook.class).get();
+        assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_INTRODUCTION_LOOP,
                 dataFromFile::toModelType);
     }
 
