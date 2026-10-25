@@ -1,0 +1,62 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant "q:QuietCommand" as QuietCommand LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "model:ModelManager" as ModelManager MODEL_COLOR
+participant "filteredPersons:FilteredList" as FilteredList MODEL_COLOR
+participant "sortedPersons:SortedList" as SortedList MODEL_COLOR
+end box
+
+[-> QuietCommand : execute(model)
+activate QuietCommand
+
+note over QuietCommand, ModelManager
+    Capture today's date using Clock.
+    Prepare the predicate and comparator.
+    Full-list access and helper calls are omitted.
+end note
+
+QuietCommand -> ModelManager : updateSortedPersonList(\npredicate, comparator)
+activate ModelManager
+
+ModelManager -> FilteredList : setPredicate(predicate)
+activate FilteredList
+FilteredList --> ModelManager
+deactivate FilteredList
+
+ModelManager -> SortedList : setComparator(comparator)
+activate SortedList
+SortedList --> ModelManager
+deactivate SortedList
+
+note over FilteredList, SortedList
+    Only the displayed view changes.
+    Stored supporter order is preserved.
+end note
+
+ModelManager --> QuietCommand
+deactivate ModelManager
+
+QuietCommand -> ModelManager : getFilteredPersonList()
+activate ModelManager
+ModelManager --> QuietCommand : sortedPersons
+deactivate ModelManager
+
+QuietCommand -> SortedList : size()
+activate SortedList
+SortedList --> QuietCommand : count
+deactivate SortedList
+
+note over QuietCommand, ModelManager
+    Create a CommandResult reporting count and DAYS.
+end note
+
+[<-- QuietCommand : result
+deactivate QuietCommand
+
+@enduml
