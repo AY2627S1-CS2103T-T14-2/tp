@@ -232,7 +232,7 @@ dates retain source order even when a tag or other update replaces a supporter r
 The sequence diagram below shows a successful `QuietCommand#execute(Model)` call, focusing on
 the filter and sort updates inside the Model component. The `ModelManager` instance is accessed
 through the `Model` interface. Predicate evaluations, comparator callbacks and automatic JavaFX
-change notifications are omitted; the notes summarise the eligibility and ordering rules.
+change notifications are omitted to focus on the explicit calls.
 Parsing and the later commit check and save performed by `LogicManager` are outside this diagram's scope.
 
 <puml src="diagrams/QuietSequenceDiagram.puml" alt="Filtering and sorting the displayed supporters when quiet executes" />

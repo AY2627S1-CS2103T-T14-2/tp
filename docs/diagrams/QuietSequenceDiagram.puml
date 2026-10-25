@@ -34,6 +34,11 @@ activate SortedList
 SortedList --> ModelManager
 deactivate SortedList
 
+note over FilteredList, SortedList
+    Only the displayed view changes.
+    Stored supporter order is preserved.
+end note
+
 ModelManager --> QuietCommand
 deactivate ModelManager
 
@@ -53,13 +58,5 @@ end note
 
 [<-- QuietCommand : result
 deactivate QuietCommand
-
-note over QuietCommand, SortedList
-    Include a supporter only if not Declined AND
-    (no interactions OR latest contact was strictly more than DAYS days ago).
-    Never-contacted supporters come first, then latest-contact dates ascending.
-    Equal dates retain current full-list order, including after record updates.
-    Stored supporter records and their order are unchanged.
-end note
 
 @enduml
