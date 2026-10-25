@@ -3,6 +3,10 @@
 skinparam arrowThickness 1.1
 skinparam arrowColor UI_COLOR_T4
 skinparam classBackgroundColor UI_COLOR
+'Compensate to match diagram text size to DG text size
+skinparam defaultFontSize 32
+skinparam classFontSize 32
+skinparam rectangleFontSize 32
 
 package UI <<Rectangle>>{
 Class "<<interface>>\nUi" as Ui
