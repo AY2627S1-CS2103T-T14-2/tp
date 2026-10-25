@@ -87,6 +87,7 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 
 - At least one of `p/PHONE` and `e/EMAIL` must be given, so that there is a way to reach the supporter. Online donors often give only an email, and people met at events often give only a number.
 - `a/ADDRESS` can be left out, e.g. when you do not know a corporate contact's postal address.
+- To leave out a field the supporter does not have, leave out its prefix too. A prefix with nothing after it, e.g. `e/` on its own, is rejected with a message saying which field is blank. (In `edit`, an empty prefix clears the field instead.)
 - `ORGANISATION` is the company or group the supporter belongs to, e.g. the company a CSR contact speaks for. Leave out `o/ORGANISATION` for individual donors.
 - `ORGANISATION` can contain any characters (e.g. `Procter & Gamble`), must not be blank, and can be at most 100 characters long. Extra spaces are removed.
 - `STAGE` is the supporter's cultivation stage, and must be one of `prospect`, `contacted`, `cultivating`, `giving`, `lapsed` or `declined`. Upper and lower case are both accepted.
