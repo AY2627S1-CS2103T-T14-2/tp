@@ -190,7 +190,7 @@ Shows how many supporters are at each cultivation stage, e.g. to check whether t
 Format: `stats`
 
 - Every supporter is counted, including those hidden by a `find` filter.
-- All six stages are listed in order, including stages with no supporters.
+- All six stages are listed in order on one line, including stages with no supporters.
 - The displayed list and the detail panel do not change.
 - Anything typed after the command word is ignored; `stats 123` behaves as `stats`.
 
@@ -198,12 +198,7 @@ For example, with four supporters:
 
 ```text
 Supporters by stage (4 in total):
-Prospect: 1
-Contacted: 0
-Cultivating: 0
-Giving: 2
-Lapsed: 1
-Declined: 0
+Prospect: 1, Contacted: 0, Cultivating: 0, Giving: 2, Lapsed: 1, Declined: 0
 ```
 
 ### Finding supporters by name or other fields: `find`
