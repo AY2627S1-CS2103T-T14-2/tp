@@ -40,7 +40,8 @@ MainWindow *-down-> "1" SupporterDetailPanel
 MainWindow *-down-> "1" StatusBarFooter
 MainWindow --> "0..1" HelpWindow
 
-PersonListPanel -down-> "*" PersonCard
+'Padded with spaces to prevent overlap with the arrow
+PersonListPanel -down-> "      *" PersonCard
 
 SupporterDetailPanel ..> SupporterDetailData
 SupporterDetailData ..> LastContactFormatter
