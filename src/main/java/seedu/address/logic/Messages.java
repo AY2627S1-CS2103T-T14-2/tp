@@ -20,6 +20,12 @@ public class Messages {
     public static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format!\n%1$s";
     public static final String MESSAGE_INVALID_PERSON_DISPLAYED_INDEX = "The supporter index provided is invalid.";
     public static final String MESSAGE_PERSONS_LISTED_OVERVIEW = "%1$d supporter(s) listed!";
+    public static final String MESSAGE_UNRECOGNISED_PREFIX = "Note: %1$s is not a recognised prefix, "
+            + "so it was saved as part of the value before it. "
+            + "If this was a typo, run undo and enter the command again.";
+    public static final String MESSAGE_UNRECOGNISED_PREFIXES = "Note: %1$s are not recognised prefixes, "
+            + "so they were saved as part of the values before them. "
+            + "If this was a typo, run undo and enter the command again.";
     public static final String MESSAGE_DUPLICATE_PERSON = "A supporter named %1$s already exists. "
             + "If this is a different person, add something to tell them apart, e.g. n/%1$s DBS";
     public static final String MESSAGE_DUPLICATE_FIELDS =
@@ -59,6 +65,17 @@ public class Messages {
                 .sorted(Tag.ALPHABETICAL_ORDER)
                 .map(Tag::toString)
                 .collect(Collectors.joining(" "));
+    }
+
+    /**
+     * Returns a note pointing out {@code unrecognisedPrefixes}, e.g. {@code em/}, which were saved as text.
+     */
+    public static String formatUnrecognisedPrefixNote(List<String> unrecognisedPrefixes) {
+        assert !unrecognisedPrefixes.isEmpty() : "only called when an unrecognised prefix was found";
+        if (unrecognisedPrefixes.size() == 1) {
+            return String.format(MESSAGE_UNRECOGNISED_PREFIX, unrecognisedPrefixes.get(0));
+        }
+        return String.format(MESSAGE_UNRECOGNISED_PREFIXES, String.join(", ", unrecognisedPrefixes));
     }
 
     /**

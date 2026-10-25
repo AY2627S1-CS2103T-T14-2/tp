@@ -1,8 +1,13 @@
 package seedu.address.logic.parser;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -15,6 +20,16 @@ import java.util.stream.Collectors;
  */
 public class ArgumentTokenizer {
 
+    /** A word of letters ending in a slash, at the start or after whitespace, e.g. {@code dte/}. */
+    private static final Pattern PREFIX_LIKE_WORD = Pattern.compile("(?<!\\S)([A-Za-z]+/)(\\S*)");
+
+    private static final Set<String> RECOGNISED_PREFIXES = CliSyntax.ALL_PREFIXES.stream()
+            .map(Prefix::getPrefix)
+            .collect(Collectors.toUnmodifiableSet());
+
+    /** Everyday words written with a slash, which are not mistyped prefixes. Compared ignoring case. */
+    private static final Set<String> SLASHED_WORDS = Set.of("s/o", "d/o", "c/o", "w/o", "and/or");
+
     /**
      * Tokenizes an arguments string and returns an {@code ArgumentMultimap} object that maps prefixes to their
      * respective argument values. Only the given prefixes will be recognized in the arguments string.
@@ -26,6 +41,27 @@ public class ArgumentTokenizer {
     public static ArgumentMultimap tokenize(String argsString, Prefix... prefixes) {
         List<PrefixPosition> positions = findAllPrefixPositions(argsString, prefixes);
         return extractArguments(argsString, positions);
+    }
+
+    /**
+     * Returns the distinct words in {@code commandText} that look like a prefix but are not one of
+     * SupporterBook's prefixes, in the order they first appear, e.g. {@code [em/]} for
+     * {@code add n/Tan p/91234567 em/tan@example.com}. Such a word is read as part of the value before it,
+     * so a mistyped prefix after an address or a note would otherwise be saved without the user noticing.
+     */
+    public static List<String> findUnrecognisedPrefixes(String commandText) {
+        requireNonNull(commandText);
+        List<String> unrecognisedPrefixes = new ArrayList<>();
+        Matcher matcher = PREFIX_LIKE_WORD.matcher(commandText);
+        while (matcher.find()) {
+            String prefix = matcher.group(1);
+            boolean isRecognised = RECOGNISED_PREFIXES.contains(prefix);
+            boolean isSlashedWord = SLASHED_WORDS.contains(matcher.group().toLowerCase());
+            if (!isRecognised && !isSlashedWord && !unrecognisedPrefixes.contains(prefix)) {
+                unrecognisedPrefixes.add(prefix);
+            }
+        }
+        return unrecognisedPrefixes;
     }
 
     /**

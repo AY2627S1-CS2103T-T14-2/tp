@@ -13,6 +13,7 @@ import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
+import seedu.address.logic.parser.ArgumentTokenizer;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Name;
@@ -48,8 +49,12 @@ public class LogicManager implements Logic {
         logger.info("----------------[USER COMMAND][" + commandText + "]");
 
         Command command = addressBookParser.parseCommand(commandText);
+        List<Person> personsBeforeCommand = List.copyOf(model.getAddressBook().getPersonList());
         CommandResult commandResult = command.execute(model);
         model.commitAddressBookIfChanged();
+        if (!personsBeforeCommand.equals(model.getAddressBook().getPersonList())) {
+            commandResult = addUnrecognisedPrefixNote(commandResult, commandText);
+        }
 
         try {
             storage.saveAddressBook(model.getAddressBook());
@@ -60,6 +65,19 @@ public class LogicManager implements Logic {
         }
 
         return commandResult;
+    }
+
+    /**
+     * Adds a note to {@code commandResult} if {@code commandText} contains words that look like prefixes but
+     * are not, since the command has just saved them as part of a value (e.g. an address or a note).
+     */
+    private CommandResult addUnrecognisedPrefixNote(CommandResult commandResult, String commandText) {
+        List<String> unrecognisedPrefixes = ArgumentTokenizer.findUnrecognisedPrefixes(commandText);
+        if (unrecognisedPrefixes.isEmpty()) {
+            return commandResult;
+        }
+        logger.info("Saved text containing unrecognised prefixes: " + unrecognisedPrefixes);
+        return commandResult.withNote(Messages.formatUnrecognisedPrefixNote(unrecognisedPrefixes));
     }
 
     @Override

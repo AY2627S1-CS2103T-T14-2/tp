@@ -65,6 +65,10 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
   For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
   For `find`, name keywords must come before the first prefix; its prefixed filters can be in any order.
 
+- A command only recognises the prefixes in its own format. Anything else that looks like a prefix is read as part of the value before it, e.g. `em/` mistyped for `e/`, or `e/` used in `log`.<br>
+  If a command saves a word that is not one of SupporterBook's prefixes (`n/`, `p/`, `e/`, `a/`, `o/`, `st/`, `t/`, `nt/`, `dt/`, `by/`), e.g. into an address or a note, the result display adds a note naming it, so you can run `undo` and enter the command again. Everyday words such as `s/o`, `c/o` and `and/or` are not flagged.<br>
+  For example, `log 1 nt/Called dte/2024-10-01` logs the note `Called dte/2024-10-01` dated today, and points out `dte/`.
+
 - Extraneous parameters for commands that take no parameters, such as `help`, `list`, `stats`, `exit`, `clear`, `undo` and `redo`, are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 

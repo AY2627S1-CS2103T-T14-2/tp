@@ -4,6 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.parser.ArgumentTokenizer.findUnrecognisedPrefixes;
+import static seedu.address.testutil.Assert.assertThrows;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -147,4 +151,41 @@ public class ArgumentTokenizerTest {
         assertNotEquals(aaa, new Prefix("aab"));
     }
 
+    @Test
+    public void findUnrecognisedPrefixes_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> findUnrecognisedPrefixes(null));
+    }
+
+    @Test
+    public void findUnrecognisedPrefixes_onlyRecognisedPrefixes_returnsEmptyList() {
+        assertEquals(List.of(), findUnrecognisedPrefixes("add n/Tan p/91234567 e/tan@example.com a/Blk 1 "
+                + "o/DBS st/giving t/vip"));
+        assertEquals(List.of(), findUnrecognisedPrefixes("log 1 nt/Called dt/2024-01-01"));
+        assertEquals(List.of(), findUnrecognisedPrefixes("intro 2 by/1"));
+        assertEquals(List.of(), findUnrecognisedPrefixes("list"));
+    }
+
+    @Test
+    public void findUnrecognisedPrefixes_mistypedPrefixes_returnsThemInOrder() {
+        assertEquals(List.of("em/"), findUnrecognisedPrefixes("add n/Tan p/91234567 em/tan@example.com"));
+        assertEquals(List.of("dte/"),
+                findUnrecognisedPrefixes("log 1 nt/Called about the gala dte/2024-01-01"));
+        assertEquals(List.of("x/", "emai/"),
+                findUnrecognisedPrefixes("add n/Tan x/1 a/Blk 1 emai/t@x.com x/2"));
+
+        // prefixes are case-sensitive, so a capitalised prefix is not recognised
+        assertEquals(List.of("N/"), findUnrecognisedPrefixes("add N/Tan p/91234567"));
+    }
+
+    @Test
+    public void findUnrecognisedPrefixes_slashesThatAreNotPrefixes_returnsEmptyList() {
+        // everyday words written with a slash, in any case
+        assertEquals(List.of(), findUnrecognisedPrefixes("add n/Ravi s/o Kumar p/9123 a/Blk 1 c/o Mdm Tan"));
+        assertEquals(List.of(), findUnrecognisedPrefixes("add n/Priya D/O Kumar p/9123"));
+        assertEquals(List.of(), findUnrecognisedPrefixes("log 1 nt/Him and/or his wife, w/o the kids"));
+
+        // a slash inside a word, after digits or in a link
+        assertEquals(List.of(), findUnrecognisedPrefixes("log 1 nt/50/50 split, see https://example.com/a"));
+        assertEquals(List.of(), findUnrecognisedPrefixes("add n/Tan p/9123 a/Blk 12/3 Tampines"));
+    }
 }

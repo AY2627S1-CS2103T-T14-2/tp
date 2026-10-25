@@ -226,4 +226,29 @@ public class LogicManagerTest {
         expectedModel.addPerson(expectedPerson);
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
     }
+
+    @Test
+    public void execute_changeWithUnrecognisedPrefix_addsNote() throws Exception {
+        model.addPerson(ALICE);
+        CommandResult result = logic.execute("log 1 nt/Called about the gala dte/2024-01-01");
+
+        assertEquals(String.format(Messages.MESSAGE_UNRECOGNISED_PREFIX, "dte/"),
+                result.getFeedbackToUser().lines().toList().getLast());
+    }
+
+    @Test
+    public void execute_noChangeWithUnrecognisedPrefix_noNote() throws Exception {
+        model.addPerson(ALICE);
+        CommandResult result = logic.execute("find x/Alice");
+
+        assertEquals(String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, 0), result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_changeWithoutUnrecognisedPrefix_noNote() throws Exception {
+        model.addPerson(ALICE);
+        CommandResult result = logic.execute("log 1 nt/Called about the gala, and/or the dinner");
+
+        assertEquals(1, result.getFeedbackToUser().lines().count());
+    }
 }

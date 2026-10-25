@@ -60,4 +60,10 @@ public class CommandResultTest {
                 + ", exit=" + commandResult.isExit() + "}";
         assertEquals(expected, commandResult.toString());
     }
+
+    @Test
+    public void withNote_addsNoteOnNewLineAndKeepsFlags() {
+        CommandResult commandResult = new CommandResult("feedback", true, false);
+        assertEquals(new CommandResult("feedback\nnote", true, false), commandResult.withNote("note"));
+    }
 }

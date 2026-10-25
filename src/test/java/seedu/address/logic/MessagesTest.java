@@ -1,6 +1,7 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static seedu.address.testutil.Assert.assertThrows;
 
 import java.util.List;
 
@@ -33,5 +34,14 @@ public class MessagesTest {
         List<Tag> tags = List.of(new Tag("vip"), new Tag("Donor"), new Tag("boardIntro"));
         assertEquals("[boardIntro] [Donor] [vip]", Messages.formatTags(tags));
         assertEquals("", Messages.formatTags(List.of()));
+    }
+
+    @Test
+    public void formatUnrecognisedPrefixNote_oneOrMorePrefixes_namesThem() {
+        assertEquals(String.format(Messages.MESSAGE_UNRECOGNISED_PREFIX, "em/"),
+                Messages.formatUnrecognisedPrefixNote(List.of("em/")));
+        assertEquals(String.format(Messages.MESSAGE_UNRECOGNISED_PREFIXES, "em/, dte/"),
+                Messages.formatUnrecognisedPrefixNote(List.of("em/", "dte/")));
+        assertThrows(AssertionError.class, () -> Messages.formatUnrecognisedPrefixNote(List.of()));
     }
 }
