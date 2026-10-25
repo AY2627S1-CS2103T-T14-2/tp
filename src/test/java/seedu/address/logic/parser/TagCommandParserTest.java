@@ -40,6 +40,14 @@ public class TagCommandParserTest {
     }
 
     @Test
+    public void parse_tagsDifferingOnlyInCase_keepsFirstTyped() {
+        assertParseSuccess(parser, " 1 t/vip t/VIP",
+                new TagCommand(INDEX_FIRST_PERSON, Set.of(new Tag("vip"))));
+        assertParseSuccess(parser, " 1 t/VIP t/vip",
+                new TagCommand(INDEX_FIRST_PERSON, Set.of(new Tag("VIP"))));
+    }
+
+    @Test
     public void parse_missingParts_failure() {
         // nothing given
         assertParseFailure(parser, "", MESSAGE_INVALID_FORMAT);

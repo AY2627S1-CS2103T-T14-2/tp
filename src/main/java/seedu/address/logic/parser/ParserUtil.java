@@ -7,7 +7,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import seedu.address.commons.core.index.Index;
@@ -246,13 +246,20 @@ public class ParserUtil {
     }
 
     /**
-     * Parses {@code Collection<String> tags} into a {@code Set<Tag>}.
+     * Parses {@code Collection<String> tags} into a {@code Set<Tag>} in the order they were typed.
+     * Tags differing only in case count as one, keeping the spelling typed first.
+     *
+     * @throws ParseException if any of the given tags is invalid.
      */
     public static Set<Tag> parseTags(Collection<String> tags) throws ParseException {
         requireNonNull(tags);
-        final Set<Tag> tagSet = new HashSet<>();
+        final Set<Tag> tagSet = new LinkedHashSet<>();
         for (String tagName : tags) {
-            tagSet.add(parseTag(tagName));
+            Tag tag = parseTag(tagName);
+            // tags differing only in case count as one, so the spelling typed first is kept
+            if (tagSet.stream().noneMatch(tag::isSameTag)) {
+                tagSet.add(tag);
+            }
         }
         return tagSet;
     }

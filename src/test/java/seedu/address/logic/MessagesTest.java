@@ -29,6 +29,14 @@ public class MessagesTest {
     }
 
     @Test
+    public void format_severalTags_alphabeticalIgnoringCase() {
+        Person person = new PersonBuilder().withName("Tan Wei Ming").withPhone("91234567").withoutAddress()
+                .withTags("vip", "Donor", "boardIntro").build();
+        assertEquals("Tan Wei Ming; Stage: Prospect; Phone: 91234567; Email: "
+                + person.getEmail().get() + "; Tags: [boardIntro][Donor][vip]", Messages.format(person));
+    }
+
+    @Test
     public void formatTags_alphabeticalIgnoringCase() {
         List<Tag> tags = List.of(new Tag("vip"), new Tag("Donor"), new Tag("boardIntro"));
         assertEquals("[boardIntro] [Donor] [vip]", Messages.formatTags(tags));

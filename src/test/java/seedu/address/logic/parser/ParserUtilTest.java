@@ -388,4 +388,11 @@ public class ParserUtilTest {
 
         assertEquals(expectedTagSet, actualTagSet);
     }
+
+    @Test
+    public void parseTags_tagsDifferingOnlyInCase_keepsFirstTyped() throws Exception {
+        Set<Tag> actualTagSet = ParserUtil.parseTags(List.of("vip", VALID_TAG_1, "VIP", "Vip"));
+
+        assertEquals(List.of(new Tag("vip"), new Tag(VALID_TAG_1)), List.copyOf(actualTagSet));
+    }
 }
