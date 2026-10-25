@@ -229,6 +229,14 @@ dates ascending. An explicit tie-breaker reads each supporter's current full-lis
 dates retain source order even when a tag or other update replaces a supporter record. The underlying
 `VersionedAddressBook` list is unchanged, so display sorting changes neither JSON order nor undo history.
 
+The sequence diagram below shows a successful `QuietCommand#execute(Model)` call, focusing on
+the filter and sort updates inside the Model component. The `ModelManager` instance is accessed
+through the `Model` interface. Predicate evaluations, comparator callbacks and automatic JavaFX
+change notifications are omitted to focus on the explicit calls.
+Parsing and the later commit check and save performed by `LogicManager` are outside this diagram's scope.
+
+<puml src="diagrams/QuietSequenceDiagram.puml" alt="Filtering and sorting the displayed supporters when quiet executes" />
+
 `updateFilteredPersonList(Predicate)` clears the comparator as well as updating the predicate.
 Existing `list`, `find`, `add`, `edit`, `undo` and `redo` paths therefore restore normal ordering
 without command-specific reset logic. Index-based commands already use `getFilteredPersonList()`
