@@ -6,7 +6,9 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_INTRODUCER;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
@@ -37,6 +39,8 @@ public class IntroCommand extends Command {
     public static final String MESSAGE_INTRODUCTION_LOOP =
             "%1$s cannot be recorded as the introducer of %2$s, "
             + "because %2$s introduced %1$s, directly or through other supporters.";
+
+    private static final Logger logger = LogsCenter.getLogger(IntroCommand.class);
 
     private final Index targetIndex;
     private final Optional<Index> introducerIndex;
@@ -80,6 +84,8 @@ public class IntroCommand extends Command {
         Person updatedPerson = target.withIntroducer(newIntroducer);
         model.setPerson(target, updatedPerson);
         model.setViewedPerson(updatedPerson);
+        logger.fine("Changed the introducer of " + target.getName() + " to "
+                + newIntroducer.map(Name::toString).orElse("none"));
         return new CommandResult(createChangedMessage(target, oldIntroducer, newIntroducer));
     }
 
