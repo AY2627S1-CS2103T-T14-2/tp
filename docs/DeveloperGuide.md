@@ -1393,8 +1393,8 @@ testers are expected to do more _exploratory_ testing.
    Expected: All three additions succeed and preserve their phone formatting.
 1. Run `find Phone p/9123`.<br>
    Expected: `Phone Label Test` and `Phone Extension Test` match.
-1. Run `find p/(65)`, then `view 1`.<br>
-   Expected: The country-code supporter is shown with the entered parentheses preserved.
+1. Run `find Country p/(65)`, then `view 1`.<br>
+   Expected: Only `Country Code Test` matches and is shown with the entered parentheses preserved.
 1. Run `edit 1 p/+65 8123-4567 ext 1 (Office)`, then `find p/8123-4567 EXT 1`.<br>
    Expected: The edited supporter matches; the extension marker's case does not affect searching.
 1. Close and reopen the app, then find and view that supporter.<br>
