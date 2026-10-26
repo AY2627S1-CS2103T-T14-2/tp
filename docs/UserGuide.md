@@ -90,9 +90,19 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 - To leave out a field the supporter does not have, leave out its prefix too. A prefix with nothing after it, e.g. `e/` on its own, is rejected with a message saying which field is blank. (In `edit`, an empty prefix clears the field instead.)
 - `ORGANISATION` is the company or group the supporter belongs to, e.g. the company a CSR contact speaks for. Leave out `o/ORGANISATION` for individual donors.
 - `ORGANISATION` can contain any characters (e.g. `Procter & Gamble`), must not be blank, and can be at most 100 characters long. Extra spaces are removed.
+- `EMAIL` must be of the form `local-part@domain`. The local part can contain letters, digits and the special characters `+`, `_`, `-` and `.`, e.g. `wei_ming+donations@dbs.com`. A period cannot start or end the local part, or appear twice in a row. The domain is made up of labels separated by periods, e.g. `u.nus.edu`.
 - `STAGE` is the supporter's cultivation stage, and must be one of `prospect`, `contacted`, `cultivating`, `giving`, `lapsed` or `declined`. Upper and lower case are both accepted.
 - If `st/STAGE` is left out, the new supporter starts at stage `Prospect`.
-- `PHONE` may start with `+` and must contain between 3 and 15 digits. Digit groups may be separated by single spaces or hyphens, including a mixture of both. For example, `+65 9123 4567`, `+65-9123-4567` and `+65 9123-4567` are accepted. Consecutive separators such as `+65  9123` or `+65- 9123` are not accepted. Your formatting is preserved when the number is displayed and saved.
+- `PHONE` may start with `+` and must contain between 3 and 15 main-number digits.
+  Digit groups may be separated by single spaces or hyphens, including a mixture of both.
+  A digit group may be enclosed in balanced parentheses, e.g. `(65) 9123 4567`.
+  Consecutive separators such as `+65  9123` or `+65- 9123` are not accepted.
+- A phone number may end with `ext` followed by 1 to 6 extension digits and/or an alphabetic
+  label in parentheses, with single spaces between parts. `ext` is case-insensitive.
+  If both are supplied, the extension comes before the label, e.g. `9123 4567 ext 12 (Office)`.
+  Labels contain English letters, optionally separated by single spaces, e.g. `(HP)`, `(Home)`
+  and `(Office Fax)`. Extension digits do not count towards the main number's 3-to-15-digit limit.
+  Your formatting, including the extension and label, is preserved when displayed and saved.
 - `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'`), hyphens (`-`) and periods (`.`), e.g. `O'Brien`, `Lee-Tan` and `J. Tan`.
 - `NAME` can also contain `s/o` or `d/o` as separate words, e.g. `Ravi s/o Kumar` and `Priya d/o Kumar`. Upper and lower case are both accepted.
 - SupporterBook only checks which characters a name uses, not whether it looks like a real name. For example, `s/o Kumar` or a name with only initials is accepted.
@@ -100,6 +110,20 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 - Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
 - `TAG` must be alphanumeric, with no spaces, e.g. `t/boardIntro`. Tags that differ only in capitalisation, e.g. `t/vip t/VIP`, count as one tag, and the spelling typed first is kept.
 - After adding, the list shows all supporters in the order they were added (any `find` or `quiet` filter is cleared), with the new supporter at the bottom.
+
+If another supporter has the same phone number or email, the addition still succeeds, but a
+warning names the existing supporters and identifies the shared fields. Shared contact details
+may be legitimate, so the warning does not block saving. Check the named records before deciding
+whether to keep or undo the addition.
+
+Phone comparison uses the complete number, ignoring formatting; country codes are not inferred,
+so `+65 9123-4567` and `6591234567` match, but `91234567` is not assumed to be the same number.
+Email comparison ignores case but does not remove dots or `+suffixes`.
+The check includes supporters hidden by `find` or `quiet`. It applies when adding, not when editing
+or loading existing data, and does not change the rule that duplicate names are rejected.
+
+For example, if Alex Yeoh already has phone `87438807`, `add n/Dup Phone p/87438807` still adds
+the new supporter and includes a warning identifying `Alex Yeoh (phone)`.
 
 <box type="tip" seamless>
 
@@ -110,6 +134,8 @@ Examples:
 
 - `add n/Aisha Rahman e/aisha.r@gmail.com` adds an online donor who gave only an email.
 - `add n/Marie Laurent p/+33 1 42 68 53 00` adds a supporter with an international phone number.
+- `add n/Phone Label Test p/9123 4567 (HP)` stores a phone number with a type label.
+- `add n/Phone Extension Test p/(65) 9123-4567 ext 12 (Office)` stores a country code, extension and label.
 - `add n/J. O'Brien-Tan p/91234567` adds a supporter whose name contains periods, apostrophes and hyphens.
 - `add n/Ravi s/o Kumar p/81112222 a/Bedok North Ave 1 st/contacted` adds a supporter named `Ravi s/o Kumar` at stage `Contacted`.
 - `add n/John Lim p/81112222 e/johnlim@example.com a/Bedok North Ave 1 st/lapsed` adds a past donor at stage `Lapsed`.
@@ -217,7 +243,7 @@ Supply at least one name keyword or nonempty prefix value. Name keywords are opt
 | Organisation | `o/ORG` | Case-insensitive substring; `o/dbs` matches `DBS Bank` |
 | Tag | `t/TAG` | Case-insensitive substring of any tag; `t/board` matches `boardIntro` |
 | Stage | `st/STAGE` | Complete stage name, ignoring case; `st/GIVING` matches `Giving`, but `st/giv` is invalid |
-| Phone | `p/PHONE` | Substring after removing `+`, spaces and hyphens from both the query and saved number |
+| Phone | `p/PHONE` | Digit substring after ignoring formatting, a trailing type label and the `ext` marker; extension digits remain searchable |
 | Email | `e/EMAIL` | Case-insensitive substring; `e/@gmail` matches an address containing `@gmail` |
 
 - **OR within a field:** any name keyword can match, and repeated values of a prefix are alternatives. For example, `find st/giving st/lapsed` finds supporters at either stage.
@@ -226,7 +252,12 @@ Supply at least one name keyword or nonempty prefix value. Name keywords are opt
 - Name keywords must appear before the first prefix, without quotation marks. Use `find tan o/DBS Bank`, not `find o/DBS Bank tan`: the latter searches for the organisation text `DBS Bank tan`.
 - Prefix values may contain multiple words. Each prefix value is one search phrase; `o/DBS Bank` searches for that phrase. Name keywords are separated by whitespace and use OR; `weiming` does not match `Wei Ming`.
 - Prefixed filters can appear in any order. To provide alternatives, repeat the prefix: use `st/giving st/lapsed`, not `st/giving lapsed`.
-- Phone queries can be shorter than a complete number. For example, `p/91-23` matches `91234567`, and `p/659123` matches the same digits in a formatted number such as `+65 9123-4567`. Phone queries must contain at least one digit and can contain only digits, `+`, spaces and hyphens; a query such as `p/+` is rejected.
+- Phone queries follow the phone format above, but the main-number length limit does not apply.
+  For example, `p/91-23` matches `91234567`, `p/(65) 9123` matches `(65) 9123-4567 (HP)`,
+  and `p/4567 ext 12` matches `9123 4567 ext 12 (Office)`.
+  Formatting, the `ext` marker and type labels are ignored; the main and extension digits form
+  the searchable digit sequence. Queries must contain main-number digits: `p/+` and `p/(HP)`
+  are rejected. Labels cannot be searched by themselves using `p/`.
 - A supporter without an organisation, phone number, email or tags does not match a search on that missing field.
 - Results stay in their original list order and are numbered from 1. Other commands use these displayed indices.
 - A new `find` searches all supporters and replaces the previous filter. `list`, `add`, `edit`, `undo` and `redo` show the full list again.
@@ -437,6 +468,7 @@ Format: `view INDEX`
 * The panel shows the name, stage, organisation, phone, email, address, tags, introducer and the supporters they introduced. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically.
 * Above the interaction history, the panel shows the same last-contact line as the supporter card, for example `Last contact: 03 Oct 2026`, or `No interactions yet` if there are no logged interactions. The line updates when the displayed supporter's interaction history changes.
 * Interactions appear newest first, e.g. `#4  16 Sep 2026  Sent partnership deck by email`. Numbers descend to `#1`, the oldest entry. On equal dates, later-logged entries appear first.
+* If the window is too short to show everything, the panel gets a scroll bar, so you can scroll down to the interaction history.
 * The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
 * A successful `view`, `log`, `editlog`, `unlog`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
 * Invalid commands leave the displayed supporter unchanged.
@@ -636,9 +668,8 @@ Edit the data file only if you are confident that you can follow the validation 
 
 ## Known issues
 
-1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
-3. **Names containing `a/l` or `a/p` are not supported.** In `add` and `edit`, a space followed by `a/` is treated as an address prefix, so names such as `Ravi a/l Kumar` cannot be entered as intended.
+1. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+2. **Names containing `a/l` or `a/p` are not supported.** In `add` and `edit`, a space followed by `a/` is treated as an address prefix, so names such as `Ravi a/l Kumar` cannot be entered as intended.
 
 ---
 

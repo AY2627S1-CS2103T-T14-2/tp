@@ -19,7 +19,11 @@
   <Label fx:id="startupMessage" text="Type view INDEX to see a supporter's details and history."
          styleClass="label-bright" wrapText="true" minWidth="0" maxWidth="Infinity" />
 
-  <VBox fx:id="detailsContainer" visible="false" managed="false" spacing="0" minWidth="0" VBox.vgrow="ALWAYS">
+  <!-- scrolls only when the window is too short for the details, so the history can always be reached -->
+  <ScrollPane fx:id="detailsScrollPane" visible="false" managed="false" fitToWidth="true" fitToHeight="true"
+              hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" minWidth="0" minHeight="0" VBox.vgrow="ALWAYS"
+              style="-fx-background-color: transparent; -fx-background: #383838;">
+  <VBox fx:id="detailsContainer" visible="false" managed="false" spacing="0" minWidth="0">
     <Label fx:id="supporterName" text="-" styleClass="label-bright"
            wrapText="true" minWidth="0" maxWidth="Infinity">
       <minHeight>
@@ -90,7 +94,7 @@
     </Label>
 
     <ScrollPane fx:id="historyScrollPane" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
-                minWidth="0" minHeight="0" VBox.vgrow="ALWAYS"
+                minWidth="0" minHeight="100" VBox.vgrow="ALWAYS"
                 style="-fx-background-color: transparent; -fx-background: #383838;">
       <content>
         <VBox spacing="10" minWidth="0" styleClass="background">
@@ -105,4 +109,5 @@
       </content>
     </ScrollPane>
   </VBox>
+  </ScrollPane>
 </VBox>

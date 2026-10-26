@@ -1,5 +1,6 @@
 package seedu.address.storage;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -9,6 +10,7 @@ import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -65,6 +67,17 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void readAddressBook_nullTag_throwsDataLoadingExceptionWithoutChangingFile() throws Exception {
+        Path dataFile = testFolder.resolve("supporterbook.json");
+        Files.copy(TEST_DATA_FOLDER.resolve("nullTagAddressBook.json"), dataFile);
+        byte[] originalContents = Files.readAllBytes(dataFile);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+        assertArrayEquals(originalContents, Files.readAllBytes(dataFile));
+    }
+
+    @Test
     public void readAndSaveAddressBook_allInOrder_success() throws Exception {
         Path filePath = testFolder.resolve("TempAddressBook.json");
         AddressBook original = getTypicalAddressBook();
@@ -97,6 +110,19 @@ public class JsonAddressBookStorageTest {
     @Test
     public void saveAddressBook_nullAddressBook_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> saveAddressBook(null, "SomeFile.json"));
+    }
+
+    @Test
+    public void readAndSaveAddressBook_annotatedPhones_preservesFormatting() throws Exception {
+        AddressBook book = new AddressBook();
+        book.addPerson(new PersonBuilder(ALICE).withPhone("9123 4567 (HP)").build());
+        book.addPerson(new PersonBuilder(HOON).withPhone("(65) 9123 4567").build());
+        book.addPerson(new PersonBuilder(IDA).withPhone("9123 4567 ext 12").build());
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("annotated.json"));
+
+        storage.saveAddressBook(book);
+
+        assertEquals(book, storage.readAddressBook().orElseThrow());
     }
 
     /**

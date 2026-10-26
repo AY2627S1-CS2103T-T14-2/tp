@@ -66,6 +66,17 @@ public class PersonMatchesSearchPredicateTest {
     }
 
     @Test
+    public void test_annotatedPhones_matchesDigitsIgnoringLabelsAndExtensionMarkers() {
+        Person annotated = new PersonBuilder(supporter).withPhone("(65) 9123-4567 ext 12 (Office)").build();
+        for (String query : List.of("659123", "(65) 9123", "4567 EXT 12 (HP)", "12")) {
+            PersonMatchesSearchPredicate predicate = new PersonMatchesSearchPredicate(List.of(), List.of(),
+                    List.of(), List.of(), List.of(query), List.of());
+            assertTrue(predicate.test(annotated), query);
+            assertFalse(predicate.test(new PersonBuilder(annotated).withPhone("88888888").build()), query);
+        }
+    }
+
+    @Test
     public void test_emailKeywords_matchesAnyCaseInsensitiveSubstring() {
         PersonMatchesSearchPredicate predicate = new PersonMatchesSearchPredicate(List.of(), List.of(), List.of(),
                 List.of(), List.of(), List.of("@gmail", "@DBS"));

@@ -187,6 +187,23 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_annotatedPhone_preservesFormatting() {
+        String[] phones = {"9123 4567 (HP)", "(65) 9123 4567", "9123 4567 ext 12", "+65 9123-4567 ext 12 (Office)"};
+        for (String phone : phones) {
+            EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(phone).build();
+            assertParseSuccess(parser, "1 " + PREFIX_PHONE + phone, new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        }
+    }
+
+    @Test
+    public void parse_malformedPhoneAnnotations_failure() {
+        String[] phones = {"(65 9123 4567", "9123 4567 (HP2)", "9123 4567 ext 1234567", "12 ext 123"};
+        for (String phone : phones) {
+            assertParseFailure(parser, "1 " + PREFIX_PHONE + phone, Phone.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
     public void parse_oneFieldSpecified_success() {
         // name
         Index targetIndex = INDEX_THIRD_PERSON;

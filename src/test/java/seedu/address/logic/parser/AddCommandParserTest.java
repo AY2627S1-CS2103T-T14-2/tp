@@ -130,6 +130,24 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_annotatedPhone_preservesFormatting() {
+        String[] phones = {"9123 4567 (HP)", "(65) 9123 4567", "9123 4567 ext 12", "+65 9123-4567 ext 12 (Office)"};
+        for (String phone : phones) {
+            Person expectedPerson = new PersonBuilder(AMY).withPhone(phone).build();
+            assertParseSuccess(parser, NAME_DESC_AMY + " " + PREFIX_PHONE + phone + EMAIL_DESC_AMY
+                    + ADDRESS_DESC_AMY + STAGE_DESC_AMY + TAG_DESC_FRIEND, new AddCommand(expectedPerson));
+        }
+    }
+
+    @Test
+    public void parse_malformedPhoneAnnotations_failure() {
+        String[] phones = {"(65 9123 4567", "9123 4567 (HP2)", "9123 4567 ext 1234567", "12 ext 123"};
+        for (String phone : phones) {
+            assertParseFailure(parser, NAME_DESC_BOB + " " + PREFIX_PHONE + phone, Phone.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
     public void parse_stageCaseAndWhitespace_success() {
         Person expectedPerson = new PersonBuilder(BOB).withStage("lapsed").build();
 
