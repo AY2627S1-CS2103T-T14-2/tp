@@ -282,6 +282,28 @@ Two supporters count as the same supporter if their names match, ignoring case a
   - Pros: Namesakes can be stored without changing either name.
   - Cons: The same person could be added twice as soon as they change jobs and contact details.
 
+### Shared-contact warnings when adding
+
+`AddCommand` checks the existing name-based duplicate rule first. For a new name, it creates
+`SharedContactWarning` from a snapshot of `Model#getAddressBook().getPersonList()` before adding
+the supporter. This includes records hidden by a filter and prevents the new record from being
+reported as its own match.
+
+The warning compares complete phone-number keys and case-insensitive email addresses, not search
+substrings. Phone formatting and type labels are ignored, but country codes are not inferred.
+An extension marker is retained in the comparison key, so a main number followed by extension
+digits is not confused with a longer main number, and different extensions remain distinct.
+Email dots and `+suffixes` are significant. Missing contact fields never match other missing fields.
+
+Each existing supporter is listed once, in full-list order, with `phone`, `email` or `phone and email`.
+The message is appended to the normal success feedback only when matches exist. Shared contacts
+do not block the addition or update existing supporters. `LogicManager` saves and commits the
+addition normally, producing one undoable change. Editing and loading do not issue these warnings.
+
+`SharedContactWarningTest` covers matching, normalization, optional fields and deterministic messages.
+`SharedContactWarningIntegrationTest` checks the reported examples, hidden matches, persistence,
+selection, unchanged rejection rules and undo/redo through `LogicManager`.
+
 ### Cultivation stage field
 
 Every `Person` has exactly one cultivation stage (see the [Glossary](#glossary) for what each stage means). The stage is represented by the `Stage` enumeration in the `Model` component, with the six values `PROSPECT`, `CONTACTED`, `CULTIVATING`, `GIVING`, `LAPSED` and `DECLINED`.
@@ -1114,6 +1136,24 @@ testers are expected to do more _exploratory_ testing.
       Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
+
+### Adding supporters with shared contact details
+
+1. Prerequisites: Use fresh sample data in an isolated test folder. Alex Yeoh has phone `87438807`
+   and email `alexyeoh@example.com`.
+1. Run `add n/Dup Phone p/87438807`.<br>
+   Expected: The supporter is added and saved. Feedback includes `Alex Yeoh (phone)` in a warning.
+1. Run `add n/Dup Email e/ALEXYEOH@EXAMPLE.COM`.<br>
+   Expected: The supporter is added. The warning includes `Alex Yeoh (email)` despite the case difference.
+1. Run `undo`, then `redo`.<br>
+   Expected: The second addition is removed and restored as one change; existing supporters are unchanged.
+1. Run `find Bernice`, then `add n/Hidden Phone Match p/8743-8807`.<br>
+   Expected: The warning still names Alex Yeoh even though he was hidden by the filter. Other existing
+   supporters sharing that number are also named. The full list is restored after adding.
+1. Run `add n/Unrelated Supporter p/123456789`.<br>
+   Expected: The normal success feedback appears without a shared-contact warning.
+1. Run `add n/Alex Yeoh p/87438807`.<br>
+   Expected: The duplicate name is rejected; an advisory contact warning does not bypass that rule.
 
 ### Finding and listing supporters
 
