@@ -111,4 +111,13 @@ public class PhoneTest {
             assertFalse(Phone.isValidPhoneSearch(query), query);
         }
     }
+
+    @Test
+    public void normalizeForSearch_annotations_removesFormattingButKeepsExtensionDigits() {
+        assertThrows(NullPointerException.class, () -> Phone.normalizeForSearch(null));
+        assertEquals("6591234567", Phone.normalizeForSearch("+(65) 9123-4567 (HP)"));
+        assertEquals("9123456712", Phone.normalizeForSearch("9123 4567 EXT 12 (Office Fax)"));
+        assertEquals("65abc", Phone.normalizeForSearch("+65 abc"));
+        assertEquals("", Phone.normalizeForSearch("+ -"));
+    }
 }

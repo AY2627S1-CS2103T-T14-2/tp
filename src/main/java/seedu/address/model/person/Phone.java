@@ -30,9 +30,11 @@ public class Phone {
     private static final String DIGIT_GROUP_REGEX = "(?:[0-9]+|\\([0-9]+\\))";
     private static final String MAIN_NUMBER_REGEX = "\\+?" + DIGIT_GROUP_REGEX + "(?:[ -]" + DIGIT_GROUP_REGEX + ")*";
     private static final String EXTENSION_REGEX = "(?: (?i:ext) [0-9]{1," + MAX_EXTENSION_DIGITS + "})?";
-    private static final String LABEL_REGEX = "(?: \\([A-Za-z]+(?: [A-Za-z]+)*\\))?";
+    private static final String TYPE_LABEL_REGEX = " \\([A-Za-z]+(?: [A-Za-z]+)*\\)";
+    private static final String LABEL_REGEX = "(?:" + TYPE_LABEL_REGEX + ")?";
 
     private static final Pattern VALIDATION_PATTERN = Pattern.compile(VALIDATION_REGEX);
+    private static final String TRAILING_LABEL_REGEX = TYPE_LABEL_REGEX + "$";
 
     public final String value;
 
@@ -67,6 +69,17 @@ public class Phone {
     public static boolean isValidPhoneSearch(String test) {
         requireNonNull(test);
         return VALIDATION_PATTERN.matcher(test).matches();
+    }
+
+    /**
+     * Returns search digits, ignoring separators, parentheses, extension markers and a trailing type label.
+     * Extension digits remain searchable. This method does not validate the supplied text.
+     */
+    public static String normalizeForSearch(String phone) {
+        requireNonNull(phone);
+        return phone.replaceAll(TRAILING_LABEL_REGEX, "")
+                .replaceAll("(?i) ext ", "")
+                .replaceAll("[+ ()-]", "");
     }
 
     @Override
