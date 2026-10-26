@@ -31,12 +31,7 @@ public class LogCommandParser implements Parser<LogCommand> {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, LogCommand.MESSAGE_USAGE));
         }
 
-        Index index;
-        try {
-            index = ParserUtil.parseIndex(argMultimap.getPreamble());
-        } catch (ParseException pe) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, LogCommand.MESSAGE_USAGE), pe);
-        }
+        Index index = ParserUtil.parseIndex(argMultimap.getPreamble(), LogCommand.MESSAGE_USAGE);
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NOTE, PREFIX_DATE);
 
