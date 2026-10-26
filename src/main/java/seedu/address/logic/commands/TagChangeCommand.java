@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -20,6 +22,8 @@ import seedu.address.model.tag.Tag;
  * Tags that are already as the user wants (e.g. a tag the supporter already has) are skipped and reported.
  */
 public abstract class TagChangeCommand extends Command {
+
+    private static final Logger logger = LogsCenter.getLogger(TagChangeCommand.class);
 
     protected final Index targetIndex;
     protected final List<Tag> tags;
@@ -84,6 +88,7 @@ public abstract class TagChangeCommand extends Command {
         Person updatedPerson = target.withTags(updatedTags);
         model.setPerson(target, updatedPerson);
         model.setViewedPerson(updatedPerson);
+        logger.fine("Changed tags of " + target.getName() + ": " + changedTags + ", skipped " + skippedTags);
         return new CommandResult(createChangedMessage(target, changedTags, skippedTags));
     }
 
