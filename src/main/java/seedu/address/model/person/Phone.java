@@ -18,9 +18,6 @@ public class Phone {
                     + "An optional 'ext' followed by 1 to 6 digits and an optional alphabetic label in parentheses "
                     + "may follow, separated by single spaces, e.g. (65) 9123-4567 ext 12 (Office)";
 
-    public static final String VALIDATION_REGEX =
-            "(" + Phone.MAIN_NUMBER_REGEX + ")" + Phone.EXTENSION_REGEX + Phone.LABEL_REGEX;
-
     /*
      * 3 digits allows short hotlines, and 15 digits is the longest a phone number can be internationally.
      */
@@ -32,6 +29,9 @@ public class Phone {
     private static final String EXTENSION_REGEX = "(?: (?i:ext) [0-9]{1," + MAX_EXTENSION_DIGITS + "})?";
     private static final String TYPE_LABEL_REGEX = " \\([A-Za-z]+(?: [A-Za-z]+)*\\)";
     private static final String LABEL_REGEX = "(?:" + TYPE_LABEL_REGEX + ")?";
+
+    public static final String VALIDATION_REGEX =
+            "(" + MAIN_NUMBER_REGEX + ")" + EXTENSION_REGEX + LABEL_REGEX;
 
     private static final Pattern VALIDATION_PATTERN = Pattern.compile(VALIDATION_REGEX);
     private static final String TRAILING_LABEL_REGEX = TYPE_LABEL_REGEX + "$";
