@@ -37,7 +37,7 @@ ModelManager .up.|> Model
 Model .right.> ReadOnlyUserPrefs
 Model .left.> ReadOnlyAddressBook
 VersionedAddressBook -left-|> AddressBook
-VersionedAddressBook -up-> "1..*\nsaved states" ReadOnlyAddressBook
+VersionedAddressBook -up-> "1..*" ReadOnlyAddressBook : saved states >
 ModelManager -left-> "1" VersionedAddressBook
 ModelManager -right-> "1" UserPrefs
 UserPrefs .up.|> ReadOnlyUserPrefs
