@@ -29,8 +29,8 @@ public class EditLogCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Edits an interaction for the supporter identified by the index "
             + "number used in the displayed supporter list.\n"
-            + "Parameters: INDEX ENTRY (both must be positive integers) ["
-            + PREFIX_NOTE + "NOTE] [" + PREFIX_DATE + "DATE]\n"
+            + "Parameters: INDEX ENTRY (both must be positive integers) "
+            + "[" + PREFIX_NOTE + "NOTE] [" + PREFIX_DATE + "DATE]\n"
             + "ENTRY is the interaction number shown in the detail panel. At least one field is required.\n"
             + "DATE must be a valid date in yyyy-MM-dd format, from 1900-01-01 through today.\n"
             + "Example: " + COMMAND_WORD + " 2 1 " + PREFIX_NOTE + "Updated meeting notes "
