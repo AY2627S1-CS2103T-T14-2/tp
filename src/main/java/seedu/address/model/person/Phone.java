@@ -3,6 +3,9 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Represents a Person's phone number in the address book.
  * Guarantees: immutable; is valid as declared in {@link #isValidPhone(String)}
@@ -10,17 +13,27 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Phone {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Phone numbers may start with a plus sign and may use single spaces or hyphens "
-                    + "between digit groups, including a mixture of both. "
-                    + "They must contain between 3 and 15 digits";
+            "Phone numbers must contain 3 to 15 main-number digits. They may start with +, "
+                    + "use single spaces or hyphens between digit groups, and enclose digit groups in parentheses. "
+                    + "An optional 'ext' followed by 1 to 6 digits and an optional alphabetic label in parentheses "
+                    + "may follow, separated by single spaces, e.g. (65) 9123-4567 ext 12 (Office)";
 
-    public static final String VALIDATION_REGEX = "\\+?\\d+(?:[ -]\\d+)*";
+    public static final String VALIDATION_REGEX =
+            "(" + Phone.MAIN_NUMBER_REGEX + ")" + Phone.EXTENSION_REGEX + Phone.LABEL_REGEX;
 
     /*
      * 3 digits allows short hotlines, and 15 digits is the longest a phone number can be internationally.
      */
     private static final int MIN_DIGITS = 3;
     private static final int MAX_DIGITS = 15;
+    private static final int MAX_EXTENSION_DIGITS = 6;
+    private static final String DIGIT_GROUP_REGEX = "(?:[0-9]+|\\([0-9]+\\))";
+    private static final String MAIN_NUMBER_REGEX = "\\+?" + DIGIT_GROUP_REGEX + "(?:[ -]" + DIGIT_GROUP_REGEX + ")*";
+    private static final String EXTENSION_REGEX = "(?: (?i:ext) [0-9]{1," + MAX_EXTENSION_DIGITS + "})?";
+    private static final String LABEL_REGEX = "(?: \\([A-Za-z]+(?: [A-Za-z]+)*\\))?";
+
+    private static final Pattern VALIDATION_PATTERN = Pattern.compile(VALIDATION_REGEX);
+
     public final String value;
 
     /**
@@ -39,10 +52,21 @@ public class Phone {
      */
     public static boolean isValidPhone(String test) {
         requireNonNull(test);
-        long digitCount = test.chars().filter(Character::isDigit).count();
-        return test.matches(VALIDATION_REGEX)
-                && digitCount >= MIN_DIGITS
-                && digitCount <= MAX_DIGITS;
+        Matcher matcher = VALIDATION_PATTERN.matcher(test);
+        if (!matcher.matches()) {
+            return false;
+        }
+        long digitCount = matcher.group(1).chars().filter(Character::isDigit).count();
+        return digitCount >= MIN_DIGITS && digitCount <= MAX_DIGITS;
+    }
+
+    /**
+     * Returns whether {@code test} is a formatted phone search fragment.
+     * Fragments follow the phone syntax but do not need 3 to 15 main-number digits.
+     */
+    public static boolean isValidPhoneSearch(String test) {
+        requireNonNull(test);
+        return VALIDATION_PATTERN.matcher(test).matches();
     }
 
     @Override

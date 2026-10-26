@@ -1,8 +1,11 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -74,5 +77,38 @@ public class PhoneTest {
 
         // different values -> returns false
         assertFalse(phone.equals(new Phone("995")));
+    }
+
+    @Test
+    public void isValidPhone_commonAnnotations_acceptsAndPreservesFormatting() {
+        for (String phone : List.of("9123 4567 (HP)", "(65) 9123 4567", "9123 4567 ext 12",
+                "+65 (9123)-4567", "9123-4567 (Home)", "9123 4567 (Office Fax)",
+                "9123 4567 EXT 123456 (Office)", "123 ext 1", "123456789012345 ext 123456")) {
+            assertTrue(Phone.isValidPhone(phone), phone);
+            assertEquals(phone, new Phone(phone).value);
+        }
+    }
+
+    @Test
+    public void isValidPhone_malformedAnnotations_rejects() {
+        for (String phone : List.of("(65 9123 4567", "65) 9123 4567", "((65)) 9123 4567", "() 9123",
+                "(65)9123 4567", "9123 4567 ()", "9123 4567 (HP2)", "9123 4567 (HP) (Office)",
+                "9123 4567 HP", "9123 4567 ext", "9123 4567 ext ABC", "9123 4567 ext 1234567",
+                "9123 4567 ext 1 ext 2", "9123 4567 (HP) ext 12", "12 ext 123456", "1234567890123456 ext 1",
+                "9123 4567  (HP)", "9123 4567 ext  12", "9123 4567 ( Office )")) {
+            assertFalse(Phone.isValidPhone(phone), phone);
+        }
+    }
+
+    @Test
+    public void isValidPhoneSearch_fragments_acceptsWithoutNumberLengthLimit() {
+        assertThrows(NullPointerException.class, () -> Phone.isValidPhoneSearch(null));
+        for (String query : List.of("9", "(65)", "+65 91-23", "9123 (HP)", "9 ext 1 (Office)",
+                "1234567890123456")) {
+            assertTrue(Phone.isValidPhoneSearch(query), query);
+        }
+        for (String query : List.of("", "+", "(HP)", "912a", "(65", "9 ext 1234567")) {
+            assertFalse(Phone.isValidPhoneSearch(query), query);
+        }
     }
 }
