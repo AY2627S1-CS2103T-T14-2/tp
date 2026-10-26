@@ -26,6 +26,7 @@ public class IntroCommand extends Command {
             + ": Records which supporter introduced the supporter identified by the index number used in the "
             + "displayed supporter list. Leave out INTRODUCER_INDEX to remove the record.\n"
             + "Parameters: INDEX (must be a positive integer) " + PREFIX_INTRODUCER + "[INTRODUCER_INDEX]\n"
+            + "INTRODUCER_INDEX must also be a positive integer when provided.\n"
             + "Example: " + COMMAND_WORD + " 3 " + PREFIX_INTRODUCER + "1";
 
     public static final String MESSAGE_INTRODUCER_SET = "Recorded that %1$s introduced %2$s.";
