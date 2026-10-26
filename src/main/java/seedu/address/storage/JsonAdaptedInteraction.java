@@ -51,7 +51,7 @@ class JsonAdaptedInteraction {
         try {
             modelDate = LocalDate.parse(date);
         } catch (DateTimeParseException exception) {
-            throw new IllegalValueException(DATE_MESSAGE_CONSTRAINTS);
+            throw new IllegalValueException(DATE_MESSAGE_CONSTRAINTS, exception);
         }
 
         if (note == null) {
