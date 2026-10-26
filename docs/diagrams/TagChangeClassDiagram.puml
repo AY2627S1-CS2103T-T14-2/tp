@@ -1,0 +1,37 @@
+@startuml
+!include style.puml
+skinparam arrowThickness 1.1
+skinparam arrowColor LOGIC_COLOR_T4
+skinparam classBackgroundColor LOGIC_COLOR
+skinparam classAttributeIconSize 0
+skinparam classAttributeFontColor #FFFFFF
+skinparam nodesep 70
+
+Class "{abstract}\nCommand" as Command
+Class "{abstract}\nTagChangeCommand" as TagChangeCommand {
+    + execute(model : Model) : CommandResult
+    # {abstract} changeTag(...) : List<Tag>
+}
+Class TagCommand {
+    # changeTag(...) : List<Tag>
+}
+Class UntagCommand {
+    # changeTag(...) : List<Tag>
+}
+Class Tag MODEL_COLOR
+
+show TagChangeCommand methods
+show TagCommand methods
+show UntagCommand methods
+
+TagChangeCommand -up-|> Command
+TagCommand -up-|> TagChangeCommand
+UntagCommand -up-|> TagChangeCommand
+TagChangeCommand -right-> "tags\n1..*" Tag
+
+note left of TagChangeCommand
+    Abstract get...Message()
+    methods for the result
+    messages are omitted.
+end note
+@enduml
