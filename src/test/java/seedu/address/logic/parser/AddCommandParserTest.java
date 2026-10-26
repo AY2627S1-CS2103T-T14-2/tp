@@ -47,7 +47,6 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.AddCommand;
-import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Organisation;
@@ -299,6 +298,20 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_blankContactField_failure() {
+        // blank phone, even with an email to reach the supporter
+        assertParseFailure(parser, NAME_DESC_BOB + " " + PREFIX_PHONE + EMAIL_DESC_BOB,
+                AddCommand.MESSAGE_BLANK_PHONE);
+        assertParseFailure(parser, NAME_DESC_BOB + " " + PREFIX_PHONE + "   ",
+                AddCommand.MESSAGE_BLANK_PHONE);
+
+        // blank email, even with a phone to reach the supporter
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " " + PREFIX_EMAIL,
+                AddCommand.MESSAGE_BLANK_EMAIL);
+        assertParseFailure(parser, NAME_DESC_BOB + " " + PREFIX_EMAIL, AddCommand.MESSAGE_BLANK_EMAIL);
+    }
+
+    @Test
     public void parse_invalidValue_failure() {
         // invalid name
         assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
@@ -312,9 +325,9 @@ public class AddCommandParserTest {
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + INVALID_EMAIL_DESC + ADDRESS_DESC_BOB
                 + TAG_DESC_HUSBAND + TAG_DESC_FRIEND, Email.MESSAGE_CONSTRAINTS);
 
-        // invalid address
+        // blank address
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + INVALID_ADDRESS_DESC
-                + TAG_DESC_HUSBAND + TAG_DESC_FRIEND, Address.MESSAGE_CONSTRAINTS);
+                + TAG_DESC_HUSBAND + TAG_DESC_FRIEND, AddCommand.MESSAGE_BLANK_ADDRESS);
 
         // invalid stage
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB

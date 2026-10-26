@@ -1,11 +1,14 @@
 package seedu.address.model;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.List;
+import java.util.Optional;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
 
@@ -81,6 +84,31 @@ public class AddressBook implements ReadOnlyAddressBook {
      */
     public void removePerson(Person key) {
         persons.remove(key);
+    }
+
+    /**
+     * Returns true if the supporter called {@code name} introduced {@code person}, either directly or
+     * through a chain of introductions (e.g. {@code name} introduced someone who introduced {@code person}).
+     * Names are compared ignoring case and extra spaces.
+     */
+    public boolean isIntroducedThrough(Person person, Name name) {
+        requireAllNonNull(person, name);
+        Optional<Name> introducer = person.getIntroducer();
+        // a chain without loops visits each supporter at most once;
+        // the limit also stops at a loop in a hand-edited data file
+        for (int step = 0; introducer.isPresent() && step < getPersonList().size(); step++) {
+            if (introducer.get().isSameName(name)) {
+                return true;
+            }
+            introducer = findPersonNamed(introducer.get()).flatMap(Person::getIntroducer);
+        }
+        return false;
+    }
+
+    private Optional<Person> findPersonNamed(Name name) {
+        return getPersonList().stream()
+                .filter(person -> person.getName().isSameName(name))
+                .findFirst();
     }
 
     //// util methods

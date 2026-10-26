@@ -135,6 +135,11 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public boolean isIntroducedThrough(Person person, Name name) {
+        return versionedAddressBook.isIntroducedThrough(person, name);
+    }
+
+    @Override
     public void commitAddressBookIfChanged() {
         // a command can write back identical data, e.g. an edit to the same phone number
         if (hasUncommittedChanges && versionedAddressBook.hasChangesSinceLastCommit()) {

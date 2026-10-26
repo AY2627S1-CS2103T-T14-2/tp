@@ -123,6 +123,34 @@ public class IntroCommandTest {
     }
 
     @Test
+    public void execute_introducerIntroducedByTarget_throwsCommandException() {
+        // the first supporter introduced the second, so the second cannot have introduced the first
+        Person first = personAt(INDEX_FIRST_PERSON);
+        Person second = personAt(INDEX_SECOND_PERSON);
+        model.setPerson(second, second.withIntroducer(Optional.of(first.getName())));
+
+        String expectedMessage = String.format(IntroCommand.MESSAGE_INTRODUCTION_LOOP, second.getName(),
+                first.getName());
+        assertCommandFailure(new IntroCommand(INDEX_FIRST_PERSON, Optional.of(INDEX_SECOND_PERSON)), model,
+                expectedMessage);
+    }
+
+    @Test
+    public void execute_introducerIntroducedByTargetThroughOthers_throwsCommandException() {
+        // the first supporter introduced the second, who introduced the third
+        Person first = personAt(INDEX_FIRST_PERSON);
+        Person second = personAt(INDEX_SECOND_PERSON);
+        Person third = personAt(INDEX_THIRD_PERSON);
+        model.setPerson(second, second.withIntroducer(Optional.of(first.getName())));
+        model.setPerson(third, third.withIntroducer(Optional.of(second.getName())));
+
+        String expectedMessage = String.format(IntroCommand.MESSAGE_INTRODUCTION_LOOP, third.getName(),
+                first.getName());
+        assertCommandFailure(new IntroCommand(INDEX_FIRST_PERSON, Optional.of(INDEX_THIRD_PERSON)), model,
+                expectedMessage);
+    }
+
+    @Test
     public void execute_invalidTargetIndex_throwsCommandException() {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
         assertCommandFailure(new IntroCommand(outOfBoundIndex, Optional.of(INDEX_FIRST_PERSON)), model,

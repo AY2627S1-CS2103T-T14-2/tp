@@ -5,6 +5,8 @@ import static java.util.Objects.requireNonNull;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
@@ -19,7 +21,8 @@ public class StatsCommand extends Command {
     public static final String COMMAND_WORD = "stats";
 
     public static final String MESSAGE_HEADER = "Supporters by stage (%1$d in total):";
-    public static final String MESSAGE_STAGE_LINE = "%1$s: %2$d";
+    public static final String MESSAGE_STAGE_COUNT = "%1$s: %2$d";
+    public static final String STAGE_COUNT_SEPARATOR = ", ";
 
     @Override
     public CommandResult execute(Model model) {
@@ -27,11 +30,11 @@ public class StatsCommand extends Command {
         List<Person> allPersons = model.getAddressBook().getPersonList();
         Map<Stage, Integer> counts = countByStage(allPersons);
 
-        StringBuilder message = new StringBuilder(String.format(MESSAGE_HEADER, allPersons.size()));
-        for (Stage stage : Stage.values()) {
-            message.append('\n').append(String.format(MESSAGE_STAGE_LINE, stage, counts.get(stage)));
-        }
-        return new CommandResult(message.toString());
+        // all counts share one line so that the result fits the result display without scrolling
+        String stageCounts = Stream.of(Stage.values())
+                .map(stage -> String.format(MESSAGE_STAGE_COUNT, stage, counts.get(stage)))
+                .collect(Collectors.joining(STAGE_COUNT_SEPARATOR));
+        return new CommandResult(String.format(MESSAGE_HEADER, allPersons.size()) + "\n" + stageCounts);
     }
 
     /**

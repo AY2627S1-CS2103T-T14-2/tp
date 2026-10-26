@@ -7,6 +7,8 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_ADDRESS_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
+import static seedu.address.testutil.TypicalPersons.BENSON;
+import static seedu.address.testutil.TypicalPersons.CARL;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.Collection;
@@ -74,6 +76,46 @@ public class AddressBookTest {
         Person editedAlice = new PersonBuilder(ALICE).withAddress(VALID_ADDRESS_BOB).withTags(VALID_TAG_HUSBAND)
                 .build();
         assertTrue(addressBook.hasPerson(editedAlice));
+    }
+
+    @Test
+    public void isIntroducedThrough_nullArguments_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () ->
+                addressBook.isIntroducedThrough(null, ALICE.getName()));
+        assertThrows(NullPointerException.class, () -> addressBook.isIntroducedThrough(ALICE, null));
+    }
+
+    @Test
+    public void isIntroducedThrough_chainOfIntroductions_trueForEveryoneAbove() {
+        // Alice introduced Benson, who introduced Carl
+        Person bensonByAlice = new PersonBuilder(BENSON).withIntroducer(ALICE.getName().fullName).build();
+        Person carlByBenson = new PersonBuilder(CARL).withIntroducer("benson meier").build();
+        addressBook.setPersons(List.of(ALICE, bensonByAlice, carlByBenson));
+
+        assertTrue(addressBook.isIntroducedThrough(carlByBenson, BENSON.getName()));
+        assertTrue(addressBook.isIntroducedThrough(carlByBenson, ALICE.getName()));
+        assertFalse(addressBook.isIntroducedThrough(bensonByAlice, CARL.getName()));
+        assertFalse(addressBook.isIntroducedThrough(ALICE, BENSON.getName()));
+    }
+
+    @Test
+    public void isIntroducedThrough_introducerNotInAddressBook_chainEndsAtThem() {
+        Person bensonByAlice = new PersonBuilder(BENSON).withIntroducer(ALICE.getName().fullName).build();
+        addressBook.setPersons(List.of(bensonByAlice));
+
+        assertTrue(addressBook.isIntroducedThrough(bensonByAlice, ALICE.getName()));
+        assertFalse(addressBook.isIntroducedThrough(bensonByAlice, CARL.getName()));
+    }
+
+    @Test
+    public void isIntroducedThrough_loopInData_stillReturns() {
+        // a hand-edited data file could hold a loop, which the check must not follow forever
+        Person aliceByBenson = new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName).build();
+        Person bensonByAlice = new PersonBuilder(BENSON).withIntroducer(ALICE.getName().fullName).build();
+        addressBook.setPersons(List.of(aliceByBenson, bensonByAlice));
+
+        assertTrue(addressBook.isIntroducedThrough(aliceByBenson, ALICE.getName()));
+        assertFalse(addressBook.isIntroducedThrough(aliceByBenson, CARL.getName()));
     }
 
     @Test

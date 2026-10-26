@@ -78,6 +78,12 @@ public interface Model {
     int replaceIntroducer(Name introducer, Optional<Name> replacement);
 
     /**
+     * Returns true if the supporter called {@code name} introduced {@code person}, directly or through a
+     * chain of introductions. Names are compared ignoring case and extra spaces.
+     */
+    boolean isIntroducedThrough(Person person, Name name);
+
+    /**
      * Saves the current address book state to the undo/redo history if supporter data has changed since the
      * last saved state. Any undone states are then discarded, so they can no longer be redone.
      */
