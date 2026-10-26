@@ -55,9 +55,7 @@ public class UnlogCommand extends Command {
             throw new CommandException(Messages.MESSAGE_INVALID_INTERACTION_INDEX);
         }
 
-        // entry numbers descend in display order, so size minus entry number gives the display position
-        int storedIndex = personToUpdate.getInteractionIndicesInDisplayOrder()
-                .get(updatedInteractions.size() - interactionIndex.getOneBased());
+        int storedIndex = personToUpdate.getInteractionStoredIndex(interactionIndex.getOneBased());
         // remove by position so identical interactions remain distinguishable
         Interaction removedInteraction = updatedInteractions.remove(storedIndex);
         Person updatedPerson = personToUpdate.withInteractions(updatedInteractions);

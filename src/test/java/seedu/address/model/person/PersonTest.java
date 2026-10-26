@@ -47,6 +47,44 @@ public class PersonTest {
     }
 
     @Test
+    public void interactionNumberConversions_mixedDatesAndDuplicates_preserveStoredPositions() {
+        Interaction earlier = new Interaction(LocalDate.of(2024, 2, 29), "Earlier meeting");
+        Interaction later = new Interaction(LocalDate.of(2024, 3, 10), "Later meeting");
+        Person person = new PersonBuilder().withInteractions(earlier, later, earlier).build();
+
+        assertEquals(0, person.getInteractionStoredIndex(1));
+        assertEquals(2, person.getInteractionStoredIndex(2));
+        assertEquals(1, person.getInteractionStoredIndex(3));
+        assertEquals(1, person.getInteractionEntryNumber(0));
+        assertEquals(3, person.getInteractionEntryNumber(1));
+        assertEquals(2, person.getInteractionEntryNumber(2));
+        assertEquals(List.of(earlier, later, earlier), person.getInteractions());
+    }
+
+    @Test
+    public void interactionNumberConversions_singleEntry_returnsOnlyPosition() {
+        Person person = new PersonBuilder()
+                .withInteractions(new Interaction(LocalDate.of(2024, 2, 29), "Called")).build();
+
+        assertEquals(0, person.getInteractionStoredIndex(1));
+        assertEquals(1, person.getInteractionEntryNumber(0));
+    }
+
+    @Test
+    public void interactionNumberConversions_invalidPositions_throwsIndexOutOfBoundsException() {
+        Person empty = new PersonBuilder().build();
+        Person person = new PersonBuilder()
+                .withInteractions(new Interaction(LocalDate.of(2024, 2, 29), "Called")).build();
+
+        assertThrows(IndexOutOfBoundsException.class, () -> empty.getInteractionStoredIndex(1));
+        assertThrows(IndexOutOfBoundsException.class, () -> empty.getInteractionEntryNumber(0));
+        assertThrows(IndexOutOfBoundsException.class, () -> person.getInteractionStoredIndex(0));
+        assertThrows(IndexOutOfBoundsException.class, () -> person.getInteractionStoredIndex(2));
+        assertThrows(IndexOutOfBoundsException.class, () -> person.getInteractionEntryNumber(-1));
+        assertThrows(IndexOutOfBoundsException.class, () -> person.getInteractionEntryNumber(1));
+    }
+
+    @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
         Person person = new PersonBuilder().build();
         assertThrows(UnsupportedOperationException.class, () -> person.getTags().remove(0));

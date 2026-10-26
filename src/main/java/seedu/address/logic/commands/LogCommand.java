@@ -91,8 +91,7 @@ public class LogCommand extends Command {
         model.setPerson(personToUpdate, updatedPerson);
         model.setViewedPerson(updatedPerson);
 
-        int displayedEntryNumber = updatedInteractions.size() - updatedPerson.getInteractionIndicesInDisplayOrder()
-                .indexOf(updatedInteractions.size() - 1);
+        int displayedEntryNumber = updatedPerson.getInteractionEntryNumber(updatedInteractions.size() - 1);
         return new CommandResult(String.format(MESSAGE_SUCCESS, displayedEntryNumber, personToUpdate.getName(),
                 DisplayDateFormatter.format(interaction.getDate()), interaction.getNote()));
     }

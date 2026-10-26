@@ -66,9 +66,7 @@ public class EditLogCommand extends Command {
             throw new CommandException(Messages.MESSAGE_INVALID_INTERACTION_INDEX);
         }
 
-        // entry numbers descend in display order, so size minus entry number gives the display position
-        int storedIndex = personToUpdate.getInteractionIndicesInDisplayOrder()
-                .get(updatedInteractions.size() - interactionIndex.getOneBased());
+        int storedIndex = personToUpdate.getInteractionStoredIndex(interactionIndex.getOneBased());
         Interaction originalInteraction = updatedInteractions.get(storedIndex);
         Interaction updatedInteraction = new Interaction(date.orElse(originalInteraction.getDate()),
                 note.orElse(originalInteraction.getNote()));
@@ -80,8 +78,7 @@ public class EditLogCommand extends Command {
         }
         model.setViewedPerson(updatedPerson);
 
-        int displayedEntryNumber = updatedInteractions.size()
-                - updatedPerson.getInteractionIndicesInDisplayOrder().indexOf(storedIndex);
+        int displayedEntryNumber = updatedPerson.getInteractionEntryNumber(storedIndex);
         return new CommandResult(String.format(MESSAGE_SUCCESS, displayedEntryNumber,
                 personToUpdate.getName(), DisplayDateFormatter.format(updatedInteraction.getDate()),
                 updatedInteraction.getNote()));

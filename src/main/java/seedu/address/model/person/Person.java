@@ -222,6 +222,28 @@ public class Person {
     }
 
     /**
+     * Returns the zero-based stored position for a one-based chronological entry number.
+     * Entry 1 is the oldest interaction; equal dates are numbered in logging order.
+     *
+     * @throws IndexOutOfBoundsException if {@code entryNumber} does not identify an existing entry.
+     */
+    public int getInteractionStoredIndex(int entryNumber) {
+        Objects.checkIndex(entryNumber - 1, interactions.size());
+        return getInteractionIndicesInDisplayOrder().get(interactions.size() - entryNumber);
+    }
+
+    /**
+     * Returns the one-based chronological entry number for a zero-based stored position.
+     * The number reflects this supporter's current history, including any date edits.
+     *
+     * @throws IndexOutOfBoundsException if {@code storedIndex} does not identify an existing interaction.
+     */
+    public int getInteractionEntryNumber(int storedIndex) {
+        Objects.checkIndex(storedIndex, interactions.size());
+        return interactions.size() - getInteractionIndicesInDisplayOrder().indexOf(storedIndex);
+    }
+
+    /**
      * Returns an immutable tag set, which throws {@code UnsupportedOperationException}
      * if modification is attempted.
      */
