@@ -30,23 +30,59 @@ public class SupporterDetailPanelTest {
 
     @Test
     public void setSupporter_selectionChanges_rendersDetailsAndScrollableHistory() throws Exception {
-        FutureTask<Void> verification = new FutureTask<>(() -> {
-            verifyPanelRendering();
-            return null;
-        });
+        runOnFxThread(SupporterDetailPanelTest::verifyPanelRendering);
+    }
+
+    @Test
+    public void setSupporter_panelTooShort_detailsScrollAndKeepHistoryVisible() throws Exception {
+        runOnFxThread(SupporterDetailPanelTest::verifyShortPanel);
+    }
+
+    private static void runOnFxThread(Runnable verification) throws Exception {
+        FutureTask<Void> task = new FutureTask<>(verification, null);
         try {
-            Platform.startup(verification);
+            Platform.startup(task);
         } catch (IllegalStateException e) {
             // Reuse the toolkit if another UI test has already started it.
-            Platform.runLater(verification);
+            Platform.runLater(task);
         }
-        verification.get(15, TimeUnit.SECONDS);
+        task.get(15, TimeUnit.SECONDS);
+    }
+
+    private static SupporterDetailPanel createPanel(double height) {
+        SupporterDetailPanel panel = new SupporterDetailPanel();
+        Scene scene = new Scene(panel.getRoot(), 400, height);
+        scene.getStylesheets().add(SupporterDetailPanelTest.class.getResource("/view/DarkTheme.css").toExternalForm());
+        // creates the scroll panes' skins, so that lookups also find the nodes inside them
+        panel.getRoot().applyCss();
+        return panel;
+    }
+
+    private static void verifyShortPanel() {
+        SupporterDetailPanel panel = createPanel(200);
+        ScrollPane details = (ScrollPane) panel.getRoot().lookup("#detailsScrollPane");
+        ScrollPane history = (ScrollPane) panel.getRoot().lookup("#historyScrollPane");
+        // with no supporter, only the prompt takes space, so it is not squeezed by an empty scroll pane
+        assertFalse(details.isVisible());
+        assertFalse(details.isManaged());
+        Person person = new PersonBuilder()
+                .withInteractions(new Interaction(LocalDate.of(2026, 9, 16), "Called")).build();
+        panel.setSupporter(Optional.of(person));
+        panel.getRoot().applyCss();
+        panel.getRoot().layout();
+
+        // the details do not fit, so the panel scrolls instead of shrinking the history away
+        assertTrue(details.getContent().getBoundsInLocal().getHeight() > details.getViewportBounds().getHeight());
+        assertTrue(history.getMinHeight() > 0);
+        assertEquals(history.getMinHeight(), history.getHeight());
+
+        details.setVvalue(1);
+        panel.setSupporter(Optional.of(new PersonBuilder(person).withStage("giving").build()));
+        assertEquals(0.0, details.getVvalue());
     }
 
     private static void verifyPanelRendering() {
-        SupporterDetailPanel panel = new SupporterDetailPanel();
-        Scene scene = new Scene(panel.getRoot(), 400, 500);
-        scene.getStylesheets().add(SupporterDetailPanelTest.class.getResource("/view/DarkTheme.css").toExternalForm());
+        SupporterDetailPanel panel = createPanel(500);
         Label startup = (Label) panel.getRoot().lookup("#startupMessage");
         VBox details = (VBox) panel.getRoot().lookup("#detailsContainer");
         Label lastContact = (Label) panel.getRoot().lookup("#lastContact");

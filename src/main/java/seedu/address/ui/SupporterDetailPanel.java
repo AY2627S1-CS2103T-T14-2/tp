@@ -30,6 +30,8 @@ public class SupporterDetailPanel extends UiPart<Region> {
     @FXML
     private Label startupMessage;
     @FXML
+    private ScrollPane detailsScrollPane;
+    @FXML
     private VBox detailsContainer;
     @FXML
     private Label supporterName;
@@ -97,6 +99,7 @@ public class SupporterDetailPanel extends UiPart<Region> {
     private void render(SupporterDetailData data) {
         setShown(startupMessage, !data.hasSupporter());
         startupMessage.setText(data.hasSupporter() ? "" : data.getPlaceholderMessage());
+        setShown(detailsScrollPane, data.hasSupporter());
         setShown(detailsContainer, data.hasSupporter());
         supporterName.setText(data.getName());
         supporterStage.setText(data.getStage());
@@ -116,6 +119,7 @@ public class SupporterDetailPanel extends UiPart<Region> {
         for (InteractionEntry entry : data.getInteractionEntries()) {
             interactionEntries.getChildren().add(createInteractionRow(entry));
         }
+        detailsScrollPane.setVvalue(0);
         historyScrollPane.setVvalue(0);
     }
 

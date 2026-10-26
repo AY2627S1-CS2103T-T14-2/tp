@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
 
+import java.awt.Point;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -9,11 +10,13 @@ import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
@@ -155,12 +158,31 @@ public class MainWindow extends UiPart<Stage> {
      * Sets the default size based on {@code guiSettings}.
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
-        primaryStage.setHeight(guiSettings.getWindowHeight());
-        primaryStage.setWidth(guiSettings.getWindowWidth());
-        if (guiSettings.getWindowCoordinates() != null) {
-            primaryStage.setX(guiSettings.getWindowCoordinates().getX());
-            primaryStage.setY(guiSettings.getWindowCoordinates().getY());
+        // a size saved on a larger screen is shrunk so that the whole window fits on this one
+        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+        primaryStage.setHeight(Math.min(guiSettings.getWindowHeight(), screenBounds.getHeight()));
+        primaryStage.setWidth(Math.min(guiSettings.getWindowWidth(), screenBounds.getWidth()));
+
+        Point coordinates = guiSettings.getWindowCoordinates();
+        if (coordinates == null) {
+            return;
         }
+        if (!isOnAnyScreen(coordinates)) {
+            // e.g. the window was last on a second screen that is no longer connected
+            logger.info("Saved window position " + coordinates
+                    + " is on no connected screen; using the default position");
+            return;
+        }
+        primaryStage.setX(coordinates.getX());
+        primaryStage.setY(coordinates.getY());
+    }
+
+    /**
+     * Returns true if {@code point} lies within the visual bounds of a connected screen.
+     */
+    static boolean isOnAnyScreen(Point point) {
+        return Screen.getScreens().stream()
+                .anyMatch(screen -> screen.getVisualBounds().contains(point.getX(), point.getY()));
     }
 
     /**
