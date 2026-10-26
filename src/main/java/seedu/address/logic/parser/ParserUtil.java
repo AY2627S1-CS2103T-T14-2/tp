@@ -240,9 +240,10 @@ public class ParserUtil {
 
     /**
      * Parses an interaction date in yyyy-MM-dd format, trimming leading and trailing whitespace.
-     * Uses the computer's local date to reject future dates.
+     * Accepts dates from {@link #MIN_INTERACTION_DATE} (1900-01-01) through today, inclusive.
+     * Uses the computer's local date to determine today.
      *
-     * @throws ParseException if the date is invalid or in the future.
+     * @throws ParseException if the date is invalid, before {@link #MIN_INTERACTION_DATE}, or in the future.
      */
     public static LocalDate parseInteractionDate(String date) throws ParseException {
         return parseInteractionDate(date, Clock.systemDefaultZone());
@@ -250,8 +251,9 @@ public class ParserUtil {
 
     /**
      * Parses an interaction date using {@code clock} to determine today's date.
+     * Accepts dates from {@link #MIN_INTERACTION_DATE} (1900-01-01) through today, inclusive.
      *
-     * @throws ParseException if the date is invalid or in the future.
+     * @throws ParseException if the date is invalid, before {@link #MIN_INTERACTION_DATE}, or in the future.
      */
     static LocalDate parseInteractionDate(String date, Clock clock) throws ParseException {
         requireNonNull(date);
