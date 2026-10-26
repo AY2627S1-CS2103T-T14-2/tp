@@ -3,6 +3,8 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -27,10 +29,12 @@ public class EditLogCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Edits an interaction for the supporter identified by the index "
             + "number used in the displayed supporter list.\n"
-            + "Parameters: INDEX ENTRY (both must be positive integers) [nt/NOTE] [dt/DATE]\n"
+            + "Parameters: INDEX ENTRY (both must be positive integers) ["
+            + PREFIX_NOTE + "NOTE] [" + PREFIX_DATE + "DATE]\n"
             + "ENTRY is the interaction number shown in the detail panel. At least one field is required.\n"
             + "DATE must be a valid date in yyyy-MM-dd format, from 1900-01-01 through today.\n"
-            + "Example: " + COMMAND_WORD + " 2 1 nt/Updated meeting notes dt/2026-10-01";
+            + "Example: " + COMMAND_WORD + " 2 1 " + PREFIX_NOTE + "Updated meeting notes "
+            + PREFIX_DATE + "2026-10-01";
     public static final String MESSAGE_SUCCESS = "Edited interaction #%1$d with %2$s (%3$s): %4$s.";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
 

@@ -3,6 +3,8 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -29,9 +31,10 @@ public class LogCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Logs an interaction with the supporter identified by the index "
             + "number used in the displayed supporter list.\n"
-            + "Parameters: INDEX (must be a positive integer) nt/NOTE [dt/DATE]\n"
+            + "Parameters: INDEX (must be a positive integer) " + PREFIX_NOTE + "NOTE [" + PREFIX_DATE + "DATE]\n"
             + "DATE must be a valid date in yyyy-MM-dd format, from 1900-01-01 through today; defaults to today.\n"
-            + "Example: " + COMMAND_WORD + " 2 nt/Coffee at Raffles Place dt/2026-10-01";
+            + "Example: " + COMMAND_WORD + " 2 " + PREFIX_NOTE + "Coffee at Raffles Place "
+            + PREFIX_DATE + "2026-10-01";
 
     public static final String MESSAGE_SUCCESS = "Logged interaction #%1$d with %2$s (%3$s): %4$s.";
 
