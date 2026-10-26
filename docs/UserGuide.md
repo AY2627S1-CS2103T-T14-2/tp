@@ -460,6 +460,7 @@ Format: `intro INDEX by/[INTRODUCER_INDEX]`
 - Running `intro` again for the same supporter replaces their introducer. Each supporter has at most one introducer.
 - Leave out `INTRODUCER_INDEX` to remove the record, e.g. `intro 3 by/`.
 - A supporter cannot be their own introducer.
+- Introductions cannot go in a circle. If a supporter introduced someone, directly or through other supporters, that person cannot be recorded as their introducer. For example, if Alex introduced Bernice, and Bernice introduced David, then neither Bernice nor David can be recorded as Alex's introducer.
 - If nothing would change (the same introducer again, or removing a record that does not exist), a message says so and the record is unchanged.
 - On success, the detail panel switches to the introduced supporter. The displayed list stays the same, so a `find` result is kept.
 - The detail panel shows each supporter's `Introducer`, and under `Introduced`, everyone they introduced.
@@ -586,7 +587,7 @@ SupporterBook loads `data/supporterbook.json` from the folder the app is launche
 
 > Could not load data/supporterbook.json because it is not in the expected format. Starting with an empty list. Your next command will overwrite the file, so copy it somewhere safe now if you want to repair it.
 
-The message includes the path of the file that could not be loaded. Invalid JSON, missing required fields, invalid field values, duplicate supporters or an introducer who is not in the file can cause this warning.
+The message includes the path of the file that could not be loaded. Invalid JSON, missing required fields, invalid field values, duplicate supporters, an introducer who is not in the file or introductions that go in a circle can cause this warning.
 
 Startup does not overwrite the unreadable file. Copy it somewhere safe before running another command if you want to recover its contents. Even `list` saves data after executing, so it can replace the file with the empty list. A command that fails parsing or validation does not overwrite it.
 
@@ -604,7 +605,7 @@ A supporter may also have an `"organisation"`, such as the company a CSR contact
 
 Each supporter card in the list shows the supporter's organisation, or `(no organisation)` if they have none.
 
-A supporter may also have an `"introducer"`, the name of the supporter who introduced them, e.g. a board member. Leave the key out if no introducer is recorded. If present, it must be the name of another supporter in the same file (capital letters and extra spaces are ignored), and cannot be the supporter's own name.
+A supporter may also have an `"introducer"`, the name of the supporter who introduced them, e.g. a board member. Leave the key out if no introducer is recorded. If present, it must be the name of another supporter in the same file (capital letters and extra spaces are ignored), and cannot be the supporter's own name. Introductions in the file cannot go in a circle, e.g. Alex introduced by Bernice while Bernice is introduced by Alex.
 
 A supporter's `"interactions"` array stores entries in logging order. Each entry has a `"date"` in `yyyy-MM-dd` format and a non-blank `"note"` of at most 500 characters. For example:
 

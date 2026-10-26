@@ -34,6 +34,9 @@ public class IntroCommand extends Command {
     public static final String MESSAGE_INTRODUCER_UNCHANGED =
             "%1$s is already recorded as the introducer of %2$s. Nothing was changed.";
     public static final String MESSAGE_NO_INTRODUCER = "%1$s has no introducer recorded. Nothing was changed.";
+    public static final String MESSAGE_INTRODUCTION_LOOP =
+            "%1$s cannot be recorded as the introducer of %2$s, "
+            + "because %2$s introduced %1$s, directly or through other supporters.";
 
     private final Index targetIndex;
     private final Optional<Index> introducerIndex;
@@ -59,6 +62,10 @@ public class IntroCommand extends Command {
             Person introducer = getDisplayedPerson(lastShownList, introducerIndex.get());
             if (introducer.isSamePerson(target)) {
                 throw new CommandException(Person.MESSAGE_SELF_INTRODUCTION);
+            }
+            if (model.isIntroducedThrough(introducer, target.getName())) {
+                throw new CommandException(String.format(MESSAGE_INTRODUCTION_LOOP, introducer.getName(),
+                        target.getName()));
             }
             newIntroducer = Optional.of(introducer.getName());
         }
