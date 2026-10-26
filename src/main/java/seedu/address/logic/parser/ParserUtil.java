@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.commons.core.index.Index;
@@ -190,6 +191,20 @@ public class ParserUtil {
             throw new ParseException(Interaction.MESSAGE_CONSTRAINTS);
         }
         return trimmedNote;
+    }
+
+    /**
+     * Parses a supplied interaction date, or returns an empty {@code Optional} if absent.
+     * A present value, including a blank string, is validated by {@link #parseInteractionDate(String)}.
+     *
+     * @throws ParseException if the supplied date is invalid, before the minimum date, or in the future.
+     */
+    public static Optional<LocalDate> parseOptionalInteractionDate(Optional<String> date) throws ParseException {
+        requireNonNull(date);
+        if (date.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(parseInteractionDate(date.get()));
     }
 
     /**

@@ -177,7 +177,7 @@ public class EditLogCommandTest {
         setInteractions(OLDEST);
         model.setViewedPerson(model.getFilteredPersonList().get(1));
         assertFailurePreservesSelection(new EditLogCommand(INDEX_FIRST_PERSON, ENTRY, NOTE, DATE),
-                EditLogCommand.MESSAGE_INVALID_INTERACTION_INDEX);
+                Messages.MESSAGE_INVALID_INTERACTION_INDEX);
     }
 
     @Test
@@ -185,7 +185,7 @@ public class EditLogCommandTest {
         setInteractions();
         model.setViewedPerson(model.getFilteredPersonList().get(1));
         assertFailurePreservesSelection(new EditLogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(1), NOTE, DATE),
-                EditLogCommand.MESSAGE_INVALID_INTERACTION_INDEX);
+                Messages.MESSAGE_INVALID_INTERACTION_INDEX);
     }
 
     @Test
