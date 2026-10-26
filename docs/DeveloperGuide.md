@@ -250,14 +250,6 @@ log, unlog or stage change updates both filtering and sorting automatically.
 `QuietCommandIntegrationTest` checks indexed commands, stored order, selection and undo/redo. It also
 verifies tied ordering after tag changes and after an interaction update creates an equal-date group.
 
-### Index parsing and error feedback
-
-`ParserUtil#parseIndex(String, String)` validates a single index and appends the supplied command usage to `Index must be a positive integer (1, 2, 3, ...).` on failure. It delegates to the existing single-argument parser and preserves the original exception as the cause. The overload is used by `delete`, `view`, `edit`, `stage`, `log`, `tag`, `untag`, and both target and introducer index parsing in `intro`.
-
-`ParserUtil#parseInteractionIndices(String, String)` provides the corresponding behavior for `editlog` and `unlog`: missing, extra or invalid indices produce `Provide exactly two positive integer indices: INDEX ENTRY.` followed by command usage. These helpers validate syntax and integer range only; commands still validate supporter indices against the displayed list and interaction numbers against the selected history.
-
-Validation order is unchanged. Missing required arguments can fail a command's format checks before index parsing, and `intro` checks duplicate prefixes before parsing its indices. A blank `by/` still requests removal of the introducer. Valid indices, including leading zeros and surrounding whitespace, retain their existing interpretation.
-
 ### Deleting a supporter and their history
 
 `DeleteCommand#execute(Model)` validates its index against `Model#getFilteredPersonList()`, so deletion after `find` targets the displayed supporter rather than the same index in the full list. It reads `Person#getInteractions().size()` before calling `Model#deletePerson(Person)` and reports that count on the second line of its success message. Every history entry is counted, including identical interactions.
@@ -588,6 +580,14 @@ Editing or deleting another supporter preserves selection. Parsing and index-val
 * **Alternative 2:** Update selection separately in each command that changes supporters.
   * Pros: Each command controls its own selection behavior.
   * Cons: The same logic is repeated across commands, and a new command can leave selection pointing to an outdated record.
+
+### Index parsing and error feedback
+
+`ParserUtil#parseIndex(String, String)` first checks that the trimmed argument contains exactly one value. Empty or multi-word arguments produce `Invalid command format!` followed by the supplied command usage. A single value is delegated to the existing single-argument parser; invalid values produce `Index must be a positive integer (1, 2, 3, ...).` followed by usage, preserving the original exception as the cause. This includes values above the supported maximum of `2147483647`, even though they are positive integers. The overload is used by `delete`, `view`, `edit`, `stage`, `log`, `tag`, `untag`, and both target and introducer index parsing in `intro`.
+
+`ParserUtil#parseInteractionIndices(String, String)` provides the corresponding behavior for `editlog` and `unlog`: missing, extra or invalid indices produce `Provide exactly two positive integer indices: INDEX ENTRY.` followed by command usage. These helpers validate syntax and integer range only; commands still validate supporter indices against the displayed list and interaction numbers against the selected history.
+
+Validation order is unchanged. Missing required arguments can fail a command's format checks before index parsing, and `intro` checks duplicate prefixes before parsing its indices. A blank `by/` still requests removal of the introducer. Valid indices, including leading zeros and surrounding whitespace, retain their existing interpretation.
 
 ### Phone-number validation
 
@@ -1147,22 +1147,6 @@ Given below are instructions to test the app manually.
 testers are expected to do more _exploratory_ testing.
 </box>
 
-### Invalid-index feedback
-
-1. Prerequisites: Use isolated test data with at least one supporter. Run `list`, then `view 1`, and note the displayed list and selected supporter.
-
-1. Test cases: `delete 0`, `delete abc`, `view 0` and `edit 0 n/x`<br>
-   Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the respective command's usage. Data, filtering, selection and the saved data file remain unchanged.
-
-1. Test cases: `stage 0 giving`, `log 0 nt/Called`, `tag 0 t/vip`, `untag 0 t/vip`, `intro 0 by/1` and `intro 1 by/abc`<br>
-   Expected: The same positive-integer explanation followed by the respective command's usage. No data or selection changes.
-
-1. Test cases: `editlog 1 abc nt/Note`, `unlog 0 1`, `unlog 1` and `unlog 1 2 3`<br>
-   Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by the respective command's usage. No data or selection changes.
-
-1. Test cases: `stage 1`, `log 1` and `intro 1`<br>
-   Expected: `Invalid command format!` followed by the respective command's usage because required arguments are missing.
-
 ### Launch and shutdown
 
 1. Initial launch
@@ -1242,8 +1226,11 @@ testers are expected to do more _exploratory_ testing.
    1. Test case: `delete 2`<br>
       Expected: `The supporter index provided is invalid.` is shown, even if the full supporter list has more supporters. The displayed list and data are unchanged.
 
-   1. Other incorrect commands to try: `delete`, `delete abc`, `delete -1` and `delete 1 2`.<br>
+   1. Other invalid index values to try: `delete abc` and `delete -1`.<br>
       Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by delete usage, with no data or list changes.
+
+   1. Missing or extra arguments: `delete` and `delete 1 2`.<br>
+      Expected: `Invalid command format!` followed by delete usage, with no data or list changes.
 
 ### Setting a supporter's stage
 
@@ -1397,8 +1384,14 @@ testers are expected to do more _exploratory_ testing.
 
 1. Invalid view commands
 
-   1. Test cases: `view`, `view abc`, `view 0`, `view -1`, `view 1.5`, `view 2147483648` and `view 1 2`<br>
+   1. Test cases: `view abc`, `view 0`, `view -1` and `view 1.5`<br>
       Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the `view` usage message.
+
+   1. Test case: `view 2147483648` (a positive integer exceeding the supported maximum of `2147483647`)<br>
+      Expected: The same index error and `view` usage message. The value is rejected because it exceeds the supported integer range.
+
+   1. Test cases: `view` and `view 1 2`<br>
+      Expected: `Invalid command format!` followed by the `view` usage message.
 
    1. Test case: With exactly one supporter displayed, run `view 2`.<br>
       Expected: `The supporter index provided is invalid.`
@@ -1446,6 +1439,25 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: While scrolled down, run `list` or `find`.<br>
       Expected: The same supporter and scroll position remain visible. A subsequent `log` for that supporter refreshes the history and returns it to the top.
+
+### Invalid-index feedback
+
+1. Prerequisites: Use isolated test data with at least one supporter. Run `list`, then `view 1`, and note the displayed list and selected supporter.
+
+1. Test cases: `delete 0`, `delete abc`, `view 0` and `edit 0 n/x`<br>
+   Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the respective command's usage. Data, filtering, selection and the saved data file remain unchanged.
+
+1. Test cases: `stage 0 giving`, `log 0 nt/Called`, `tag 0 t/vip`, `untag 0 t/vip`, `intro 0 by/1` and `intro 1 by/abc`<br>
+   Expected: The same positive-integer explanation followed by the respective command's usage. No data or selection changes.
+
+1. Test cases: `editlog 1 abc nt/Note`, `unlog 0 1`, `unlog 1` and `unlog 1 2 3`<br>
+   Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by the respective command's usage. No data or selection changes.
+
+1. Test cases: `delete`, `view`, `edit n/Bob`, `stage 1`, `log 1`, `intro 1`, `tag 1` and `untag 1`<br>
+   Expected: `Invalid command format!` followed by the respective command's usage because required arguments are missing. No data or selection changes.
+
+1. Test cases: `delete 1 2`, `view 1 2`, `edit 1 x n/Bob`, `stage 1 giving extra`, `log 1 x nt/Called`, `intro 1 by/2 3`, `tag 1 2 t/vip` and `untag 1 2 t/vip`<br>
+   Expected: `Invalid command format!` followed by the respective command's usage because extra arguments were supplied. No data or selection changes.
 
 ### Phone formats and annotations
 
