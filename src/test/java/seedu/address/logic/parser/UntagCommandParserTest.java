@@ -69,7 +69,7 @@ public class UntagCommandParserTest {
         assertParseFailure(parser, " abc t/vip", MESSAGE_INVALID_INDEX);
 
         // text before the prefix that is not a single index
-        assertParseFailure(parser, " 1 2 t/vip", MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, " 1 2 t/vip", MESSAGE_INVALID_FORMAT);
     }
 
     @Test

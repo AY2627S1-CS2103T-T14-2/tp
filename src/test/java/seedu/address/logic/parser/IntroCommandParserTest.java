@@ -71,10 +71,13 @@ public class IntroCommandParserTest {
         // introducer index not a positive whole number
         assertParseFailure(parser, " 2 by/0", MESSAGE_INVALID_INDEX);
         assertParseFailure(parser, " 2 by/1.5", MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, " 2 by/Tan Wei Ming", MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, " 2 by/Tan Wei Ming", MESSAGE_INVALID_FORMAT);
+
+        // extra words in either index argument
+        assertParseFailure(parser, " 1 by/2 3", MESSAGE_INVALID_FORMAT);
 
         // text before the prefix that is not a single index
-        assertParseFailure(parser, " 2 3 by/1", MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, " 2 3 by/1", MESSAGE_INVALID_FORMAT);
     }
 
     @Test

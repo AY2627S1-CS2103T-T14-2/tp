@@ -106,7 +106,7 @@ public class LogCommandParserTest {
     public void parse_dateWithoutRequiredParts_failure() {
         assertParseFailure(parser, " 1 dt/2024-02-29", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, " dt/2024-02-29 nt/" + VALID_NOTE, MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 1 extra dt/2024-02-29 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, " 1 extra dt/2024-02-29 nt/" + VALID_NOTE, MESSAGE_INVALID_FORMAT);
     }
 
     @Test

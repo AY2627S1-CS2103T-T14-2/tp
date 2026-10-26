@@ -176,10 +176,11 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_viewInvalidArguments_throwsParseException() {
         String expectedMessage = ParserUtil.MESSAGE_INVALID_INDEX + "\n" + ViewCommand.MESSAGE_USAGE;
-        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view"));
+        String formatMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ViewCommand.MESSAGE_USAGE);
+        assertThrows(ParseException.class, formatMessage, () -> parser.parseCommand("view"));
         assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view abc"));
         assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view 0"));
-        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view 1 2"));
+        assertThrows(ParseException.class, formatMessage, () -> parser.parseCommand("view 1 2"));
     }
 
     @Test

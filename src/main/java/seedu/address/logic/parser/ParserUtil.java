@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -53,13 +54,18 @@ public class ParserUtil {
     }
 
     /**
-     * Parses an index, appending the command's usage to the index error if parsing fails.
+     * Parses a single index, reporting invalid command format for empty or multi-word input.
+     * For a single invalid value, appends the command's usage to the index error.
      * Uses the same validation as {@link #parseIndex(String)}; displayed-list bounds are checked by the command.
      *
      * @throws ParseException if the specified index is invalid.
      */
     public static Index parseIndex(String oneBasedIndex, String commandUsage) throws ParseException {
         requireAllNonNull(oneBasedIndex, commandUsage);
+        String trimmedIndex = oneBasedIndex.trim();
+        if (!trimmedIndex.matches("\\S+")) {
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, commandUsage));
+        }
         try {
             return parseIndex(oneBasedIndex);
         } catch (ParseException e) {

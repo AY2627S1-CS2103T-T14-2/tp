@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
@@ -24,6 +25,14 @@ public class DeleteCommandParserTest {
         String expectedMessage = ParserUtil.MESSAGE_INVALID_INDEX + "\n" + DeleteCommand.MESSAGE_USAGE;
         for (String index : new String[]{"0", "-1", "+1", "abc", "1.5", "2147483648"}) {
             assertParseFailure(parser, index + "", expectedMessage);
+        }
+    }
+
+    @Test
+    public void parse_malformedArguments_reportsFormatAndUsage() {
+        for (String input : new String[]{"", "  ", "1 2", "1 extra"}) {
+            assertParseFailure(parser, input,
+                    String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
         }
     }
 
