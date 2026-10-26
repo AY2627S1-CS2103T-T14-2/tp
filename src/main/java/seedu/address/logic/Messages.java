@@ -69,15 +69,14 @@ public class Messages {
         builder.append(person.getName())
                 .append("; Stage: ")
                 .append(person.getStage());
-        // an optional field is left out of the message when the supporter does not have
-        // it
+        // an optional field is left out of the message when the supporter does not have it
         person.getPhone().ifPresent(phone -> builder.append("; Phone: ").append(phone));
         person.getEmail().ifPresent(email -> builder.append("; Email: ").append(email));
         person.getAddress().ifPresent(address -> builder.append("; Address: ").append(address));
         person.getOrganisation().ifPresent(organisation -> builder.append("; Organisation: ").append(organisation));
         if (!person.getTags().isEmpty()) {
             builder.append("; Tags: ");
-            person.getTags().forEach(builder::append);
+            person.getTags().stream().sorted(Tag.ALPHABETICAL_ORDER).forEach(builder::append);
         }
         return builder.toString();
     }

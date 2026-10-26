@@ -97,6 +97,7 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 - SupporterBook only checks which characters a name uses, not whether it looks like a real name. For example, `s/o Kumar` or a name with only initials is accepted.
 - Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`.
 - Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
+- `TAG` must be alphanumeric, with no spaces, e.g. `t/boardIntro`. Tags that differ only in capitalisation, e.g. `t/vip t/VIP`, count as one tag, and the spelling typed first is kept.
 - After adding, the list shows all supporters in the order they were added (any `find` or `quiet` filter is cleared), with the new supporter at the bottom.
 
 <box type="tip" seamless>
@@ -483,7 +484,7 @@ Format: `tag INDEX t/TAG [t/TAG]...`
 - Tags the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and **must be a positive integer** 1, 2, 3, ...
 - At least one `t/TAG` must be given. Each `TAG` must be alphanumeric, with no spaces, as in `add`.
 - Tags the supporter already has are skipped. Capital letters are ignored when checking, so `t/vip` is skipped if the supporter is tagged `VIP`, and the existing tag keeps its capitalisation.
-- Tags given more than once in different capitalisation, e.g. `t/vip t/VIP`, count as one tag. The same applies to `untag`.
+- Tags given more than once in different capitalisation, e.g. `t/vip t/VIP`, count as one tag, and the spelling typed first is kept. The same applies to `untag`.
 - The result display lists the tags added and the tags skipped. If every tag is skipped, nothing is changed and a message says so.
 - On success, the detail panel switches to this supporter. The displayed list stays the same, so a `find` result is kept.
 
