@@ -90,6 +90,14 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_annotatedPhone_preservesFormatting() throws Exception {
+        for (String phone : List.of("9123 4567 (HP)", "(65) 9123 4567", "9123 4567 ext 12")) {
+            Person person = new PersonBuilder(BENSON).withPhone(phone).build();
+            assertEquals(person, new JsonAdaptedPerson(person).toModelType());
+        }
+    }
+
+    @Test
     public void toModelType_nullPhone_returnsPersonWithoutPhone() throws Exception {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, null, VALID_EMAIL, VALID_ADDRESS,

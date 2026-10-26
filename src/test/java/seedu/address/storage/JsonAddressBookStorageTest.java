@@ -112,6 +112,19 @@ public class JsonAddressBookStorageTest {
         assertThrows(NullPointerException.class, () -> saveAddressBook(null, "SomeFile.json"));
     }
 
+    @Test
+    public void readAndSaveAddressBook_annotatedPhones_preservesFormatting() throws Exception {
+        AddressBook book = new AddressBook();
+        book.addPerson(new PersonBuilder(ALICE).withPhone("9123 4567 (HP)").build());
+        book.addPerson(new PersonBuilder(HOON).withPhone("(65) 9123 4567").build());
+        book.addPerson(new PersonBuilder(IDA).withPhone("9123 4567 ext 12").build());
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("annotated.json"));
+
+        storage.saveAddressBook(book);
+
+        assertEquals(book, storage.readAddressBook().orElseThrow());
+    }
+
     /**
      * Saves {@code addressBook} at the specified {@code filePath}.
      */
