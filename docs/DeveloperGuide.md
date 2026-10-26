@@ -446,7 +446,7 @@ In tests, `PersonBuilder` builds a `Person` with an empty history unless `Person
 2. It creates an `Interaction` using the supplied date, or today's date at execution if none was supplied. The default uses the computer's clock; tests can supply a fixed `Clock`.
 3. It copies the supporter's existing interactions in logging order and appends the new interaction. The new entry's zero-based stored index is the updated list size minus one.
 4. It creates a replacement `Person` with the updated history and copies every other field unchanged, including the cultivation stage and tags. It then calls `Model#setPerson(Person, Person)` and selects the updated supporter with `Model#setViewedPerson(Person)`.
-5. It finds the new entry's position in `Person#getInteractionIndicesInDisplayOrder()`. Subtracting that zero-based display position from the history size gives its chronological number: oldest is `#1`, newest is largest. The returned `CommandResult` reports this number, supporter, date and note.
+5. It calls `Person#getInteractionEntryNumber(int)` on the updated supporter to convert the new entry's zero-based stored index to its one-based chronological number: oldest is `#1`, newest is largest. The returned `CommandResult` reports this number, supporter, date and note.
 
 Identical interactions are appended normally because two calls or messages with the same note can happen on the same day. `LogCommand` also does not call `Model#updateFilteredPersonList(Predicate)`, so logging against a supporter in a `find` result keeps that filter in place.
 
@@ -484,10 +484,10 @@ Identical interactions are appended normally because two calls or messages with 
 `EditLogCommand` performs the model update as follows.
 
 1. Validate the supporter index against `Model#getFilteredPersonList()`, then the entry number against that supporter's history size. These failures have distinct messages and leave data and selection unchanged.
-2. Convert the chronological entry number to a zero-based display position using `historySize - entryNumber`. Look up that position in `Person#getInteractionIndicesInDisplayOrder()` to obtain the stored index.
+2. Call `Person#getInteractionStoredIndex(int)` on the original supporter to convert the one-based chronological entry number to its zero-based stored index.
 3. Create a replacement `Interaction`, taking omitted fields from the original. Replace the entry at its stored index in a copied list. This distinguishes identical entries and preserves logging position for equal-date ordering.
 4. Create a replacement `Person` preserving all other fields, including the introducer. Call `Model#setPerson(Person, Person)` and `Model#setViewedPerson(Person)` without changing the list filter.
-5. Find the stored index in the updated display-order mapping. Subtract its display position from the history size to obtain the edited entry's new chronological number for the success message. `SupporterDetailData` uses the same ordering to refresh the panel.
+5. Call `Person#getInteractionEntryNumber(int)` on the updated supporter to convert the edited entry's zero-based stored index to its current one-based chronological number for the success message. `SupporterDetailData` uses the same ordering to refresh the panel.
 
 Supplying unchanged values succeeds normally. Date edits can renumber other entries, but do not reorder the stored list. Last contact remains derived from the latest interaction date.
 
@@ -500,7 +500,7 @@ Supplying unchanged values succeeds normally. Date edits can renumber other entr
 `UnlogCommand` performs the model update as follows.
 
 1. Validate the supporter index against `Model#getFilteredPersonList()`, then validate the entry number against that supporter's history size. These failures have distinct messages and leave data and selection unchanged.
-2. Convert the chronological entry number to a zero-based display position using `historySize - entryNumber`. Look up that position in `Person#getInteractionIndicesInDisplayOrder()` to obtain the stored index.
+2. Call `Person#getInteractionStoredIndex(int)` on the original supporter to convert the one-based chronological entry number to its zero-based stored index.
 3. Copy the interaction list and remove the entry at that stored index. Removing by position distinguishes identical interactions and preserves the remaining logging order.
 4. Create a replacement `Person`, preserving all other fields, including the introducer. Call `Model#setPerson(Person, Person)` and `Model#setViewedPerson(Person)` without changing the list filter.
 5. Return the removed entry's pre-deletion number, date and note. `SupporterDetailData` derives contiguous chronological numbers from the updated history and supplies the empty-history state when none remain.
