@@ -110,6 +110,20 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 - `TAG` must be alphanumeric, with no spaces, e.g. `t/boardIntro`. Tags that differ only in capitalisation, e.g. `t/vip t/VIP`, count as one tag, and the spelling typed first is kept.
 - After adding, the list shows all supporters in the order they were added (any `find` or `quiet` filter is cleared), with the new supporter at the bottom.
 
+If another supporter has the same phone number or email, the addition still succeeds, but a
+warning names the existing supporters and identifies the shared fields. Shared contact details
+may be legitimate, so the warning does not block saving. Check the named records before deciding
+whether to keep or undo the addition.
+
+Phone comparison uses the complete number, ignoring formatting; country codes are not inferred,
+so `+65 9123-4567` and `6591234567` match, but `91234567` is not assumed to be the same number.
+Email comparison ignores case but does not remove dots or `+suffixes`.
+The check includes supporters hidden by `find` or `quiet`. It applies when adding, not when editing
+or loading existing data, and does not change the rule that duplicate names are rejected.
+
+For example, if Alex Yeoh already has phone `87438807`, `add n/Dup Phone p/87438807` still adds
+the new supporter and includes a warning identifying `Alex Yeoh (phone)`.
+
 <box type="tip" seamless>
 
 **Tip:** A supporter can have any number of tags, including zero, e.g. `t/boardIntro` for someone introduced by a board member.
