@@ -33,6 +33,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Phone;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -225,5 +226,43 @@ public class LogicManagerTest {
         ModelManager expectedModel = new ModelManager();
         expectedModel.addPerson(expectedPerson);
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_changeWithUnrecognisedPrefix_addsNote() throws Exception {
+        model.addPerson(ALICE);
+        CommandResult result = logic.execute("log 1 nt/Called about the gala dte/2024-01-01");
+
+        assertEquals(String.format(Messages.MESSAGE_UNRECOGNISED_PREFIX, "dte/"),
+                result.getFeedbackToUser().lines().toList().getLast());
+    }
+
+    @Test
+    public void execute_noChangeWithUnrecognisedPrefix_noNote() throws Exception {
+        model.addPerson(ALICE);
+        CommandResult result = logic.execute("find x/Alice");
+
+        assertEquals(String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, 0), result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_changeWithoutUnrecognisedPrefix_noNote() throws Exception {
+        model.addPerson(ALICE);
+        CommandResult result = logic.execute("log 1 nt/Called about the gala, and/or the dinner");
+
+        assertEquals(1, result.getFeedbackToUser().lines().count());
+    }
+
+    @Test
+    public void execute_rejectedWithUnrecognisedPrefix_addsNoteToError() {
+        assertParseException("add n/Tan p/91234567 x/foo", Phone.MESSAGE_CONSTRAINTS + "\n"
+                + String.format(Messages.MESSAGE_UNRECOGNISED_PREFIX_IN_ERROR, "x/"));
+        assertParseException("add n/Tan x/foo p/91234567 ee/tan@example.com", Name.MESSAGE_CONSTRAINTS + "\n"
+                + String.format(Messages.MESSAGE_UNRECOGNISED_PREFIXES_IN_ERROR, "x/, ee/"));
+    }
+
+    @Test
+    public void execute_rejectedWithoutUnrecognisedPrefix_errorUnchanged() {
+        assertParseException("add n/Tan s/o Lim p/abc", Phone.MESSAGE_CONSTRAINTS);
     }
 }

@@ -13,6 +13,7 @@ import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
+import seedu.address.logic.parser.ArgumentTokenizer;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Name;
@@ -47,9 +48,13 @@ public class LogicManager implements Logic {
     public CommandResult execute(String commandText) throws CommandException, ParseException {
         logger.info("----------------[USER COMMAND][" + commandText + "]");
 
-        Command command = addressBookParser.parseCommand(commandText);
+        Command command = parseCommand(commandText);
+        List<Person> personsBeforeCommand = List.copyOf(model.getAddressBook().getPersonList());
         CommandResult commandResult = command.execute(model);
         model.commitAddressBookIfChanged();
+        if (!personsBeforeCommand.equals(model.getAddressBook().getPersonList())) {
+            commandResult = addUnrecognisedPrefixNote(commandResult, commandText);
+        }
 
         try {
             storage.saveAddressBook(model.getAddressBook());
@@ -60,6 +65,38 @@ public class LogicManager implements Logic {
         }
 
         return commandResult;
+    }
+
+    /**
+     * Parses {@code commandText}. If it is rejected and contains words that look like prefixes but are not,
+     * adds a note naming them to the error, since such a word is read as part of the value before it and
+     * can make the error blame a field the user typed correctly.
+     */
+    private Command parseCommand(String commandText) throws ParseException {
+        try {
+            return addressBookParser.parseCommand(commandText);
+        } catch (ParseException pe) {
+            List<String> unrecognisedPrefixes = ArgumentTokenizer.findUnrecognisedPrefixes(commandText);
+            if (unrecognisedPrefixes.isEmpty()) {
+                throw pe;
+            }
+            logger.info("Rejected command containing unrecognised prefixes: " + unrecognisedPrefixes);
+            throw new ParseException(pe.getMessage() + "\n"
+                    + Messages.formatUnrecognisedPrefixErrorNote(unrecognisedPrefixes), pe);
+        }
+    }
+
+    /**
+     * Adds a note to {@code commandResult} if {@code commandText} contains words that look like prefixes but
+     * are not, since the command has just saved them as part of a value (e.g. an address or a note).
+     */
+    private CommandResult addUnrecognisedPrefixNote(CommandResult commandResult, String commandText) {
+        List<String> unrecognisedPrefixes = ArgumentTokenizer.findUnrecognisedPrefixes(commandText);
+        if (unrecognisedPrefixes.isEmpty()) {
+            return commandResult;
+        }
+        logger.info("Saved text containing unrecognised prefixes: " + unrecognisedPrefixes);
+        return commandResult.withNote(Messages.formatUnrecognisedPrefixNote(unrecognisedPrefixes));
     }
 
     @Override
