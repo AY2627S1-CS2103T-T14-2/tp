@@ -32,12 +32,14 @@ public abstract class TagChangeCommand extends Command {
         assert !tags.isEmpty() : "at least one tag must be given";
         this.targetIndex = targetIndex;
         // tags differing only in case count as one, so t/VIP t/vip never reports one of them as skipped
-        this.tags = Tag.sortedDistinctIgnoringCase(tags);
+        this.tags = List.copyOf(Tag.sortedDistinctIgnoringCase(tags));
     }
 
     /**
-     * Changes {@code supporterTags} for {@code tag} and returns the tags added or removed,
-     * or an empty list if {@code tag} is skipped.
+     * Adds or removes {@code tag} by changing {@code supporterTags} in place, and returns the tags actually
+     * added or removed, or an empty list if {@code tag} is skipped.
+     * Removed tags are returned as stored on the supporter, so their case may differ from {@code tag}.
+     * {@code execute} relies on both the change to {@code supporterTags} and the returned list.
      */
     protected abstract List<Tag> changeTag(Set<Tag> supporterTags, Tag tag);
 
