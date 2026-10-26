@@ -183,6 +183,7 @@ public class ArgumentTokenizerTest {
         assertEquals(List.of(), findUnrecognisedPrefixes("add n/Ravi s/o Kumar p/9123 a/Blk 1 c/o Mdm Tan"));
         assertEquals(List.of(), findUnrecognisedPrefixes("add n/Priya D/O Kumar p/9123"));
         assertEquals(List.of(), findUnrecognisedPrefixes("log 1 nt/Him and/or his wife, w/o the kids"));
+        assertEquals(List.of(), findUnrecognisedPrefixes("log 1 nt/Met W/ the CEO"));
 
         // a slash inside a word, after digits or in a link
         assertEquals(List.of(), findUnrecognisedPrefixes("log 1 nt/50/50 split, see https://example.com/a"));

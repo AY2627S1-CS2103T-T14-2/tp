@@ -28,7 +28,7 @@ public class ArgumentTokenizer {
             .collect(Collectors.toUnmodifiableSet());
 
     /** Everyday words written with a slash, which are not mistyped prefixes. Compared ignoring case. */
-    private static final Set<String> SLASHED_WORDS = Set.of("s/o", "d/o", "c/o", "w/o", "and/or");
+    private static final Set<String> SLASHED_WORDS = Set.of("s/o", "d/o", "c/o", "w/", "w/o", "and/or");
 
     /**
      * Tokenizes an arguments string and returns an {@code ArgumentMultimap} object that maps prefixes to their
