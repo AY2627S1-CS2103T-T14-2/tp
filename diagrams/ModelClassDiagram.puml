@@ -9,7 +9,6 @@ Class "<<interface>>\nReadOnlyAddressBook" as ReadOnlyAddressBook
 Class "<<interface>>\nReadOnlyUserPrefs" as ReadOnlyUserPrefs
 Class "<<interface>>\nModel" as Model
 Class AddressBook
-Class VersionedAddressBook
 Class ModelManager
 Class UserPrefs
 
@@ -36,9 +35,7 @@ AddressBook .up.|> ReadOnlyAddressBook
 ModelManager .up.|> Model
 Model .right.> ReadOnlyUserPrefs
 Model .left.> ReadOnlyAddressBook
-VersionedAddressBook -left-|> AddressBook
-VersionedAddressBook -up-> "1..*" ReadOnlyAddressBook : saved states >
-ModelManager -left-> "1" VersionedAddressBook
+ModelManager -left-> "1" AddressBook
 ModelManager -right-> "1" UserPrefs
 UserPrefs .up.|> ReadOnlyUserPrefs
 
