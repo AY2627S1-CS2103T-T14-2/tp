@@ -32,22 +32,12 @@ public class IntroCommandParser implements Parser<IntroCommand> {
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_INTRODUCER);
 
-        Index targetIndex = parseIndex(argMultimap.getPreamble());
+        Index targetIndex = ParserUtil.parseIndex(argMultimap.getPreamble(), IntroCommand.MESSAGE_USAGE);
         String introducerValue = argMultimap.getValue(PREFIX_INTRODUCER).get().trim();
         if (introducerValue.isEmpty()) {
             return new IntroCommand(targetIndex, Optional.empty());
         }
-        return new IntroCommand(targetIndex, Optional.of(parseIndex(introducerValue)));
-    }
-
-    /**
-     * Parses {@code value} as an index, reporting a wrong command format if it is not a positive whole number.
-     */
-    private static Index parseIndex(String value) throws ParseException {
-        try {
-            return ParserUtil.parseIndex(value);
-        } catch (ParseException pe) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, IntroCommand.MESSAGE_USAGE), pe);
-        }
+        return new IntroCommand(targetIndex, Optional.of(
+                ParserUtil.parseIndex(introducerValue, IntroCommand.MESSAGE_USAGE)));
     }
 }

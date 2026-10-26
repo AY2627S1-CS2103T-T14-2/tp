@@ -27,13 +27,7 @@ public class StageCommandParser implements Parser<StageCommand> {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, StageCommand.MESSAGE_USAGE));
         }
 
-        Index index;
-        try {
-            index = ParserUtil.parseIndex(parts[0]);
-        } catch (ParseException pe) {
-            throw new ParseException(
-                    String.format(MESSAGE_INVALID_COMMAND_FORMAT, StageCommand.MESSAGE_USAGE), pe);
-        }
+        Index index = ParserUtil.parseIndex(parts[0], StageCommand.MESSAGE_USAGE);
 
         Stage stage = ParserUtil.parseStage(parts[1]);
         return new StageCommand(index, stage);

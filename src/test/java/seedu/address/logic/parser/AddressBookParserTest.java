@@ -53,6 +53,18 @@ public class AddressBookParserTest {
     private final AddressBookParser parser = new AddressBookParser();
 
     @Test
+    public void parseCommand_invalidSupporterIndex_reportsReasonAndUsage() {
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INDEX + "\n" + DeleteCommand.MESSAGE_USAGE, () ->
+                parser.parseCommand("delete 0"));
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INDEX + "\n" + DeleteCommand.MESSAGE_USAGE, () ->
+                parser.parseCommand("delete abc"));
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INDEX + "\n" + ViewCommand.MESSAGE_USAGE, () ->
+                parser.parseCommand("view 0"));
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INDEX + "\n" + EditCommand.MESSAGE_USAGE, () ->
+                parser.parseCommand("edit 0 n/x"));
+    }
+
+    @Test
     public void parseCommand_add() throws Exception {
         Person person = new PersonBuilder().build();
         AddCommand command = (AddCommand) parser.parseCommand(PersonUtil.getAddCommand(person));
@@ -163,7 +175,7 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_viewInvalidArguments_throwsParseException() {
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ViewCommand.MESSAGE_USAGE);
+        String expectedMessage = ParserUtil.MESSAGE_INVALID_INDEX + "\n" + ViewCommand.MESSAGE_USAGE;
         assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view"));
         assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view abc"));
         assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view 0"));

@@ -1,6 +1,5 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -17,8 +16,8 @@ import seedu.address.logic.commands.ViewCommand;
  */
 public class ViewCommandParserTest {
 
-    private static final String INVALID_FORMAT_MESSAGE =
-            String.format(MESSAGE_INVALID_COMMAND_FORMAT, ViewCommand.MESSAGE_USAGE);
+    private static final String INVALID_INDEX_MESSAGE =
+            ParserUtil.MESSAGE_INVALID_INDEX + "\n" + ViewCommand.MESSAGE_USAGE;
 
     private final ViewCommandParser parser = new ViewCommandParser();
 
@@ -38,48 +37,48 @@ public class ViewCommandParserTest {
 
     @Test
     public void parse_missingIndex_throwsParseException() {
-        assertParseFailure(parser, "", INVALID_FORMAT_MESSAGE);
-        assertParseFailure(parser, " \t\r\n ", INVALID_FORMAT_MESSAGE);
+        assertParseFailure(parser, "", INVALID_INDEX_MESSAGE);
+        assertParseFailure(parser, " \t\r\n ", INVALID_INDEX_MESSAGE);
     }
 
     @Test
     public void parse_nonnumericIndex_throwsParseException() {
-        assertParseFailure(parser, "abc", INVALID_FORMAT_MESSAGE);
-        assertParseFailure(parser, "1abc", INVALID_FORMAT_MESSAGE);
+        assertParseFailure(parser, "abc", INVALID_INDEX_MESSAGE);
+        assertParseFailure(parser, "1abc", INVALID_INDEX_MESSAGE);
     }
 
     @Test
     public void parse_zeroIndex_throwsParseException() {
-        assertParseFailure(parser, "0", INVALID_FORMAT_MESSAGE);
+        assertParseFailure(parser, "0", INVALID_INDEX_MESSAGE);
     }
 
     @Test
     public void parse_negativeIndex_throwsParseException() {
-        assertParseFailure(parser, "-1", INVALID_FORMAT_MESSAGE);
+        assertParseFailure(parser, "-1", INVALID_INDEX_MESSAGE);
     }
 
     @Test
     public void parse_decimalIndex_throwsParseException() {
-        assertParseFailure(parser, "1.5", INVALID_FORMAT_MESSAGE);
-        assertParseFailure(parser, "1.0", INVALID_FORMAT_MESSAGE);
+        assertParseFailure(parser, "1.5", INVALID_INDEX_MESSAGE);
+        assertParseFailure(parser, "1.0", INVALID_INDEX_MESSAGE);
     }
 
     @Test
     public void parse_oversizedIndex_throwsParseException() {
-        assertParseFailure(parser, "2147483648", INVALID_FORMAT_MESSAGE);
-        assertParseFailure(parser, "999999999999999999999", INVALID_FORMAT_MESSAGE);
+        assertParseFailure(parser, "2147483648", INVALID_INDEX_MESSAGE);
+        assertParseFailure(parser, "999999999999999999999", INVALID_INDEX_MESSAGE);
     }
 
     @Test
     public void parse_multipleIndices_throwsParseException() {
-        assertParseFailure(parser, "1 2", INVALID_FORMAT_MESSAGE);
-        assertParseFailure(parser, "1\t2", INVALID_FORMAT_MESSAGE);
+        assertParseFailure(parser, "1 2", INVALID_INDEX_MESSAGE);
+        assertParseFailure(parser, "1\t2", INVALID_INDEX_MESSAGE);
     }
 
     @Test
     public void parse_extraArguments_throwsParseException() {
-        assertParseFailure(parser, "1 extra", INVALID_FORMAT_MESSAGE);
-        assertParseFailure(parser, "1 nt/Note", INVALID_FORMAT_MESSAGE);
+        assertParseFailure(parser, "1 extra", INVALID_INDEX_MESSAGE);
+        assertParseFailure(parser, "1 nt/Note", INVALID_INDEX_MESSAGE);
     }
 
     @Test
