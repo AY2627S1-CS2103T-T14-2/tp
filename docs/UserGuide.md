@@ -55,6 +55,9 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 - Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
+- Supporter indices must be positive integers. For example, `delete 0`, `delete abc`, `view 0` and `edit 0 n/x` report `Index must be a positive integer (1, 2, 3, ...).` followed by the command's usage.<br>
+  For `editlog` and `unlog`, missing, extra or invalid indices report `Provide exactly two positive integer indices: INDEX ENTRY.` followed by usage. A positive index that does not identify a displayed supporter or interaction is rejected separately during execution. Missing required fields can still produce `Invalid command format!` followed by usage.
+
 - Items in square brackets are optional.<br>
   For example, `n/NAME [t/TAG]` can be used as `n/John Doe t/friend` or as `n/John Doe`.
 
