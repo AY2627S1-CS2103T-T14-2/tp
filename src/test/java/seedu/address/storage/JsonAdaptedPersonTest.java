@@ -24,6 +24,7 @@ import seedu.address.model.person.Organisation;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Stage;
+import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
 public class JsonAdaptedPersonTest {
@@ -153,6 +154,33 @@ public class JsonAdaptedPersonTest {
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
                         VALID_ORGANISATION, null, VALID_STAGE, VALID_INTERACTIONS, invalidTags);
         assertThrows(IllegalValueException.class, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_nullTag_throwsIllegalValueException() {
+        List<JsonAdaptedTag> tagsWithNull = new ArrayList<>(VALID_TAGS);
+        tagsWithNull.add(null);
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_ORGANISATION, null, VALID_STAGE, VALID_INTERACTIONS, tagsWithNull);
+        String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Tag.class.getSimpleName());
+
+        assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_emptyTags_returnsPersonWithoutTags() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_ORGANISATION, null, VALID_STAGE, VALID_INTERACTIONS, List.of());
+
+        assertTrue(person.toModelType().getTags().isEmpty());
+    }
+
+    @Test
+    public void toModelType_nullTags_returnsPersonWithoutTags() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                VALID_ORGANISATION, null, VALID_STAGE, VALID_INTERACTIONS, null);
+
+        assertTrue(person.toModelType().getTags().isEmpty());
     }
 
     @Test

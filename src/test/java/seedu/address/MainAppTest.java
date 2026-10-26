@@ -84,6 +84,12 @@ public class MainAppTest {
     }
 
     @Test
+    public void initModelManager_nullTag_startsEmptyWithWarning() throws Exception {
+        assertInvalidFileStartsEmpty(TEST_DATA_FOLDER.resolve("JsonAddressBookStorageTest")
+                .resolve("nullTagAddressBook.json"));
+    }
+
+    @Test
     public void initModelManager_mixedValidAndInvalidSupporters_startsEmptyWithWarning() throws Exception {
         assertInvalidFileStartsEmpty(TEST_DATA_FOLDER.resolve("JsonAddressBookStorageTest")
                 .resolve("invalidAndValidPersonAddressBook.json"));

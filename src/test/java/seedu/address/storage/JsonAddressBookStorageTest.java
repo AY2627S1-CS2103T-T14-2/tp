@@ -1,5 +1,6 @@
 package seedu.address.storage;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -9,6 +10,7 @@ import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -62,6 +64,17 @@ public class JsonAddressBookStorageTest {
     @Test
     public void readAddressBook_invalidAndValidPersonAddressBook_throwDataLoadingException() {
         assertThrows(DataLoadingException.class, () -> readAddressBook("invalidAndValidPersonAddressBook.json"));
+    }
+
+    @Test
+    public void readAddressBook_nullTag_throwsDataLoadingExceptionWithoutChangingFile() throws Exception {
+        Path dataFile = testFolder.resolve("supporterbook.json");
+        Files.copy(TEST_DATA_FOLDER.resolve("nullTagAddressBook.json"), dataFile);
+        byte[] originalContents = Files.readAllBytes(dataFile);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+        assertArrayEquals(originalContents, Files.readAllBytes(dataFile));
     }
 
     @Test
