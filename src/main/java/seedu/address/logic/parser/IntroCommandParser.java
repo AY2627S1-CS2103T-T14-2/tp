@@ -27,7 +27,8 @@ public class IntroCommandParser implements Parser<IntroCommand> {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_INTRODUCER);
 
         if (argMultimap.getPreamble().isEmpty() || argMultimap.getValue(PREFIX_INTRODUCER).isEmpty()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, IntroCommand.MESSAGE_USAGE));
+            throw new ParseException(
+                    String.format(MESSAGE_INVALID_COMMAND_FORMAT, IntroCommand.MESSAGE_USAGE));
         }
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_INTRODUCER);

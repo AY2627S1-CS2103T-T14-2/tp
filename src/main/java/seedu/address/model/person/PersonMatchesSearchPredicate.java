@@ -12,7 +12,7 @@ import seedu.address.commons.util.ToStringBuilder;
 /**
  * Matches any criterion within a field and all specified fields of a supporter.
  * Text matching ignores case and uses substrings, while stages match exactly.
- * Phone matching ignores plus signs, spaces and hyphens.
+ * Phone matching ignores formatting, type labels and extension markers, but retains extension digits.
  */
 public class PersonMatchesSearchPredicate implements Predicate<Person> {
     private final List<String> nameKeywords;
@@ -65,12 +65,11 @@ public class PersonMatchesSearchPredicate implements Predicate<Person> {
     }
 
     /**
-     * Returns phone text without plus signs, spaces or hyphens for substring searches.
+     * Returns phone search digits without formatting, trailing labels or extension markers.
      * This does not validate the remaining characters or require a complete phone number.
      */
     public static String normalizePhone(String phone) {
-        requireNonNull(phone);
-        return phone.replace("+", "").replace(" ", "").replace("-", "");
+        return Phone.normalizeForSearch(phone);
     }
 
     private static List<String> normalizeText(List<String> keywords) {

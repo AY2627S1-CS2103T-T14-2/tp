@@ -82,6 +82,15 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_annotatedPhoneFragments_success() {
+        for (String query : List.of("(65)", "9123 (HP)", "9 ext 12", "(65) 9123 EXT 12 (Office)")) {
+            FindCommand expectedCommand = new FindCommand(new PersonMatchesSearchPredicate(List.of(), List.of(),
+                    List.of(), List.of(), List.of(query), List.of()));
+            assertParseSuccess(parser, "p/" + query, expectedCommand);
+        }
+    }
+
+    @Test
     public void parse_emptyPrefixValue_failure() {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
         for (String prefix : List.of("o/", "t/", "p/", "e/")) {
@@ -102,7 +111,8 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_invalidPhoneQuery_failure() {
-        for (String value : List.of("+", "-", "+ -", "abc", "912a", "(65)9123")) {
+        for (String value : List.of("+", "-", "+ -", "abc", "912a", "(65)9123", "(HP)",
+                "(65", "9123 ext", "9123 ext 1234567", "9123 (HP2)")) {
             assertParseFailure(parser, "p/" + value, FindCommandParser.MESSAGE_INVALID_PHONE_SEARCH);
         }
         assertParseFailure(parser, "p/9123 p/+", FindCommandParser.MESSAGE_INVALID_PHONE_SEARCH);

@@ -42,7 +42,9 @@ public class AddCommandParser implements Parser<AddCommand> {
         if (!arePrefixesPresent(argMultimap, PREFIX_NAME) || !argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
         }
-        if (!arePrefixesPresent(argMultimap, PREFIX_PHONE) && !arePrefixesPresent(argMultimap, PREFIX_EMAIL)) {
+        boolean hasContactPrefix = arePrefixesPresent(argMultimap, PREFIX_PHONE)
+                || arePrefixesPresent(argMultimap, PREFIX_EMAIL);
+        if (!hasContactPrefix) {
             throw new ParseException(AddCommand.MESSAGE_MISSING_CONTACT);
         }
 
@@ -84,14 +86,6 @@ public class AddCommandParser implements Parser<AddCommand> {
             throw new ParseException(blankMessage);
         }
         return Optional.of(fieldParser.parse(value.get()));
-    }
-
-    /**
-     * Parses a field value, e.g. {@link ParserUtil#parsePhone(String)}.
-     */
-    @FunctionalInterface
-    private interface FieldParser<T> {
-        T parse(String value) throws ParseException;
     }
 
     /**

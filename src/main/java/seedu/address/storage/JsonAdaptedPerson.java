@@ -142,6 +142,10 @@ class JsonAdaptedPerson {
     private Set<Tag> toModelTags() throws IllegalValueException {
         final Set<Tag> modelTags = new HashSet<>();
         for (JsonAdaptedTag tag : tags) {
+            if (tag == null) {
+                throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
+                        Tag.class.getSimpleName()));
+            }
             modelTags.add(tag.toModelType());
         }
         return modelTags;

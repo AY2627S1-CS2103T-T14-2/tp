@@ -187,15 +187,16 @@ tokenization, allowing multiword organisation values and whitespace between pref
 
 The parser rejects missing criteria and empty prefix values. Stage values use
 `ParserUtil#parseStage(String)` so invalid or partial stage names produce the existing stage error.
-Phone queries must contain digits after removing plus signs, spaces and hyphens, and may not
-contain other characters. They are search fragments rather than complete `Phone` values, so the
-phone-number length constraints do not apply to queries.
+Phone queries use `Phone#isValidPhoneSearch(String)` to check the same formatting, parentheses,
+extension and label syntax as stored numbers. They are search fragments rather than complete
+`Phone` values, so the main-number length constraints do not apply to queries.
 
 `PersonMatchesSearchPredicate` defensively copies its criteria and normalizes text with
 `Locale.ROOT`. Names, organisations, tags and emails use literal, case-insensitive substring
-matching; stages match exactly. `normalizePhone(String)` removes formatting from both phone
-criteria and stored numbers before substring matching. Missing optional fields do not satisfy
-criteria on those fields.
+matching; stages match exactly. `normalizePhone(String)` delegates to `Phone#normalizeForSearch(String)`
+to remove separators, parentheses, trailing type labels and extension markers from both phone
+criteria and stored numbers. Extension digits remain in the searchable sequence. Missing optional
+fields do not satisfy criteria on those fields.
 
 Alternatives within a field use OR and different field groups use AND. For example,
 `find tan lim o/DBS o/OCBC st/giving` requires any name keyword, any organisation alternative and
@@ -281,6 +282,28 @@ Two supporters count as the same supporter if their names match, ignoring case a
 - **Alternative 2:** The name together with the phone number or email.
   - Pros: Namesakes can be stored without changing either name.
   - Cons: The same person could be added twice as soon as they change jobs and contact details.
+
+### Shared-contact warnings when adding
+
+`AddCommand` checks the existing name-based duplicate rule first. For a new name, it creates
+`SharedContactWarning` from a snapshot of `Model#getAddressBook().getPersonList()` before adding
+the supporter. This includes records hidden by a filter and prevents the new record from being
+reported as its own match.
+
+The warning compares complete phone-number keys and case-insensitive email addresses, not search
+substrings. Phone formatting and type labels are ignored, but country codes are not inferred.
+An extension marker is retained in the comparison key, so a main number followed by extension
+digits is not confused with a longer main number, and different extensions remain distinct.
+Email dots and `+suffixes` are significant. Missing contact fields never match other missing fields.
+
+Each existing supporter is listed once, in full-list order, with `phone`, `email` or `phone and email`.
+The message is appended to the normal success feedback only when matches exist. Shared contacts
+do not block the addition or update existing supporters. `LogicManager` saves and commits the
+addition normally, producing one undoable change. Editing and loading do not issue these warnings.
+
+`SharedContactWarningTest` covers matching, normalization, optional fields and deterministic messages.
+`SharedContactWarningIntegrationTest` checks the reported examples, hidden matches, persistence,
+selection, unchanged rejection rules and undo/redo through `LogicManager`.
 
 ### Cultivation stage field
 
@@ -557,6 +580,23 @@ Editing or deleting another supporter preserves selection. Parsing and index-val
 * **Alternative 2:** Update selection separately in each command that changes supporters.
   * Pros: Each command controls its own selection behavior.
   * Cons: The same logic is repeated across commands, and a new command can leave selection pointing to an outdated record.
+
+### Phone-number validation
+
+`Phone` validates a main number followed by an optional extension and an optional type label.
+The main number accepts a leading plus sign and digit groups, optionally enclosed in balanced
+parentheses, separated by single spaces or hyphens. An extension uses case-insensitive `ext`
+followed by 1 to 6 digits; a trailing parenthesized label contains English alphabetic words.
+The main number must contain 3 to 15 digits, excluding the extension. Both annotations are optional;
+when both are present, the extension precedes the label.
+
+`ParserUtil#parsePhone(String)` and `JsonAdaptedPerson` use this model validation, keeping `add`,
+`edit` and storage consistent. `Phone#value` preserves the entered formatting; normalization is
+used only for searching, not for display or persistence. Search fragments reuse the syntax
+without imposing the main-number digit-count limits.
+
+`PhoneCommandIntegrationTest` checks annotated phones through `LogicManager`, including add/edit,
+searching, undo/redo, JSON round trips and rejected commands that must preserve the current state.
 
 ### Optional contact fields
 
@@ -850,7 +890,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case resumes from step 1.
 
-- 1c. User provided a detail that is invalid (e.g. a name with symbols, a phone number with spaces, an unknown stage).
+- 1c. User provided a detail that is invalid (e.g. a name with unsupported symbols, a phone number with unbalanced parentheses, an unknown stage).
   - 1c1. SupporterBook shows an error message for that detail.
 
     Use case resumes from step 1.
@@ -1115,6 +1155,24 @@ testers are expected to do more _exploratory_ testing.
 
 1. _{ more test cases … }_
 
+### Adding supporters with shared contact details
+
+1. Prerequisites: Use fresh sample data in an isolated test folder. Alex Yeoh has phone `87438807`
+   and email `alexyeoh@example.com`.
+1. Run `add n/Dup Phone p/87438807`.<br>
+   Expected: The supporter is added and saved. Feedback includes `Alex Yeoh (phone)` in a warning.
+1. Run `add n/Dup Email e/ALEXYEOH@EXAMPLE.COM`.<br>
+   Expected: The supporter is added. The warning includes `Alex Yeoh (email)` despite the case difference.
+1. Run `undo`, then `redo`.<br>
+   Expected: The second addition is removed and restored as one change; existing supporters are unchanged.
+1. Run `find Bernice`, then `add n/Hidden Phone Match p/8743-8807`.<br>
+   Expected: The warning still names Alex Yeoh even though he was hidden by the filter. Other existing
+   supporters sharing that number are also named. The full list is restored after adding.
+1. Run `add n/Unrelated Supporter p/123456789`.<br>
+   Expected: The normal success feedback appears without a shared-contact warning.
+1. Run `add n/Alex Yeoh p/87438807`.<br>
+   Expected: The duplicate name is rejected; an advisory contact warning does not bypass that rule.
+
 ### Finding and listing supporters
 
 1. Prerequisites: The list contains `Tan Wei Ming`, `Tan Ah Kow` and `Weiling Koh`, added in that order.
@@ -1364,6 +1422,25 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: While scrolled down, run `list` or `find`.<br>
       Expected: The same supporter and scroll position remain visible. A subsequent `log` for that supporter refreshes the history and returns it to the top.
+
+### Phone formats and annotations
+
+1. Prerequisites: Use an isolated test folder with no supporters named `Phone Label Test`,
+   `Country Code Test` or `Phone Extension Test`.
+1. Run `add n/Phone Label Test p/9123 4567 (HP)`,
+   `add n/Country Code Test p/(65) 9123 4567` and
+   `add n/Phone Extension Test p/9123 4567 ext 12`.<br>
+   Expected: All three additions succeed and preserve their phone formatting.
+1. Run `find Phone p/9123`.<br>
+   Expected: `Phone Label Test` and `Phone Extension Test` match.
+1. Run `find Country p/(65)`, then `view 1`.<br>
+   Expected: Only `Country Code Test` matches and is shown with the entered parentheses preserved.
+1. Run `edit 1 p/+65 8123-4567 ext 1 (Office)`, then `find p/8123-4567 EXT 1`.<br>
+   Expected: The edited supporter matches; the extension marker's case does not affect searching.
+1. Close and reopen the app, then find and view that supporter.<br>
+   Expected: The complete formatted number, extension and label remain unchanged.
+1. Try `edit 1 p/12 ext 123456`, `edit 1 p/9123 ext 1234567` and `find p/(HP)`.<br>
+   Expected: Each command is rejected without changing data or the active view.
 
 ### Saving data
 

@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.PersonMatchesSearchPredicate;
+import seedu.address.model.person.Phone;
 import seedu.address.model.person.Stage;
 
 /**
@@ -21,8 +22,10 @@ import seedu.address.model.person.Stage;
  */
 public class FindCommandParser implements Parser<FindCommand> {
     public static final String MESSAGE_INVALID_PHONE_SEARCH =
-            "Phone search values must contain at least one digit and may only contain digits, "
-                    + "plus signs, spaces or hyphens";
+            "Phone search values must contain digits and follow the phone format: "
+                    + "an optional leading +, digit groups separated by single spaces or hyphens, "
+                    + "optional parentheses around digit groups, optional ext with 1 to 6 digits, "
+                    + "and an optional trailing alphabetic label in parentheses";
 
     /**
      * Parses the given arguments into a command combining name keywords and field filters.
@@ -47,7 +50,7 @@ public class FindCommandParser implements Parser<FindCommand> {
         }
 
         for (String phone : phones) {
-            if (!PersonMatchesSearchPredicate.normalizePhone(phone).matches("[0-9]+")) {
+            if (!Phone.isValidPhoneSearch(phone)) {
                 throw new ParseException(MESSAGE_INVALID_PHONE_SEARCH);
             }
         }

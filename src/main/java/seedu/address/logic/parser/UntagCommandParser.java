@@ -30,7 +30,8 @@ public class UntagCommandParser implements Parser<UntagCommand> {
         List<String> tagValues = argMultimap.getAllValues(PREFIX_TAG);
 
         if (argMultimap.getPreamble().isEmpty() || tagValues.isEmpty()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, UntagCommand.MESSAGE_USAGE));
+            throw new ParseException(
+                    String.format(MESSAGE_INVALID_COMMAND_FORMAT, UntagCommand.MESSAGE_USAGE));
         }
 
         Index index = ParserUtil.parseIndex(argMultimap.getPreamble(), UntagCommand.MESSAGE_USAGE);

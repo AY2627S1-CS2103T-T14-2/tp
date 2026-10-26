@@ -22,6 +22,7 @@ import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.ParserUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
@@ -107,7 +108,7 @@ public class DeleteCommandIntegrationTest {
         logic.execute("view 1");
 
         assertFailurePreservesState(ParseException.class, "delete 1 2",
-                String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+                ParserUtil.MESSAGE_INVALID_INDEX + "\n" + DeleteCommand.MESSAGE_USAGE);
     }
 
     private void assertFailurePreservesState(Class<? extends Throwable> exceptionType,
