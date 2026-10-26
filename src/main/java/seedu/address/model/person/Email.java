@@ -13,8 +13,8 @@ public class Email {
     public static final String MESSAGE_CONSTRAINTS = "Emails should be of the format local-part@domain "
             + "and adhere to the following constraints:\n"
             + "1. The local-part should only contain alphanumeric characters and these special characters, excluding "
-            + "the parentheses, (" + SPECIAL_CHARACTERS + "). The local-part may not start or end with any special "
-            + "characters.\n"
+            + "the parentheses, (" + SPECIAL_CHARACTERS + "). The local-part may not start or end with a period, "
+            + "or have two periods in a row.\n"
             + "2. The local-part is followed by an '@' and then a domain name. The domain name is made up of domain "
             + "labels separated by periods.\n"
             + "The domain name must:\n"
@@ -23,8 +23,9 @@ public class Email {
             + "    - have each domain label consist of alphanumeric characters, separated only by hyphens, if any.";
     // alphanumeric and special characters
     private static final String ALPHANUMERIC_NO_UNDERSCORE = "[^\\W_]+"; // alphanumeric characters except underscore
-    private static final String LOCAL_PART_REGEX = "^" + ALPHANUMERIC_NO_UNDERSCORE + "([" + SPECIAL_CHARACTERS + "]"
-            + ALPHANUMERIC_NO_UNDERSCORE + ")*";
+    // dot-atom form (RFC 5322): words of alphanumeric characters, '+', '_' and '-', joined by single periods
+    private static final String LOCAL_PART_WORD = "[\\w+-]+";
+    private static final String LOCAL_PART_REGEX = "^" + LOCAL_PART_WORD + "(\\." + LOCAL_PART_WORD + ")*";
     private static final String DOMAIN_PART_REGEX = ALPHANUMERIC_NO_UNDERSCORE
             + "(-" + ALPHANUMERIC_NO_UNDERSCORE + ")*";
     private static final String DOMAIN_LAST_PART_REGEX = "(" + DOMAIN_PART_REGEX + "){2,}$"; // At least two chars

@@ -42,8 +42,9 @@ public class EmailTest {
         assertFalse(Email.isValidEmail("peterjack@example.com ")); // trailing space
         assertFalse(Email.isValidEmail("peterjack@@example.com")); // double '@' symbol
         assertFalse(Email.isValidEmail("peter@jack@example.com")); // '@' symbol in local part
-        assertFalse(Email.isValidEmail("-peterjack@example.com")); // local part starts with a hyphen
-        assertFalse(Email.isValidEmail("peterjack-@example.com")); // local part ends with a hyphen
+        assertFalse(Email.isValidEmail("peter!jack@example.com")); // '!' symbol in local part
+        assertFalse(Email.isValidEmail(".peterjack@example.com")); // local part starts with a period
+        assertFalse(Email.isValidEmail("peterjack.@example.com")); // local part ends with a period
         assertFalse(Email.isValidEmail("peter..jack@example.com")); // local part has two consecutive periods
         assertFalse(Email.isValidEmail("peterjack@example@com")); // '@' symbol in domain name
         assertFalse(Email.isValidEmail("peterjack@.example.com")); // domain name starts with a period
@@ -64,6 +65,13 @@ public class EmailTest {
         assertTrue(Email.isValidEmail("peter_jack@very-very-very-long-example.com")); // long domain name
         assertTrue(Email.isValidEmail("if.you.dream.it_you.can.do.it@example.com")); // long local part
         assertTrue(Email.isValidEmail("e1234567@u.nus.edu")); // more than one period in domain
+        assertTrue(Email.isValidEmail("-peterjack@example.com")); // local part starts with a hyphen
+        assertTrue(Email.isValidEmail("peterjack_@example.com")); // local part ends with an underscore
+        assertTrue(Email.isValidEmail("+peterjack@example.com")); // local part starts with a '+' symbol
+        assertTrue(Email.isValidEmail("peter++jack@example.com")); // consecutive '+' symbols
+        assertTrue(Email.isValidEmail("peter__jack@example.com")); // consecutive underscores
+        assertTrue(Email.isValidEmail("peter--jack@example.com")); // consecutive hyphens
+        assertTrue(Email.isValidEmail("peter+_.-jack@example.com")); // special characters around a period
     }
 
     @Test
