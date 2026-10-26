@@ -15,10 +15,20 @@ import seedu.address.model.tag.Tag;
 
 public class UntagCommandParserTest {
 
+    private static final String MESSAGE_INVALID_INDEX =
+            ParserUtil.MESSAGE_INVALID_INDEX + "\n" + UntagCommand.MESSAGE_USAGE;
     private static final String MESSAGE_INVALID_FORMAT =
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, UntagCommand.MESSAGE_USAGE);
 
     private UntagCommandParser parser = new UntagCommandParser();
+
+    @Test
+    public void parse_invalidIndexValues_reportsIndexErrorAndUsage() {
+        String expectedMessage = ParserUtil.MESSAGE_INVALID_INDEX + "\n" + UntagCommand.MESSAGE_USAGE;
+        for (String index : new String[]{"0", "-1", "+1", "abc", "1.5", "2147483648"}) {
+            assertParseFailure(parser, index + " t/vip", expectedMessage);
+        }
+    }
 
     @Test
     public void parse_oneTag_success() {
@@ -54,9 +64,9 @@ public class UntagCommandParserTest {
 
     @Test
     public void parse_invalidIndex_failure() {
-        assertParseFailure(parser, " 0 t/vip", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " -1 t/vip", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " abc t/vip", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 0 t/vip", MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, " -1 t/vip", MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, " abc t/vip", MESSAGE_INVALID_INDEX);
 
         // text before the prefix that is not a single index
         assertParseFailure(parser, " 1 2 t/vip", MESSAGE_INVALID_FORMAT);

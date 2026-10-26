@@ -1,6 +1,5 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
@@ -24,8 +23,8 @@ import seedu.address.model.person.Interaction;
  */
 public class EditLogCommandParserTest {
 
-    private static final String MESSAGE_INVALID_FORMAT =
-            String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditLogCommand.MESSAGE_USAGE);
+    private static final String MESSAGE_INVALID_INDICES =
+            ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES + "\n" + EditLogCommand.MESSAGE_USAGE;
     private final EditLogCommandParser parser = new EditLogCommandParser();
 
     @Test
@@ -59,15 +58,15 @@ public class EditLogCommandParserTest {
     @Test
     public void parse_missingOrExtraIndices_failure() {
         for (String args : List.of("", " ", "1", "nt/Note", "1 nt/Note", "1 2 3 nt/Note", "1 2 extra dt/2024-02-29")) {
-            assertParseFailure(parser, args, MESSAGE_INVALID_FORMAT);
+            assertParseFailure(parser, args, MESSAGE_INVALID_INDICES);
         }
     }
 
     @Test
     public void parse_invalidIndexInEitherPosition_failure() {
         for (String invalidIndex : List.of("0", "-1", "+1", "abc", "1.5", "2147483648")) {
-            assertParseFailure(parser, invalidIndex + " 2 nt/Note", MESSAGE_INVALID_FORMAT);
-            assertParseFailure(parser, "1 " + invalidIndex + " nt/Note", MESSAGE_INVALID_FORMAT);
+            assertParseFailure(parser, invalidIndex + " 2 nt/Note", MESSAGE_INVALID_INDICES);
+            assertParseFailure(parser, "1 " + invalidIndex + " nt/Note", MESSAGE_INVALID_INDICES);
         }
     }
 
@@ -114,7 +113,7 @@ public class EditLogCommandParserTest {
     @Test
     public void parse_multipleErrors_reportsInValidationOrder() {
         // malformed indices precede duplicate prefixes, which precede field validation
-        assertParseFailure(parser, " 1 abc nt/ dt/invalid dt/invalid", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 1 abc nt/ dt/invalid dt/invalid", MESSAGE_INVALID_INDICES);
         assertParseFailure(parser, " 1 2 nt/ dt/invalid dt/invalid",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_DATE));
         // note validation precedes date validation regardless of prefix order

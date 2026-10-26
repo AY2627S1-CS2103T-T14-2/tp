@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
@@ -65,6 +66,62 @@ public class ParserUtilTest {
 
         // Leading and trailing whitespaces
         assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseIndex("  1  "));
+    }
+
+    @Test
+    public void parseIndex_withUsageValidInput_returnsIndex() throws Exception {
+        assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseIndex(WHITESPACE + "01" + WHITESPACE, "delete INDEX"));
+        assertEquals(Index.fromOneBased(Integer.MAX_VALUE),
+                ParserUtil.parseIndex("2147483647", "delete INDEX"));
+    }
+
+    @Test
+    public void parseIndex_withUsageInvalidInput_reportsReasonAndUsage() {
+        String usage = "delete INDEX\nDeletes a supporter.";
+        String expectedMessage = "Index must be a positive integer (1, 2, 3, ...).\n" + usage;
+        for (String input : List.of("0", "-1", "+1", "1.5", "abc", "2147483648")) {
+            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseIndex(input, usage));
+        }
+    }
+
+    @Test
+    public void parseIndex_withUsageMalformedInput_reportsFormatAndUsage() {
+        String usage = "delete INDEX";
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage);
+        for (String input : List.of("", WHITESPACE, "1 2", "1 extra", "1\t2", "1\n2")) {
+            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseIndex(input, usage));
+        }
+    }
+
+    @Test
+    public void parseIndex_withUsageNullArguments_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseIndex(null, "delete INDEX"));
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseIndex("1", null));
+    }
+
+    @Test
+    public void parseInteractionIndices_withUsageValidInput_returnsIndices() throws Exception {
+        InteractionIndices expected = new InteractionIndices(Index.fromOneBased(2), Index.fromOneBased(3));
+        assertEquals(expected,
+                ParserUtil.parseInteractionIndices(WHITESPACE + "02 \t 003" + WHITESPACE, "unlog INDEX ENTRY"));
+    }
+
+    @Test
+    public void parseInteractionIndices_withUsageInvalidInput_reportsReasonAndUsage() {
+        String usage = "unlog INDEX ENTRY\nDeletes an interaction.";
+        String expectedMessage = "Provide exactly two positive integer indices: INDEX ENTRY.\n" + usage;
+        for (String input : List.of("", WHITESPACE, "1", "1 2 3", "0 1", "1 0", "abc 1", "1 abc",
+                "-1 1", "1 -1", "+1 1", "1 +1", "1.5 1", "1 1.5", "2147483648 1", "1 2147483648")) {
+            assertThrows(ParseException.class, expectedMessage, () ->
+                    ParserUtil.parseInteractionIndices(input, usage));
+        }
+    }
+
+    @Test
+    public void parseInteractionIndices_withUsageNullArguments_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () ->
+                ParserUtil.parseInteractionIndices(null, "unlog INDEX ENTRY"));
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseInteractionIndices("1 2", null));
     }
 
     @Test

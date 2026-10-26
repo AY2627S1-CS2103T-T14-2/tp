@@ -24,6 +24,9 @@ public class LogCommandParserTest {
     private static final String MESSAGE_INVALID_FORMAT =
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, LogCommand.MESSAGE_USAGE);
 
+    private static final String MESSAGE_INVALID_INDEX =
+            ParserUtil.MESSAGE_INVALID_INDEX + "\n" + LogCommand.MESSAGE_USAGE;
+
     private LogCommandParser parser = new LogCommandParser();
 
     @Test
@@ -54,22 +57,22 @@ public class LogCommandParserTest {
     @Test
     public void parse_invalidIndex_failure() {
         // not a number
-        assertParseFailure(parser, " x nt/" + VALID_NOTE, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " x nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
 
         // zero
-        assertParseFailure(parser, " 0 nt/" + VALID_NOTE, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 0 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
 
         // negative
-        assertParseFailure(parser, " -1 nt/" + VALID_NOTE, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " -1 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
 
         // signed
-        assertParseFailure(parser, " +1 nt/" + VALID_NOTE, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " +1 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
 
         // decimal
-        assertParseFailure(parser, " 1.5 nt/" + VALID_NOTE, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 1.5 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
 
         // larger than the maximum int
-        assertParseFailure(parser, " 2147483648 nt/" + VALID_NOTE, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 2147483648 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
     }
 
     @Test
@@ -130,8 +133,8 @@ public class LogCommandParserTest {
 
     @Test
     public void parse_multipleErrors_reportsInValidationOrder() {
-        // Format errors take precedence over duplicate prefixes and invalid parameter values.
-        assertParseFailure(parser, " x nt/ dt/invalid dt/invalid", MESSAGE_INVALID_FORMAT);
+        // Index errors take precedence over duplicate prefixes and invalid parameter values.
+        assertParseFailure(parser, " x nt/ dt/invalid dt/invalid", MESSAGE_INVALID_INDEX);
         // Duplicate prefixes take precedence over note/date validation.
         assertParseFailure(parser, " 1 nt/ dt/invalid dt/invalid",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_DATE));

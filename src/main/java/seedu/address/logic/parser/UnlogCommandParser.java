@@ -1,7 +1,6 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 
 import seedu.address.logic.commands.UnlogCommand;
 import seedu.address.logic.parser.ParserUtil.InteractionIndices;
@@ -20,11 +19,7 @@ public class UnlogCommandParser implements Parser<UnlogCommand> {
      */
     public UnlogCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        try {
-            InteractionIndices indices = ParserUtil.parseInteractionIndices(args);
-            return new UnlogCommand(indices.supporterIndex(), indices.interactionIndex());
-        } catch (ParseException pe) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, UnlogCommand.MESSAGE_USAGE), pe);
-        }
+        InteractionIndices indices = ParserUtil.parseInteractionIndices(args, UnlogCommand.MESSAGE_USAGE);
+        return new UnlogCommand(indices.supporterIndex(), indices.interactionIndex());
     }
 }

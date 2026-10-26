@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -28,7 +29,7 @@ import seedu.address.model.tag.Tag;
  */
 public class ParserUtil {
 
-    public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+    public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer (1, 2, 3, ...).";
     public static final String MESSAGE_INVALID_INTERACTION_INDICES =
             "Provide exactly two positive integer indices: INDEX ENTRY.";
 
@@ -53,6 +54,26 @@ public class ParserUtil {
     }
 
     /**
+     * Parses a single index, reporting invalid command format for empty or multi-word input.
+     * For a single invalid value, appends the command's usage to the index error.
+     * Uses the same validation as {@link #parseIndex(String)}; displayed-list bounds are checked by the command.
+     *
+     * @throws ParseException if the specified index is invalid.
+     */
+    public static Index parseIndex(String oneBasedIndex, String commandUsage) throws ParseException {
+        requireAllNonNull(oneBasedIndex, commandUsage);
+        String trimmedIndex = oneBasedIndex.trim();
+        if (!trimmedIndex.matches("\\S+")) {
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, commandUsage));
+        }
+        try {
+            return parseIndex(oneBasedIndex);
+        } catch (ParseException e) {
+            throw new ParseException(e.getMessage() + "\n" + commandUsage, e);
+        }
+    }
+
+    /**
      * Parses {@code INDEX ENTRY} into a supporter index and an interaction index.
      * Accepts leading, trailing and separating whitespace. Only parses the indices; commands must check
      * their bounds and map the displayed interaction number to its stored position.
@@ -70,6 +91,22 @@ public class ParserUtil {
             return new InteractionIndices(parseIndex(parts[0]), parseIndex(parts[1]));
         } catch (ParseException e) {
             throw new ParseException(MESSAGE_INVALID_INTERACTION_INDICES, e);
+        }
+    }
+
+    /**
+     * Parses interaction indices, appending the command's usage to the index error if parsing fails.
+     * Uses the same validation as {@link #parseInteractionIndices(String)}; bounds are checked by the command.
+     *
+     * @throws ParseException if there are not exactly two valid positive integer indices.
+     */
+    public static InteractionIndices parseInteractionIndices(String indices, String commandUsage)
+            throws ParseException {
+        requireAllNonNull(indices, commandUsage);
+        try {
+            return parseInteractionIndices(indices);
+        } catch (ParseException e) {
+            throw new ParseException(e.getMessage() + "\n" + commandUsage, e);
         }
     }
 
@@ -209,9 +246,10 @@ public class ParserUtil {
 
     /**
      * Parses an interaction date in yyyy-MM-dd format, trimming leading and trailing whitespace.
-     * Uses the computer's local date to reject future dates.
+     * Accepts dates from {@link #MIN_INTERACTION_DATE} (1900-01-01) through today, inclusive.
+     * Uses the computer's local date to determine today.
      *
-     * @throws ParseException if the date is invalid or in the future.
+     * @throws ParseException if the date is invalid, before {@link #MIN_INTERACTION_DATE}, or in the future.
      */
     public static LocalDate parseInteractionDate(String date) throws ParseException {
         return parseInteractionDate(date, Clock.systemDefaultZone());
@@ -219,8 +257,9 @@ public class ParserUtil {
 
     /**
      * Parses an interaction date using {@code clock} to determine today's date.
+     * Accepts dates from {@link #MIN_INTERACTION_DATE} (1900-01-01) through today, inclusive.
      *
-     * @throws ParseException if the date is invalid or in the future.
+     * @throws ParseException if the date is invalid, before {@link #MIN_INTERACTION_DATE}, or in the future.
      */
     static LocalDate parseInteractionDate(String date, Clock clock) throws ParseException {
         requireNonNull(date);

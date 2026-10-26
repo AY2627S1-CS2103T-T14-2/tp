@@ -53,6 +53,18 @@ public class AddressBookParserTest {
     private final AddressBookParser parser = new AddressBookParser();
 
     @Test
+    public void parseCommand_invalidSupporterIndex_reportsReasonAndUsage() {
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INDEX + "\n" + DeleteCommand.MESSAGE_USAGE, () ->
+                parser.parseCommand("delete 0"));
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INDEX + "\n" + DeleteCommand.MESSAGE_USAGE, () ->
+                parser.parseCommand("delete abc"));
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INDEX + "\n" + ViewCommand.MESSAGE_USAGE, () ->
+                parser.parseCommand("view 0"));
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INDEX + "\n" + EditCommand.MESSAGE_USAGE, () ->
+                parser.parseCommand("edit 0 n/x"));
+    }
+
+    @Test
     public void parseCommand_add() throws Exception {
         Person person = new PersonBuilder().build();
         AddCommand command = (AddCommand) parser.parseCommand(PersonUtil.getAddCommand(person));
@@ -94,7 +106,7 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_editlogInvalidArguments_throwsParseException() {
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditLogCommand.MESSAGE_USAGE);
+        String expectedMessage = ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES + "\n" + EditLogCommand.MESSAGE_USAGE;
         assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("editlog"));
         assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("editlog 1 abc nt/Note"));
         assertThrows(ParseException.class, EditLogCommand.MESSAGE_NOT_EDITED, () ->
@@ -116,6 +128,13 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_logInvalidIndex_reportsIndexErrorAndUsage() {
+        String expectedMessage = ParserUtil.MESSAGE_INVALID_INDEX + "\n" + LogCommand.MESSAGE_USAGE;
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("log 0 nt/Called"));
+        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("log abc nt/Called"));
+    }
+
+    @Test
     public void parseCommand_unlog_returnsUnlogCommand() throws Exception {
         UnlogCommand expected = new UnlogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON);
         assertEquals(expected, parser.parseCommand("unlog 1 2"));
@@ -124,7 +143,7 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_unlogInvalidArguments_throwsParseException() {
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, UnlogCommand.MESSAGE_USAGE);
+        String expectedMessage = ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES + "\n" + UnlogCommand.MESSAGE_USAGE;
         assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("unlog"));
         assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("unlog 1 abc"));
     }
@@ -156,11 +175,12 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_viewInvalidArguments_throwsParseException() {
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ViewCommand.MESSAGE_USAGE);
-        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view"));
+        String expectedMessage = ParserUtil.MESSAGE_INVALID_INDEX + "\n" + ViewCommand.MESSAGE_USAGE;
+        String formatMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ViewCommand.MESSAGE_USAGE);
+        assertThrows(ParseException.class, formatMessage, () -> parser.parseCommand("view"));
         assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view abc"));
         assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view 0"));
-        assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand("view 1 2"));
+        assertThrows(ParseException.class, formatMessage, () -> parser.parseCommand("view 1 2"));
     }
 
     @Test

@@ -13,6 +13,8 @@ import seedu.address.model.person.Stage;
 
 public class StageCommandParserTest {
 
+    private static final String MESSAGE_INVALID_INDEX =
+            ParserUtil.MESSAGE_INVALID_INDEX + "\n" + StageCommand.MESSAGE_USAGE;
     private static final String MESSAGE_INVALID_FORMAT =
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, StageCommand.MESSAGE_USAGE);
 
@@ -58,25 +60,25 @@ public class StageCommandParserTest {
     @Test
     public void parse_invalidIndex_failure() {
         // not a number
-        assertParseFailure(parser, " x giving", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " x giving", MESSAGE_INVALID_INDEX);
 
         // zero
-        assertParseFailure(parser, " 0 giving", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 0 giving", MESSAGE_INVALID_INDEX);
 
         // negative
-        assertParseFailure(parser, " -1 giving", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " -1 giving", MESSAGE_INVALID_INDEX);
 
         // signed
-        assertParseFailure(parser, " +1 giving", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " +1 giving", MESSAGE_INVALID_INDEX);
 
         // decimal
-        assertParseFailure(parser, " 1.5 giving", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 1.5 giving", MESSAGE_INVALID_INDEX);
 
         // larger than the maximum int
-        assertParseFailure(parser, " 2147483648 giving", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 2147483648 giving", MESSAGE_INVALID_INDEX);
 
         // invalid index is reported before invalid stage
-        assertParseFailure(parser, " 0 gave", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 0 gave", MESSAGE_INVALID_INDEX);
     }
 
     @Test
