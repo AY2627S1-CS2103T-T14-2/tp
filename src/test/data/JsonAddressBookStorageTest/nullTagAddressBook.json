@@ -1,0 +1,10 @@
+{
+  "persons": [
+    {
+      "name": "Alex Yeoh",
+      "email": "alexyeoh@example.com",
+      "stage": "Giving",
+      "tags": [null]
+    }
+  ]
+}
