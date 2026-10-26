@@ -5,13 +5,12 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.commons.util.DisplayDateFormatter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -33,11 +32,7 @@ public class EditLogCommand extends Command {
             + "DATE must be a valid date in yyyy-MM-dd format, from 1900-01-01 through today.\n"
             + "Example: " + COMMAND_WORD + " 2 1 nt/Updated meeting notes dt/2026-10-01";
     public static final String MESSAGE_SUCCESS = "Edited interaction #%1$d with %2$s (%3$s): %4$s.";
-    public static final String MESSAGE_INVALID_INTERACTION_INDEX = "The interaction number provided is invalid.";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
-
-    private static final DateTimeFormatter DATE_FORMATTER =
-            DateTimeFormatter.ofPattern("dd MMM uuuu", Locale.ENGLISH);
 
     private final Index targetIndex;
     private final Index interactionIndex;
@@ -68,7 +63,7 @@ public class EditLogCommand extends Command {
         Person personToUpdate = lastShownList.get(targetIndex.getZeroBased());
         List<Interaction> updatedInteractions = new ArrayList<>(personToUpdate.getInteractions());
         if (interactionIndex.getZeroBased() >= updatedInteractions.size()) {
-            throw new CommandException(MESSAGE_INVALID_INTERACTION_INDEX);
+            throw new CommandException(Messages.MESSAGE_INVALID_INTERACTION_INDEX);
         }
 
         // entry numbers descend in display order, so size minus entry number gives the display position
@@ -91,7 +86,7 @@ public class EditLogCommand extends Command {
         int displayedEntryNumber = updatedInteractions.size()
                 - updatedPerson.getInteractionIndicesInDisplayOrder().indexOf(storedIndex);
         return new CommandResult(String.format(MESSAGE_SUCCESS, displayedEntryNumber,
-                personToUpdate.getName(), updatedInteraction.getDate().format(DATE_FORMATTER),
+                personToUpdate.getName(), DisplayDateFormatter.format(updatedInteraction.getDate()),
                 updatedInteraction.getNote()));
     }
 

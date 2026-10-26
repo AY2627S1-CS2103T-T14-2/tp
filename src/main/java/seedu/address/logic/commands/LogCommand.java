@@ -6,13 +6,12 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.commons.util.DisplayDateFormatter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -35,9 +34,6 @@ public class LogCommand extends Command {
             + "Example: " + COMMAND_WORD + " 2 nt/Coffee at Raffles Place dt/2026-10-01";
 
     public static final String MESSAGE_SUCCESS = "Logged interaction #%1$d with %2$s (%3$s): %4$s.";
-
-    private static final DateTimeFormatter DATE_FORMATTER =
-            DateTimeFormatter.ofPattern("dd MMM uuuu", Locale.ENGLISH);
 
     private final Index targetIndex;
     private final String note;
@@ -101,7 +97,7 @@ public class LogCommand extends Command {
         int displayedEntryNumber = updatedInteractions.size() - updatedPerson.getInteractionIndicesInDisplayOrder()
                 .indexOf(updatedInteractions.size() - 1);
         return new CommandResult(String.format(MESSAGE_SUCCESS, displayedEntryNumber, personToUpdate.getName(),
-                interaction.getDate().format(DATE_FORMATTER), interaction.getNote()));
+                DisplayDateFormatter.format(interaction.getDate()), interaction.getNote()));
     }
 
     @Override
