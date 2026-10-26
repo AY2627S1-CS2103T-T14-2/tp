@@ -49,18 +49,14 @@ public class AddCommandParser implements Parser<AddCommand> {
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
                 PREFIX_ORGANISATION, PREFIX_STAGE);
         Name name = ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get());
-        Optional<Phone> phone = argMultimap.getValue(PREFIX_PHONE).isPresent()
-                ? Optional.of(ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get()))
-                : Optional.empty();
-        Optional<Email> email = argMultimap.getValue(PREFIX_EMAIL).isPresent()
-                ? Optional.of(ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get()))
-                : Optional.empty();
-        Optional<Address> address = argMultimap.getValue(PREFIX_ADDRESS).isPresent()
-                ? Optional.of(ParserUtil.parseAddress(argMultimap.getValue(PREFIX_ADDRESS).get()))
-                : Optional.empty();
-        Optional<Organisation> organisation = argMultimap.getValue(PREFIX_ORGANISATION).isPresent()
-                ? Optional.of(ParserUtil.parseOrganisation(argMultimap.getValue(PREFIX_ORGANISATION).get()))
-                : Optional.empty();
+        Optional<Phone> phone = parseOptionalField(argMultimap, PREFIX_PHONE, AddCommand.MESSAGE_BLANK_PHONE,
+                ParserUtil::parsePhone);
+        Optional<Email> email = parseOptionalField(argMultimap, PREFIX_EMAIL, AddCommand.MESSAGE_BLANK_EMAIL,
+                ParserUtil::parseEmail);
+        Optional<Address> address = parseOptionalField(argMultimap, PREFIX_ADDRESS,
+                AddCommand.MESSAGE_BLANK_ADDRESS, ParserUtil::parseAddress);
+        Optional<Organisation> organisation = parseOptionalField(argMultimap, PREFIX_ORGANISATION,
+                Organisation.MESSAGE_CONSTRAINTS, ParserUtil::parseOrganisation);
         Stage stage = argMultimap.getValue(PREFIX_STAGE).isPresent()
                 ? ParserUtil.parseStage(argMultimap.getValue(PREFIX_STAGE).get())
                 : Stage.DEFAULT_STAGE;
@@ -69,6 +65,33 @@ public class AddCommandParser implements Parser<AddCommand> {
         Person person = new Person(name, phone, email, address, organisation, stage, tagList);
 
         return new AddCommand(person);
+    }
+
+    /**
+     * Parses the value of an optional field with {@code fieldParser}, or returns an empty {@code Optional}
+     * if {@code prefix} was left out. A prefix given with nothing after it is rejected with
+     * {@code blankMessage}, since in {@code add} the user leaves out a field the supporter does not have.
+     *
+     * @throws ParseException if the value is blank or invalid.
+     */
+    private static <T> Optional<T> parseOptionalField(ArgumentMultimap argMultimap, Prefix prefix,
+            String blankMessage, FieldParser<T> fieldParser) throws ParseException {
+        Optional<String> value = argMultimap.getValue(prefix);
+        if (value.isEmpty()) {
+            return Optional.empty();
+        }
+        if (value.get().isBlank()) {
+            throw new ParseException(blankMessage);
+        }
+        return Optional.of(fieldParser.parse(value.get()));
+    }
+
+    /**
+     * Parses a field value, e.g. {@link ParserUtil#parsePhone(String)}.
+     */
+    @FunctionalInterface
+    private interface FieldParser<T> {
+        T parse(String value) throws ParseException;
     }
 
     /**

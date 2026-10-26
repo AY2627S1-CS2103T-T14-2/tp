@@ -42,6 +42,13 @@ public class AddCommand extends Command {
     public static final String MESSAGE_MISSING_CONTACT = "A supporter needs at least one way to reach them. "
             + "Provide " + PREFIX_PHONE + "PHONE, " + PREFIX_EMAIL + "EMAIL, or both.";
 
+    public static final String MESSAGE_BLANK_PHONE = "Phone number should not be blank. "
+            + "Leave out " + PREFIX_PHONE + " if the supporter has no phone number.";
+    public static final String MESSAGE_BLANK_EMAIL = "Email should not be blank. "
+            + "Leave out " + PREFIX_EMAIL + " if the supporter has no email.";
+    public static final String MESSAGE_BLANK_ADDRESS = "Address should not be blank. "
+            + "Leave out " + PREFIX_ADDRESS + " if you do not know the supporter's address.";
+
     public static final String MESSAGE_SUCCESS = "New supporter added: %1$s";
 
     private final Person toAdd;
