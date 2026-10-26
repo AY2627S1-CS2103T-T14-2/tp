@@ -1367,19 +1367,19 @@ testers are expected to do more _exploratory_ testing.
 1. Test case: `intro 3 by/4`<br>
    Expected: The message is `Recorded that David Li introduced Charlotte O'Brien.` The detail panel shows Charlotte, with `David Li` as her `Introducer`.
 
-1. Test case: `intro 2 by/3`<br>
+1. Continuing from the previous test case: `intro 2 by/3`<br>
    Expected: Nothing is changed, because Bernice introduced David, who introduced Charlotte. The message says that Charlotte O'Brien cannot be recorded as the introducer of Bernice Yu.
 
-1. Test case: `view 4`<br>
+1. Continuing from the previous test case: `view 4`<br>
    Expected: The detail panel shows David Li, with `Bernice Yu` as his `Introducer` and `Charlotte O'Brien` under `Introduced`.
 
-1. Test case: `intro 3 by/4` again<br>
+1. Continuing from the previous test case: `intro 3 by/4` again<br>
    Expected: The message says David Li is already recorded as the introducer of Charlotte O'Brien and nothing was changed. It is not shown as an error.
 
-1. Test case: `edit 4 n/David Lee`, then `view 3`<br>
+1. Continuing from the previous test case: `edit 4 n/David Lee`, then `view 3`<br>
    Expected: Charlotte's introducer is now shown as `David Lee`.
 
-1. Test case: `intro 3 by/`<br>
+1. Continuing from the previous test case: `intro 3 by/`<br>
    Expected: The message is `Removed David Lee as the introducer of Charlotte O'Brien.`
 
 1. Other incorrect commands to try: `intro 3 by/3`, `intro 3 4`, `intro 3 by/0`, `intro 3 by/x` (where x is larger than the list size)<br>
@@ -1392,7 +1392,7 @@ testers are expected to do more _exploratory_ testing.
 1. Test case: `tag 1 t/vip t/VIP t/monthlydonor`<br>
    Expected: The message is `Added tags to Alex Yeoh: [vip]`, then `Skipped tags they already have: [monthlydonor]` on a second line. `t/VIP` counts as the same tag as `t/vip`, and Alex keeps `monthlyDonor` as it was spelt.
 
-1. Test case: `untag 1 t/VIP t/gala2025`<br>
+1. Continuing from the previous test case: `untag 1 t/VIP t/gala2025`<br>
    Expected: The message is `Removed tags from Alex Yeoh: [vip]`, then `Skipped tags they do not have: [gala2025]`.
 
 1. Test case: `untag 1 t/gala2025`<br>

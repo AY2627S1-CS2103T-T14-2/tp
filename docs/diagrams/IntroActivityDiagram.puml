@@ -10,7 +10,11 @@ introducer if one is given;
 'Since the beta syntax does not support placing the condition outside the
 'diamond we place it as the true branch instead.
 
-if () then ([the introducer is the supporter,
+if () then ([an index is past the end
+of the displayed list])
+    :Show that the index
+    is invalid;
+elseif () then ([the introducer is the supporter,
 or the supporter introduced the
 introducer, directly or through
 other supporters])
