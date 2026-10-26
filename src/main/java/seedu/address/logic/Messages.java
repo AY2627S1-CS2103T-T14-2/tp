@@ -26,6 +26,10 @@ public class Messages {
     public static final String MESSAGE_UNRECOGNISED_PREFIXES = "Note: %1$s are not recognised prefixes, "
             + "so they were saved as part of the values before them. "
             + "If this was a typo, run undo and enter the command again.";
+    public static final String MESSAGE_UNRECOGNISED_PREFIX_IN_ERROR =
+            "Note: %1$s is not a recognised prefix, so it was read as part of the value before it.";
+    public static final String MESSAGE_UNRECOGNISED_PREFIXES_IN_ERROR =
+            "Note: %1$s are not recognised prefixes, so they were read as part of the values before them.";
     public static final String MESSAGE_DUPLICATE_PERSON = "A supporter named %1$s already exists. "
             + "If this is a different person, add something to tell them apart, e.g. n/%1$s DBS";
     public static final String MESSAGE_DUPLICATE_FIELDS =
@@ -71,11 +75,25 @@ public class Messages {
      * Returns a note pointing out {@code unrecognisedPrefixes}, e.g. {@code em/}, which were saved as text.
      */
     public static String formatUnrecognisedPrefixNote(List<String> unrecognisedPrefixes) {
-        assert !unrecognisedPrefixes.isEmpty() : "only called when an unrecognised prefix was found";
-        if (unrecognisedPrefixes.size() == 1) {
-            return String.format(MESSAGE_UNRECOGNISED_PREFIX, unrecognisedPrefixes.get(0));
+        return formatPrefixNote(unrecognisedPrefixes,
+                MESSAGE_UNRECOGNISED_PREFIX, MESSAGE_UNRECOGNISED_PREFIXES);
+    }
+
+    /**
+     * Returns a note pointing out {@code unrecognisedPrefixes}, e.g. {@code x/}, which were read as part of
+     * a value that was then rejected, so the user knows the error may come from a mistyped prefix.
+     */
+    public static String formatUnrecognisedPrefixErrorNote(List<String> unrecognisedPrefixes) {
+        return formatPrefixNote(unrecognisedPrefixes,
+                MESSAGE_UNRECOGNISED_PREFIX_IN_ERROR, MESSAGE_UNRECOGNISED_PREFIXES_IN_ERROR);
+    }
+
+    private static String formatPrefixNote(List<String> prefixes, String oneFormat, String manyFormat) {
+        assert !prefixes.isEmpty() : "only called when an unrecognised prefix was found";
+        if (prefixes.size() == 1) {
+            return String.format(oneFormat, prefixes.get(0));
         }
-        return String.format(MESSAGE_UNRECOGNISED_PREFIXES, String.join(", ", unrecognisedPrefixes));
+        return String.format(manyFormat, String.join(", ", prefixes));
     }
 
     /**

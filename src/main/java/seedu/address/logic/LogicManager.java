@@ -48,7 +48,7 @@ public class LogicManager implements Logic {
     public CommandResult execute(String commandText) throws CommandException, ParseException {
         logger.info("----------------[USER COMMAND][" + commandText + "]");
 
-        Command command = addressBookParser.parseCommand(commandText);
+        Command command = parseCommand(commandText);
         List<Person> personsBeforeCommand = List.copyOf(model.getAddressBook().getPersonList());
         CommandResult commandResult = command.execute(model);
         model.commitAddressBookIfChanged();
@@ -65,6 +65,25 @@ public class LogicManager implements Logic {
         }
 
         return commandResult;
+    }
+
+    /**
+     * Parses {@code commandText}. If it is rejected and contains words that look like prefixes but are not,
+     * adds a note naming them to the error, since such a word is read as part of the value before it and
+     * can make the error blame a field the user typed correctly.
+     */
+    private Command parseCommand(String commandText) throws ParseException {
+        try {
+            return addressBookParser.parseCommand(commandText);
+        } catch (ParseException pe) {
+            List<String> unrecognisedPrefixes = ArgumentTokenizer.findUnrecognisedPrefixes(commandText);
+            if (unrecognisedPrefixes.isEmpty()) {
+                throw pe;
+            }
+            logger.info("Rejected command containing unrecognised prefixes: " + unrecognisedPrefixes);
+            throw new ParseException(pe.getMessage() + "\n"
+                    + Messages.formatUnrecognisedPrefixErrorNote(unrecognisedPrefixes), pe);
+        }
     }
 
     /**

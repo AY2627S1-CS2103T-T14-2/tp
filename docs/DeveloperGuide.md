@@ -178,6 +178,29 @@ Later command results and errors replace the warning through the existing comman
 
 `MainAppTest` covers valid, empty, missing, malformed, invalid and duplicate data files, verifies that loading preserves the file's bytes, and checks that a subsequent successful command saves normally. UI testing should also verify the initial warning and replacement by command feedback using the scenarios in the manual testing appendix.
 
+### Detecting mistyped prefixes
+
+`ArgumentTokenizer` splits a command's arguments only at the prefixes its parser asks for. Any other word ending in `/`, such as `em/` mistyped for `e/`, stays part of the value before it. On its own, this would save a mistyped prefix silently inside an address or a note, or make the parser blame a field the user typed correctly: `add n/Tan p/91234567 x/foo` reads the phone number as `91234567 x/foo` and reports an invalid phone number.
+
+`ArgumentTokenizer#findUnrecognisedPrefixes(String)` scans the whole command text for words made of letters followed by `/`, at the start or after a space, and returns those that are not in `CliSyntax.ALL_PREFIXES`, in the order they first appear. It skips everyday words written with a slash (`s/o`, `d/o`, `c/o`, `w/o` and `and/or`), and does not match slashes after digits (`5/3`) or inside links. `LogicManager#execute(String)` uses it in two places:
+
+1. If parsing throws a `ParseException`, `LogicManager` throws a new `ParseException` with the original message followed by a note from `Messages#formatUnrecognisedPrefixErrorNote(List)`, e.g. `Note: x/ is not a recognised prefix, so it was read as part of the value before it.`
+1. If the command runs and the supporter list differs from a copy taken before it ran, `LogicManager` adds a note from `Messages#formatUnrecognisedPrefixNote(List)` with `CommandResult#withNote(String)`. This note suggests `undo`, so a command that changes nothing, such as `find x/Alice`, does not get it.
+
+No command is rejected because of these words; the notes only point them out.
+
+#### Design considerations:
+
+**Aspect: What to do with a word that looks like a prefix but is not one**
+
+- **Alternative 1 (current choice):** Run the command as the parser reads it, and add a note naming the word.
+  - Pros: Addresses, organisations and notes can contain slashes, e.g. `a/Blk 5 Unit/3` or `nt/A/C details to follow`, and are saved as typed. A wrongly flagged word only costs an extra line in the result.
+  - Cons: A mistyped prefix inside an address or a note is still saved, so the user has to run `undo`.
+
+- **Alternative 2:** Reject any command that contains such a word.
+  - Pros: A mistyped prefix is never saved.
+  - Cons: Real values with slashes could not be saved at all, with no way around it, unless every such word, like `Unit/`, were added to a list of exceptions.
+
 ### Finding and listing supporters
 
 `FindCommandParser` reads name keywords from the preamble and uses `ArgumentTokenizer` to read
@@ -1195,6 +1218,25 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: the same command without `st/contacted`, and with a different name<br>
       Expected: The new supporter is added with the `Prospect` badge.
+
+### Mistyped prefixes
+
+1. Prerequisites: Start from the sample data and run `list`.
+
+1. Test case: `add n/Tan p/91234567 x/foo`<br>
+   Expected: No supporter is added. The error shows the rules for phone numbers, followed by `Note: x/ is not a recognised prefix, so it was read as part of the value before it.`
+
+1. Test case: `log 1 nt/Called dte/2024-10-01`<br>
+   Expected: The 1st supporter gets a new interaction dated today, with the note `Called dte/2024-10-01`. The result ends with a note that `dte/` is not a recognised prefix and was saved as part of the value before it.
+
+1. Continuing from the previous test case: `undo`<br>
+   Expected: The interaction is removed.
+
+1. Test case: `log 1 nt/Met at the gala c/o the board, and/or by email`<br>
+   Expected: The interaction is logged, with no note, as `c/o` and `and/or` are everyday words.
+
+1. Test case: `find x/Alex`<br>
+   Expected: No note, as `find` changes no data and there is nothing to undo.
 
 ### Logging an interaction
 

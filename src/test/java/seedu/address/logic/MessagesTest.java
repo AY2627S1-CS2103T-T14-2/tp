@@ -44,4 +44,13 @@ public class MessagesTest {
                 Messages.formatUnrecognisedPrefixNote(List.of("em/", "dte/")));
         assertThrows(AssertionError.class, () -> Messages.formatUnrecognisedPrefixNote(List.of()));
     }
+
+    @Test
+    public void formatUnrecognisedPrefixErrorNote_oneOrMorePrefixes_namesThem() {
+        assertEquals(String.format(Messages.MESSAGE_UNRECOGNISED_PREFIX_IN_ERROR, "x/"),
+                Messages.formatUnrecognisedPrefixErrorNote(List.of("x/")));
+        assertEquals(String.format(Messages.MESSAGE_UNRECOGNISED_PREFIXES_IN_ERROR, "x/, ee/"),
+                Messages.formatUnrecognisedPrefixErrorNote(List.of("x/", "ee/")));
+        assertThrows(AssertionError.class, () -> Messages.formatUnrecognisedPrefixErrorNote(List.of()));
+    }
 }
