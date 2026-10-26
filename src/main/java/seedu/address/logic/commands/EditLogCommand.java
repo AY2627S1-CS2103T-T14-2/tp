@@ -74,10 +74,7 @@ public class EditLogCommand extends Command {
                 note.orElse(originalInteraction.getNote()));
         // retain the logging position for equal-date ordering and distinguish identical interactions
         updatedInteractions.set(storedIndex, updatedInteraction);
-        Person updatedPerson = new Person(personToUpdate.getName(), personToUpdate.getPhone(),
-                personToUpdate.getEmail(), personToUpdate.getAddress(), personToUpdate.getOrganisation(),
-                personToUpdate.getIntroducer(), personToUpdate.getStage(), updatedInteractions,
-                personToUpdate.getTags());
+        Person updatedPerson = personToUpdate.withInteractions(updatedInteractions);
         if (!updatedPerson.equals(personToUpdate)) {
             model.setPerson(personToUpdate, updatedPerson);
         }

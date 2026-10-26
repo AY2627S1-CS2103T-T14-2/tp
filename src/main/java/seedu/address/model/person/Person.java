@@ -179,6 +179,15 @@ public class Person {
                 interactions, newTags);
     }
 
+    /**
+     * Returns a copy of this supporter with {@code newInteractions} as their history.
+     * Every other detail is unchanged. The supplied list is defensively copied in its given order.
+     */
+    public Person withInteractions(List<Interaction> newInteractions) {
+        return new Person(name, getPhone(), getEmail(), getAddress(), getOrganisation(), getIntroducer(), stage,
+                newInteractions, tags);
+    }
+
     public Stage getStage() {
         return stage;
     }

@@ -341,6 +341,33 @@ public class PersonTest {
     }
 
     @Test
+    public void withInteractions_keepsOtherDetailsAndOriginalHistory() {
+        Interaction original = new Interaction(LocalDate.of(2024, 2, 20), "Called");
+        Interaction replacement = new Interaction(LocalDate.of(2024, 3, 10), "Met");
+        Person person = new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName)
+                .withInteractions(original).build();
+
+        Person updated = person.withInteractions(List.of(replacement));
+
+        assertEquals(new PersonBuilder(person).withInteractions(replacement).build(), updated);
+        assertEquals(List.of(original), person.getInteractions());
+        assertEquals(new PersonBuilder(person).withInteractions().build(), person.withInteractions(List.of()));
+    }
+
+    @Test
+    public void withInteractions_defensivelyCopiesHistoryAndPreservesOrder() {
+        Interaction earlier = new Interaction(LocalDate.of(2024, 2, 20), "Called");
+        Interaction later = new Interaction(LocalDate.of(2024, 3, 10), "Met");
+        List<Interaction> history = new ArrayList<>(List.of(later, earlier, later));
+
+        Person updated = ALICE.withInteractions(history);
+        history.clear();
+
+        assertEquals(List.of(later, earlier, later), updated.getInteractions());
+        assertThrows(UnsupportedOperationException.class, () -> updated.getInteractions().clear());
+    }
+
+    @Test
     public void isValidIntroducer() {
         // no introducer -> returns true
         assertTrue(Person.isValidIntroducer(ALICE.getName(), Optional.empty()));

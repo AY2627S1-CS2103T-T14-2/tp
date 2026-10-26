@@ -87,10 +87,7 @@ public class LogCommand extends Command {
         List<Interaction> updatedInteractions = new ArrayList<>(personToUpdate.getInteractions());
         updatedInteractions.add(interaction);
 
-        Person updatedPerson = new Person(personToUpdate.getName(), personToUpdate.getPhone(),
-                personToUpdate.getEmail(), personToUpdate.getAddress(), personToUpdate.getOrganisation(),
-                personToUpdate.getIntroducer(), personToUpdate.getStage(), updatedInteractions,
-                personToUpdate.getTags());
+        Person updatedPerson = personToUpdate.withInteractions(updatedInteractions);
         model.setPerson(personToUpdate, updatedPerson);
         model.setViewedPerson(updatedPerson);
 

@@ -60,10 +60,7 @@ public class UnlogCommand extends Command {
                 .get(updatedInteractions.size() - interactionIndex.getOneBased());
         // remove by position so identical interactions remain distinguishable
         Interaction removedInteraction = updatedInteractions.remove(storedIndex);
-        Person updatedPerson = new Person(personToUpdate.getName(), personToUpdate.getPhone(),
-                personToUpdate.getEmail(), personToUpdate.getAddress(), personToUpdate.getOrganisation(),
-                personToUpdate.getIntroducer(), personToUpdate.getStage(), updatedInteractions,
-                personToUpdate.getTags());
+        Person updatedPerson = personToUpdate.withInteractions(updatedInteractions);
         model.setPerson(personToUpdate, updatedPerson);
         model.setViewedPerson(updatedPerson);
 
