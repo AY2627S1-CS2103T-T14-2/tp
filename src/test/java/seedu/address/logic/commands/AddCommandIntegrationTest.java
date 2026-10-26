@@ -1,7 +1,9 @@
 package seedu.address.logic.commands;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
+import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +38,18 @@ public class AddCommandIntegrationTest {
         assertCommandSuccess(new AddCommand(validPerson), model,
                 String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(validPerson)),
                 expectedModel);
+    }
+
+    @Test
+    public void execute_sharedPhone_addsSupporterWithWarning() throws Exception {
+        Person person = new PersonBuilder().withName("Shared Phone Test")
+                .withPhone(ALICE.getPhone().orElseThrow().value).withoutEmail().build();
+
+        CommandResult result = new AddCommand(person).execute(model);
+
+        assertTrue(model.hasPerson(person));
+        assertTrue(result.getFeedbackToUser().contains("Warning:"));
+        assertTrue(result.getFeedbackToUser().contains(ALICE.getName().fullName + " (phone)"));
     }
 
     @Test
