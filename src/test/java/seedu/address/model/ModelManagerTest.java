@@ -208,13 +208,15 @@ public class ModelManagerTest {
     @Test
     public void isIntroducedThrough_introducedPerson_checksWholeAddressBook() {
         Person bensonByAlice = new PersonBuilder(BENSON).withIntroducer(ALICE.getName().fullName).build();
+        Person carlByBenson = new PersonBuilder(CARL).withIntroducer(BENSON.getName().fullName).build();
         modelManager.addPerson(ALICE);
         modelManager.addPerson(bensonByAlice);
-        // the filter does not hide anyone from the introductions
-        modelManager.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Benson")));
+        modelManager.addPerson(carlByBenson);
+        // the filter hides Benson, who links Carl to Alice
+        modelManager.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Carl")));
 
-        assertTrue(modelManager.isIntroducedThrough(bensonByAlice, ALICE.getName()));
-        assertFalse(modelManager.isIntroducedThrough(ALICE, BENSON.getName()));
+        assertTrue(modelManager.isIntroducedThrough(carlByBenson, ALICE.getName()));
+        assertFalse(modelManager.isIntroducedThrough(ALICE, CARL.getName()));
     }
 
     @Test
