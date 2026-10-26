@@ -564,7 +564,7 @@ A supporter's phone number, email and address are optional, but every supporter 
 
 - `Person` stores a missing field as `null` internally, and `Person#getPhone()`, `Person#getEmail()` and `Person#getAddress()` return an `Optional`, in the same way as `Person#getOrganisation()`.
 - The main `Person` constructor takes each optional field as an `Optional`, and throws an `IllegalArgumentException` if both the phone number and the email are empty. `Person#isValidContact(Optional, Optional)` holds this rule so that other components can check it first.
-- `AddCommandParser` requires only `n/NAME`. If neither `p/PHONE` nor `e/EMAIL` is given, it reports `AddCommand.MESSAGE_MISSING_CONTACT`, which names the two prefixes so the user knows how to fix the command.
+- `AddCommandParser` requires only `n/NAME`. If neither `p/PHONE` nor `e/EMAIL` is given, it reports `AddCommand.MESSAGE_MISSING_CONTACT`, which names the two prefixes so the user knows how to fix the command. A `p/`, `e/` or `a/` with nothing after it is reported with `AddCommand.MESSAGE_BLANK_PHONE`, `MESSAGE_BLANK_EMAIL` or `MESSAGE_BLANK_ADDRESS`, which tell the user to leave the prefix out, as the organisation message does for an empty `o/`. This differs from `edit`, where an empty prefix clears the field.
 - `EditCommand` keeps a field's current value, which may be empty, when the edit leaves it out. A prefix with nothing after it (`p/`, `e/`, `a/` or `o/`) clears that field: `EditCommandParser` marks it with `EditPersonDescriptor#clearPhone()` and the like. Before creating the edited `Person`, `EditCommand` checks `Person#isValidContact(Optional, Optional)` and reports `EditCommand.MESSAGE_NO_CONTACT_LEFT` if the edit would leave neither a phone number nor an email.
 - `JsonAdaptedPerson` leaves out the keys of missing fields when saving. When loading, a missing key means the field is empty, and a supporter with neither a phone number nor an email makes the whole data file invalid.
 - `Messages#format(Person)` and `PersonCard` show only the fields a supporter has. `PersonCard` hides the label of a missing field, so it takes up no space.
@@ -580,6 +580,86 @@ A supporter's phone number, email and address are optional, but every supporter 
 - **Alternative 2:** Both required, as in AB3.
   - Pros: Simpler; every supporter can be reached in both ways.
   - Cons: The user would have to invent a phone number or email for many real supporters.
+
+### Recording an introducer
+
+A supporter can have an introducer, the supporter who introduced them, e.g. the board member who introduced a company's CSR lead. As described in the [Model component](#model-component), `Person` stores the introducer's `Name`, and `Person#getIntroducer()` returns an `Optional<Name>`. Each supporter has at most one introducer, so following introducers from any supporter leads back to someone with no introducer recorded.
+
+`IntroCommandParser` parses `intro INDEX by/[INTRODUCER_INDEX]` into an `IntroCommand` holding the supporter's `Index` and an `Optional<Index>` for the introducer. An empty `by/` gives an empty `Optional`, which removes the record. The activity diagram below shows how `IntroCommand#execute(Model)` handles the command.
+
+<puml src="diagrams/IntroActivityDiagram.puml" alt="Activity diagram of how IntroCommand records, keeps or rejects an introducer" />
+
+1. `IntroCommand` looks up both supporters in `Model#getFilteredPersonList()`, so the user can only link supporters they can see. An index past the end of the displayed list gives `Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX`, as in other commands.
+1. It rejects a supporter as their own introducer with `Person.MESSAGE_SELF_INTRODUCTION`, and an introduction that would form a loop with `IntroCommand.MESSAGE_INTRODUCTION_LOOP`, which names both supporters.
+1. If the introducer would not change (the same introducer again, or removing a record that does not exist), it shows the supporter with `Model#setViewedPerson(Person)` and reports that nothing was changed. No `Person` is replaced, so no undo state is saved.
+1. Otherwise, it creates a copy of the supporter with `Person#withIntroducer(Optional<Name>)`, and calls `Model#setPerson(Person, Person)` and `Model#setViewedPerson(Person)`. The displayed list is not changed, so a `find` result is kept.
+
+**Preventing loops:** `AddressBook#isIntroducedThrough(Person person, Name name)`, which `Model` exposes, returns true if the supporter called `name` introduced `person`, directly or through other supporters. It starts at `person`'s introducer and keeps moving to that supporter's own introducer, comparing names with `Name#isSameName(Name)`, which ignores case and extra spaces. `IntroCommand` checks whether the proposed introducer was introduced through the target supporter. If so, the new introduction would close a loop.
+
+For example, suppose Alex introduced Bernice, and Bernice introduced David. When the user tries to record David as Alex's introducer, `isIntroducedThrough(david, alexName)` moves from David to Bernice, then to Alex, and returns true, so the command is rejected.
+
+The walk takes at most as many steps as there are supporters. A chain without loops visits each supporter at most once, so this limit never stops a valid walk early, and it makes sure the walk ends even if a hand-edited data file already contains a loop.
+
+**Keeping introductions valid:** Introductions are stored by name, so they are updated when a supporter's name changes or the supporter is removed.
+
+- When `edit` changes a supporter's name, `EditCommand` calls `Model#replaceIntroducer(Name, Optional<Name>)` to point every supporter they introduced at the new name. `DeleteCommand` calls it with an empty `Optional`, removing the deleted supporter as everyone's introducer. Both changes happen in one command, so one `undo` reverts them together.
+- When loading, `JsonSerializableAddressBook` checks introducers after adding every supporter, since an introducer may appear later in the file. An introducer who is not a supporter, or a supporter introduced through themselves (`AddressBook#isIntroducedThrough(person, person's name)`), makes the data file invalid.
+- The detail panel shows the viewed supporter's introducer, and lists the supporters returned by `Logic#getPersonsIntroducedBy(Name)` under `Introduced`.
+
+#### Design considerations:
+
+**Aspect: How to store an introduction**
+
+- **Alternative 1 (current choice):** The introduced supporter's `Person` holds the introducer's `Name`.
+  - Pros: Each supporter has at most one introducer by design. The data file stays a flat list of supporters, with the introducer saved as a string.
+  - Cons: A rename or deletion must update every link (`Model#replaceIntroducer(...)`), and finding everyone a supporter introduced means checking every supporter.
+
+- **Alternative 2:** The introduced supporter's `Person` holds a reference to the introducer's `Person` object.
+  - Pros: The introducer's details can be read without a search.
+  - Cons: `Person` is immutable and is replaced whenever a supporter changes, so the reference would point at an old copy. The data file would still need a name or ID to save the link.
+
+**Aspect: Whether to allow introduction loops**
+
+- **Alternative 1 (current choice):** Reject a loop in `intro` and when loading the data file.
+  - Pros: A loop makes no sense (two supporters cannot each have introduced the other), and code that follows introducers, such as a future feature showing an introduction chain, can rely on every chain ending.
+  - Cons: Every `intro` walks up to one chain, which takes time proportional to the number of supporters. This is fast for the few hundred supporters a small charity has.
+
+- **Alternative 2:** Allow loops.
+  - Pros: `intro` would be simpler.
+  - Cons: The data could record impossible histories, and every feature that follows introducers would need its own check to avoid looping forever.
+
+### Adding and removing tags
+
+`tag` adds tags to a supporter and `untag` removes them, keeping the supporter's other tags. Before these commands, the only way to change tags was `edit INDEX t/...`, which replaces all of a supporter's tags.
+
+`TagCommandParser` and `UntagCommandParser` parse the index and tags. `ParserUtil#parseTags(Collection<String>)` keeps only the first spelling of tags that differ only in case, so `t/vip t/VIP` gives one tag. The two commands share their behaviour through the abstract class `TagChangeCommand`, as shown below.
+
+<puml src="diagrams/TagChangeClassDiagram.puml" alt="Class diagram of TagChangeCommand and its subclasses TagCommand and UntagCommand" />
+
+`TagChangeCommand#execute(Model)` is a template method. It looks up the supporter in the displayed list, copies their tags into a new set, and calls `changeTag(...)` once for each tag the user gave. Each subclass decides what a change means:
+
+- `TagCommand#changeTag(...)` adds the tag, unless the supporter already has it ignoring case (`Tag#isSameTag(Tag)`), so `t/vip` does not add a second tag next to `VIP`.
+- `UntagCommand#changeTag(...)` removes every tag that matches ignoring case, and returns them as the supporter had them, so the message for `untag 1 t/vip` shows `[VIP]`.
+
+A tag for which `changeTag(...)` returns an empty list is reported as skipped. If every tag is skipped, nothing is changed, and the command shows the supporter with a message saying so, rather than an error, since what the user wanted is already true. Otherwise, `execute` replaces the supporter with `Person#withTags(Set<Tag>)` and shows them in the detail panel. The result lists the tags changed and, on a second line, any tags skipped. The subclasses provide these messages through three abstract `get...Message()` methods.
+
+#### Design considerations:
+
+**Aspect: How to share code between `tag` and `untag`**
+
+- **Alternative 1 (current choice):** An abstract `TagChangeCommand` with a template method, and one `changeTag(...)` per subclass.
+  - Pros: The index check, skipping, messages and model updates are written and tested once. The two commands cannot drift apart.
+  - Cons: Readers must look at two classes to follow one command.
+
+- **Alternative 2:** Two independent commands.
+  - Pros: Each command reads on its own.
+  - Cons: Almost all of `execute` would be repeated in both classes, as it was before the shared class was added in v1.5, and a fix to one could be missed in the other.
+
+### Counting supporters by stage
+
+`stats` shows how many supporters are at each cultivation stage. `StatsCommand#execute(Model)` counts every supporter in `Model#getAddressBook()`, not just the displayed list, so a `find` filter does not change the result. Neither the displayed list nor the detail panel changes, and since no supporter changes, no undo state is saved.
+
+The counts are kept in an `EnumMap<Stage, Integer>` that starts with every stage at 0, so stages with no supporters are still listed, in the order of `Stage.values()`. The result has a header with the total, then every count on one line, e.g. `Prospect: 1, Contacted: 0, ...`, so the whole result fits in the result display without scrolling.
 
 ### Undo/redo feature
 
@@ -744,6 +824,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | `* *`    | fundraiser recording Singaporean names      | save names containing hyphens, apostrophes, s/o and d/o                  | I can record my supporters' names as they actually are               |
 | `* *`    | fundraiser with overseas corporate contacts | save phone numbers that include a country code                           | I can store the numbers I actually dial                              |
 | `* *`    | fundraiser                                  | mark whether a contact is an individual supporter or a corporate contact | I can tell the two kinds of relationship apart                       |
+| `* *`    | fundraiser                                  | clear a contact detail that no longer applies                            | the record does not keep a number or address that no longer works    |
 | `*`      | fundraiser                                  | record a contact's job title                                             | I know whether I am talking to someone who can approve a partnership |
 | `*`      | fundraiser                                  | record how a supporter prefers to be addressed                           | I do not open a letter to a major donor with the wrong name          |
 
@@ -789,6 +870,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | `* * *`  | fundraiser | set a cultivation stage on a supporter                                          | I know whether they have been approached, are giving, have lapsed or have declined |
 | `* * *`  | fundraiser | change a supporter's stage in a single command                                  | updating where things stand after a meeting takes seconds                          |
 | `* *`    | fundraiser | tag supporters with labels of my own                                            | I can group them in ways I did not anticipate when I started                       |
+| `* *`    | fundraiser | add or remove one tag without retyping the others                               | I do not lose a supporter's other tags by mistake                                  |
 | `*`      | fundraiser | see how many supporters sit at each stage                                       | I can tell early in the year whether I have enough prospects                       |
 | `*`      | fundraiser | record that a supporter declined, together with a reason                        | I do not approach them again the same way                                          |
 | `*`      | fundraiser | pin a small number of key relationships                                         | the handful my year depends on stay in front of me                                 |
@@ -941,6 +1023,16 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case resumes from step 1.
 
+- 1f. User gives a field (e.g. the address) with no value, to clear it.
+  - 1f1. SupporterBook treats the empty field as a request to remove that detail.
+
+    Use case resumes from step 2.
+
+- 1g. The edit would leave the supporter with neither a phone number nor an email.
+  - 1g1. SupporterBook shows an error message stating that at least one is required, and makes no changes.
+
+    Use case resumes from step 1.
+
 **Use case: UC05 - Delete a supporter**
 
 **Preconditions: A list of supporters is shown, with an index beside each supporter**
@@ -1048,6 +1140,83 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 - 1c. The supporter is already at the requested cultivation stage.
   - 1c1. SupporterBook informs the user that the supporter is already at that cultivation stage and makes no changes.
+
+    Use case ends.
+
+**Use case: UC09 - Record who introduced a supporter**
+
+**Preconditions: A list of supporters is shown, with an index beside each supporter, and both supporters are in it**
+
+**MSS**
+
+1.  User requests to record that one supporter in the list introduced another.
+2.  SupporterBook records the introducer and shows the introduced supporter, whose details list the introducer.
+
+    Use case ends.
+
+**Extensions**
+
+- 1a. A given index is invalid.
+  - 1a1. SupporterBook shows an error message.
+
+    Use case resumes from step 1.
+
+- 1b. The user gives the same supporter as both the introducer and the introduced supporter.
+  - 1b1. SupporterBook shows an error message stating that a supporter cannot be their own introducer.
+
+    Use case resumes from step 1.
+
+- 1c. The introduced supporter already introduced the given introducer, directly or through other supporters.
+  - 1c1. SupporterBook shows an error message naming both supporters, explaining that the introductions would form a loop.
+
+    Use case resumes from step 1.
+
+- 1d. The supporter already has a different introducer.
+  - 1d1. SupporterBook replaces the introducer and shows the old and new introducers.
+
+    Use case ends.
+
+- 1e. The given introducer is already recorded as the supporter's introducer.
+  - 1e1. SupporterBook informs the user that the introducer is already recorded and makes no changes.
+
+    Use case ends.
+
+- 1f. The user gives no introducer, to remove the record.
+  - 1f1. SupporterBook removes the supporter's introducer, or informs the user that the supporter has none.
+
+    Use case ends.
+
+**Use case: UC10 - Add or remove a supporter's tags**
+
+**Preconditions: A list of supporters is shown, with an index beside each supporter**
+
+**MSS**
+
+1.  User requests to add tags to, or remove tags from, a specific supporter in the list.
+2.  SupporterBook adds or removes the tags, keeping the supporter's other tags.
+3.  SupporterBook shows the supporter and lists the tags added or removed.
+
+    Use case ends.
+
+**Extensions**
+
+- 1a. The given index is invalid.
+  - 1a1. SupporterBook shows an error message.
+
+    Use case resumes from step 1.
+
+- 1b. The user gives no tag, or a tag that is not alphanumeric.
+  - 1b1. SupporterBook shows an error message.
+
+    Use case resumes from step 1.
+
+- 2a. Some tags are skipped, because the supporter already has them (when adding) or does not have them (when removing). Capital letters are ignored.
+  - 2a1. SupporterBook changes the other tags, and lists the skipped tags after the changed ones.
+
+    Use case ends.
+
+- 2b. Every tag is skipped.
+  - 2b1. SupporterBook informs the user that nothing was changed, and shows the supporter.
 
     Use case ends.
 
@@ -1162,6 +1331,86 @@ testers are expected to do more _exploratory_ testing.
 
    1. Other incorrect commands to try: `delete`, `delete abc`, `delete -1` and `delete 1 2`.<br>
       Expected: An invalid-command-format message, with no data or list changes.
+
+### Adding and editing supporters
+
+1. Adding a supporter with only some contact details
+   1. Prerequisites: Start from the sample data, e.g. in a new empty folder.
+
+   1. Test case: `add n/Mei Lin Tan e/meilin@example.org o/Temasek Foundation`<br>
+      Expected: Mei Lin Tan is added at the end of the list at stage `Prospect`. The message shows only the details given, her email and organisation, and her card has no phone or address.
+
+   1. Test case: `add n/Kumar Raj a/1 Test Road`<br>
+      Expected: No supporter is added. The message says a supporter needs at least one way to reach them, and asks for `p/PHONE`, `e/EMAIL`, or both.
+
+   1. Test case: `add n/Kumar Raj p/81234567 e/`<br>
+      Expected: No supporter is added. The message says the email should not be blank, and to leave out `e/` if the supporter has no email.
+
+1. Clearing details with `edit`
+   1. Prerequisites: Start from the sample data and run `list`. The 3rd supporter, Charlotte O'Brien, has an email but no phone number.
+
+   1. Test case: `edit 3 e/`<br>
+      Expected: Nothing is changed. The message says a supporter needs at least one way to reach them.
+
+   1. Test case: `edit 3 p/81234567 e/`<br>
+      Expected: Charlotte now has the phone number `81234567` and no email.
+
+   1. Test case: `edit 1 a/`<br>
+      Expected: Alex Yeoh's address is removed, and his card no longer shows one.
+
+### Recording introducers
+
+1. Prerequisites: Start from the sample data and run `list`. The sample data records that Bernice Yu (2nd) introduced David Li (4th).
+
+1. Test case: `intro 3 by/4`<br>
+   Expected: The message is `Recorded that David Li introduced Charlotte O'Brien.` The detail panel shows Charlotte, with `David Li` as her `Introducer`.
+
+1. Test case: `intro 2 by/3`<br>
+   Expected: Nothing is changed, because Bernice introduced David, who introduced Charlotte. The message says that Charlotte O'Brien cannot be recorded as the introducer of Bernice Yu.
+
+1. Test case: `view 4`<br>
+   Expected: The detail panel shows David Li, with `Bernice Yu` as his `Introducer` and `Charlotte O'Brien` under `Introduced`.
+
+1. Test case: `intro 3 by/4` again<br>
+   Expected: The message says David Li is already recorded as the introducer of Charlotte O'Brien and nothing was changed. It is not shown as an error.
+
+1. Test case: `edit 4 n/David Lee`, then `view 3`<br>
+   Expected: Charlotte's introducer is now shown as `David Lee`.
+
+1. Test case: `intro 3 by/`<br>
+   Expected: The message is `Removed David Lee as the introducer of Charlotte O'Brien.`
+
+1. Other incorrect commands to try: `intro 3 by/3`, `intro 3 4`, `intro 3 by/0`, `intro 3 by/x` (where x is larger than the list size)<br>
+   Expected: Nothing is changed. The message shows error details.
+
+### Adding and removing tags
+
+1. Prerequisites: Start from the sample data and run `list`. The 1st supporter, Alex Yeoh, has the tag `monthlyDonor`.
+
+1. Test case: `tag 1 t/vip t/VIP t/monthlydonor`<br>
+   Expected: The message is `Added tags to Alex Yeoh: [vip]`, then `Skipped tags they already have: [monthlydonor]` on a second line. `t/VIP` counts as the same tag as `t/vip`, and Alex keeps `monthlyDonor` as it was spelt.
+
+1. Test case: `untag 1 t/VIP t/gala2025`<br>
+   Expected: The message is `Removed tags from Alex Yeoh: [vip]`, then `Skipped tags they do not have: [gala2025]`.
+
+1. Test case: `untag 1 t/gala2025`<br>
+   Expected: The message says Alex Yeoh has none of these tags and nothing was changed. It is not shown as an error.
+
+1. Other incorrect commands to try: `tag 1`, `tag 1 t/board intro`, `untag 0 t/vip`, `tag x t/vip` (where x is larger than the list size)<br>
+   Expected: No tags are changed. The message shows error details.
+
+### Counting supporters by stage
+
+1. Prerequisites: Start from the sample data, which has six supporters, one at each stage.
+
+1. Test case: `stats`<br>
+   Expected: `Supporters by stage (6 in total):`, then `Prospect: 1, Contacted: 1, Cultivating: 1, Giving: 1, Lapsed: 1, Declined: 1` on one line. The displayed list and detail panel do not change.
+
+1. Test case: `find Alex`, then `stats`<br>
+   Expected: The same counts, since every supporter is counted. The list still shows only Alex Yeoh.
+
+1. Test case: `list`, `stage 3 giving`, then `stats`<br>
+   Expected: `Prospect: 0` and `Giving: 2`, with the total still 6.
 
 ### Setting a supporter's stage
 
