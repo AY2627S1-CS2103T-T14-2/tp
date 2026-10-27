@@ -327,6 +327,14 @@ public class AddCommandParserTest {
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " " + PREFIX_EMAIL,
                 AddCommand.MESSAGE_BLANK_EMAIL);
         assertParseFailure(parser, NAME_DESC_BOB + " " + PREFIX_EMAIL, AddCommand.MESSAGE_BLANK_EMAIL);
+
+        // no-break spaces only, which String#isBlank does not recognise
+        assertParseFailure(parser, NAME_DESC_BOB + " " + PREFIX_PHONE + " ",
+                AddCommand.MESSAGE_BLANK_PHONE);
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " " + PREFIX_ADDRESS + " ",
+                AddCommand.MESSAGE_BLANK_ADDRESS);
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " " + PREFIX_ORGANISATION + " ",
+                Organisation.MESSAGE_CONSTRAINTS);
     }
 
     @Test
