@@ -181,6 +181,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t
 - A supporter's logged interactions are kept when their details are edited.
 - A supporter's introducer is kept when their details are edited. If you rename a supporter who introduced others, those supporters show the new name as their introducer.
 - A supporter's name cannot be changed to the name of another supporter, using the same comparison as `add`. Changing only the capitalisation of their own name is allowed.
+- If the edited record shares a phone number or email with another supporter, the edit still succeeds and a warning names the matching supporters and fields, using the same comparison rules as `add`. Hidden supporters are included, but the edited supporter is not compared with their own original record. The warning reflects the resulting record, including contact details you did not change; check whether the sharing is intentional before keeping or undoing the edit.
 - After editing, the list shows all supporters in the order they were added (any `find` or `quiet` filter is cleared).
 
 Examples:

@@ -31,6 +31,22 @@ public class SharedContactWarningTest {
     }
 
     @Test
+    public void getEditMessage_matchingContacts_usesUpdateWordingWithSameMatches() {
+        Person candidate = new PersonBuilder(alice).withName("Bob").withEmail("ALICE@EXAMPLE.COM").build();
+
+        assertEquals(String.format(SharedContactWarning.MESSAGE_SHARED_CONTACTS_AFTER_EDIT, "Alice (phone and email)"),
+                new SharedContactWarning(List.of(alice), candidate).getEditMessage());
+    }
+
+    @Test
+    public void getEditMessage_noMatchingContacts_returnsEmpty() {
+        Person different = new PersonBuilder().withName("Different").withPhone("123")
+                .withEmail("other@example.com").build();
+
+        assertEquals("", new SharedContactWarning(List.of(alice), different).getEditMessage());
+    }
+
+    @Test
     public void getMessage_matchingPhone_ignoresFormattingAndNamesExistingSupporter() {
         Person candidate = new PersonBuilder().withName("Bob").withPhone("6591234567").withoutEmail().build();
 
