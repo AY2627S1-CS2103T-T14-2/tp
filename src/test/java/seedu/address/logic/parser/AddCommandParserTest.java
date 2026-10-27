@@ -74,7 +74,8 @@ public class AddCommandParserTest {
     @Test
     public void parse_supportedNamesWithOtherFields_success() {
         String[] names = {"O'Brien", "Lee-Tan", "J. Tan", "Ravi s/o Kumar", "Priya d/o Kumar",
-            "Ravi S/O Kumar", "Priya D/O Kumar", "J. O'Brien-Tan d/o Kumar"};
+            "Ravi S/O Kumar", "Priya D/O Kumar", "J. O'Brien-Tan d/o Kumar",
+            "Ahmad bin Ali @ Ah Mat", "Tan Ah Kow (Chen Ah Kow)", "Tan, Ah Kow"};
         String otherFields = PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + ORGANISATION_DESC_BOB
                 + STAGE_DESC_BOB + TAG_DESC_HUSBAND + TAG_DESC_FRIEND;
 
@@ -84,6 +85,21 @@ public class AddCommandParserTest {
             assertParseSuccess(parser, " " + PREFIX_NAME + name + otherFields, new AddCommand(expectedPerson));
             assertParseSuccess(parser, otherFields + " " + PREFIX_NAME + name, new AddCommand(expectedPerson));
         }
+    }
+
+    @Test
+    public void parse_namesWithCommasBracketsOrAtSignsAndEmailOnly_success() {
+        Person expectedAlias = new PersonBuilder().withName("Ahmad bin Ali @ Ah Mat")
+                .withEmail("a1@example.com").withoutPhone().withoutAddress().build();
+        Person expectedDialectName = new PersonBuilder().withName("Tan Ah Kow (Chen Ah Kow)")
+                .withEmail("a2@example.com").withoutPhone().withoutAddress().build();
+        Person expectedCommaName = new PersonBuilder().withName("Tan, Ah Kow")
+                .withEmail("a3@example.com").withoutPhone().withoutAddress().build();
+
+        assertParseSuccess(parser, " n/Ahmad bin Ali @ Ah Mat e/a1@example.com", new AddCommand(expectedAlias));
+        assertParseSuccess(parser, " n/Tan Ah Kow (Chen Ah Kow) e/a2@example.com",
+                new AddCommand(expectedDialectName));
+        assertParseSuccess(parser, " n/Tan, Ah Kow e/a3@example.com", new AddCommand(expectedCommaName));
     }
 
     @Test
