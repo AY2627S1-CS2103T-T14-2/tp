@@ -11,7 +11,8 @@ public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
             "Names must start with a letter or digit, and may only contain letters, digits, spaces, "
-                    + "apostrophes ('), hyphens (-), periods (.), and whole words s/o or d/o (case-insensitive)";
+                    + "apostrophes ('), hyphens (-), periods (.), commas (,), round brackets (()), at signs (@), "
+                    + "and whole words s/o or d/o (case-insensitive)";
 
     /*
      * The first character must be a letter or digit after space normalization.
@@ -21,7 +22,7 @@ public class Name {
      * on long names without changing the accepted characters or imposing a length limit.
      */
     public static final String VALIDATION_REGEX =
-            "(?=\\p{Alnum})(?:(?<!\\S)(?i:[sd]/o)(?!\\S)|[\\p{Alnum} '.-])++";
+            "(?=\\p{Alnum})(?:(?<!\\S)(?i:[sd]/o)(?!\\S)|[\\p{Alnum} '.,()@-])++";
 
     public final String fullName;
 
