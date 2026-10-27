@@ -30,6 +30,20 @@ public class LogCommandParserTest {
     private LogCommandParser parser = new LogCommandParser();
 
     @Test
+    public void parse_unicodeBlankNote_failure() {
+        for (String note : List.of("\u0085", "\u2003", "\u00a0", " \t\u0085\u2003\u00a0\u202f\u3000 ")) {
+            assertParseFailure(parser, " 1 nt/" + note, Interaction.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
+    public void parse_unicodePaddedNote_preservesInternalSpacing() {
+        String note = "Called  about\u00a0the\u2003appeal";
+        assertParseSuccess(parser, " 1 nt/\u2003\u00a0" + note + "\u202f\u3000",
+                new LogCommand(INDEX_FIRST_PERSON, note));
+    }
+
+    @Test
     public void parse_validArgs_returnsLogCommand() {
         assertParseSuccess(parser, " 1 nt/" + VALID_NOTE, new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE));
 

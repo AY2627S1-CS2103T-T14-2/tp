@@ -13,6 +13,34 @@ import java.util.Arrays;
 public class StringUtil {
 
     /**
+     * Removes leading and trailing whitespace and Unicode space separators from a string,
+     * including NEXT LINE (U+0085).
+     * Internal spacing is preserved. Characters removed by {@link String#trim()} are also removed.
+     *
+     * @param text The non-null string to trim.
+     * @return The trimmed string, or an empty string if it contains only trimmable characters.
+     * @throws NullPointerException if {@code text} is null.
+     */
+    public static String trimUnicodeWhitespace(String text) {
+        requireNonNull(text);
+        int start = 0;
+        int end = text.length();
+        while (start < end && isTrimmableWhitespace(text.codePointAt(start))) {
+            start += Character.charCount(text.codePointAt(start));
+        }
+        while (start < end && isTrimmableWhitespace(text.codePointBefore(end))) {
+            end -= Character.charCount(text.codePointBefore(end));
+        }
+        return text.substring(start, end);
+    }
+
+    private static boolean isTrimmableWhitespace(int codePoint) {
+        // NEXT LINE is Unicode whitespace but is excluded by both Java Character predicates below
+        return codePoint <= ' ' || codePoint == '\u0085'
+                || Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint);
+    }
+
+    /**
      * Returns true if the {@code sentence} contains the {@code word}.
      *   Ignores case, but a full word match is required.
      *   <br>examples:<pre>
