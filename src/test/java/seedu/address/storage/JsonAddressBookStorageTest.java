@@ -32,6 +32,18 @@ public class JsonAddressBookStorageTest {
     public Path testFolder;
 
     @Test
+    public void readAndSaveAddressBook_organisationAtUnicodeLimit_preservesOrganisation() throws Exception {
+        String organisationAtLimit = "a".repeat(99) + "😀";
+        AddressBook book = new AddressBook();
+        book.addPerson(new PersonBuilder(ALICE).withOrganisation(organisationAtLimit).build());
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("unicodeOrganisation.json"));
+
+        // exercise actual JSON serialization and deserialization, including the boundary-length emoji
+        storage.saveAddressBook(book);
+        assertEquals(book, storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
     public void readAddressBook_nullFilePath_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> readAddressBook(null));
     }
