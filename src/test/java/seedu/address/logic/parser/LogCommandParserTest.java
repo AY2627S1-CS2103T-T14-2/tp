@@ -30,6 +30,16 @@ public class LogCommandParserTest {
     private LogCommandParser parser = new LogCommandParser();
 
     @Test
+    public void parse_supplementaryCharactersAtLengthBoundary_checksCodePoints() {
+        for (String note : List.of("a".repeat(499) + "\ud83d\ude00", "\ud83d\ude00".repeat(500))) {
+            assertParseSuccess(parser, " 1 nt/ " + note + " ",
+                    new LogCommand(INDEX_FIRST_PERSON, note));
+            assertParseFailure(parser, " 1 nt/ " + note + "a ",
+                    Interaction.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
     public void parse_validArgs_returnsLogCommand() {
         assertParseSuccess(parser, " 1 nt/" + VALID_NOTE, new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE));
 

@@ -6,12 +6,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
 public class InteractionTest {
 
     private static final LocalDate DATE = LocalDate.of(2026, 9, 16);
+
+    @Test
+    public void constructor_codePointLengthBoundary_acceptsLimitAndRejectsOverflow() {
+        for (String note : List.of("a".repeat(499) + "\ud83d\ude00", "\ud83d\ude00".repeat(500),
+                "e\u0301".repeat(250))) {
+            assertTrue(Interaction.isValidNote(note));
+            assertEquals(note, new Interaction(DATE, " " + note + " ").getNote());
+            assertFalse(Interaction.isValidNote(note + "a"));
+            assertThrows(IllegalArgumentException.class, Interaction.MESSAGE_CONSTRAINTS, () ->
+                    new Interaction(DATE, " " + note + "a "));
+        }
+    }
 
     @Test
     public void constructor_nullArguments_throwsNullPointerException() {

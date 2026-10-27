@@ -20,6 +20,16 @@ public class JsonAdaptedInteractionTest {
     private static final String VALID_NOTE = "Called to discuss the year-end appeal";
 
     @Test
+    public void toModelType_supplementaryCharactersAtLengthBoundary_checksCodePoints() throws Exception {
+        String note = "a".repeat(499) + "\ud83d\ude00";
+        Interaction interaction = new JsonAdaptedInteraction(VALID_DATE, note).toModelType();
+        assertEquals(note, interaction.getNote());
+        assertEquals(interaction, new JsonAdaptedInteraction(interaction).toModelType());
+        JsonAdaptedInteraction tooLong = new JsonAdaptedInteraction(VALID_DATE, note + "a");
+        assertThrows(IllegalValueException.class, Interaction.MESSAGE_CONSTRAINTS, tooLong::toModelType);
+    }
+
+    @Test
     public void toModelType_validInteractionDetails_returnsInteraction() throws Exception {
         Interaction interaction = new Interaction(LocalDate.parse(VALID_DATE), VALID_NOTE);
         JsonAdaptedInteraction adaptedInteraction = new JsonAdaptedInteraction(interaction);

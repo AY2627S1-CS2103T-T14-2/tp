@@ -34,12 +34,12 @@ public class Interaction {
     }
 
     /**
-     * Returns true if the note is not blank and is at most {@link #MAX_NOTE_LENGTH} characters after trimming.
+     * Returns true if the note is not blank and is at most {@link #MAX_NOTE_LENGTH} Unicode code points after trimming.
      */
     public static boolean isValidNote(String test) {
         requireNonNull(test);
         String trimmed = test.trim();
-        return !trimmed.isEmpty() && trimmed.length() <= MAX_NOTE_LENGTH;
+        return !trimmed.isEmpty() && trimmed.codePointCount(0, trimmed.length()) <= MAX_NOTE_LENGTH;
     }
 
     public LocalDate getDate() {

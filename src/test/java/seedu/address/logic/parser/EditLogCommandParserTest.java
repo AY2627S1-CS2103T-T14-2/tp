@@ -28,6 +28,17 @@ public class EditLogCommandParserTest {
     private final EditLogCommandParser parser = new EditLogCommandParser();
 
     @Test
+    public void parse_supplementaryCharactersAtLengthBoundary_checksCodePoints() {
+        for (String note : List.of("a".repeat(499) + "\ud83d\ude00", "\ud83d\ude00".repeat(500))) {
+            assertParseSuccess(parser, " 1 2 nt/ " + note + " ",
+                    new EditLogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON,
+                    Optional.of(note), Optional.empty()));
+            assertParseFailure(parser, " 1 2 nt/ " + note + "a ",
+                    Interaction.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
     public void parse_nullArgs_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> parser.parse(null));
     }
