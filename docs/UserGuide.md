@@ -113,7 +113,8 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
   Labels contain English letters, optionally separated by single spaces, e.g. `(HP)`, `(Home)`
   and `(Office Fax)`. Extension digits do not count towards the main number's 3-to-15-digit limit.
   Your formatting, including the extension and label, is preserved when displayed and saved.
-- `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'`), hyphens (`-`) and periods (`.`), e.g. `O'Brien`, `Lee-Tan` and `J. Tan`.
+- `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'` or `’`), hyphens (`-`) and periods (`.`), e.g. `O'Brien`, `Lee-Tan` and `J. Tan`.
+- Accented and non-Latin letters are accepted in `NAME`, e.g. `José Tan` and `李伟`.
 - `NAME` can also contain `s/o` or `d/o` as separate words, e.g. `Ravi s/o Kumar` and `Priya d/o Kumar`. Upper and lower case are both accepted.
 - SupporterBook only checks which characters a name uses, not whether it looks like a real name. For example, `s/o Kumar` or a name with only initials is accepted.
 - Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`.
@@ -143,6 +144,8 @@ the new supporter and includes a warning identifying `Alex Yeoh (phone)`.
 Examples:
 
 - `add n/Aisha Rahman e/aisha.r@gmail.com` adds an online donor who gave only an email.
+- `add n/李伟 e/li@example.com` adds a supporter whose name uses Chinese characters.
+- `add n/Charlotte O’Brien e/c2@example.com` adds a supporter whose name contains a curly apostrophe.
 - `add n/Marie Laurent p/+33 1 42 68 53 00` adds a supporter with an international phone number.
 - `add n/Phone Label Test p/9123 4567 (HP)` stores a phone number with a type label.
 - `add n/Phone Extension Test p/(65) 9123-4567 ext 12 (Office)` stores a country code, extension and label.
