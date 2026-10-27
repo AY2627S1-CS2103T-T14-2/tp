@@ -362,7 +362,7 @@ Records an interaction with a supporter, dated today or on a specified past date
 Format: `log INDEX nt/NOTE [dt/DATE]`
 
 - Logs the interaction against the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and must be a positive integer.
-- `NOTE` records what happened. It can contain any characters, must not be blank, and can be at most 500 characters long. Leading and trailing spaces are removed. For this limit, simple emoji such as 😀 counts as one character, while combined emoji or a letter with a combining accent can count as more than one.
+- `NOTE` records what happened. It can contain any characters, must not be blank, and can be at most 500 characters long. Leading and trailing spaces are removed. For this limit, simple emoji such as 😀 count as one character, while combined emoji or a letter with a combining accent can count as more than one.
 - Without `dt/`, the date defaults to today when the command runs, using the computer's clock.
 - `DATE` must be a valid date in `yyyy-MM-dd` format, e.g. `2024-02-29`, from `1900-01-01` through today (inclusive). Empty or out-of-range dates are rejected. Today is determined by the computer's clock.
 - `nt/` and `dt/` can appear in either order. Each prefix may only be supplied once.
