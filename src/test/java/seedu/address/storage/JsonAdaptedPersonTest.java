@@ -49,6 +49,18 @@ public class JsonAdaptedPersonTest {
             .collect(Collectors.toList());
 
     @Test
+    public void toModelType_organisationUnicodeLengthBoundary_checksCodePoints() throws Exception {
+        String organisationAtLimit = "a".repeat(99) + "😀";
+        Person expected = new PersonBuilder(BENSON).withOrganisation(organisationAtLimit).build();
+        assertEquals(expected, new JsonAdaptedPerson(expected).toModelType());
+
+        // construct invalid stored data directly, bypassing the model's constructor validation
+        JsonAdaptedPerson tooLong = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                organisationAtLimit + "a", null, VALID_STAGE, VALID_INTERACTIONS, VALID_TAGS);
+        assertThrows(IllegalValueException.class, Organisation.MESSAGE_CONSTRAINTS, tooLong::toModelType);
+    }
+
+    @Test
     public void toModelType_validPersonDetails_returnsPerson() throws Exception {
         JsonAdaptedPerson person = new JsonAdaptedPerson(BENSON);
         assertEquals(BENSON, person.toModelType());

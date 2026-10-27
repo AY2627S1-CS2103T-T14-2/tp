@@ -60,6 +60,18 @@ public class AddCommandParserTest {
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
+    public void parse_organisationUnicodeLengthBoundary_checksCodePoints() {
+        String organisationAtLimit = "a".repeat(99) + "😀";
+        Person expectedPerson = new PersonBuilder(BOB).withOrganisation(organisationAtLimit).build();
+        String input = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
+                + STAGE_DESC_BOB + TAG_DESC_HUSBAND + TAG_DESC_FRIEND
+                + " " + PREFIX_ORGANISATION + organisationAtLimit;
+
+        assertParseSuccess(parser, input, new AddCommand(expectedPerson));
+        assertParseFailure(parser, input + "a", Organisation.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
     public void parse_supportedNamesWithOtherFields_success() {
         String[] names = {"O'Brien", "Lee-Tan", "J. Tan", "Ravi s/o Kumar", "Priya d/o Kumar",
             "Ravi S/O Kumar", "Priya D/O Kumar", "J. O'Brien-Tan d/o Kumar"};
