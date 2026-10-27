@@ -311,6 +311,12 @@ public class EditCommandParserTest {
         assertParseSuccess(parser, targetIndex.getOneBased() + INVALID_ORGANISATION_DESC,
                 new EditCommand(targetIndex, new EditPersonDescriptorBuilder().withoutOrganisation().build()));
 
+        // so do no-break spaces, which String#isBlank does not recognise
+        EditPersonDescriptor clearedDescriptor = new EditPersonDescriptorBuilder().withoutAddress()
+                .withoutOrganisation().build();
+        assertParseSuccess(parser, targetIndex.getOneBased() + " " + PREFIX_ADDRESS + "  "
+                + PREFIX_ORGANISATION + " ", new EditCommand(targetIndex, clearedDescriptor));
+
         // cleared fields together with an edited one
         String userInput = targetIndex.getOneBased() + INVALID_ADDRESS_DESC + PHONE_DESC_AMY + " " + PREFIX_EMAIL;
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutAddress()

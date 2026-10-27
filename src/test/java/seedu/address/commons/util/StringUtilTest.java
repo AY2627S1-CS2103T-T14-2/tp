@@ -48,6 +48,17 @@ public class StringUtilTest {
         assertEquals("Called", StringUtil.trimUnicodeWhitespace(padding + "Called" + padding));
     }
 
+    @Test
+    public void isUnicodeBlank() {
+        assertThrows(NullPointerException.class, () -> StringUtil.isUnicodeBlank(null));
+
+        for (String text : List.of("", " ", "\t", "\u0085", " ", " ", "   　 ")) {
+            assertTrue(StringUtil.isUnicodeBlank(text));
+        }
+        assertFalse(StringUtil.isUnicodeBlank(" Office "));
+        assertFalse(StringUtil.isUnicodeBlank("-"));
+    }
+
 
     //---------------- Tests for isNonZeroUnsignedInteger --------------------------------------
 

@@ -34,6 +34,17 @@ public class StringUtil {
         return text.substring(start, end);
     }
 
+    /**
+     * Returns true if {@code text} is empty or contains only characters removed by
+     * {@link #trimUnicodeWhitespace(String)}, such as NO-BREAK SPACE (U+00A0), which {@link String#isBlank()}
+     * does not recognise.
+     *
+     * @throws NullPointerException if {@code text} is null.
+     */
+    public static boolean isUnicodeBlank(String text) {
+        return trimUnicodeWhitespace(text).isEmpty();
+    }
+
     private static boolean isTrimmableWhitespace(int codePoint) {
         // NEXT LINE is Unicode whitespace but is excluded by both Java Character predicates below
         return codePoint <= ' ' || codePoint == '\u0085'
