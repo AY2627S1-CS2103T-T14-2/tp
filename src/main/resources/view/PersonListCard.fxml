@@ -18,14 +18,15 @@
       <padding>
         <Insets top="5" right="5" bottom="5" left="15" />
       </padding>
-      <HBox spacing="0.5" alignment="CENTER_LEFT">
+      <HBox spacing="0.5" alignment="BASELINE_LEFT">
         <Label fx:id="id" styleClass="cell_big_label">
           <minWidth>
             <!-- Ensures that the label text is never truncated -->
             <Region fx:constant="USE_PREF_SIZE" />
           </minWidth>
         </Label>
-        <Label fx:id="name" text="\$first" styleClass="cell_big_label" />
+        <Label fx:id="name" text="\$first" styleClass="cell_big_label" minWidth="0"
+               wrapText="true" alignment="TOP_LEFT" />
         <Label fx:id="stage" styleClass="stage_badge">
           <HBox.margin>
             <Insets left="8" />
@@ -35,7 +36,8 @@
           </minWidth>
         </Label>
       </HBox>
-      <Label fx:id="organisation" styleClass="cell_small_label" text="\$organisation" />
+      <Label fx:id="organisation" styleClass="cell_small_label" text="\$organisation"
+             minWidth="0" wrapText="true" />
       <Label fx:id="lastContact" styleClass="cell_small_label" text="No interactions yet" />
       <FlowPane fx:id="tags" />
       <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
