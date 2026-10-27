@@ -3,6 +3,8 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import seedu.address.commons.util.StringUtil;
+
 /**
  * Represents the organisation a supporter belongs to, e.g. the company a CSR contact speaks for.
  * Guarantees: immutable; is valid as declared in {@link #isValidOrganisation(String)}
@@ -42,7 +44,7 @@ public class Organisation {
     }
 
     private static String normalise(String organisation) {
-        return organisation.trim().replaceAll("\\s+", " ");
+        return StringUtil.trimUnicodeWhitespace(organisation).replaceAll("\\s+", " ");
     }
 
     @Override

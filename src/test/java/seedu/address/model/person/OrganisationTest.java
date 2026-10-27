@@ -50,6 +50,7 @@ public class OrganisationTest {
     @Test
     public void constructor_extraSpaces_spacesNormalised() {
         assertEquals("DBS Bank", new Organisation("  DBS   Bank  ").value);
+        assertEquals("DBS Bank", new Organisation(" DBS Bank ").value);
         assertEquals(new Organisation("DBS Bank"), new Organisation("DBS  Bank"));
     }
 
@@ -61,6 +62,8 @@ public class OrganisationTest {
         // invalid organisations
         assertFalse(Organisation.isValidOrganisation("")); // empty string
         assertFalse(Organisation.isValidOrganisation("   ")); // spaces only
+        assertFalse(Organisation.isValidOrganisation(" ")); // no-break space only
+        assertFalse(Organisation.isValidOrganisation("     ")); // Unicode spaces only
         assertFalse(Organisation.isValidOrganisation("a".repeat(Organisation.MAX_LENGTH + 1))); // too long
 
         // valid organisations

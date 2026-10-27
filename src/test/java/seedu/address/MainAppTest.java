@@ -23,6 +23,7 @@ import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.Storage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.PersonBuilder;
 
 public class MainAppTest {
 
@@ -72,6 +73,22 @@ public class MainAppTest {
     }
 
     @Test
+    public void initModelManager_savedLongName_loadsWithoutWarningOrChangingFile() throws Exception {
+        Path dataFile = testFolder.resolve("long-name.json");
+        AddressBook expectedData = new AddressBook();
+        expectedData.addPerson(new PersonBuilder().withName("A".repeat(5_000)).build());
+        Storage storage = createStorage(dataFile);
+        storage.saveAddressBook(expectedData);
+        byte[] originalContents = Files.readAllBytes(dataFile);
+
+        Model model = mainApp.initModelManager(storage, new UserPrefs());
+
+        assertEquals(expectedData, model.getAddressBook());
+        assertEquals("", mainApp.getStartupWarning());
+        assertArrayEquals(originalContents, Files.readAllBytes(dataFile));
+    }
+
+    @Test
     public void initModelManager_malformedJson_startsEmptyWithWarning() throws Exception {
         assertInvalidFileStartsEmpty(TEST_DATA_FOLDER.resolve("JsonAddressBookStorageTest")
                 .resolve("notJsonFormatAddressBook.json"));
@@ -87,6 +104,28 @@ public class MainAppTest {
     public void initModelManager_nullTag_startsEmptyWithWarning() throws Exception {
         assertInvalidFileStartsEmpty(TEST_DATA_FOLDER.resolve("JsonAddressBookStorageTest")
                 .resolve("nullTagAddressBook.json"));
+    }
+
+    @Test
+    public void initModelManager_nullRoot_startsEmptyWithWarning() throws Exception {
+        assertNullDataStartsEmpty("null");
+    }
+
+    @Test
+    public void initModelManager_nullPerson_startsEmptyWithWarning() throws Exception {
+        assertNullDataStartsEmpty("{\"persons\":[null]}");
+    }
+
+    @Test
+    public void initModelManager_validThenNullPerson_startsEmptyWithWarning() throws Exception {
+        assertNullDataStartsEmpty("{\"persons\":["
+                + "{\"name\":\"Valid Supporter\",\"phone\":\"123\",\"stage\":\"prospect\"},null]}");
+    }
+
+    private void assertNullDataStartsEmpty(String contents) throws Exception {
+        Path fixture = testFolder.resolve("null-data.json");
+        Files.writeString(fixture, contents);
+        assertInvalidFileStartsEmpty(fixture);
     }
 
     @Test

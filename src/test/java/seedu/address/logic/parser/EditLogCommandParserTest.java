@@ -7,6 +7,8 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSucces
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalInteractionNotes.CHARACTER_PRESERVATION_NOTES;
+import static seedu.address.testutil.TypicalInteractionNotes.SUPPLEMENTARY_NOTES_AT_LIMIT;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -39,7 +41,30 @@ public class EditLogCommandParserTest {
         String note = "Called  about\u00a0the\u2003appeal";
         assertParseSuccess(parser, " 1 2 nt/\u2003\u00a0" + note + "\u202f\u3000",
                 new EditLogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON,
-                Optional.of(note), Optional.empty()));
+                        Optional.of(note), Optional.empty()));
+    }
+
+    @Test
+    public void parse_specialCharacters_preservesNote() {
+        for (String note : CHARACTER_PRESERVATION_NOTES) {
+            assertParseSuccess(parser, " 1 2 nt/" + note,
+                    new EditLogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON,
+                            Optional.of(note), Optional.empty()));
+        }
+    }
+
+    @Test
+    public void parse_supplementaryCharactersAtLengthBoundary_checksCodePoints() {
+        // both notes contain 500 code points, but exceed 500 UTF-16 code units
+        for (String note : SUPPLEMENTARY_NOTES_AT_LIMIT) {
+            // surrounding spaces are trimmed before checking the limit
+            assertParseSuccess(parser, " 1 2 nt/ " + note + " ",
+                    new EditLogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON,
+                            Optional.of(note), Optional.empty()));
+            // one additional ASCII character takes the note to 501 code points
+            assertParseFailure(parser, " 1 2 nt/ " + note + "a ",
+                    Interaction.MESSAGE_CONSTRAINTS);
+        }
     }
 
     @Test
