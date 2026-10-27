@@ -114,9 +114,10 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
   Labels contain English letters, optionally separated by single spaces, e.g. `(HP)`, `(Home)`
   and `(Office Fax)`. Extension digits do not count towards the main number's 3-to-15-digit limit.
   Your formatting, including the extension and label, is preserved when displayed and saved.
-- `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'`), hyphens (`-`) and periods (`.`), e.g. `O'Brien`, `Lee-Tan` and `J. Tan`.
+- `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'`), hyphens (`-`), periods (`.`), commas (`,`), round brackets (`(` and `)`) and at signs (`@`), e.g. `O'Brien`, `Lee-Tan`, `J. Tan`, `Tan, Ah Kow`, `Tan Ah Kow (Chen Ah Kow)` and `Ahmad bin Ali @ Ah Mat`.
 - `NAME` can also contain `s/o` or `d/o` as separate words, e.g. `Ravi s/o Kumar` and `Priya d/o Kumar`. Upper and lower case are both accepted.
 - SupporterBook only checks which characters a name uses, not whether it looks like a real name. For example, `s/o Kumar` or a name with only initials is accepted.
+- Round brackets in `NAME` do not need to be balanced, and spaces around punctuation are optional. The name must still start with a letter or digit, so `(Tan)` and `@Tan` are rejected. These name rules apply to both `add` and `edit`.
 - Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`.
 - Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
 - `TAG` must be alphanumeric, with no spaces, e.g. `t/boardIntro`. Tags that differ only in capitalisation, e.g. `t/vip t/VIP`, count as one tag, and the spelling typed first is kept.
@@ -148,6 +149,9 @@ Examples:
 - `add n/Phone Label Test p/9123 4567 (HP)` stores a phone number with a type label.
 - `add n/Phone Extension Test p/(65) 9123-4567 ext 12 (Office)` stores a country code, extension and label.
 - `add n/J. O'Brien-Tan p/91234567` adds a supporter whose name contains periods, apostrophes and hyphens.
+- `add n/Ahmad bin Ali @ Ah Mat e/a1@example.com` adds a supporter whose name contains an alias marked with `@`.
+- `add n/Tan Ah Kow (Chen Ah Kow) e/a2@example.com` adds a supporter whose name contains a dialect name in round brackets.
+- `add n/Tan, Ah Kow e/a3@example.com` adds a supporter whose name contains a comma.
 - `add n/Ravi s/o Kumar p/81112222 a/Bedok North Ave 1 st/contacted` adds a supporter named `Ravi s/o Kumar` at stage `Contacted`.
 - `add n/John Lim p/81112222 e/johnlim@example.com a/Bedok North Ave 1 st/lapsed` adds a past donor at stage `Lapsed`.
 - `add n/Tan Wei Ming p/91234567 e/weiming@dbs.com a/12 Marina Boulevard o/DBS Bank t/boardIntro` adds a CSR contact at DBS Bank who was introduced by a board member.
