@@ -12,7 +12,9 @@ public class Organisation {
     public static final int MAX_LENGTH = 100;
 
     public static final String MESSAGE_CONSTRAINTS = "Organisation names should not be blank and should be at most "
-            + MAX_LENGTH + " characters long. Leave out o/ if the supporter has no organisation.";
+            + MAX_LENGTH + " characters long after removing surrounding spaces "
+            + "and reducing repeated internal spaces to one. "
+            + "Leave out o/ if the supporter has no organisation.";
 
     public final String value;
 

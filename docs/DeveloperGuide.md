@@ -409,7 +409,7 @@ The stage is also shown in the UI: `PersonCard` displays it as a badge next to t
 
 A `Person` may belong to an organisation, such as the company a CSR contact speaks for. Individual donors usually have none, so the field is optional. It is represented by the `Organisation` class in the `Model` component.
 
-- `Organisation#isValidOrganisation(String)` accepts any characters, because company names often contain symbols (e.g. `Procter & Gamble`). After leading and trailing spaces are removed and each run of spaces inside is reduced to one, the value must not be blank and must be at most `Organisation.MAX_LENGTH` (100) characters long.
+- `Organisation#isValidOrganisation(String)` accepts any characters, because company names often contain symbols (e.g. `Procter & Gamble`). After leading and trailing spaces are removed and each run of spaces inside is reduced to one, the value must not be blank and must contain at most `Organisation.MAX_LENGTH` (100) Unicode code points. The limit is checked using `String.codePointCount`, so supplementary characters such as 😀 count as one, while combined emoji can contain multiple code points.
 - The `Organisation` constructor applies the same space normalisation before storing the value, so `DBS  Bank` and `DBS Bank` are equal.
 - `Person` stores no organisation as `null` internally, but `Person#getOrganisation()` returns an `Optional<Organisation>`, so callers must handle the missing case explicitly. The `Person` constructors without an organisation parameter create a supporter with none.
 - `EditCommand` and `StageCommand` copy the existing organisation into the `Person` they create, so editing other details or changing the stage never removes it.
