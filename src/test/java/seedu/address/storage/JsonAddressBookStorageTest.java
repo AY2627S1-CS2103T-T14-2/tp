@@ -105,6 +105,32 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void readAddressBook_nullRoot_throwsDataLoadingExceptionWithoutChangingFile() throws Exception {
+        assertNullDataRejectedWithoutChangingFile("null");
+    }
+
+    @Test
+    public void readAddressBook_nullPerson_throwsDataLoadingExceptionWithoutChangingFile() throws Exception {
+        assertNullDataRejectedWithoutChangingFile("{\"persons\":[null]}");
+    }
+
+    @Test
+    public void readAddressBook_validThenNullPerson_throwsDataLoadingExceptionWithoutChangingFile() throws Exception {
+        assertNullDataRejectedWithoutChangingFile("{\"persons\":["
+                + "{\"name\":\"Valid Supporter\",\"phone\":\"123\",\"stage\":\"prospect\",\"tags\":[]},null]}");
+    }
+
+    private void assertNullDataRejectedWithoutChangingFile(String contents) throws Exception {
+        Path dataFile = testFolder.resolve("supporterbook.json");
+        Files.writeString(dataFile, contents);
+        byte[] originalContents = Files.readAllBytes(dataFile);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+        assertArrayEquals(originalContents, Files.readAllBytes(dataFile));
+    }
+
+    @Test
     public void readAndSaveAddressBook_allInOrder_success() throws Exception {
         Path filePath = testFolder.resolve("TempAddressBook.json");
         AddressBook original = getTypicalAddressBook();
