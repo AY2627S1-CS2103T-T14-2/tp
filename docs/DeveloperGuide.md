@@ -448,13 +448,13 @@ In tests, `PersonBuilder` builds a `Person` with no organisation unless `PersonB
 
 Each `Person` owns an interaction history. An entry is represented by the immutable `Interaction` class in the `Model` component and contains a `LocalDate` and a short note.
 
-- An interaction note is trimmed before it is stored. It must not be blank after trimming and must be at most `Interaction.MAX_NOTE_LENGTH` (500) characters long.
+- An interaction note is trimmed before it is stored. It must not be blank after trimming and must be at most `Interaction.MAX_NOTE_LENGTH` (500) Unicode code points long. `Interaction.isValidNote()` counts code points after trimming; supplementary characters count as one, while combining sequences can count as multiple code points.
 - `Person` stores interactions in logging order. Its constructor makes a defensive copy of the supplied list, and `Person#getInteractions()` returns an unmodifiable view.
 - Existing `Person` constructors create an empty interaction history. This keeps existing creation paths compatible with the new field.
 - `EditCommand` and `StageCommand` copy the existing history into the replacement `Person`, so changing other supporter details never removes past interactions.
 - Interaction history is included in `Person#equals(Object)` and `Person#hashCode()`, but not in `Person#isSamePerson(Person)`. Supporter identity therefore remains name-based.
 
-In the `Storage` component, `JsonAdaptedInteraction` stores a date as an ISO `yyyy-MM-dd` string and a note as a string. `JsonAdaptedPerson` stores the entries in an `"interactions"` array while preserving their order. When loading, a missing array means the supporter has an empty history, so data files created before interaction histories existed remain compatible. A missing interaction field, malformed date, blank note or note longer than 500 characters makes the data file invalid.
+In the `Storage` component, `JsonAdaptedInteraction` stores a date as an ISO `yyyy-MM-dd` string and a note as a string. `JsonAdaptedPerson` stores the entries in an `"interactions"` array while preserving their order. When loading, a missing array means the supporter has an empty history, so data files created before interaction histories existed remain compatible. A missing interaction field, malformed date, blank note or note longer than 500 Unicode code points after trimming makes the data file invalid.
 
 In tests, `PersonBuilder` builds a `Person` with an empty history unless `PersonBuilder#withInteractions(Interaction...)` is called.
 
@@ -584,6 +584,8 @@ Selection follows these rules:
 * `ModelManager#setAddressBook(ReadOnlyAddressBook)` clears selection when all supporter data is replaced, including by `clear`.
 
 Editing or deleting another supporter preserves selection. Parsing and index-validation failures also preserve it.
+
+Undo and redo match immutable record versions by their original object identity rather than by name or list index. `ModelManager` records this session-only lineage in an `IdentityHashMap` whenever `setPerson` succeeds, including dependent records updated after an introducer is renamed. Restoring a snapshot selects the corresponding record even after a rename or a no-op edit; it clears selection if that supporter does not exist in the restored state. Equal-valued records belonging to different supporters do not share lineage, and no identity is written to JSON.
 
 #### Design considerations:
 
@@ -1155,7 +1157,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case resumes from step 1.
 
-- 1c. The given note is blank or longer than 500 characters.
+- 1c. The given note is blank or longer than 500 Unicode code points after trimming.
   - 1c1. SupporterBook shows an error message stating the rules for a note.
 
     Use case resumes from step 1.
@@ -1520,7 +1522,7 @@ testers are expected to do more _exploratory_ testing.
       Expected: The displayed list becomes empty because the supporter no longer matches the retained filter. The detail panel shows `TagFilterProbe` with no tags. The supporter has not been deleted.
 
    1. Continuing from the previous test case: `list`<br>
-      Expected: `TagFilterProbe` is present in the full list with the tag removed. Check the displayed indices before another index-based command.
+      Expected: `TagFilterProbe` is present in the full list with the tag removed.
 
 ### Counting supporters by stage
 
@@ -1568,7 +1570,7 @@ testers are expected to do more _exploratory_ testing.
       Expected: The displayed list becomes empty because the supporter no longer matches the retained filter. The detail panel shows `StageFilterProbe` at stage `Lapsed`. The supporter has not been deleted.
 
    1. Continuing from the previous test case: `list`<br>
-      Expected: `StageFilterProbe` is present in the full list at stage `Lapsed`. Check the displayed indices before another index-based command.
+      Expected: `StageFilterProbe` is present in the full list at stage `Lapsed`.
 
 1. Setting a stage when adding a supporter
    1. Test case: `add n/StageTester p/91234567 e/tester@example.com a/1 Test Street st/contacted`<br>
@@ -1615,7 +1617,7 @@ testers are expected to do more _exploratory_ testing.
 
 1. Invalid interaction logging commands
    1. Test case: `log 1 nt/`<br>
-      Expected: No interaction is logged. The status message says that an interaction note must not be blank and must be at most 500 characters long.
+      Expected: No interaction is logged. The status message says: `Interaction notes should not be blank and should be at most 500 characters long, excluding spaces at the beginning and end.`
 
    1. Test case: `log 1 nt/Called nt/Emailed`<br>
       Expected: No interaction is logged. The status message reports the repeated `nt/` prefix.
@@ -1811,6 +1813,13 @@ testers are expected to do more _exploratory_ testing.
 
 ### Saving data
 
+1. Reloading a supporter with a long valid name
+
+   1. Prerequisites: Use an isolated test folder and generate an `add n/NAME p/123` command whose `NAME` is 5,000 letters long.
+
+   1. Test case: Paste the command into the app, run `exit`, then relaunch from the same folder.<br>
+      Expected: Adding succeeds and the saved supporter loads without a stack-overflow error or load-failure warning.
+
 1. Dealing with missing/corrupted data files
 
    1. Prerequisites: Use an isolated test folder with the JAR file. Keep a backup of any real supporter data and close the app before editing the test data file.
@@ -1823,6 +1832,9 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: Close the app, replace the test data file's contents with `not json format!`, then relaunch.<br>
       Expected: The list is empty and the result display warns that the file could not be loaded and that the next command will overwrite it. The invalid file's contents are unchanged at startup.
+
+   1. Test case: Close the app and repeat the preceding test with `null`, then with `{"persons":[null]}` as the entire test data file.<br>
+      Expected: Both files produce the same empty-list fallback and warning without crashing or changing the file at startup. A null entry alongside valid supporters also rejects the whole file rather than loading partial data.
 
    1. Test case: After the warning, enter an unknown command.<br>
       Expected: `Unknown command.` replaces the warning, and the invalid file is unchanged.

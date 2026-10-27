@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
@@ -82,7 +83,7 @@ public class AddCommandParser implements Parser<AddCommand> {
         if (value.isEmpty()) {
             return Optional.empty();
         }
-        if (value.get().isBlank()) {
+        if (StringUtil.isUnicodeBlank(value.get())) {
             throw new ParseException(blankMessage);
         }
         return Optional.of(fieldParser.parse(value.get()));

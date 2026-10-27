@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalInteractionNotes.ASCII_AND_EMOJI_AT_NOTE_LIMIT;
+import static seedu.address.testutil.TypicalInteractionNotes.CHARACTER_PRESERVATION_NOTES;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.HOON;
 import static seedu.address.testutil.TypicalPersons.IDA;
@@ -14,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -30,6 +34,29 @@ public class JsonAddressBookStorageTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void readAndSaveAddressBook_specialCharacterNotes_preservesNotes() throws Exception {
+        List<String> notes = new ArrayList<>(CHARACTER_PRESERVATION_NOTES);
+        // also check persistence of a valid boundary note rejected by the former UTF-16 length check
+        notes.add(ASCII_AND_EMOJI_AT_NOTE_LIMIT);
+        Interaction[] interactions = notes.stream()
+                .map(note -> new Interaction(LocalDate.of(2024, 2, 29), note))
+                .toArray(Interaction[]::new);
+        Person supporter = new PersonBuilder(ALICE).withInteractions(interactions).build();
+        AddressBook original = new AddressBook();
+        original.addPerson(supporter);
+        Path filePath = testFolder.resolve("specialCharacterNotes.json");
+        // write actual JSON, then read it through a fresh storage instance to exercise escaping and decoding
+        new JsonAddressBookStorage(filePath).saveAddressBook(original);
+
+        ReadOnlyAddressBook restored = new JsonAddressBookStorage(filePath).readAddressBook().orElseThrow();
+        List<String> restoredNotes = restored.getPersonList().get(0).getInteractions().stream()
+                .map(Interaction::getNote)
+                .toList();
+        assertEquals(notes, restoredNotes);
+        assertEquals(original, new AddressBook(restored));
+    }
 
     @Test
     public void readAddressBook_nullFilePath_throwsNullPointerException() {
@@ -70,6 +97,32 @@ public class JsonAddressBookStorageTest {
     public void readAddressBook_nullTag_throwsDataLoadingExceptionWithoutChangingFile() throws Exception {
         Path dataFile = testFolder.resolve("supporterbook.json");
         Files.copy(TEST_DATA_FOLDER.resolve("nullTagAddressBook.json"), dataFile);
+        byte[] originalContents = Files.readAllBytes(dataFile);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+        assertArrayEquals(originalContents, Files.readAllBytes(dataFile));
+    }
+
+    @Test
+    public void readAddressBook_nullRoot_throwsDataLoadingExceptionWithoutChangingFile() throws Exception {
+        assertNullDataRejectedWithoutChangingFile("null");
+    }
+
+    @Test
+    public void readAddressBook_nullPerson_throwsDataLoadingExceptionWithoutChangingFile() throws Exception {
+        assertNullDataRejectedWithoutChangingFile("{\"persons\":[null]}");
+    }
+
+    @Test
+    public void readAddressBook_validThenNullPerson_throwsDataLoadingExceptionWithoutChangingFile() throws Exception {
+        assertNullDataRejectedWithoutChangingFile("{\"persons\":["
+                + "{\"name\":\"Valid Supporter\",\"phone\":\"123\",\"stage\":\"prospect\",\"tags\":[]},null]}");
+    }
+
+    private void assertNullDataRejectedWithoutChangingFile(String contents) throws Exception {
+        Path dataFile = testFolder.resolve("supporterbook.json");
+        Files.writeString(dataFile, contents);
         byte[] originalContents = Files.readAllBytes(dataFile);
         JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
 

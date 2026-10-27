@@ -18,7 +18,8 @@ public class Interaction {
     public static final int MAX_NOTE_LENGTH = 500;
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Interaction notes should not be blank and should be at most " + MAX_NOTE_LENGTH + " characters long";
+            "Interaction notes should not be blank and should be at most " + MAX_NOTE_LENGTH
+                    + " characters long, excluding spaces at the beginning and end.";
 
     private final LocalDate date;
     private final String note;
@@ -35,12 +36,12 @@ public class Interaction {
     }
 
     /**
-     * Returns true if the note is not blank and is at most {@link #MAX_NOTE_LENGTH} characters after trimming.
+     * Returns true if the note is not blank and is at most {@link #MAX_NOTE_LENGTH} Unicode code points after trimming.
      */
     public static boolean isValidNote(String test) {
         requireNonNull(test);
         String trimmed = StringUtil.trimUnicodeWhitespace(test);
-        return !trimmed.isEmpty() && trimmed.length() <= MAX_NOTE_LENGTH;
+        return !trimmed.isEmpty() && trimmed.codePointCount(0, trimmed.length()) <= MAX_NOTE_LENGTH;
     }
 
     public LocalDate getDate() {

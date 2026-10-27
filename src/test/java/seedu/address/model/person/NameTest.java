@@ -21,6 +21,27 @@ public class NameTest {
     }
 
     @Test
+    public void constructor_longName_preservesNameWithoutStackOverflow() {
+        String longName = "A".repeat(50_000);
+
+        assertEquals(longName, new Name(longName).fullName);
+    }
+
+    @Test
+    public void isValidName_longNameWithSlashWords_returnsTrue() {
+        assertTrue(Name.isValidName("s/o " + "A".repeat(5_000) + " D/o " + "O'Brien-Tan. ".repeat(5_000)));
+        assertTrue(Name.isValidName("A".repeat(5_000) + " s/o"));
+    }
+
+    @Test
+    public void isValidName_longInvalidName_returnsFalse() {
+        assertFalse(Name.isValidName("A".repeat(50_000) + "*"));
+        assertFalse(Name.isValidName("A".repeat(5_000) + " s/oKumar"));
+        assertFalse(Name.isValidName("A".repeat(5_000) + " s/o.Kumar"));
+        assertFalse(Name.isValidName("A".repeat(5_000) + "s/o"));
+    }
+
+    @Test
     public void isValidName() {
         // null name
         assertThrows(NullPointerException.class, () -> Name.isValidName(null));

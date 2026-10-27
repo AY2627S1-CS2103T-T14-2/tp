@@ -18,9 +18,11 @@ public class Name {
      * Unicode letters and straight or curly apostrophes are supported; digits remain 0-9.
      * Slashes are allowed only in whole words s/o or d/o, ignoring case.
      * The lookahead checks the first character without consuming it, allowing s/o or d/o at the start.
+     * Match slash words before individual letters. Possessive repetition avoids recursive backtracking
+     * on long names without changing the accepted characters or imposing a length limit.
      */
     public static final String VALIDATION_REGEX =
-            "(?=[\\p{L}0-9])(?:[\\p{L}0-9 '’.-]|(?<!\\S)(?i:[sd]/o)(?!\\S))+";
+            "(?=[\\p{L}0-9])(?:(?<!\\S)(?i:[sd]/o)(?!\\S)|[\\p{L}0-9 '’.-])++";
 
     public final String fullName;
 

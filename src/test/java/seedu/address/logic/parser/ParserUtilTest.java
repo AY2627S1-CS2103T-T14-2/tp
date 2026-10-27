@@ -235,6 +235,12 @@ public class ParserUtilTest {
         String addressWithWhitespace = WHITESPACE + VALID_ADDRESS + WHITESPACE;
         Address expectedAddress = new Address(VALID_ADDRESS);
         assertEquals(expectedAddress, ParserUtil.parseAddress(addressWithWhitespace));
+        assertEquals(expectedAddress, ParserUtil.parseAddress(" " + VALID_ADDRESS + " "));
+    }
+
+    @Test
+    public void parseAddress_unicodeBlank_throwsParseException() {
+        assertThrows(ParseException.class, Address.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseAddress(" "));
     }
 
     @Test

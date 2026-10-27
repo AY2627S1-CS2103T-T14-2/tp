@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -75,7 +76,7 @@ public class EditCommandParser implements Parser<EditCommand> {
         if (value.isEmpty()) {
             return;
         }
-        if (value.get().isBlank()) {
+        if (StringUtil.isUnicodeBlank(value.get())) {
             clearer.run();
             return;
         }
