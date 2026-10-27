@@ -1811,6 +1811,13 @@ testers are expected to do more _exploratory_ testing.
 
 ### Saving data
 
+1. Reloading a supporter with a long valid name
+
+   1. Prerequisites: Use an isolated test folder and generate an `add n/NAME p/123` command whose `NAME` is 5,000 letters long.
+
+   1. Test case: Paste the command into the app, run `exit`, then relaunch from the same folder.<br>
+      Expected: Adding succeeds and the saved supporter loads without a stack-overflow error or load-failure warning. Name validation preserves the accepted format and does not impose a new length limit.
+
 1. Dealing with missing/corrupted data files
 
    1. Prerequisites: Use an isolated test folder with the JAR file. Keep a backup of any real supporter data and close the app before editing the test data file.
