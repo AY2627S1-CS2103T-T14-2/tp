@@ -1,5 +1,8 @@
 package seedu.address.storage;
 
+import static java.util.Objects.requireNonNull;
+
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
@@ -43,6 +46,16 @@ class JsonAdaptedInteraction {
      * @throws IllegalValueException if there were any data constraints violated in the adapted interaction.
      */
     public Interaction toModelType() throws IllegalValueException {
+        return toModelType(Clock.systemDefaultZone());
+    }
+
+    /**
+     * Converts this interaction using {@code clock} to determine today's local date.
+     *
+     * @throws IllegalValueException if any stored interaction constraint is violated.
+     */
+    Interaction toModelType(Clock clock) throws IllegalValueException {
+        requireNonNull(clock);
         if (date == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "date"));
         }
@@ -52,6 +65,11 @@ class JsonAdaptedInteraction {
             modelDate = LocalDate.parse(date);
         } catch (DateTimeParseException exception) {
             throw new IllegalValueException(DATE_MESSAGE_CONSTRAINTS, exception);
+        }
+
+        if (!Interaction.isValidDate(modelDate, LocalDate.now(clock))) {
+            throw new IllegalValueException(modelDate.isBefore(Interaction.MIN_DATE)
+                    ? Interaction.MESSAGE_EARLY_DATE : Interaction.MESSAGE_FUTURE_DATE);
         }
 
         if (note == null) {

@@ -342,7 +342,7 @@ public class ParserUtilTest {
     @Test
     public void parseInteractionDate_beforeMinimumDate_throwsParseException() {
         for (String date : List.of("1899-12-31", "0000-01-01", "0001-01-01")) {
-            assertThrows(ParseException.class, ParserUtil.MESSAGE_EARLY_INTERACTION_DATE, () ->
+            assertThrows(ParseException.class, Interaction.MESSAGE_EARLY_DATE, () ->
                     ParserUtil.parseInteractionDate(date, INTERACTION_CLOCK));
         }
     }
@@ -374,7 +374,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseInteractionDate_futureDate_throwsParseException() {
-        assertThrows(ParseException.class, ParserUtil.MESSAGE_FUTURE_INTERACTION_DATE, () ->
+        assertThrows(ParseException.class, Interaction.MESSAGE_FUTURE_DATE, () ->
                 ParserUtil.parseInteractionDate("2026-10-21", INTERACTION_CLOCK));
     }
 

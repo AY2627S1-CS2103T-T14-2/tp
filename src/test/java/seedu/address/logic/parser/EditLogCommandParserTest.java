@@ -127,9 +127,9 @@ public class EditLogCommandParserTest {
         for (String date : List.of("", "   ", "2024-2-29", "2024/02/29", "2024-02-30", "2023-02-29")) {
             assertParseFailure(parser, " 1 2 dt/" + date, ParserUtil.MESSAGE_INVALID_INTERACTION_DATE);
         }
-        assertParseFailure(parser, " 1 2 dt/1899-12-31", ParserUtil.MESSAGE_EARLY_INTERACTION_DATE);
+        assertParseFailure(parser, " 1 2 dt/1899-12-31", Interaction.MESSAGE_EARLY_DATE);
         assertParseFailure(parser, " 1 2 dt/" + LocalDate.now().plusYears(1),
-                ParserUtil.MESSAGE_FUTURE_INTERACTION_DATE);
+                Interaction.MESSAGE_FUTURE_DATE);
     }
 
     @Test

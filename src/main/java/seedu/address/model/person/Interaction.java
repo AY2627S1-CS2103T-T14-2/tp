@@ -2,6 +2,7 @@ package seedu.address.model.person;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
+import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.time.LocalDate;
 import java.util.Objects;
@@ -16,6 +17,10 @@ import seedu.address.commons.util.ToStringBuilder;
 public class Interaction {
 
     public static final int MAX_NOTE_LENGTH = 500;
+    public static final LocalDate MIN_DATE = LocalDate.of(1900, 1, 1);
+
+    public static final String MESSAGE_EARLY_DATE = "Interaction dates must be on or after " + MIN_DATE + ".";
+    public static final String MESSAGE_FUTURE_DATE = "Interaction dates cannot be in the future.";
 
     public static final String MESSAGE_CONSTRAINTS =
             "Interaction notes should not be blank and should be at most " + MAX_NOTE_LENGTH
@@ -28,8 +33,7 @@ public class Interaction {
      * Creates an {@code Interaction} on the given {@code date}, removing leading and trailing spaces from its note.
      */
     public Interaction(LocalDate date, String note) {
-        requireNonNull(date);
-        requireNonNull(note);
+        requireAllNonNull(date, note);
         checkArgument(isValidNote(note), MESSAGE_CONSTRAINTS);
         this.date = date;
         this.note = StringUtil.trimUnicodeWhitespace(note);
@@ -42,6 +46,15 @@ public class Interaction {
         requireNonNull(test);
         String trimmed = StringUtil.trimUnicodeWhitespace(test);
         return !trimmed.isEmpty() && trimmed.codePointCount(0, trimmed.length()) <= MAX_NOTE_LENGTH;
+    }
+
+    /**
+     * Returns true if {@code date} is from {@link #MIN_DATE} through {@code today}, inclusive.
+     * The caller supplies today's local date so validation can use a controlled clock in tests.
+     */
+    public static boolean isValidDate(LocalDate date, LocalDate today) {
+        requireAllNonNull(date, today);
+        return !date.isBefore(MIN_DATE) && !date.isAfter(today);
     }
 
     public LocalDate getDate() {

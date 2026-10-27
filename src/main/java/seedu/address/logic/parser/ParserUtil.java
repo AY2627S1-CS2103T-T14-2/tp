@@ -35,10 +35,6 @@ public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INTERACTION_DATE =
             "Interaction dates must be valid dates in yyyy-MM-dd format, e.g. 2026-10-01.";
-    public static final LocalDate MIN_INTERACTION_DATE = LocalDate.of(1900, 1, 1);
-    public static final String MESSAGE_EARLY_INTERACTION_DATE =
-            "Interaction dates must be on or after " + MIN_INTERACTION_DATE + ".";
-    public static final String MESSAGE_FUTURE_INTERACTION_DATE = "Interaction dates cannot be in the future.";
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
@@ -246,10 +242,10 @@ public class ParserUtil {
 
     /**
      * Parses an interaction date in yyyy-MM-dd format, trimming leading and trailing whitespace.
-     * Accepts dates from {@link #MIN_INTERACTION_DATE} (1900-01-01) through today, inclusive.
+     * Accepts dates from {@link Interaction#MIN_DATE} (1900-01-01) through today, inclusive.
      * Uses the computer's local date to determine today.
      *
-     * @throws ParseException if the date is invalid, before {@link #MIN_INTERACTION_DATE}, or in the future.
+     * @throws ParseException if the date is invalid, before {@link Interaction#MIN_DATE}, or in the future.
      */
     public static LocalDate parseInteractionDate(String date) throws ParseException {
         return parseInteractionDate(date, Clock.systemDefaultZone());
@@ -257,13 +253,12 @@ public class ParserUtil {
 
     /**
      * Parses an interaction date using {@code clock} to determine today's date.
-     * Accepts dates from {@link #MIN_INTERACTION_DATE} (1900-01-01) through today, inclusive.
+     * Accepts dates from {@link Interaction#MIN_DATE} (1900-01-01) through today, inclusive.
      *
-     * @throws ParseException if the date is invalid, before {@link #MIN_INTERACTION_DATE}, or in the future.
+     * @throws ParseException if the date is invalid, before {@link Interaction#MIN_DATE}, or in the future.
      */
     static LocalDate parseInteractionDate(String date, Clock clock) throws ParseException {
-        requireNonNull(date);
-        requireNonNull(clock);
+        requireAllNonNull(date, clock);
         String trimmedDate = date.trim();
         if (!trimmedDate.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) {
             throw new ParseException(MESSAGE_INVALID_INTERACTION_DATE);
@@ -275,11 +270,9 @@ public class ParserUtil {
         } catch (DateTimeParseException e) {
             throw new ParseException(MESSAGE_INVALID_INTERACTION_DATE, e);
         }
-        if (parsedDate.isBefore(MIN_INTERACTION_DATE)) {
-            throw new ParseException(MESSAGE_EARLY_INTERACTION_DATE);
-        }
-        if (parsedDate.isAfter(LocalDate.now(clock))) {
-            throw new ParseException(MESSAGE_FUTURE_INTERACTION_DATE);
+        if (!Interaction.isValidDate(parsedDate, LocalDate.now(clock))) {
+            throw new ParseException(parsedDate.isBefore(Interaction.MIN_DATE)
+                    ? Interaction.MESSAGE_EARLY_DATE : Interaction.MESSAGE_FUTURE_DATE);
         }
         return parsedDate;
     }
