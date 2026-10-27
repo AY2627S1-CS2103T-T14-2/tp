@@ -362,7 +362,7 @@ Records an interaction with a supporter, dated today or on a specified past date
 Format: `log INDEX nt/NOTE [dt/DATE]`
 
 - Logs the interaction against the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and must be a positive integer.
-- `NOTE` records what happened. It can contain any characters, must not be blank, and can be at most 500 characters long. Leading and trailing spaces are removed. The limit counts Unicode code points: 😀 counts as one, while combined emoji or a letter with a combining accent can count as more than one.
+- `NOTE` records what happened. It can contain any characters, must not be blank, and can be at most 500 characters long. Leading and trailing spaces are removed. For this limit, simple emoji such as 😀 counts as one character, while combined emoji or a letter with a combining accent can count as more than one.
 - Without `dt/`, the date defaults to today when the command runs, using the computer's clock.
 - `DATE` must be a valid date in `yyyy-MM-dd` format, e.g. `2024-02-29`, from `1900-01-01` through today (inclusive). Empty or out-of-range dates are rejected. Today is determined by the computer's clock.
 - `nt/` and `dt/` can appear in either order. Each prefix may only be supplied once.
@@ -404,7 +404,7 @@ Format: `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`
 - `ENTRY` is the number beside the interaction in the detail panel, not its row position. Use `view INDEX` to check it first.
 - Supply at least one field. Omitted fields remain unchanged; supplying the existing value is allowed.
 - To revert an interaction edited by mistake, run `undo` immediately afterward. Undo history is available only during the current session.
-- `NOTE` must not be blank and may contain at most 500 Unicode code points after trimming leading and trailing spaces. As with `log`, combined emoji or a letter with a combining accent can count as more than one.
+- `NOTE` must not be blank and may contain at most 500 characters after trimming leading and trailing spaces. Characters are counted as described under [logging an interaction](#logging-an-interaction-log).
 - `DATE` must be a valid `yyyy-MM-dd` date from `1900-01-01` through today (inclusive), using the computer's clock. Empty, invalid and out-of-range dates are rejected.
 - `nt/` and `dt/` may appear in either order, but each may appear only once. As with `log`, a space followed by either prefix inside a note is interpreted as a parameter prefix.
 - Date changes can reorder and renumber entries: oldest is `#1`, newest has the largest number, and the panel displays newest first. Equal dates retain the original logging order, with later-logged entries first.
