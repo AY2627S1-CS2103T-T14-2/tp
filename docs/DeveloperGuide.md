@@ -1366,6 +1366,15 @@ testers are expected to do more _exploratory_ testing.
    1. Relaunch the app by double-clicking the JAR file.<br>
       Expected: The most recent window size and location are retained.
 
+1. Launching with invalid window preferences
+   1. Prerequisites: Close the app. In the folder containing the JAR, replace the contents of `preferences.json` with `{"guiSettings":null}`.
+
+   1. Test case: Launch the app.<br>
+      Expected: The app opens with the default window size. `preferences.json` is rewritten with the default window settings.
+
+   1. Test case: Close the app, replace the contents of `preferences.json` with `null`, then launch the app.<br>
+      Expected: Similar to previous.
+
 1. _{ more test cases … }_
 
 ### Adding supporters with shared contact details
