@@ -1816,7 +1816,7 @@ testers are expected to do more _exploratory_ testing.
    1. Prerequisites: Use an isolated test folder and generate an `add n/NAME p/123` command whose `NAME` is 5,000 letters long.
 
    1. Test case: Paste the command into the app, run `exit`, then relaunch from the same folder.<br>
-      Expected: Adding succeeds and the saved supporter loads without a stack-overflow error or load-failure warning. Name validation preserves the accepted format and does not impose a new length limit.
+      Expected: Adding succeeds and the saved supporter loads without a stack-overflow error or load-failure warning.
 
 1. Dealing with missing/corrupted data files
 
