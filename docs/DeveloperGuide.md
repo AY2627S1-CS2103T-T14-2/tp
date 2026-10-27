@@ -587,10 +587,6 @@ Editing or deleting another supporter preserves selection. Parsing and index-val
 
 Undo and redo match immutable record versions by their original object identity rather than by name or list index. `ModelManager` records this session-only lineage in an `IdentityHashMap` whenever `setPerson` succeeds, including dependent records updated after an introducer is renamed. Restoring a snapshot selects the corresponding record even after a rename or a no-op edit; it clears selection if that supporter does not exist in the restored state. Equal-valued records belonging to different supporters do not share lineage, and no identity is written to JSON.
 
-When a new commit discards redo states, or a no-op replaces a record without adding a history state, lineage entries for unused versions are released. `VersionedAddressBook#getRetainedPersonVersions()` collects current and saved record instances by identity for this cleanup.
-
-`ViewedPersonHistoryTest` covers rename chains, reused names, no-op edits, failed edits and branched history. `ViewedPersonHistoryIntegrationTest` checks the reported filtered-rename sequence and dependent-introducer updates through command parsing and saved-data reloads.
-
 #### Design considerations:
 
 **Aspect: How to record the viewed supporter**
