@@ -1520,7 +1520,7 @@ testers are expected to do more _exploratory_ testing.
       Expected: The displayed list becomes empty because the supporter no longer matches the retained filter. The detail panel shows `TagFilterProbe` with no tags. The supporter has not been deleted.
 
    1. Continuing from the previous test case: `list`<br>
-      Expected: `TagFilterProbe` is present in the full list with the tag removed. Check the displayed indices before another index-based command.
+      Expected: `TagFilterProbe` is present in the full list with the tag removed.
 
 ### Counting supporters by stage
 
@@ -1568,7 +1568,7 @@ testers are expected to do more _exploratory_ testing.
       Expected: The displayed list becomes empty because the supporter no longer matches the retained filter. The detail panel shows `StageFilterProbe` at stage `Lapsed`. The supporter has not been deleted.
 
    1. Continuing from the previous test case: `list`<br>
-      Expected: `StageFilterProbe` is present in the full list at stage `Lapsed`. Check the displayed indices before another index-based command.
+      Expected: `StageFilterProbe` is present in the full list at stage `Lapsed`.
 
 1. Setting a stage when adding a supporter
    1. Test case: `add n/StageTester p/91234567 e/tester@example.com a/1 Test Street st/contacted`<br>
