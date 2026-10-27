@@ -127,7 +127,7 @@ public class CommandPrefixWarningIntegrationTest {
 
     @Test
     public void execute_nonMutatingAndIgnoredArguments_doNotSuggestUndo() throws Exception {
-        CommandResult findResult = logic.execute("find n/Alex");
+        CommandResult findResult = logic.execute("find x/Alex");
         assertFalse(findResult.getFeedbackToUser().contains("Note:"));
         CommandResult clearResult = logic.execute("clear t/vip x/foo");
         assertFalse(clearResult.getFeedbackToUser().contains("Note:"));
@@ -140,5 +140,41 @@ public class CommandPrefixWarningIntegrationTest {
 
         assertFalse(result.getFeedbackToUser().contains("Note:"));
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_findUnsupportedKnownFilters_reportsOnlyExplicitErrorAndPreservesState() throws Exception {
+        logic.execute("find Bernice");
+        logic.execute("view 1");
+        AddressBook original = new AddressBook(model.getAddressBook());
+        var selection = model.getViewedPerson();
+        var shown = List.copyOf(model.getFilteredPersonList());
+        byte[] saved = Files.readAllBytes(storage.getAddressBookFilePath());
+
+        for (String prefix : List.of("n/", "a/", "dt/", "nt/", "by/")) {
+            String expectedError = "Unsupported search filter(s): " + prefix + ".\n"
+                    + "find supports only o/, t/, st/, p/ and e/.\n" + FindCommand.MESSAGE_USAGE;
+            for (String command : List.of("find " + prefix + "value", "find o/DBS " + prefix + "value")) {
+                ParseException failure = assertThrows(ParseException.class, () -> logic.execute(command));
+
+                assertEquals(expectedError, failure.getMessage(), command);
+                assertFalse(failure.getMessage().contains("Note:"), command);
+                assertEquals(original, model.getAddressBook());
+                assertEquals(selection, model.getViewedPerson());
+                assertEquals(shown, model.getFilteredPersonList());
+                assertArrayEquals(saved, Files.readAllBytes(storage.getAddressBookFilePath()));
+            }
+        }
+    }
+
+    @Test
+    public void execute_findKnownAndUnknownPrefixes_addsNoteOnlyForUnknownWord() {
+        ParseException failure = assertThrows(ParseException.class, () -> logic.execute("find n/Tan x/foo"));
+
+        String expectedError = "Unsupported search filter(s): n/.\n"
+                + "find supports only o/, t/, st/, p/ and e/.\n" + FindCommand.MESSAGE_USAGE;
+        assertEquals(expectedError + "\n" + Messages.formatUnrecognisedPrefixErrorNote(List.of("x/")),
+                failure.getMessage());
+        assertFalse(failure.getMessage().contains("Note: n/"));
     }
 }

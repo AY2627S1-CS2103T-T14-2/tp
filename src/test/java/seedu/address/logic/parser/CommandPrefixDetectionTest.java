@@ -36,7 +36,7 @@ public class CommandPrefixDetectionTest {
         assertEquals(List.of("t/"), parser.findUnrecognisedPrefixes("log 1 nt/Called t/vip"));
         assertEquals(List.of("t/", "x/", "by/", "T/"), parser.findUnrecognisedPrefixes(
                 "editlog 1 1 nt/Called t/vip x/one by/2 t/again T/vip"));
-        assertEquals(List.of("n/"), parser.findUnrecognisedPrefixes("find n/Tan"));
+        assertEquals(List.of("x/"), parser.findUnrecognisedPrefixes("find n/Tan x/foo"));
         assertEquals(List.of("p/"), parser.findUnrecognisedPrefixes("intro 1 by/2 p/123"));
         assertEquals(List.of("st/"), parser.findUnrecognisedPrefixes("tag 1 t/vip st/giving"));
         assertEquals(List.of("o/"), parser.findUnrecognisedPrefixes("untag 1 t/vip o/DBS"));
@@ -46,6 +46,14 @@ public class CommandPrefixDetectionTest {
     public void findUnrecognisedPrefixes_positionalCommands_doNotRecognisePrefixes() {
         for (String command : List.of("delete 1", "view 1", "stage 1", "unlog 1 1", "quiet")) {
             assertEquals(List.of("st/"), parser.findUnrecognisedPrefixes(command + " st/giving"), command);
+        }
+    }
+
+    @Test
+    public void findUnrecognisedPrefixes_findUnsupportedKnownFilters_leavesRejectionToFindParser() {
+        for (String prefix : List.of("n/", "a/", "dt/", "nt/", "by/")) {
+            assertEquals(List.of(), parser.findUnrecognisedPrefixes("find " + prefix + "value"), prefix);
+            assertEquals(List.of(), parser.findUnrecognisedPrefixes("find o/DBS " + prefix + "value"), prefix);
         }
     }
 

@@ -187,12 +187,14 @@ Later command results and errors replace the warning through the existing comman
 
 `AddressBookParser#findUnrecognisedPrefixes(String)` selects the prefixes supported by the command's own format, then delegates scanning to `ArgumentTokenizer`. The scan returns prefix-like words outside that set in their first-occurrence order, including prefixes used by other commands. Positional-only commands accept no prefixes. Commands that ignore arguments produce no prefix notes, and unknown command words retain the global `CliSyntax.ALL_PREFIXES` check. The advisory prefix sets must stay aligned with the corresponding command parsers when formats change.
 
+For `find`, the advisory scan uses `CliSyntax.ALL_PREFIXES` instead. `FindCommandParser` explicitly rejects known unsupported filters (`n/`, `a/`, `dt/`, `nt/` and `by/`), so their errors must not also claim that those prefixes were read as ordinary text. Unknown words such as `x/` remain eligible for an advisory note when parsing fails; a successful search changes no supporter data and receives no undo suggestion.
+
 The scanner skips everyday slash words (`s/o`, `d/o`, `c/o`, `w/`, `w/o` and `and/or`) and does not match slashes after digits (`5/3`) or inside links. `LogicManager#execute(String)` uses it in two places:
 
 1. If parsing throws a `ParseException`, `LogicManager` throws a new `ParseException` with the original message followed by a note from `Messages#formatUnrecognisedPrefixErrorNote(List)`, e.g. `Note: by/ is not a recognised prefix for this command, so it was read as part of the value before it.`
 1. If the command runs and the supporter list differs from a copy taken before it ran, `LogicManager` adds a note from `Messages#formatUnrecognisedPrefixNote(List)` with `CommandResult#withNote(String)`. This note suggests `undo`, so a command that changes nothing, such as `find x/Alice`, does not get it.
 
-No command is rejected because of these words; the notes only point them out. Failures during command execution keep their original error without a prefix note.
+The advisory scan never rejects input; the notes only point out words treated as text. Explicit validation, including `find`'s unsupported-filter check, can still reject a command. Failures during command execution keep their original error without a prefix note.
 
 #### Design considerations:
 
@@ -1634,6 +1636,9 @@ testers are expected to do more _exploratory_ testing.
 
 1. Test case: `find x/Alex`<br>
    Expected: No note, as `find` changes no data and there is nothing to undo.
+
+1. Test case: `find n/Alex`<br>
+   Expected: The unsupported-search-filter error names `n/` and lists the supported filters and usage. No advisory note claims that `n/` was treated as ordinary text, and the displayed list and viewed supporter are unchanged.
 
 1. Test case: `log 999 nt/Called t/vip` with fewer than 999 supporters displayed<br>
    Expected: Only the invalid-supporter-index error is shown, without a prefix note or a new interaction.

@@ -60,6 +60,7 @@ public class AddressBookParser {
 
     /**
      * Returns prefix-like words not supported by the command's own format, without changing parsing.
+     * Find's parser rejects unsupported known filters itself, so its advisory scan checks only unknown words.
      * Commands that ignore arguments produce no notes. Unknown command words retain the global prefix check.
      *
      * @throws NullPointerException if {@code userInput} is null.
@@ -79,8 +80,8 @@ public class AddressBookParser {
                     PREFIX_ORGANISATION, PREFIX_STAGE, PREFIX_TAG);
             case EditCommand.COMMAND_WORD -> List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
                     PREFIX_ORGANISATION, PREFIX_TAG);
-            case FindCommand.COMMAND_WORD -> List.of(PREFIX_ORGANISATION, PREFIX_TAG, PREFIX_STAGE,
-                    PREFIX_PHONE, PREFIX_EMAIL);
+            // Find's parser rejects unsupported known filters; do not describe them as ordinary text.
+            case FindCommand.COMMAND_WORD -> CliSyntax.ALL_PREFIXES;
             case LogCommand.COMMAND_WORD, EditLogCommand.COMMAND_WORD -> List.of(PREFIX_NOTE, PREFIX_DATE);
             case IntroCommand.COMMAND_WORD -> List.of(PREFIX_INTRODUCER);
             case TagCommand.COMMAND_WORD, UntagCommand.COMMAND_WORD -> List.of(PREFIX_TAG);
