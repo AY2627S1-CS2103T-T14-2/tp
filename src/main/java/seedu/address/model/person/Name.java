@@ -10,16 +10,17 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Names must start with a letter or digit, and may only contain letters, digits, spaces, "
-                    + "apostrophes ('), hyphens (-), periods (.), and whole words s/o or d/o (case-insensitive)";
+            "Names must start with a letter or digit, and may only contain Unicode letters, digits, spaces, "
+                    + "apostrophes (' or ’), hyphens (-), periods (.), and whole words s/o or d/o (case-insensitive)";
 
     /*
      * The first character must be a letter or digit after space normalization.
+     * Unicode letters and straight or curly apostrophes are supported; digits remain 0-9.
      * Slashes are allowed only in whole words s/o or d/o, ignoring case.
      * The lookahead checks the first character without consuming it, allowing s/o or d/o at the start.
      */
     public static final String VALIDATION_REGEX =
-            "(?=\\p{Alnum})(?:[\\p{Alnum} '.-]|(?<!\\S)(?i:[sd]/o)(?!\\S))+";
+            "(?=[\\p{L}0-9])(?:[\\p{L}0-9 '’.-]|(?<!\\S)(?i:[sd]/o)(?!\\S))+";
 
     public final String fullName;
 

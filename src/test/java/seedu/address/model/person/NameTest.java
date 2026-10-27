@@ -41,6 +41,36 @@ public class NameTest {
     }
 
     @Test
+    public void isValidName_accentedLetters_returnsTrue() {
+        assertTrue(Name.isValidName("José Tan"));
+        assertTrue(Name.isValidName("Émilie Tan"));
+    }
+
+    @Test
+    public void isValidName_nonLatinLetters_returnsTrue() {
+        assertTrue(Name.isValidName("李伟"));
+        assertTrue(Name.isValidName("Αλέξανδρος"));
+        assertTrue(Name.isValidName("Иван"));
+    }
+
+    @Test
+    public void isValidName_curlyApostrophe_returnsTrue() {
+        assertTrue(Name.isValidName("Charlotte O’Brien"));
+    }
+
+    @Test
+    public void isValidName_curlyApostropheStart_returnsFalse() {
+        assertFalse(Name.isValidName("’Tan"));
+        assertFalse(Name.isValidName("  ’Tan  "));
+    }
+
+    @Test
+    public void isValidName_unicodeSymbols_returnsFalse() {
+        assertFalse(Name.isValidName("Tan☀"));
+        assertFalse(Name.isValidName("☀Tan"));
+    }
+
+    @Test
     public void isValidName_supportedPunctuation_returnsTrue() {
         assertTrue(Name.isValidName("O'Brien"));
         assertTrue(Name.isValidName("Lee-Tan"));
