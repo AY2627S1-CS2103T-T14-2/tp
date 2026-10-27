@@ -13,7 +13,6 @@ import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
-import seedu.address.logic.parser.ArgumentTokenizer;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Name;
@@ -76,7 +75,7 @@ public class LogicManager implements Logic {
         try {
             return addressBookParser.parseCommand(commandText);
         } catch (ParseException pe) {
-            List<String> unrecognisedPrefixes = ArgumentTokenizer.findUnrecognisedPrefixes(commandText);
+            List<String> unrecognisedPrefixes = addressBookParser.findUnrecognisedPrefixes(commandText);
             if (unrecognisedPrefixes.isEmpty()) {
                 throw pe;
             }
@@ -91,7 +90,7 @@ public class LogicManager implements Logic {
      * are not, since the command has just saved them as part of a value (e.g. an address or a note).
      */
     private CommandResult addUnrecognisedPrefixNote(CommandResult commandResult, String commandText) {
-        List<String> unrecognisedPrefixes = ArgumentTokenizer.findUnrecognisedPrefixes(commandText);
+        List<String> unrecognisedPrefixes = addressBookParser.findUnrecognisedPrefixes(commandText);
         if (unrecognisedPrefixes.isEmpty()) {
             return commandResult;
         }

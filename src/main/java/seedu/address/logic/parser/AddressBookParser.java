@@ -1,8 +1,21 @@
 package seedu.address.logic.parser;
 
+import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_INTRODUCER;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ORGANISATION;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_STAGE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,6 +54,42 @@ public class AddressBookParser {
      */
     private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
+    private static final Set<String> COMMANDS_IGNORING_ARGUMENTS = Set.of(ClearCommand.COMMAND_WORD,
+            ListCommand.COMMAND_WORD, StatsCommand.COMMAND_WORD, ExitCommand.COMMAND_WORD, HelpCommand.COMMAND_WORD,
+            UndoCommand.COMMAND_WORD, RedoCommand.COMMAND_WORD);
+
+    /**
+     * Returns prefix-like words not supported by the command's own format, without changing parsing.
+     * Commands that ignore arguments produce no notes. Unknown command words retain the global prefix check.
+     *
+     * @throws NullPointerException if {@code userInput} is null.
+     */
+    public List<String> findUnrecognisedPrefixes(String userInput) {
+        requireNonNull(userInput);
+        Matcher matcher = BASIC_COMMAND_FORMAT.matcher(userInput.trim());
+        if (!matcher.matches()) {
+            return ArgumentTokenizer.findUnrecognisedPrefixes(userInput);
+        }
+        String commandWord = matcher.group("commandWord");
+        if (COMMANDS_IGNORING_ARGUMENTS.contains(commandWord)) {
+            return List.of();
+        }
+        List<Prefix> recognisedPrefixes = switch (commandWord) {
+            case AddCommand.COMMAND_WORD -> List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
+                    PREFIX_ORGANISATION, PREFIX_STAGE, PREFIX_TAG);
+            case EditCommand.COMMAND_WORD -> List.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
+                    PREFIX_ORGANISATION, PREFIX_TAG);
+            case FindCommand.COMMAND_WORD -> List.of(PREFIX_ORGANISATION, PREFIX_TAG, PREFIX_STAGE,
+                    PREFIX_PHONE, PREFIX_EMAIL);
+            case LogCommand.COMMAND_WORD, EditLogCommand.COMMAND_WORD -> List.of(PREFIX_NOTE, PREFIX_DATE);
+            case IntroCommand.COMMAND_WORD -> List.of(PREFIX_INTRODUCER);
+            case TagCommand.COMMAND_WORD, UntagCommand.COMMAND_WORD -> List.of(PREFIX_TAG);
+            case DeleteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD, StageCommand.COMMAND_WORD,
+                    UnlogCommand.COMMAND_WORD, QuietCommand.COMMAND_WORD -> List.of();
+            default -> CliSyntax.ALL_PREFIXES;
+        };
+        return ArgumentTokenizer.findUnrecognisedPrefixes(userInput, recognisedPrefixes);
+    }
 
     /**
      * Parses user input into command for execution.
