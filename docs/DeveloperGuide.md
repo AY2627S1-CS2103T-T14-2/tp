@@ -1504,6 +1504,15 @@ testers are expected to do more _exploratory_ testing.
 1. Other incorrect commands to try: `tag 1`, `tag 1 t/board intro`, `untag 0 t/vip`, `tag x t/vip` (where x is larger than the list size)<br>
    Expected: No tags are changed. The message shows error details.
 
+1. Removing a tag used by the active search filter
+   1. Prerequisites: Use isolated test data with no supporter named `TagFilterProbe`. Run `add n/TagFilterProbe p/87654321 t/uniquetesttag`, then `find TagFilterProbe t/uniquetesttag`. Ensure exactly one supporter is displayed.
+
+   1. Test case: `untag 1 t/uniquetesttag`<br>
+      Expected: The displayed list becomes empty because the supporter no longer matches the retained filter. The detail panel shows `TagFilterProbe` with no tags. The supporter has not been deleted.
+
+   1. Continuing from the previous test case: `list`<br>
+      Expected: `TagFilterProbe` is present in the full list with the tag removed. Check the displayed indices before another index-based command.
+
 ### Counting supporters by stage
 
 1. Prerequisites: Start from the sample data, which has six supporters, one at each stage.
@@ -1538,10 +1547,19 @@ testers are expected to do more _exploratory_ testing.
       Expected: No stage is changed. The status message shows error details.
 
 1. Changing the stage after a `find`
-   1. Prerequisites: Run a `find` command that shows at least one supporter.
+   1. Prerequisites: Run a name-only `find` command, with no field filters, that shows at least one supporter.
 
    1. Test case: `stage 1 cultivating`<br>
-      Expected: The 1st supporter in the results moves to `Cultivating`, and the list still shows only the `find` results.
+      Expected: The 1st supporter in the results moves to `Cultivating`. The name filter remains active and the same supporters remain displayed because their names have not changed.
+
+1. Changing a stage used by the active search filter
+   1. Prerequisites: Use isolated test data with no supporter named `StageFilterProbe`. Run `add n/StageFilterProbe p/12345678 st/giving`, then `find StageFilterProbe st/giving`. Ensure exactly one supporter is displayed.
+
+   1. Test case: `stage 1 lapsed`<br>
+      Expected: The displayed list becomes empty because the supporter no longer matches the retained filter. The detail panel shows `StageFilterProbe` at stage `Lapsed`. The supporter has not been deleted.
+
+   1. Continuing from the previous test case: `list`<br>
+      Expected: `StageFilterProbe` is present in the full list at stage `Lapsed`. Check the displayed indices before another index-based command.
 
 1. Setting a stage when adding a supporter
    1. Test case: `add n/StageTester p/91234567 e/tester@example.com a/1 Test Street st/contacted`<br>

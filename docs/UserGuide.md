@@ -203,7 +203,7 @@ Format: `stage INDEX STAGE`
 - Any stage can be changed to any other stage, e.g. a lapsed donor can be moved back to `cultivating`.
 - If the supporter is already at that stage, their record is unchanged and a message says so.
 - On success, the detail panel switches to this supporter and shows their current stage, including when they are already at the requested stage.
-- The displayed list stays the same, so a `find` result is kept.
+- The current list filter remains active. Changing a supporter's stage can remove them from a `find` or `quiet` result if they no longer match. Check the displayed indices again after making a change.
 
 | Stage         | Meaning                                                                            |
 | ------------- | ---------------------------------------------------------------------------------- |
@@ -543,7 +543,7 @@ Format: `untag INDEX t/TAG [t/TAG]...`
 - Capital letters are ignored, so `untag 1 t/vip` removes the tag `VIP`.
 - Tags the supporter does not have are skipped.
 - The result display lists the tags removed and the tags skipped. If every tag is skipped, nothing is changed and a message says so.
-- On success, the detail panel switches to this supporter. The displayed list stays the same, so a `find` result is kept.
+- On success, the detail panel switches to this supporter. The current list filter remains active, but removing a tag can remove the supporter from a `find` result if they no longer match. Check the displayed indices again before another command.
 - To remove all of a supporter's tags at once, use `edit INDEX t/`.
 
 Examples:
