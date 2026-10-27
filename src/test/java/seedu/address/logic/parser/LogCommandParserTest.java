@@ -150,7 +150,7 @@ public class LogCommandParserTest {
     public void parse_invalidDate_failure() {
         for (String date : List.of("", "   ", "2024-2-29", "2024/02/29", "2024-02-30", "2023-02-29")) {
             assertParseFailure(parser, " 1 nt/" + VALID_NOTE + " dt/" + date,
-                    ParserUtil.MESSAGE_INVALID_INTERACTION_DATE);
+                    Interaction.MESSAGE_INVALID_DATE_FORMAT);
         }
     }
 

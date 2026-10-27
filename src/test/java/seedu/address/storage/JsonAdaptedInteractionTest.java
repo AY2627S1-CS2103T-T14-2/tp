@@ -2,7 +2,6 @@ package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static seedu.address.storage.JsonAdaptedInteraction.DATE_MESSAGE_CONSTRAINTS;
 import static seedu.address.storage.JsonAdaptedInteraction.MISSING_FIELD_MESSAGE_FORMAT;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalInteractionNotes.ASCII_AND_EMOJI_AT_NOTE_LIMIT;
@@ -62,7 +61,7 @@ public class JsonAdaptedInteractionTest {
     @Test
     public void toModelType_invalidDate_throwsIllegalValueException() {
         JsonAdaptedInteraction interaction = new JsonAdaptedInteraction("16-09-2026", VALID_NOTE);
-        assertThrows(IllegalValueException.class, DATE_MESSAGE_CONSTRAINTS, () -> {
+        assertThrows(IllegalValueException.class, Interaction.MESSAGE_INVALID_DATE_FORMAT, () -> {
             try {
                 interaction.toModelType();
             } catch (IllegalValueException exception) {

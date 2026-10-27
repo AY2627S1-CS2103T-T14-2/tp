@@ -19,6 +19,8 @@ public class Interaction {
     public static final int MAX_NOTE_LENGTH = 500;
     public static final LocalDate MIN_DATE = LocalDate.of(1900, 1, 1);
 
+    public static final String MESSAGE_INVALID_DATE_FORMAT =
+            "Interaction dates must be valid dates in yyyy-MM-dd format, e.g. 2026-10-01.";
     public static final String MESSAGE_EARLY_DATE = "Interaction dates must be on or after " + MIN_DATE + ".";
     public static final String MESSAGE_FUTURE_DATE = "Interaction dates cannot be in the future.";
 

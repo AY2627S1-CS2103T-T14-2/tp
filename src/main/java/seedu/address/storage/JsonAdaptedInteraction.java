@@ -18,7 +18,6 @@ import seedu.address.model.person.Interaction;
 class JsonAdaptedInteraction {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Interaction's %s field is missing!";
-    public static final String DATE_MESSAGE_CONSTRAINTS = "Interaction dates should be in yyyy-MM-dd format";
 
     private final String date;
     private final String note;
@@ -64,7 +63,7 @@ class JsonAdaptedInteraction {
         try {
             modelDate = LocalDate.parse(date);
         } catch (DateTimeParseException exception) {
-            throw new IllegalValueException(DATE_MESSAGE_CONSTRAINTS, exception);
+            throw new IllegalValueException(Interaction.MESSAGE_INVALID_DATE_FORMAT, exception);
         }
 
         if (!Interaction.isValidDate(modelDate, LocalDate.now(clock))) {

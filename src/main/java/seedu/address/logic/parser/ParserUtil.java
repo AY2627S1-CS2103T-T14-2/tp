@@ -33,9 +33,6 @@ public class ParserUtil {
     public static final String MESSAGE_INVALID_INTERACTION_INDICES =
             "Provide exactly two positive integer indices: INDEX ENTRY.";
 
-    public static final String MESSAGE_INVALID_INTERACTION_DATE =
-            "Interaction dates must be valid dates in yyyy-MM-dd format, e.g. 2026-10-01.";
-
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
      * trimmed.
@@ -66,59 +63,6 @@ public class ParserUtil {
             return parseIndex(oneBasedIndex);
         } catch (ParseException e) {
             throw new ParseException(e.getMessage() + "\n" + commandUsage, e);
-        }
-    }
-
-    /**
-     * Parses {@code INDEX ENTRY} into a supporter index and an interaction index.
-     * Accepts leading, trailing and separating whitespace. Only parses the indices; commands must check
-     * their bounds and map the displayed interaction number to its stored position.
-     * Command parsers should wrap a failure with their own invalid-format usage message.
-     *
-     * @throws ParseException if there are not exactly two valid positive integer indices.
-     */
-    public static InteractionIndices parseInteractionIndices(String indices) throws ParseException {
-        requireNonNull(indices);
-        String[] parts = indices.trim().split("\\s+");
-        if (parts.length != 2) {
-            throw new ParseException(MESSAGE_INVALID_INTERACTION_INDICES);
-        }
-        try {
-            return new InteractionIndices(parseIndex(parts[0]), parseIndex(parts[1]));
-        } catch (ParseException e) {
-            throw new ParseException(MESSAGE_INVALID_INTERACTION_INDICES, e);
-        }
-    }
-
-    /**
-     * Parses interaction indices, appending the command's usage to the index error if parsing fails.
-     * Uses the same validation as {@link #parseInteractionIndices(String)}; bounds are checked by the command.
-     *
-     * @throws ParseException if there are not exactly two valid positive integer indices.
-     */
-    public static InteractionIndices parseInteractionIndices(String indices, String commandUsage)
-            throws ParseException {
-        requireAllNonNull(indices, commandUsage);
-        try {
-            return parseInteractionIndices(indices);
-        } catch (ParseException e) {
-            throw new ParseException(e.getMessage() + "\n" + commandUsage, e);
-        }
-    }
-
-    /**
-     * The supporter and interaction indices supplied to an interaction-editing or deletion command.
-     * The interaction index identifies the displayed entry number, not its stored list position.
-     *
-     * @param supporterIndex index in the displayed supporter list.
-     * @param interactionIndex chronological entry number shown beside the interaction, with oldest numbered 1.
-     */
-    public record InteractionIndices(Index supporterIndex, Index interactionIndex) {
-        /**
-         * Creates a pair of non-null supporter and interaction indices.
-         */
-        public InteractionIndices {
-            requireAllNonNull(supporterIndex, interactionIndex);
         }
     }
 
@@ -212,6 +156,93 @@ public class ParserUtil {
     }
 
     /**
+     * Parses a {@code String tag} into a {@code Tag}.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code tag} is invalid.
+     */
+    public static Tag parseTag(String tag) throws ParseException {
+        requireNonNull(tag);
+        String trimmedTag = tag.trim();
+        if (!Tag.isValidTagName(trimmedTag)) {
+            throw new ParseException(Tag.MESSAGE_CONSTRAINTS);
+        }
+        return new Tag(trimmedTag);
+    }
+
+    /**
+     * Parses {@code Collection<String> tags} into a {@code Set<Tag>} in the order they were typed.
+     * Tags differing only in case count as one, keeping the spelling typed first.
+     *
+     * @throws ParseException if any of the given tags is invalid.
+     */
+    public static Set<Tag> parseTags(Collection<String> tags) throws ParseException {
+        requireNonNull(tags);
+        final Set<Tag> tagSet = new LinkedHashSet<>();
+        for (String tagName : tags) {
+            Tag tag = parseTag(tagName);
+            // tags differing only in case count as one, so the spelling typed first is kept
+            if (tagSet.stream().noneMatch(tag::isSameTag)) {
+                tagSet.add(tag);
+            }
+        }
+        return tagSet;
+    }
+
+    /**
+     * Parses {@code INDEX ENTRY} into a supporter index and an interaction index.
+     * Accepts leading, trailing and separating whitespace. Only parses the indices; commands must check
+     * their bounds and map the displayed interaction number to its stored position.
+     * Command parsers should wrap a failure with their own invalid-format usage message.
+     *
+     * @throws ParseException if there are not exactly two valid positive integer indices.
+     */
+    public static InteractionIndices parseInteractionIndices(String indices) throws ParseException {
+        requireNonNull(indices);
+        String[] parts = indices.trim().split("\\s+");
+        if (parts.length != 2) {
+            throw new ParseException(MESSAGE_INVALID_INTERACTION_INDICES);
+        }
+        try {
+            return new InteractionIndices(parseIndex(parts[0]), parseIndex(parts[1]));
+        } catch (ParseException e) {
+            throw new ParseException(MESSAGE_INVALID_INTERACTION_INDICES, e);
+        }
+    }
+
+    /**
+     * Parses interaction indices, appending the command's usage to the index error if parsing fails.
+     * Uses the same validation as {@link #parseInteractionIndices(String)}; bounds are checked by the command.
+     *
+     * @throws ParseException if there are not exactly two valid positive integer indices.
+     */
+    public static InteractionIndices parseInteractionIndices(String indices, String commandUsage)
+            throws ParseException {
+        requireAllNonNull(indices, commandUsage);
+        try {
+            return parseInteractionIndices(indices);
+        } catch (ParseException e) {
+            throw new ParseException(e.getMessage() + "\n" + commandUsage, e);
+        }
+    }
+
+    /**
+     * The supporter and interaction indices supplied to an interaction-editing or deletion command.
+     * The interaction index identifies the displayed entry number, not its stored list position.
+     *
+     * @param supporterIndex index in the displayed supporter list.
+     * @param interactionIndex chronological entry number shown beside the interaction, with oldest numbered 1.
+     */
+    public record InteractionIndices(Index supporterIndex, Index interactionIndex) {
+        /**
+         * Creates a pair of non-null supporter and interaction indices.
+         */
+        public InteractionIndices {
+            requireAllNonNull(supporterIndex, interactionIndex);
+        }
+    }
+
+    /**
      * Parses a {@code String note} into a valid interaction note.
      * Leading and trailing whitespaces will be trimmed.
      *
@@ -261,53 +292,19 @@ public class ParserUtil {
         requireAllNonNull(date, clock);
         String trimmedDate = date.trim();
         if (!trimmedDate.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) {
-            throw new ParseException(MESSAGE_INVALID_INTERACTION_DATE);
+            throw new ParseException(Interaction.MESSAGE_INVALID_DATE_FORMAT);
         }
 
         LocalDate parsedDate;
         try {
             parsedDate = LocalDate.parse(trimmedDate);
         } catch (DateTimeParseException e) {
-            throw new ParseException(MESSAGE_INVALID_INTERACTION_DATE, e);
+            throw new ParseException(Interaction.MESSAGE_INVALID_DATE_FORMAT, e);
         }
         if (!Interaction.isValidDate(parsedDate, LocalDate.now(clock))) {
             throw new ParseException(parsedDate.isBefore(Interaction.MIN_DATE)
                     ? Interaction.MESSAGE_EARLY_DATE : Interaction.MESSAGE_FUTURE_DATE);
         }
         return parsedDate;
-    }
-
-    /**
-     * Parses a {@code String tag} into a {@code Tag}.
-     * Leading and trailing whitespaces will be trimmed.
-     *
-     * @throws ParseException if the given {@code tag} is invalid.
-     */
-    public static Tag parseTag(String tag) throws ParseException {
-        requireNonNull(tag);
-        String trimmedTag = tag.trim();
-        if (!Tag.isValidTagName(trimmedTag)) {
-            throw new ParseException(Tag.MESSAGE_CONSTRAINTS);
-        }
-        return new Tag(trimmedTag);
-    }
-
-    /**
-     * Parses {@code Collection<String> tags} into a {@code Set<Tag>} in the order they were typed.
-     * Tags differing only in case count as one, keeping the spelling typed first.
-     *
-     * @throws ParseException if any of the given tags is invalid.
-     */
-    public static Set<Tag> parseTags(Collection<String> tags) throws ParseException {
-        requireNonNull(tags);
-        final Set<Tag> tagSet = new LinkedHashSet<>();
-        for (String tagName : tags) {
-            Tag tag = parseTag(tagName);
-            // tags differing only in case count as one, so the spelling typed first is kept
-            if (tagSet.stream().noneMatch(tag::isSameTag)) {
-                tagSet.add(tag);
-            }
-        }
-        return tagSet;
     }
 }
