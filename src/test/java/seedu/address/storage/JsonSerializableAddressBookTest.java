@@ -6,6 +6,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +28,13 @@ public class JsonSerializableAddressBookTest {
             TEST_DATA_FOLDER.resolve("unknownIntroducerAddressBook.json");
     private static final Path INTRODUCTION_LOOP_FILE =
             TEST_DATA_FOLDER.resolve("introductionLoopAddressBook.json");
+
+    @Test
+    public void toModelType_nullPerson_throwsIllegalValueException() {
+        JsonSerializableAddressBook data = new JsonSerializableAddressBook(Arrays.asList((JsonAdaptedPerson) null));
+
+        assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_NULL_PERSON, data::toModelType);
+    }
 
     @Test
     public void toModelType_typicalPersonsFile_success() throws Exception {
