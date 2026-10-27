@@ -32,7 +32,7 @@ public class ParserUtilTest {
     private static final Clock INTERACTION_CLOCK = Clock.fixed(
             Instant.parse("2026-10-19T16:30:00Z"), ZoneId.of("Asia/Singapore"));
 
-    private static final String INVALID_NAME = "R@chel";
+    private static final String INVALID_NAME = "R&chel";
     private static final String INVALID_PHONE = "+65 123--4";
     private static final String INVALID_ADDRESS = " ";
     private static final String INVALID_EMAIL = "example.com";
