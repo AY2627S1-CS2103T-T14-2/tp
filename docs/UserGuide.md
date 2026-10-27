@@ -71,7 +71,8 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 - A command only recognises the prefixes in its own format. Anything else that looks like a prefix is read as part of the value before it, e.g. `em/` mistyped for `e/`, or `e/` used in `log`. A command is never rejected just for containing such a word, as addresses and notes can contain slashes, e.g. `Unit/3`.<br>
   Instead, when a command contains a word that is not one of SupporterBook's prefixes (`n/`, `p/`, `e/`, `a/`, `o/`, `st/`, `t/`, `nt/`, `dt/`, `by/`), SupporterBook adds a note naming it:
   - If the command saves the word, e.g. into an address or a note, the note follows the result, so you can run `undo` and enter the command again. For example, `log 1 nt/Called dte/2024-10-01` logs the note `Called dte/2024-10-01` dated today, and points out `dte/`.
-  - If the command fails, the note follows the error, as the mistyped prefix may be what made the value before it invalid. For example, `add n/Tan p/91234567 x/foo` shows the rules for phone numbers, followed by `Note: x/ is not a recognised prefix, so it was read as part of the value before it.`
+  - If the command's format or one of its values is invalid, the note follows the error, as the mistyped prefix may be what made the value before it invalid. For example, `add n/Tan p/91234567 x/foo` shows the rules for phone numbers, followed by `Note: x/ is not a recognised prefix, so it was read as part of the value before it.`
+  - If the format and values are valid but the command still cannot be carried out, only the error is shown. For example, `log 999 nt/Called dte/2024-10-01` with fewer than 999 supporters displayed reports the invalid index without a note.
 
   Everyday words such as `s/o`, `c/o`, `w/` and `and/or` are not flagged. If a note points out a word you meant to type, such as `Unit/` in an address, you can ignore it.
 
