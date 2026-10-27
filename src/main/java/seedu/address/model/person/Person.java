@@ -188,6 +188,14 @@ public class Person {
                 newInteractions, tags);
     }
 
+    /**
+     * Returns a copy of this supporter with {@code newStage} as their stage. Every other detail is unchanged.
+     */
+    public Person withStage(Stage newStage) {
+        return new Person(name, getPhone(), getEmail(), getAddress(), getOrganisation(), getIntroducer(), newStage,
+                interactions, tags);
+    }
+
     public Stage getStage() {
         return stage;
     }
