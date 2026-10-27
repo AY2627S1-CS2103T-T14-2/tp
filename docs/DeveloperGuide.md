@@ -485,7 +485,7 @@ In tests, `PersonBuilder` builds a `Person` with an empty history unless `Person
 **Parsing `log INDEX nt/NOTE [dt/DATE]`:** The command is parsed by `LogCommandParser` as follows.
 
 1. `AddressBookParser` passes the arguments after the command word to `LogCommandParser#parse(String)`.
-2. The parser requires `INDEX` and `nt/NOTE`, and accepts optional `dt/DATE` in either prefix order. It parses the index with `ParserUtil#parseIndex(String, String)`, reporting a positive-integer explanation followed by log usage if it fails, then rejects repeated prefixes.
+2. The parser requires `INDEX` and `nt/NOTE`, and accepts optional `dt/DATE` in either prefix order. It parses the index with `ParserUtil#parseIndex(String, String)`. A single invalid index value produces a positive-integer explanation followed by log usage; extra words in the index argument produce an invalid-command-format message followed by usage. The parser then rejects repeated prefixes.
 3. It validates the note with `ParserUtil#parseInteractionNote(String)` and any supplied date with `ParserUtil#parseInteractionDate(String)`. Dates must be valid calendar dates in `yyyy-MM-dd` format, from `1900-01-01` through today (inclusive), using the computer's clock. The lower bound allows historical records while rejecting implausibly old dates and likely year-entry mistakes.
 4. It creates a `LogCommand` with the parsed index, note and an `Optional<LocalDate>`. An omitted date remains empty until execution.
 
@@ -1137,8 +1137,8 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **MSS**
 
-1.  User requests to log an interaction with a specific supporter in the list, giving an index and a short note.
-2.  SupporterBook records the interaction, dated today, in the supporter's interaction history.
+1.  User requests to log an interaction with a specific supporter in the list, giving an index, a short note and, optionally, an interaction date.
+2.  SupporterBook records the interaction using the supplied date, or today's date if none was supplied, in the supporter's interaction history.
 3.  SupporterBook confirms the logged interaction and shows the supporter's details and updated interaction history.
 
     Use case ends.
@@ -1162,6 +1162,16 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 - 1d. User gives more than one note.
   - 1d1. SupporterBook shows an error message, indicating that only one note can be given.
+
+    Use case resumes from step 1.
+
+- 1e. The supplied date is empty, is not a valid calendar date in yyyy-MM-dd format, is before 1900-01-01, or is after today.
+  - 1e1. SupporterBook shows an error message explaining the date constraint.
+
+    Use case resumes from step 1.
+
+- 1f. User supplies the date parameter more than once.
+  - 1f1. SupporterBook shows an error message, indicating that only one date can be given.
 
     Use case resumes from step 1.
 
@@ -1534,7 +1544,7 @@ testers are expected to do more _exploratory_ testing.
       Expected: The 1st supporter in the results moves to `Cultivating`, and the list still shows only the `find` results.
 
 1. Setting a stage when adding a supporter
-   1. Test case: `add n/Stage Tester p/91234567 e/tester@example.com a/1 Test Street st/contacted`<br>
+   1. Test case: `add n/StageTester p/91234567 e/tester@example.com a/1 Test Street st/contacted`<br>
       Expected: The new supporter is added with the `Contacted` badge.
 
    1. Test case: the same command without `st/contacted`, and with a different name<br>
@@ -1589,7 +1599,7 @@ testers are expected to do more _exploratory_ testing.
 ### Editing an interaction
 
 1. Editing a date and then using the refreshed number
-   1. Prerequisites: Add a supporter with a unique name using `add n/Editlog Tester p/91234567`, then run `find Editlog Tester`. Ensure exactly one supporter is displayed with no interactions. Run `log 1 nt/Middle meeting dt/2024-02-29`, `log 1 nt/First meeting dt/2024-02-20`, then `log 1 nt/Recent call dt/2024-03-10`.
+   1. Prerequisites: Add a supporter with a unique name using `add n/EditlogTester p/91234567`, then run `find EditlogTester`. Ensure exactly one supporter is displayed with no interactions. Run `log 1 nt/Middle meeting dt/2024-02-29`, `log 1 nt/First meeting dt/2024-02-20`, then `log 1 nt/Recent call dt/2024-03-10`.
 
    1. Test case: `editlog 1 2 dt/2024-03-15`<br>
       Expected: `Middle meeting` moves to #3 above `Recent call` (#2) and `First meeting` (#1). The success message reports #3, and last contact becomes 15 March 2024. The note, supporter details and find result are preserved.
@@ -1601,7 +1611,7 @@ testers are expected to do more _exploratory_ testing.
       Expected: `Recent call` appears as #3 above `Corrected meeting` (#2). Both have the same date, but `Recent call` was logged later. Last contact becomes 10 March 2024.
 
 1. Editing one of two identical entries
-   1. Prerequisites: Add another uniquely named supporter with `add n/Editlog Duplicate Tester p/91234567`, then run `find Duplicate`. Ensure only that supporter is displayed with no interactions. Run `log 1 nt/Meeting dt/2024-02-29`, `log 1 nt/Follow-up dt/2024-02-29`, then `log 1 nt/Meeting dt/2024-02-29`.
+   1. Prerequisites: Add another uniquely named supporter with `add n/EditlogDuplicateTester p/91234567`, then run `find EditlogDuplicateTester`. Ensure only that supporter is displayed with no interactions. Run `log 1 nt/Meeting dt/2024-02-29`, `log 1 nt/Follow-up dt/2024-02-29`, then `log 1 nt/Meeting dt/2024-02-29`.
 
    1. Test case: `editlog 1 3 nt/Corrected meeting`<br>
       Expected: The panel shows `Corrected meeting` (#3), `Follow-up` (#2) and the unchanged `Meeting` (#1).
@@ -1625,7 +1635,7 @@ testers are expected to do more _exploratory_ testing.
 ### Deleting an interaction
 
 1. Deleting by chronological number after a `find`
-   1. Prerequisites: Add a supporter with a unique name using `add n/Unlog Tester p/91234567`, then run `find Unlog Tester`. Ensure exactly one supporter is displayed with no interactions. Run these commands in order: `log 1 nt/Middle meeting dt/2024-02-29`, `log 1 nt/First meeting dt/2024-02-20`, `log 1 nt/Recent call dt/2024-03-10`.
+   1. Prerequisites: Add a supporter with a unique name using `add n/UnlogTester p/91234567`, then run `find UnlogTester`. Ensure exactly one supporter is displayed with no interactions. Run these commands in order: `log 1 nt/Middle meeting dt/2024-02-29`, `log 1 nt/First meeting dt/2024-02-20`, `log 1 nt/Recent call dt/2024-03-10`.
 
    1. Test case: `unlog 1 2`<br>
       Expected: The success message identifies `Middle meeting` as deleted entry #2. The panel shows `Recent call` as #2 and `First meeting` as #1. The find result and supporter details remain unchanged.
@@ -1634,7 +1644,7 @@ testers are expected to do more _exploratory_ testing.
       Expected: `Recent call` is removed first, then `First meeting`. The supporter remains selected with an empty history and `No interactions yet` as last contact.
 
 1. Deleting one of two identical entries
-   1. Prerequisites: With Unlog Tester still the only displayed supporter and their history empty, run `log 1 nt/Meeting dt/2024-02-29`, `log 1 nt/Follow-up dt/2024-02-29`, then `log 1 nt/Meeting dt/2024-02-29`.
+   1. Prerequisites: With UnlogTester still the only displayed supporter and their history empty, run `log 1 nt/Meeting dt/2024-02-29`, `log 1 nt/Follow-up dt/2024-02-29`, then `log 1 nt/Meeting dt/2024-02-29`.
 
    1. Test case: `unlog 1 3`<br>
       Expected: Only the later `Meeting` entry is removed. The panel shows `Follow-up` as #2 above the remaining `Meeting` as #1.
@@ -1650,17 +1660,17 @@ testers are expected to do more _exploratory_ testing.
 
 1. Viewing a supporter with no interactions
 
-   1. Prerequisites: Add a supporter with a unique name using `add n/View Tester p/91234567`, then run `find View Tester`. Ensure exactly one supporter is displayed.
+   1. Prerequisites: Add a supporter with a unique name using `add n/ViewTester p/91234567`, then run `find ViewTester`. Ensure exactly one supporter is displayed.
 
    1. Test case: `view 1`<br>
-      Expected: `Showing View Tester: no interactions logged yet`. The panel shows the name, stage and phone, with organisation, email, address and tags shown as `-`. The history area reads `No interactions yet. Log one with: log INDEX nt/NOTE.` The list and filter are unchanged.
+      Expected: `Showing ViewTester: no interactions logged yet`. The panel shows the name, stage and phone, with organisation, email, address and tags shown as `-`. The history area reads `No interactions yet. Log one with: log INDEX nt/NOTE.` The list and filter are unchanged.
 
 1. Viewing a supporter with interactions
 
-   1. Prerequisites: Keep View Tester as the only displayed supporter. Run `log 1 nt/Called about volunteering` and `log 1 nt/Met to discuss the appeal`.
+   1. Prerequisites: Keep ViewTester as the only displayed supporter. Run `log 1 nt/Called about volunteering` and `log 1 nt/Met to discuss the appeal`.
 
    1. Test case: `view 1`<br>
-      Expected: `Showing View Tester: 2 interaction(s) logged`. The panel shows `#2` before `#1` because both entries have today's date. Each row shows its number, date and complete note, with no list or filter change.
+      Expected: `Showing ViewTester: 2 interaction(s) logged`. The panel shows `#2` before `#1` because both entries have today's date. Each row shows its number, date and complete note, with no list or filter change.
 
 1. Viewing by the current displayed index
 
@@ -1702,7 +1712,7 @@ testers are expected to do more _exploratory_ testing.
 
    1. Prerequisites: Run `list` with at least two supporters, then `view 1`. Note the displayed supporter's name.
 
-   1. Test case: Run `find` with a name that excludes the viewed supporter, then `list`, then `add n/Panel Retention Tester p/91234567` using a unique name.<br>
+   1. Test case: Run `find` with a name that excludes the viewed supporter, then `list`, then `add n/PanelRetentionTester p/91234567` using a unique name.<br>
       Expected: The list changes after each command, but the panel keeps showing the original supporter and retains its history scroll position.
 
 1. Switching and clearing selection
