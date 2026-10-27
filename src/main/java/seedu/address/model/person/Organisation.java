@@ -30,12 +30,13 @@ public class Organisation {
 
     /**
      * Returns true if a given string is a valid organisation name once its spaces are normalised.
+     * The normalised name must not be blank and must contain at most {@link #MAX_LENGTH} Unicode code points.
      * Any characters are allowed, as company names often contain symbols such as {@code &} and {@code '}.
      */
     public static boolean isValidOrganisation(String test) {
         requireNonNull(test);
         String normalised = normalise(test);
-        return !normalised.isEmpty() && normalised.length() <= MAX_LENGTH;
+        return !normalised.isEmpty() && normalised.codePointCount(0, normalised.length()) <= MAX_LENGTH;
     }
 
     private static String normalise(String organisation) {
