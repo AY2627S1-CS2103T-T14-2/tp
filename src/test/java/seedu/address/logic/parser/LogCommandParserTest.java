@@ -7,6 +7,8 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailur
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalInteractionNotes.CHARACTER_PRESERVATION_NOTES;
+import static seedu.address.testutil.TypicalInteractionNotes.SUPPLEMENTARY_NOTES_AT_LIMIT;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -41,6 +43,27 @@ public class LogCommandParserTest {
         String note = "Called  about\u00a0the\u2003appeal";
         assertParseSuccess(parser, " 1 nt/\u2003\u00a0" + note + "\u202f\u3000",
                 new LogCommand(INDEX_FIRST_PERSON, note));
+    }
+
+    @Test
+    public void parse_specialCharacters_preservesNote() {
+        for (String note : CHARACTER_PRESERVATION_NOTES) {
+            assertParseSuccess(parser, " 1 nt/" + note,
+                    new LogCommand(INDEX_FIRST_PERSON, note));
+        }
+    }
+
+    @Test
+    public void parse_supplementaryCharactersAtLengthBoundary_checksCodePoints() {
+        // both notes contain 500 code points, but exceed 500 UTF-16 code units
+        for (String note : SUPPLEMENTARY_NOTES_AT_LIMIT) {
+            // surrounding spaces are trimmed before checking the limit
+            assertParseSuccess(parser, " 1 nt/ " + note + " ",
+                    new LogCommand(INDEX_FIRST_PERSON, note));
+            // one additional ASCII character takes the note to 501 code points
+            assertParseFailure(parser, " 1 nt/ " + note + "a ",
+                    Interaction.MESSAGE_CONSTRAINTS);
+        }
     }
 
     @Test

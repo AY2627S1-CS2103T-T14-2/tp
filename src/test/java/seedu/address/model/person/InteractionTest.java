@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalInteractionNotes.ASCII_AND_EMOJI_AT_NOTE_LIMIT;
+import static seedu.address.testutil.TypicalInteractionNotes.EMOJI_ONLY_AT_NOTE_LIMIT;
+import static seedu.address.testutil.TypicalInteractionNotes.JOINED_EMOJI;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -34,6 +37,30 @@ public class InteractionTest {
         String note = "a".repeat(Interaction.MAX_NOTE_LENGTH);
         assertEquals(note, new Interaction(DATE, "\u2003" + note + "\u00a0").getNote());
         assertFalse(Interaction.isValidNote("\u2003" + note + "a\u00a0"));
+    }
+
+    @Test
+    public void constructor_joinedEmojiAtLengthBoundary_countsJoiner() {
+        // woman + zero-width joiner + laptop occupy three code points, not one
+        String note = "a".repeat(497) + JOINED_EMOJI;
+        assertTrue(Interaction.isValidNote(note));
+        assertEquals(note, new Interaction(DATE, note).getNote());
+        assertFalse(Interaction.isValidNote("a" + note));
+        assertThrows(IllegalArgumentException.class, Interaction.MESSAGE_CONSTRAINTS, () ->
+                new Interaction(DATE, "a" + note));
+    }
+
+    @Test
+    public void constructor_codePointLengthBoundary_acceptsLimitAndRejectsOverflow() {
+        // each input has 500 code points; e + combining acute accent uses two code points per repetition
+        for (String note : List.of(ASCII_AND_EMOJI_AT_NOTE_LIMIT, EMOJI_ONLY_AT_NOTE_LIMIT,
+                "e\u0301".repeat(250))) {
+            assertTrue(Interaction.isValidNote(note));
+            assertEquals(note, new Interaction(DATE, " " + note + " ").getNote());
+            assertFalse(Interaction.isValidNote(note + "a"));
+            assertThrows(IllegalArgumentException.class, Interaction.MESSAGE_CONSTRAINTS, () ->
+                    new Interaction(DATE, " " + note + "a "));
+        }
     }
 
     @Test

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static seedu.address.storage.JsonAdaptedInteraction.DATE_MESSAGE_CONSTRAINTS;
 import static seedu.address.storage.JsonAdaptedInteraction.MISSING_FIELD_MESSAGE_FORMAT;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalInteractionNotes.ASCII_AND_EMOJI_AT_NOTE_LIMIT;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -32,6 +33,17 @@ public class JsonAdaptedInteractionTest {
     public void toModelType_unicodePaddedNote_trimsNote() throws Exception {
         JsonAdaptedInteraction interaction = new JsonAdaptedInteraction(VALID_DATE, "\u2003" + VALID_NOTE + "\u00a0");
         assertEquals(VALID_NOTE, interaction.toModelType().getNote());
+    }
+
+    @Test
+    public void toModelType_supplementaryCharactersAtLengthBoundary_checksCodePoints() throws Exception {
+        // 499 ASCII characters + one emoji: 500 code points, but 501 UTF-16 code units
+        String note = ASCII_AND_EMOJI_AT_NOTE_LIMIT;
+        Interaction interaction = new JsonAdaptedInteraction(VALID_DATE, note).toModelType();
+        assertEquals(note, interaction.getNote());
+        assertEquals(interaction, new JsonAdaptedInteraction(interaction).toModelType());
+        JsonAdaptedInteraction tooLong = new JsonAdaptedInteraction(VALID_DATE, note + "a");
+        assertThrows(IllegalValueException.class, Interaction.MESSAGE_CONSTRAINTS, tooLong::toModelType);
     }
 
     @Test
