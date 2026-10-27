@@ -585,6 +585,8 @@ Selection follows these rules:
 
 Editing or deleting another supporter preserves selection. Parsing and index-validation failures also preserve it.
 
+Undo and redo match immutable record versions by their original object identity rather than by name or list index. `ModelManager` records this session-only lineage in an `IdentityHashMap` whenever `setPerson` succeeds, including dependent records updated after an introducer is renamed. Restoring a snapshot selects the corresponding record even after a rename or a no-op edit; it clears selection if that supporter does not exist in the restored state. Equal-valued records belonging to different supporters do not share lineage, and no identity is written to JSON.
+
 #### Design considerations:
 
 **Aspect: How to record the viewed supporter**

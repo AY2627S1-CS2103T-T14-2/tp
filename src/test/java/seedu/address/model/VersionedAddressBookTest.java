@@ -9,10 +9,13 @@ import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.CARL;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.person.Person;
 import seedu.address.testutil.AddressBookBuilder;
+import seedu.address.testutil.PersonBuilder;
 
 public class VersionedAddressBookTest {
 
@@ -24,6 +27,26 @@ public class VersionedAddressBookTest {
         assertEquals(initialState, versionedAddressBook);
         assertFalse(versionedAddressBook.canUndo());
         assertFalse(versionedAddressBook.canRedo());
+    }
+
+    @Test
+    public void getRetainedPersonVersions_includesCurrentAndHistoryByIdentity() {
+        Person editedAlice = new PersonBuilder(ALICE).withName("Renamed Alice").build();
+        versionedAddressBook.setPerson(ALICE, editedAlice);
+        versionedAddressBook.commit();
+        versionedAddressBook.undo();
+        Person equalAlice = new PersonBuilder(ALICE).build();
+        versionedAddressBook.setPerson(ALICE, equalAlice);
+
+        Set<Person> retained = versionedAddressBook.getRetainedPersonVersions();
+        assertTrue(retained.contains(ALICE));
+        assertTrue(retained.contains(editedAlice));
+        assertTrue(retained.contains(equalAlice));
+        assertFalse(retained.contains(new PersonBuilder(ALICE).build()));
+
+        versionedAddressBook.addPerson(BENSON);
+        versionedAddressBook.commit();
+        assertFalse(versionedAddressBook.getRetainedPersonVersions().contains(editedAlice));
     }
 
     @Test
