@@ -1,0 +1,15 @@
+{
+  "persons": [ {
+    "name": "Date Test",
+    "phone": "91234567",
+    "stage": "Prospect",
+    "tags": [],
+    "interactions": [ {
+      "date": "2000-01-01",
+      "note": "Valid interaction"
+    }, {
+      "date": "1899-12-31",
+      "note": "Out of range interaction"
+    } ]
+  } ]
+}
