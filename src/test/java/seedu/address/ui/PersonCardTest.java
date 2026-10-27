@@ -77,21 +77,22 @@ public class PersonCardTest {
     }
 
     @Test
-    public void layout_cardResized_reflowsTextAndAdjustsHeight() throws Exception {
+    public void layout_cardResized_reflowsTextAndFitsContent() throws Exception {
         runOnFxThread(() -> {
             Person person = new PersonBuilder().withName(LONG_NAME).withOrganisation(LONG_ORGANISATION).build();
             PersonCard card = createLaidOutCard(person, 650);
             Region root = card.getRoot();
             Label name = (Label) root.lookup("#name");
             Label organisation = (Label) root.lookup("#organisation");
-            double wideCardHeight = root.getHeight();
+            Region content = (Region) name.getParent().getParent();
+            double wideContentHeight = content.getHeight();
             double wideNameHeight = name.getHeight();
             double wideOrganisationHeight = organisation.getHeight();
 
             root.resize(250, root.prefHeight(250));
             root.layout();
 
-            assertTrue(root.getHeight() > wideCardHeight, "The card should grow when narrowed");
+            assertTrue(content.getHeight() > wideContentHeight, "The content should grow when narrowed");
             assertTrue(name.getHeight() > wideNameHeight, "The name should wrap onto more lines");
             assertTrue(organisation.getHeight() > wideOrganisationHeight,
                     "The organisation should wrap onto more lines");
@@ -103,11 +104,13 @@ public class PersonCardTest {
             root.resize(650, root.prefHeight(650));
             root.layout();
 
-            assertEquals(wideCardHeight, root.getHeight(), LAYOUT_TOLERANCE);
+            assertEquals(wideContentHeight, content.getHeight(), LAYOUT_TOLERANCE);
             assertEquals(wideNameHeight, name.getHeight(), LAYOUT_TOLERANCE);
             assertEquals(wideOrganisationHeight, organisation.getHeight(), LAYOUT_TOLERANCE);
             assertFullyDisplayed(name, LONG_NAME);
             assertFullyDisplayed(organisation, LONG_ORGANISATION);
+            assertTrue(content.localToScene(content.getBoundsInLocal()).getMaxY()
+                    <= root.localToScene(root.getBoundsInLocal()).getMaxY());
         });
     }
 
