@@ -1824,6 +1824,9 @@ testers are expected to do more _exploratory_ testing.
    1. Test case: Close the app, replace the test data file's contents with `not json format!`, then relaunch.<br>
       Expected: The list is empty and the result display warns that the file could not be loaded and that the next command will overwrite it. The invalid file's contents are unchanged at startup.
 
+   1. Test case: Close the app and repeat the preceding test with `null`, then with `{"persons":[null]}` as the entire test data file.<br>
+      Expected: Both files produce the same empty-list fallback and warning without crashing or changing the file at startup. A null entry alongside valid supporters also rejects the whole file rather than loading partial data.
+
    1. Test case: After the warning, enter an unknown command.<br>
       Expected: `Unknown command.` replaces the warning, and the invalid file is unchanged.
 

@@ -90,6 +90,28 @@ public class MainAppTest {
     }
 
     @Test
+    public void initModelManager_nullRoot_startsEmptyWithWarning() throws Exception {
+        assertNullDataStartsEmpty("null");
+    }
+
+    @Test
+    public void initModelManager_nullPerson_startsEmptyWithWarning() throws Exception {
+        assertNullDataStartsEmpty("{\"persons\":[null]}");
+    }
+
+    @Test
+    public void initModelManager_validThenNullPerson_startsEmptyWithWarning() throws Exception {
+        assertNullDataStartsEmpty("{\"persons\":["
+                + "{\"name\":\"Valid Supporter\",\"phone\":\"123\",\"stage\":\"prospect\"},null]}");
+    }
+
+    private void assertNullDataStartsEmpty(String contents) throws Exception {
+        Path fixture = testFolder.resolve("null-data.json");
+        Files.writeString(fixture, contents);
+        assertInvalidFileStartsEmpty(fixture);
+    }
+
+    @Test
     public void initModelManager_mixedValidAndInvalidSupporters_startsEmptyWithWarning() throws Exception {
         assertInvalidFileStartsEmpty(TEST_DATA_FOLDER.resolve("JsonAddressBookStorageTest")
                 .resolve("invalidAndValidPersonAddressBook.json"));
