@@ -73,6 +73,46 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_unsupportedPrefixes_failure() {
+        for (String prefix : List.of("n/", "a/", "dt/", "nt/", "by/")) {
+            String expectedMessage = "Unsupported search filter(s): " + prefix + ".\n"
+                    + "find supports only o/, t/, st/, p/ and e/.\n" + FindCommand.MESSAGE_USAGE;
+
+            assertParseFailure(parser, prefix + "alex", expectedMessage);
+            assertParseFailure(parser, prefix, expectedMessage);
+            assertParseFailure(parser, "tan " + prefix + "value", expectedMessage);
+            assertParseFailure(parser, "o/dbs " + prefix + "geylang", expectedMessage);
+            assertParseFailure(parser, " \t o/dbs\n" + prefix + "geylang \t", expectedMessage);
+            assertParseFailure(parser, prefix + "first " + prefix + "second", expectedMessage);
+        }
+        String expectedMessage = "Unsupported search filter(s): a/.\n"
+                + "find supports only o/, t/, st/, p/ and e/.\n" + FindCommand.MESSAGE_USAGE;
+        assertParseFailure(parser, "a/geylang", expectedMessage);
+        assertParseFailure(parser, "o/dbs a/geylang", expectedMessage);
+    }
+
+    @Test
+    public void parse_multipleUnsupportedPrefixes_listsEachPrefixOnce() {
+        String expectedMessage = "Unsupported search filter(s): n/, a/, dt/, nt/, by/.\n"
+                + "find supports only o/, t/, st/, p/ and e/.\n" + FindCommand.MESSAGE_USAGE;
+
+        assertParseFailure(parser, "n/alex a/geylang dt/today nt/note by/1 n/bob", expectedMessage);
+        assertParseFailure(parser, "o/dbs by/1 nt/note dt/today a/geylang n/alex a/bedok", expectedMessage);
+    }
+
+    @Test
+    public void parse_slashedWords_success() {
+        FindCommand expectedCommand = new FindCommand(new PersonMatchesSearchPredicate(
+                List.of("Ravi", "s/o", "Kumar", "d/o", "Priya")));
+        assertParseSuccess(parser, "Ravi s/o Kumar d/o Priya", expectedCommand);
+
+        assertParseSuccess(parser, "o/DBS and/or OCBC", new FindCommand(new PersonMatchesSearchPredicate(List.of(),
+                List.of("DBS and/or OCBC"), List.of(), List.of(), List.of(), List.of())));
+        assertParseSuccess(parser, "e/alex@example.com/path", new FindCommand(new PersonMatchesSearchPredicate(
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of("alex@example.com/path"))));
+    }
+
+    @Test
     public void parse_formattedPartialPhone_success() {
         FindCommand expectedCommand = new FindCommand(new PersonMatchesSearchPredicate(List.of(), List.of(),
                 List.of(), List.of(), List.of("659123"), List.of()));
