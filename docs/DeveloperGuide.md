@@ -1137,8 +1137,8 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **MSS**
 
-1.  User requests to log an interaction with a specific supporter in the list, giving an index and a short note.
-2.  SupporterBook records the interaction, dated today, in the supporter's interaction history.
+1.  User requests to log an interaction with a specific supporter in the list, giving an index, a short note and, optionally, an interaction date.
+2.  SupporterBook records the interaction using the supplied date, or today's date if none was supplied, in the supporter's interaction history.
 3.  SupporterBook confirms the logged interaction and shows the supporter's details and updated interaction history.
 
     Use case ends.
@@ -1162,6 +1162,16 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 - 1d. User gives more than one note.
   - 1d1. SupporterBook shows an error message, indicating that only one note can be given.
+
+    Use case resumes from step 1.
+
+- 1e. The supplied date is empty, is not a valid calendar date in yyyy-MM-dd format, is before 1900-01-01, or is after today.
+  - 1e1. SupporterBook shows an error message explaining the date constraint.
+
+    Use case resumes from step 1.
+
+- 1f. User supplies the date parameter more than once.
+  - 1f1. SupporterBook shows an error message, indicating that only one date can be given.
 
     Use case resumes from step 1.
 
