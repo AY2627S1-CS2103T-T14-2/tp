@@ -129,6 +129,19 @@ public class MainAppTest {
         assertEquals(new AddressBook(), storage.readAddressBook().orElseThrow());
     }
 
+    @Test
+    public void initPrefs_nullGuiSettings_usesAndSavesDefaultPrefs() throws Exception {
+        Path prefsFile = testFolder.resolve("preferences.json");
+        Files.copy(TEST_DATA_FOLDER.resolve("JsonUserPrefsStorageTest")
+                .resolve("NullGuiSettingsUserPrefs.json"), prefsFile);
+        JsonUserPrefsStorage prefsStorage = new JsonUserPrefsStorage(prefsFile);
+
+        UserPrefs prefs = mainApp.initPrefs(prefsStorage);
+
+        assertEquals(new UserPrefs(), prefs);
+        assertEquals(new UserPrefs(), prefsStorage.readUserPrefs().orElseThrow());
+    }
+
     private Storage createStorage(Path dataFile) {
         return new StorageManager(new JsonAddressBookStorage(dataFile),
                 new JsonUserPrefsStorage(testFolder.resolve("preferences.json")));
