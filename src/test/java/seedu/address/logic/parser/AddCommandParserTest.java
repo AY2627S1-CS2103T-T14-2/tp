@@ -229,7 +229,7 @@ public class AddCommandParserTest {
         assertParseFailure(parser, STAGE_DESC_AMY + validExpectedPersonString,
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_STAGE));
 
-        // multiple organisations
+        // multiple organizations
         assertParseFailure(parser, ORGANISATION_DESC_AMY + validExpectedPersonString,
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_ORGANISATION));
 
@@ -262,7 +262,7 @@ public class AddCommandParserTest {
         assertParseFailure(parser, INVALID_STAGE_DESC + validExpectedPersonString,
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_STAGE));
 
-        // invalid organisation
+        // invalid organization
         assertParseFailure(parser, INVALID_ORGANISATION_DESC + validExpectedPersonString,
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_ORGANISATION));
 
@@ -287,7 +287,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_optionalFieldsMissing_success() {
-        // zero tags, no organisation
+        // zero tags, no organization
         Person expectedPerson = new PersonBuilder(AMY).withTags().build();
         assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY + ADDRESS_DESC_AMY
                 + STAGE_DESC_AMY, new AddCommand(expectedPerson));
@@ -356,13 +356,36 @@ public class AddCommandParserTest {
                 AddCommand.MESSAGE_BLANK_EMAIL);
         assertParseFailure(parser, NAME_DESC_BOB + " " + PREFIX_EMAIL, AddCommand.MESSAGE_BLANK_EMAIL);
 
-        // no-break spaces only, which String#isBlank does not recognise
-        assertParseFailure(parser, NAME_DESC_BOB + " " + PREFIX_PHONE + " ",
+        // no-break spaces only, which String#isBlank does not recognize
+        assertParseFailure(parser, NAME_DESC_BOB + " " + PREFIX_PHONE + "\u00a0",
                 AddCommand.MESSAGE_BLANK_PHONE);
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " " + PREFIX_ADDRESS + " ",
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " " + PREFIX_ADDRESS + "\u00a0",
                 AddCommand.MESSAGE_BLANK_ADDRESS);
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " " + PREFIX_ORGANISATION + " ",
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " " + PREFIX_ORGANISATION + "\u00a0",
                 Organisation.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_blankTag_failure() {
+        String[] blankValues = {"", " ", " \t\r\n", "\u00a0", "\u2003", "\u0085", " \t\u00a0\u2003\u0085\r\n"};
+
+        for (String blankValue : blankValues) {
+            assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " " + PREFIX_TAG + blankValue,
+                    ParserUtil.MESSAGE_BLANK_TAG);
+        }
+    }
+
+    @Test
+    public void parse_blankTagWithValidTags_failure() {
+        String personDetails = NAME_DESC_BOB + PHONE_DESC_BOB;
+        String blankTag = " " + PREFIX_TAG;
+
+        assertParseFailure(parser, personDetails + blankTag + TAG_DESC_FRIEND + TAG_DESC_HUSBAND,
+                ParserUtil.MESSAGE_BLANK_TAG);
+        assertParseFailure(parser, personDetails + TAG_DESC_FRIEND + blankTag + TAG_DESC_HUSBAND,
+                ParserUtil.MESSAGE_BLANK_TAG);
+        assertParseFailure(parser, personDetails + TAG_DESC_FRIEND + TAG_DESC_HUSBAND + blankTag,
+                ParserUtil.MESSAGE_BLANK_TAG);
     }
 
     @Test
@@ -391,11 +414,11 @@ public class AddCommandParserTest {
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
                 + " " + PREFIX_STAGE + TAG_DESC_HUSBAND + TAG_DESC_FRIEND, Stage.MESSAGE_CONSTRAINTS);
 
-        // blank organisation
+        // blank organization
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
                 + INVALID_ORGANISATION_DESC + TAG_DESC_HUSBAND + TAG_DESC_FRIEND, Organisation.MESSAGE_CONSTRAINTS);
 
-        // organisation too long
+        // organization too long
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
                 + " " + PREFIX_ORGANISATION + "a".repeat(Organisation.MAX_LENGTH + 1) + TAG_DESC_FRIEND,
                 Organisation.MESSAGE_CONSTRAINTS);
