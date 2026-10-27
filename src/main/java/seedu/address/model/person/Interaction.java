@@ -17,7 +17,8 @@ public class Interaction {
     public static final int MAX_NOTE_LENGTH = 500;
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Interaction notes should not be blank and should be at most " + MAX_NOTE_LENGTH + " characters long";
+            "Interaction notes should not be blank and should be at most " + MAX_NOTE_LENGTH
+                    + " characters long, excluding spaces at the beginning and end.";
 
     private final LocalDate date;
     private final String note;

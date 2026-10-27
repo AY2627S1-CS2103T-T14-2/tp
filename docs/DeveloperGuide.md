@@ -1588,7 +1588,7 @@ testers are expected to do more _exploratory_ testing.
 
 1. Invalid interaction logging commands
    1. Test case: `log 1 nt/`<br>
-      Expected: No interaction is logged. The status message says that an interaction note must not be blank and must be at most 500 characters long.
+      Expected: No interaction is logged. The status message says: `Interaction notes should not be blank and should be at most 500 characters long, excluding spaces at the beginning and end.`
 
    1. Test case: `log 1 nt/Called nt/Emailed`<br>
       Expected: No interaction is logged. The status message reports the repeated `nt/` prefix.
