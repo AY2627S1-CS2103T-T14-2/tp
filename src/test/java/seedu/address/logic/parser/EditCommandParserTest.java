@@ -155,9 +155,12 @@ public class EditCommandParserTest {
 
         // while parsing {@code PREFIX_TAG} alone will reset the tags of the {@code Person} being edited,
         // parsing it together with a valid tag results in error
-        assertParseFailure(parser, "1" + TAG_DESC_FRIEND + TAG_DESC_HUSBAND + TAG_EMPTY, Tag.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "1" + TAG_DESC_FRIEND + TAG_EMPTY + TAG_DESC_HUSBAND, Tag.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "1" + TAG_EMPTY + TAG_DESC_FRIEND + TAG_DESC_HUSBAND, Tag.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1" + TAG_DESC_FRIEND + TAG_DESC_HUSBAND + TAG_EMPTY,
+                ParserUtil.MESSAGE_BLANK_TAG);
+        assertParseFailure(parser, "1" + TAG_DESC_FRIEND + TAG_EMPTY + TAG_DESC_HUSBAND,
+                ParserUtil.MESSAGE_BLANK_TAG);
+        assertParseFailure(parser, "1" + TAG_EMPTY + TAG_DESC_FRIEND + TAG_DESC_HUSBAND,
+                ParserUtil.MESSAGE_BLANK_TAG);
 
         // multiple invalid values, but only the first invalid value is captured
         assertParseFailure(parser, "1" + INVALID_NAME_DESC + INVALID_EMAIL_DESC + VALID_ADDRESS_AMY + VALID_PHONE_AMY,
@@ -243,7 +246,7 @@ public class EditCommandParserTest {
         expectedCommand = new EditCommand(targetIndex, descriptor);
         assertParseSuccess(parser, userInput, expectedCommand);
 
-        // organisation
+        // organization
         userInput = targetIndex.getOneBased() + ORGANISATION_DESC_AMY;
         descriptor = new EditPersonDescriptorBuilder().withOrganisation(VALID_ORGANISATION_AMY).build();
         expectedCommand = new EditCommand(targetIndex, descriptor);
@@ -280,7 +283,7 @@ public class EditCommandParserTest {
         assertParseFailure(parser, userInput,
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS));
 
-        // multiple organisations
+        // multiple organizations
         userInput = targetIndex.getOneBased() + ORGANISATION_DESC_AMY + ORGANISATION_DESC_BOB;
 
         assertParseFailure(parser, userInput, Messages.getErrorMessageForDuplicatePrefixes(PREFIX_ORGANISATION));
@@ -311,11 +314,11 @@ public class EditCommandParserTest {
         assertParseSuccess(parser, targetIndex.getOneBased() + INVALID_ORGANISATION_DESC,
                 new EditCommand(targetIndex, new EditPersonDescriptorBuilder().withoutOrganisation().build()));
 
-        // so do no-break spaces, which String#isBlank does not recognise
+        // so do no-break spaces, which String#isBlank does not recognize
         EditPersonDescriptor clearedDescriptor = new EditPersonDescriptorBuilder().withoutAddress()
                 .withoutOrganisation().build();
-        assertParseSuccess(parser, targetIndex.getOneBased() + " " + PREFIX_ADDRESS + "  "
-                + PREFIX_ORGANISATION + " ", new EditCommand(targetIndex, clearedDescriptor));
+        assertParseSuccess(parser, targetIndex.getOneBased() + " " + PREFIX_ADDRESS + "\u00a0 "
+                + PREFIX_ORGANISATION + "\u00a0", new EditCommand(targetIndex, clearedDescriptor));
 
         // cleared fields together with an edited one
         String userInput = targetIndex.getOneBased() + INVALID_ADDRESS_DESC + PHONE_DESC_AMY + " " + PREFIX_EMAIL;
