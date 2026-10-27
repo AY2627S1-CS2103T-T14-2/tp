@@ -18,7 +18,7 @@ public class StageCommandParserTest {
     private static final String MESSAGE_INVALID_FORMAT =
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, StageCommand.MESSAGE_USAGE);
 
-    private StageCommandParser parser = new StageCommandParser();
+    private final StageCommandParser parser = new StageCommandParser();
 
     @Test
     public void parse_validArgs_returnsStageCommand() {
