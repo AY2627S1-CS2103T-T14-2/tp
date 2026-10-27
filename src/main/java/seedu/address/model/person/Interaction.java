@@ -6,6 +6,7 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 import java.time.LocalDate;
 import java.util.Objects;
 
+import seedu.address.commons.util.StringUtil;
 import seedu.address.commons.util.ToStringBuilder;
 
 /**
@@ -30,7 +31,7 @@ public class Interaction {
         requireNonNull(note);
         checkArgument(isValidNote(note), MESSAGE_CONSTRAINTS);
         this.date = date;
-        this.note = note.trim();
+        this.note = StringUtil.trimUnicodeWhitespace(note);
     }
 
     /**
@@ -38,7 +39,7 @@ public class Interaction {
      */
     public static boolean isValidNote(String test) {
         requireNonNull(test);
-        String trimmed = test.trim();
+        String trimmed = StringUtil.trimUnicodeWhitespace(test);
         return !trimmed.isEmpty() && trimmed.length() <= MAX_NOTE_LENGTH;
     }
 
