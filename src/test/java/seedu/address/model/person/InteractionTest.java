@@ -16,7 +16,7 @@ public class InteractionTest {
 
     @Test
     public void constructor_unicodeBlankNote_throwsIllegalArgumentException() {
-        for (String note : List.of("\u2003", "\u00a0", " \t\u2003\u00a0\u202f\u3000 ")) {
+        for (String note : List.of("\u0085", "\u2003", "\u00a0", " \t\u0085\u2003\u00a0\u202f\u3000 ")) {
             assertFalse(Interaction.isValidNote(note));
             assertThrows(IllegalArgumentException.class, Interaction.MESSAGE_CONSTRAINTS, () ->
                     new Interaction(DATE, note));

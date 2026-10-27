@@ -13,7 +13,8 @@ import java.util.Arrays;
 public class StringUtil {
 
     /**
-     * Removes leading and trailing whitespace and Unicode space separators from a string.
+     * Removes leading and trailing whitespace and Unicode space separators from a string,
+     * including NEXT LINE (U+0085).
      * Internal spacing is preserved. Characters removed by {@link String#trim()} are also removed.
      *
      * @param text The non-null string to trim.
@@ -34,7 +35,9 @@ public class StringUtil {
     }
 
     private static boolean isTrimmableWhitespace(int codePoint) {
-        return codePoint <= ' ' || Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint);
+        // NEXT LINE is Unicode whitespace but is excluded by both Java Character predicates below
+        return codePoint <= ' ' || codePoint == '\u0085'
+                || Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint);
     }
 
     /**

@@ -31,7 +31,7 @@ public class LogCommandParserTest {
 
     @Test
     public void parse_unicodeBlankNote_failure() {
-        for (String note : List.of("\u2003", "\u00a0", " \t\u2003\u00a0\u202f\u3000 ")) {
+        for (String note : List.of("\u0085", "\u2003", "\u00a0", " \t\u0085\u2003\u00a0\u202f\u3000 ")) {
             assertParseFailure(parser, " 1 nt/" + note, Interaction.MESSAGE_CONSTRAINTS);
         }
     }

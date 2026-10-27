@@ -22,7 +22,7 @@ public class JsonAdaptedInteractionTest {
 
     @Test
     public void toModelType_unicodeBlankNote_throwsIllegalValueException() {
-        for (String note : List.of("\u2003", "\u00a0", " \t\u2003\u00a0 ")) {
+        for (String note : List.of("\u0085", "\u2003", "\u00a0", " \t\u0085\u2003\u00a0 ")) {
             JsonAdaptedInteraction interaction = new JsonAdaptedInteraction(VALID_DATE, note);
             assertThrows(IllegalValueException.class, Interaction.MESSAGE_CONSTRAINTS, interaction::toModelType);
         }

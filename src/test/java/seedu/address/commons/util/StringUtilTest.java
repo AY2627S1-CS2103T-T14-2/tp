@@ -19,16 +19,17 @@ public class StringUtilTest {
 
     @Test
     public void trimUnicodeWhitespace_blank_returnsEmpty() {
-        for (String text : List.of("", " ", "\t\r\n", "\u2003", "\u00a0", "\u202f", "\u3000",
-                " \t\u2003\u00a0\u202f\u3000 ")) {
+        for (String text : List.of("", " ", "\t\r\n", "\u0085", "\u2003", "\u00a0", "\u202f", "\u3000",
+                " \t\u0085\u2003\u00a0\u202f\u3000 ")) {
             assertEquals("", StringUtil.trimUnicodeWhitespace(text));
         }
     }
 
     @Test
     public void trimUnicodeWhitespace_paddedText_preservesInternalSpacing() {
-        String text = "\ud83d\ude00 Called  about\u00a0the\u2003appeal \ud83d\ude00";
-        for (String padding : List.of(" ", "\t", "\u2003", "\u00a0", "\u202f", "\u3000", " \t\u2003\u00a0 ")) {
+        String text = "\ud83d\ude00 Called  about\u00a0the\u2003appeal\u0085today \ud83d\ude00";
+        for (String padding : List.of(" ", "\t", "\u0085", "\u2003", "\u00a0", "\u202f", "\u3000",
+                " \t\u2003\u00a0 ")) {
             assertEquals(text, StringUtil.trimUnicodeWhitespace(padding + text + padding));
             assertEquals(text, StringUtil.trimUnicodeWhitespace(padding + text));
             assertEquals(text, StringUtil.trimUnicodeWhitespace(text + padding));
