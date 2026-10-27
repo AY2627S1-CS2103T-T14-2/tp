@@ -10,20 +10,24 @@ import java.util.Optional;
 import seedu.address.model.person.Person;
 
 /**
- * Describes existing supporters whose contact details match a supporter being added.
+ * Describes other supporters whose contact details match a supporter being added or edited.
  * Matches are advisory and do not change the name-based rule for duplicate supporters.
  */
 public class SharedContactWarning {
     public static final String MESSAGE_SHARED_CONTACTS =
             "Warning: Shared contact details with existing supporter(s): %s. "
                     + "The supporter was added; check whether this is intentional.";
+    public static final String MESSAGE_SHARED_CONTACTS_AFTER_EDIT =
+            "Warning: Shared contact details with existing supporter(s): %s. "
+                    + "The supporter was updated; check whether this is intentional.";
 
     private final List<Person> existingPersons;
     private final Optional<String> phoneKey;
     private final Optional<String> emailKey;
 
     /**
-     * Creates a warning using a snapshot of supporters before {@code person} is added.
+     * Creates a warning using a snapshot of other supporters to compare against {@code person}.
+     * Callers editing an existing supporter must exclude the original record from this list.
      */
     public SharedContactWarning(List<Person> existingPersons, Person person) {
         this.existingPersons = List.copyOf(requireNonNull(existingPersons));
@@ -37,6 +41,17 @@ public class SharedContactWarning {
      * Results retain full-list order and each supporter appears at most once.
      */
     public String getMessage() {
+        return formatMessage(MESSAGE_SHARED_CONTACTS);
+    }
+
+    /**
+     * Returns the same contact matches with feedback describing a successful update rather than an addition.
+     */
+    public String getEditMessage() {
+        return formatMessage(MESSAGE_SHARED_CONTACTS_AFTER_EDIT);
+    }
+
+    private String formatMessage(String messageFormat) {
         List<String> matches = new ArrayList<>();
         for (Person existing : existingPersons) {
             boolean hasSharedPhone = matchesContact(phoneKey,
@@ -47,7 +62,7 @@ public class SharedContactWarning {
                 matches.add(existing.getName().fullName + " (" + sharedFields(hasSharedPhone, hasSharedEmail) + ")");
             }
         }
-        return matches.isEmpty() ? "" : String.format(MESSAGE_SHARED_CONTACTS, String.join("; ", matches));
+        return matches.isEmpty() ? "" : String.format(messageFormat, String.join("; ", matches));
     }
 
     private static boolean matchesContact(Optional<String> first, Optional<String> second) {

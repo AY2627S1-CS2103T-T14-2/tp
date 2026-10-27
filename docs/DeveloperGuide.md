@@ -311,12 +311,17 @@ Two supporters count as the same supporter if their names match, ignoring case a
   - Pros: Namesakes can be stored without changing either name.
   - Cons: The same person could be added twice as soon as they change jobs and contact details.
 
-### Shared-contact warnings when adding
+### Shared-contact warnings when adding or editing
 
 `AddCommand` checks the existing name-based duplicate rule first. For a new name, it creates
 `SharedContactWarning` from a snapshot of `Model#getAddressBook().getPersonList()` before adding
 the supporter. This includes records hidden by a filter and prevents the new record from being
 reported as its own match.
+
+After validating the displayed index, duplicate-name rule and required contact fields, `EditCommand`
+compares the resulting record against a full-list snapshot excluding the original supporter.
+This avoids self-matches even when a supporter is renamed, and includes matches hidden by a filter.
+Both commands use the same comparison helper; edit feedback describes an update rather than an addition.
 
 The warning compares complete phone-number keys and case-insensitive email addresses, not search
 substrings. Phone formatting and type labels are ignored, but country codes are not inferred.
@@ -325,9 +330,11 @@ digits is not confused with a longer main number, and different extensions remai
 Email dots and `+suffixes` are significant. Missing contact fields never match other missing fields.
 
 Each existing supporter is listed once, in full-list order, with `phone`, `email` or `phone and email`.
-The message is appended to the normal success feedback only when matches exist. Shared contacts
-do not block the addition or update existing supporters. `LogicManager` saves and commits the
-addition normally, producing one undoable change. Editing and loading do not issue these warnings.
+The message is appended to normal success feedback only when matches exist. Shared contacts do not
+block adding or editing, and the warning never changes matching supporters. The entire resulting
+record is checked, including unchanged contact fields that already share a value. `LogicManager`
+saves and commits actual data changes normally; a warning does not create an extra undo point.
+Loading does not issue shared-contact warnings.
 
 `SharedContactWarningTest` covers matching, normalization, optional fields and deterministic messages.
 `SharedContactWarningIntegrationTest` checks the reported examples, hidden matches, persistence,
@@ -411,7 +418,7 @@ The stage is also shown in the UI: `PersonCard` displays it as a badge next to t
 
 A `Person` may belong to an organisation, such as the company a CSR contact speaks for. Individual donors usually have none, so the field is optional. It is represented by the `Organisation` class in the `Model` component.
 
-- `Organisation#isValidOrganisation(String)` accepts any characters, because company names often contain symbols (e.g. `Procter & Gamble`). After leading and trailing spaces are removed and each run of spaces inside is reduced to one, the value must not be blank and must be at most `Organisation.MAX_LENGTH` (100) characters long.
+- `Organisation#isValidOrganisation(String)` accepts any characters, because company names often contain symbols (e.g. `Procter & Gamble`). After leading and trailing spaces are removed and each run of spaces inside is reduced to one, the value must not be blank and must contain at most `Organisation.MAX_LENGTH` (100) Unicode code points. The limit is checked using `String.codePointCount`, so supplementary characters such as 😀 count as one, while combined emoji can contain multiple code points.
 - The `Organisation` constructor applies the same space normalisation before storing the value, so `DBS  Bank` and `DBS Bank` are equal.
 - `Person` stores no organisation as `null` internally, but `Person#getOrganisation()` returns an `Optional<Organisation>`, so callers must handle the missing case explicitly. The `Person` constructors without an organisation parameter create a supporter with none.
 - `EditCommand` and `StageCommand` copy the existing organisation into the `Person` they create, so editing other details or changing the stage never removes it.
@@ -1398,6 +1405,22 @@ testers are expected to do more _exploratory_ testing.
    Expected: The normal success feedback appears without a shared-contact warning.
 1. Run `add n/Alex Yeoh p/87438807`.<br>
    Expected: The duplicate name is rejected; an advisory contact warning does not bypass that rule.
+
+### Editing supporters with shared contact details
+
+1. Prerequisites: Use fresh sample data in an isolated test folder and run `list`. Alex Yeoh is 1st,
+   Bernice Yu is 2nd and Charlotte O'Brien is 3rd.
+1. Run `edit 2 p/87438807`.<br>
+   Expected: Bernice's phone is updated. The success feedback includes a warning naming `Alex Yeoh (phone)`.
+1. Run `edit 3 e/ALEXYEOH@example.com`.<br>
+   Expected: Charlotte's email is updated. The warning names `Alex Yeoh (email)` despite the case difference.
+1. Run `undo`, then `redo`.<br>
+   Expected: Charlotte's email change is reverted and restored as one change. Alex's contact details are unchanged.
+1. Run `find Bernice`, then `edit 1 p/8743-8807`.<br>
+   Expected: Bernice is updated and the warning still names Alex, even though he was hidden by the filter.
+   The full list is shown again, and the entered phone formatting is preserved.
+1. Run `find Bernice`, then `edit 1 p/123456789`.<br>
+   Expected: Bernice is updated without a shared-contact warning; her unchanged email does not match herself.
 
 ### Finding and listing supporters
 

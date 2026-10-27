@@ -32,7 +32,7 @@ public class ParserUtilTest {
     private static final Clock INTERACTION_CLOCK = Clock.fixed(
             Instant.parse("2026-10-19T16:30:00Z"), ZoneId.of("Asia/Singapore"));
 
-    private static final String INVALID_NAME = "R@chel";
+    private static final String INVALID_NAME = "R&chel";
     private static final String INVALID_PHONE = "+65 123--4";
     private static final String INVALID_ADDRESS = " ";
     private static final String INVALID_EMAIL = "example.com";
@@ -235,12 +235,12 @@ public class ParserUtilTest {
         String addressWithWhitespace = WHITESPACE + VALID_ADDRESS + WHITESPACE;
         Address expectedAddress = new Address(VALID_ADDRESS);
         assertEquals(expectedAddress, ParserUtil.parseAddress(addressWithWhitespace));
-        assertEquals(expectedAddress, ParserUtil.parseAddress(" " + VALID_ADDRESS + " "));
+        assertEquals(expectedAddress, ParserUtil.parseAddress("\u00a0" + VALID_ADDRESS + "\u2003"));
     }
 
     @Test
     public void parseAddress_unicodeBlank_throwsParseException() {
-        assertThrows(ParseException.class, Address.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseAddress(" "));
+        assertThrows(ParseException.class, Address.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseAddress("\u00a0"));
     }
 
     @Test
@@ -413,7 +413,19 @@ public class ParserUtilTest {
 
     @Test
     public void parseTag_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parseTag(INVALID_TAG));
+        assertThrows(ParseException.class, Tag.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseTag(INVALID_TAG));
+    }
+
+    @Test
+    public void parseTag_emptyValue_throwsParseException() {
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_BLANK_TAG, () -> ParserUtil.parseTag(""));
+    }
+
+    @Test
+    public void parseTag_whitespaceOnlyValue_throwsParseException() {
+        for (String tag : List.of(" ", WHITESPACE, "\u00a0", "\u2003", "\u0085", " \t\u00a0\u2003\u0085\r\n")) {
+            assertThrows(ParseException.class, ParserUtil.MESSAGE_BLANK_TAG, () -> ParserUtil.parseTag(tag));
+        }
     }
 
     @Test
