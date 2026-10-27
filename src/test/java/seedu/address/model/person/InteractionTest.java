@@ -6,12 +6,35 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
 public class InteractionTest {
 
     private static final LocalDate DATE = LocalDate.of(2026, 9, 16);
+
+    @Test
+    public void constructor_unicodeBlankNote_throwsIllegalArgumentException() {
+        for (String note : List.of("\u2003", "\u00a0", " \t\u2003\u00a0\u202f\u3000 ")) {
+            assertFalse(Interaction.isValidNote(note));
+            assertThrows(IllegalArgumentException.class, Interaction.MESSAGE_CONSTRAINTS, () ->
+                    new Interaction(DATE, note));
+        }
+    }
+
+    @Test
+    public void constructor_unicodePaddedNote_preservesContent() {
+        String note = "Called  about\u00a0the\u2003appeal \ud83d\ude00";
+        assertEquals(note, new Interaction(DATE, "\u2003\u00a0" + note + "\u202f\u3000").getNote());
+    }
+
+    @Test
+    public void constructor_unicodePaddingAtLengthLimit_acceptsTrimmedNote() {
+        String note = "a".repeat(Interaction.MAX_NOTE_LENGTH);
+        assertEquals(note, new Interaction(DATE, "\u2003" + note + "\u00a0").getNote());
+        assertFalse(Interaction.isValidNote("\u2003" + note + "a\u00a0"));
+    }
 
     @Test
     public void constructor_nullArguments_throwsNullPointerException() {
