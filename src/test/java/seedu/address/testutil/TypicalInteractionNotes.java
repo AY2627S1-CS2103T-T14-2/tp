@@ -15,6 +15,12 @@ public class TypicalInteractionNotes {
             "已联系，讨论捐款",
             "Discussed volunteering " + JOINED_EMOJI);
 
+    // both notes contain exactly 500 code points, but exceed 500 UTF-16 code units
+    public static final String ASCII_AND_EMOJI_AT_NOTE_LIMIT = "a".repeat(499) + "\ud83d\ude00";
+    public static final String EMOJI_ONLY_AT_NOTE_LIMIT = "\ud83d\ude00".repeat(500);
+    public static final List<String> SUPPLEMENTARY_NOTES_AT_LIMIT = List.of(
+            ASCII_AND_EMOJI_AT_NOTE_LIMIT, EMOJI_ONLY_AT_NOTE_LIMIT);
+
     private TypicalInteractionNotes() {
     }
 }

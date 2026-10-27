@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static seedu.address.storage.JsonAdaptedInteraction.DATE_MESSAGE_CONSTRAINTS;
 import static seedu.address.storage.JsonAdaptedInteraction.MISSING_FIELD_MESSAGE_FORMAT;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalInteractionNotes.ASCII_AND_EMOJI_AT_NOTE_LIMIT;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -21,8 +22,8 @@ public class JsonAdaptedInteractionTest {
 
     @Test
     public void toModelType_supplementaryCharactersAtLengthBoundary_checksCodePoints() throws Exception {
-        // 499 ASCII characters + one emoji: 500 code points, but 501 UTF-16 code units.
-        String note = "a".repeat(499) + "\ud83d\ude00";
+        // 499 ASCII characters + one emoji: 500 code points, but 501 UTF-16 code units
+        String note = ASCII_AND_EMOJI_AT_NOTE_LIMIT;
         Interaction interaction = new JsonAdaptedInteraction(VALID_DATE, note).toModelType();
         assertEquals(note, interaction.getNote());
         assertEquals(interaction, new JsonAdaptedInteraction(interaction).toModelType());

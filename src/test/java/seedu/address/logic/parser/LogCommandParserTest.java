@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSucces
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalInteractionNotes.CHARACTER_PRESERVATION_NOTES;
+import static seedu.address.testutil.TypicalInteractionNotes.SUPPLEMENTARY_NOTES_AT_LIMIT;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -41,7 +42,7 @@ public class LogCommandParserTest {
     @Test
     public void parse_supplementaryCharactersAtLengthBoundary_checksCodePoints() {
         // both notes contain 500 code points, but exceed 500 UTF-16 code units
-        for (String note : List.of("a".repeat(499) + "\ud83d\ude00", "\ud83d\ude00".repeat(500))) {
+        for (String note : SUPPLEMENTARY_NOTES_AT_LIMIT) {
             // surrounding spaces are trimmed before checking the limit
             assertParseSuccess(parser, " 1 nt/ " + note + " ",
                     new LogCommand(INDEX_FIRST_PERSON, note));

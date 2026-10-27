@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalInteractionNotes.ASCII_AND_EMOJI_AT_NOTE_LIMIT;
 import static seedu.address.testutil.TypicalInteractionNotes.CHARACTER_PRESERVATION_NOTES;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.HOON;
@@ -38,7 +39,7 @@ public class JsonAddressBookStorageTest {
     public void readAndSaveAddressBook_specialCharacterNotes_preservesNotes() throws Exception {
         List<String> notes = new ArrayList<>(CHARACTER_PRESERVATION_NOTES);
         // also check persistence of a valid boundary note rejected by the former UTF-16 length check
-        notes.add("a".repeat(499) + "\ud83d\ude00");
+        notes.add(ASCII_AND_EMOJI_AT_NOTE_LIMIT);
         Interaction[] interactions = notes.stream()
                 .map(note -> new Interaction(LocalDate.of(2024, 2, 29), note))
                 .toArray(Interaction[]::new);

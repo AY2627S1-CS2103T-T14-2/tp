@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalInteractionNotes.ASCII_AND_EMOJI_AT_NOTE_LIMIT;
+import static seedu.address.testutil.TypicalInteractionNotes.EMOJI_ONLY_AT_NOTE_LIMIT;
 import static seedu.address.testutil.TypicalInteractionNotes.JOINED_EMOJI;
 
 import java.time.LocalDate;
@@ -29,7 +31,7 @@ public class InteractionTest {
     @Test
     public void constructor_codePointLengthBoundary_acceptsLimitAndRejectsOverflow() {
         // each input has 500 code points; e + combining acute accent uses two code points per repetition
-        for (String note : List.of("a".repeat(499) + "\ud83d\ude00", "\ud83d\ude00".repeat(500),
+        for (String note : List.of(ASCII_AND_EMOJI_AT_NOTE_LIMIT, EMOJI_ONLY_AT_NOTE_LIMIT,
                 "e\u0301".repeat(250))) {
             assertTrue(Interaction.isValidNote(note));
             assertEquals(note, new Interaction(DATE, " " + note + " ").getNote());
