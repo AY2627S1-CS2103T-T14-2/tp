@@ -223,7 +223,7 @@ public class ParserUtil {
      */
     public static String parseInteractionNote(String note) throws ParseException {
         requireNonNull(note);
-        String trimmedNote = note.trim();
+        String trimmedNote = StringUtil.trimUnicodeWhitespace(note);
         if (!Interaction.isValidNote(trimmedNote)) {
             throw new ParseException(Interaction.MESSAGE_CONSTRAINTS);
         }
