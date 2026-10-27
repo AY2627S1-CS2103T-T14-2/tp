@@ -60,6 +60,30 @@ public class AddCommandParserTest {
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
+    public void parse_accentedNameWithEmailOnly_success() {
+        Person expectedPerson = new PersonBuilder().withName("José Tan").withEmail("jose@example.com")
+                .withoutPhone().withoutAddress().build();
+
+        assertParseSuccess(parser, " n/José Tan e/jose@example.com", new AddCommand(expectedPerson));
+    }
+
+    @Test
+    public void parse_nonLatinNameWithEmailOnly_success() {
+        Person expectedPerson = new PersonBuilder().withName("李伟").withEmail("li@example.com")
+                .withoutPhone().withoutAddress().build();
+
+        assertParseSuccess(parser, " n/李伟 e/li@example.com", new AddCommand(expectedPerson));
+    }
+
+    @Test
+    public void parse_curlyApostropheNameWithEmailOnly_success() {
+        Person expectedPerson = new PersonBuilder().withName("Charlotte O’Brien").withEmail("c2@example.com")
+                .withoutPhone().withoutAddress().build();
+
+        assertParseSuccess(parser, " n/Charlotte O’Brien e/c2@example.com", new AddCommand(expectedPerson));
+    }
+
+    @Test
     public void parse_supportedNamesWithOtherFields_success() {
         String[] names = {"O'Brien", "Lee-Tan", "J. Tan", "Ravi s/o Kumar", "Priya d/o Kumar",
             "Ravi S/O Kumar", "Priya D/O Kumar", "J. O'Brien-Tan d/o Kumar"};
