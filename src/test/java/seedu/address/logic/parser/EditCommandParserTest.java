@@ -73,7 +73,8 @@ public class EditCommandParserTest {
     @Test
     public void parse_supportedNames_success() {
         String[] names = {"O'Brien", "Lee-Tan", "J. Tan", "Ravi s/o Kumar", "Priya d/o Kumar",
-            "Ravi S/O Kumar", "Priya D/O Kumar", "J. O'Brien-Tan d/o Kumar"};
+            "Ravi S/O Kumar", "Priya D/O Kumar", "J. O'Brien-Tan d/o Kumar",
+            "Ahmad bin Ali @ Ah Mat", "Tan Ah Kow (Chen Ah Kow)", "Tan, Ah Kow"};
 
         for (String name : names) {
             EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(name).build();
@@ -84,7 +85,8 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_supportedNamesWithAddress_success() {
-        String[] names = {"Ravi s/o Kumar", "Priya d/o Kumar", "J. O'Brien-Tan D/O Kumar"};
+        String[] names = {"Ravi s/o Kumar", "Priya d/o Kumar", "J. O'Brien-Tan D/O Kumar",
+            "Ahmad bin Ali @ Ah Mat", "Tan Ah Kow (Chen Ah Kow)", "Tan, Ah Kow"};
 
         for (String name : names) {
             EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(name)
