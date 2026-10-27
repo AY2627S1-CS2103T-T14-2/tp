@@ -7,6 +7,7 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSucces
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalInteractionNotes.CHARACTER_PRESERVATION_NOTES;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -28,11 +29,23 @@ public class EditLogCommandParserTest {
     private final EditLogCommandParser parser = new EditLogCommandParser();
 
     @Test
+    public void parse_specialCharacters_preservesNote() {
+        for (String note : CHARACTER_PRESERVATION_NOTES) {
+            assertParseSuccess(parser, " 1 2 nt/" + note,
+                    new EditLogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON,
+                            Optional.of(note), Optional.empty()));
+        }
+    }
+
+    @Test
     public void parse_supplementaryCharactersAtLengthBoundary_checksCodePoints() {
+        // both notes contain 500 code points, but exceed 500 UTF-16 code units
         for (String note : List.of("a".repeat(499) + "\ud83d\ude00", "\ud83d\ude00".repeat(500))) {
+            // surrounding spaces are trimmed before checking the limit
             assertParseSuccess(parser, " 1 2 nt/ " + note + " ",
                     new EditLogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON,
                     Optional.of(note), Optional.empty()));
+            // one additional ASCII character takes the note to 501 code points
             assertParseFailure(parser, " 1 2 nt/ " + note + "a ",
                     Interaction.MESSAGE_CONSTRAINTS);
         }

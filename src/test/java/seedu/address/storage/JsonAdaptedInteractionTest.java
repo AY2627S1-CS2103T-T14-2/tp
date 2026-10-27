@@ -21,6 +21,7 @@ public class JsonAdaptedInteractionTest {
 
     @Test
     public void toModelType_supplementaryCharactersAtLengthBoundary_checksCodePoints() throws Exception {
+        // 499 ASCII characters + one emoji: 500 code points, but 501 UTF-16 code units.
         String note = "a".repeat(499) + "\ud83d\ude00";
         Interaction interaction = new JsonAdaptedInteraction(VALID_DATE, note).toModelType();
         assertEquals(note, interaction.getNote());

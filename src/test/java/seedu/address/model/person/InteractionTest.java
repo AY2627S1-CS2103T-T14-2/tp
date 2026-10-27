@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalInteractionNotes.JOINED_EMOJI;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,7 +16,19 @@ public class InteractionTest {
     private static final LocalDate DATE = LocalDate.of(2026, 9, 16);
 
     @Test
+    public void constructor_joinedEmojiAtLengthBoundary_countsJoiner() {
+        // woman + zero-width joiner + laptop occupy three code points, not one
+        String note = "a".repeat(497) + JOINED_EMOJI;
+        assertTrue(Interaction.isValidNote(note));
+        assertEquals(note, new Interaction(DATE, note).getNote());
+        assertFalse(Interaction.isValidNote("a" + note));
+        assertThrows(IllegalArgumentException.class, Interaction.MESSAGE_CONSTRAINTS, () ->
+                new Interaction(DATE, "a" + note));
+    }
+
+    @Test
     public void constructor_codePointLengthBoundary_acceptsLimitAndRejectsOverflow() {
+        // each input has 500 code points; e + combining acute accent uses two code points per repetition
         for (String note : List.of("a".repeat(499) + "\ud83d\ude00", "\ud83d\ude00".repeat(500),
                 "e\u0301".repeat(250))) {
             assertTrue(Interaction.isValidNote(note));
