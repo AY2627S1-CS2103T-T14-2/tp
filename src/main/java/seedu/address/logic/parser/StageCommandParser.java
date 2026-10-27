@@ -13,6 +13,9 @@ import seedu.address.model.person.Stage;
  */
 public class StageCommandParser implements Parser<StageCommand> {
 
+    /** The command takes exactly an INDEX and a STAGE, with no prefixes. */
+    private static final int EXPECTED_ARGUMENT_COUNT = 2;
+
     /**
      * Parses the given {@code String} of arguments in the context of the StageCommand
      * and returns a StageCommand object for execution.
@@ -20,16 +23,13 @@ public class StageCommandParser implements Parser<StageCommand> {
      */
     public StageCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        String[] parts = args.trim().split("\\s+");
-
-        // exactly an INDEX and a STAGE, with no prefixes
-        if (parts.length != 2) {
+        String[] arguments = args.trim().split("\\s+");
+        if (arguments.length != EXPECTED_ARGUMENT_COUNT) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, StageCommand.MESSAGE_USAGE));
         }
 
-        Index index = ParserUtil.parseIndex(parts[0], StageCommand.MESSAGE_USAGE);
-
-        Stage stage = ParserUtil.parseStage(parts[1]);
+        Index index = ParserUtil.parseIndex(arguments[0], StageCommand.MESSAGE_USAGE);
+        Stage stage = ParserUtil.parseStage(arguments[1]);
         return new StageCommand(index, stage);
     }
 

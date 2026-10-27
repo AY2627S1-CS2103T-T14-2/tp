@@ -17,6 +17,8 @@ public class PersonCard extends UiPart<Region> {
 
     private static final String FXML = "PersonListCard.fxml";
     private static final String NO_ORGANISATION = "(no organisation)";
+    /** Prefix of the style class that colours the stage label, e.g. {@code stage_giving}. */
+    private static final String STAGE_STYLE_CLASS_PREFIX = "stage_";
 
     /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
@@ -57,7 +59,7 @@ public class PersonCard extends UiPart<Region> {
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
         stage.setText(person.getStage().toString());
-        stage.getStyleClass().add("stage_" + person.getStage().name().toLowerCase());
+        stage.getStyleClass().add(STAGE_STYLE_CLASS_PREFIX + person.getStage().name().toLowerCase());
         organisation.setText(person.getOrganisation().map(org -> org.value).orElse(NO_ORGANISATION));
         lastContact.setText(LastContactFormatter.format(person.getLastInteractionDate()));
         showIfPresent(phone, person.getPhone().map(p -> p.value));
