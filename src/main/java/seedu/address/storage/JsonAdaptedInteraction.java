@@ -63,6 +63,9 @@ class JsonAdaptedInteraction {
         if (date == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "date"));
         }
+        if (!Interaction.isValidDateFormat(date)) {
+            throw new IllegalValueException(Interaction.MESSAGE_INVALID_DATE_FORMAT);
+        }
 
         final LocalDate modelDate;
         try {

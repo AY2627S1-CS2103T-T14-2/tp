@@ -298,7 +298,7 @@ public class ParserUtil {
     static LocalDate parseInteractionDate(String date, Clock clock) throws ParseException {
         requireAllNonNull(date, clock);
         String trimmedDate = date.trim();
-        if (!trimmedDate.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) {
+        if (!Interaction.isValidDateFormat(trimmedDate)) {
             throw new ParseException(Interaction.MESSAGE_INVALID_DATE_FORMAT);
         }
 
