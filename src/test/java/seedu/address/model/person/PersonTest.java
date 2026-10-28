@@ -393,6 +393,17 @@ public class PersonTest {
     }
 
     @Test
+    public void withStage_keepsOtherDetails() {
+        Person aliceByBenson = new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName)
+                .withInteractions(new Interaction(LocalDate.of(2026, 9, 16), "Called")).build();
+
+        Person updated = aliceByBenson.withStage(Stage.GIVING);
+
+        assertEquals(new PersonBuilder(aliceByBenson).withStage("giving").build(), updated);
+        assertEquals(aliceByBenson.getInteractions(), updated.getInteractions());
+    }
+
+    @Test
     public void withInteractions_defensivelyCopiesHistoryAndPreservesOrder() {
         Interaction earlier = new Interaction(LocalDate.of(2024, 2, 20), "Called");
         Interaction later = new Interaction(LocalDate.of(2024, 3, 10), "Met");
