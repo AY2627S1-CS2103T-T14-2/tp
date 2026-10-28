@@ -1506,6 +1506,12 @@ testers are expected to do more _exploratory_ testing.
    1. Test case: `edit 1 a/`<br>
       Expected: Alex Yeoh's address is removed, and his card no longer shows one.
 
+1. Showing long contact details on a card
+   1. Prerequisites: Start from the sample data at the default window size.
+
+   1. Test case: `add n/Long Contact e/fundraising.partnerships.and.corporate.giving@internationalcharityfoundation.org.sg a/Blk 123 Ang Mo Kio Avenue 6, #12-345, Singapore Society Building, Singapore 560123`<br>
+      Expected: On the new card at the bottom of the list, the full address and email wrap onto extra lines instead of ending in `...`.
+
 ### Recording introducers
 
 1. Prerequisites: Start from the sample data and run `list`. The sample data records that Bernice Yu (2nd) introduced David Li (4th).
