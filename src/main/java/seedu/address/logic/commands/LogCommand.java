@@ -33,7 +33,8 @@ public class LogCommand extends Command {
             + ": Logs an interaction with the supporter identified by the index "
             + "number used in the displayed supporter list.\n"
             + "Parameters: INDEX (must be a positive integer) " + PREFIX_NOTE + "NOTE [" + PREFIX_DATE + "DATE]\n"
-            + "DATE must be a valid date in yyyy-MM-dd format, from 1900-01-01 through today; defaults to today.\n"
+            + "DATE must be a valid date in yyyy-MM-dd format, from " + Interaction.MIN_DATE
+            + " through today; defaults to today.\n"
             + "Example: " + COMMAND_WORD + " 2 " + PREFIX_NOTE + "Coffee at Raffles Place "
             + PREFIX_DATE + "2026-10-01";
 

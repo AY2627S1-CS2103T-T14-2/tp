@@ -33,7 +33,8 @@ public class EditLogCommand extends Command {
             + "Parameters: INDEX ENTRY (both must be positive integers) "
             + "[" + PREFIX_NOTE + "NOTE] [" + PREFIX_DATE + "DATE]\n"
             + "ENTRY is the interaction number shown in the detail panel. At least one field is required.\n"
-            + "DATE must be a valid date in yyyy-MM-dd format, from 1900-01-01 through today.\n"
+            + "DATE must be a valid date in yyyy-MM-dd format, from " + Interaction.MIN_DATE
+            + " through today.\n"
             + "Example: " + COMMAND_WORD + " 2 1 " + PREFIX_NOTE + "Updated meeting notes "
             + PREFIX_DATE + "2026-10-01";
     public static final String MESSAGE_SUCCESS = "Edited interaction #%1$d with %2$s (%3$s): %4$s.";

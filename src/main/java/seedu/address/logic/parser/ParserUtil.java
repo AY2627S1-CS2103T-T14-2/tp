@@ -200,7 +200,7 @@ public class ParserUtil {
      * Parses {@code INDEX ENTRY} into a supporter index and an interaction index.
      * Accepts leading, trailing and separating whitespace. Only parses the indices; commands must check
      * their bounds and map the displayed interaction number to its stored position.
-     * Command parsers should wrap a failure with their own invalid-format usage message.
+     * Use {@link #parseInteractionIndices(String, String)} to append command usage to an index error.
      *
      * @throws ParseException if there are not exactly two valid positive integer indices.
      */
