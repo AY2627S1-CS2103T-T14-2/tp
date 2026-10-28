@@ -52,6 +52,11 @@ public class ViewCommandParserTest {
     }
 
     @Test
+    public void parse_nonAsciiIndex_throwsParseException() {
+        assertParseFailure(parser, "١", INVALID_INDEX_MESSAGE);
+    }
+
+    @Test
     public void parse_zeroIndex_throwsParseException() {
         assertParseFailure(parser, "0", INVALID_INDEX_MESSAGE);
     }
