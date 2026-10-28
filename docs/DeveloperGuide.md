@@ -185,12 +185,16 @@ Later command results and errors replace the warning through the existing comman
 
 `ArgumentTokenizer` splits a command's arguments only at the prefixes its parser asks for. Any other word ending in `/`, such as `em/` mistyped for `e/`, stays part of the value before it. On its own, this would save a mistyped prefix silently inside an address or a note, or make the parser blame a field the user typed correctly: `add n/Tan p/91234567 x/foo` reads the phone number as `91234567 x/foo` and reports an invalid phone number.
 
-`ArgumentTokenizer#findUnrecognisedPrefixes(String)` scans the whole command text for words made of letters followed by `/`, at the start or after a space, and returns those that are not in `CliSyntax.ALL_PREFIXES`, in the order they first appear. It skips everyday words written with a slash (`s/o`, `d/o`, `c/o`, `w/`, `w/o` and `and/or`), and does not match slashes after digits (`5/3`) or inside links. `LogicManager#execute(String)` uses it in two places:
+`AddressBookParser#findUnrecognisedPrefixes(String)` selects the prefixes supported by the command's own format, then delegates scanning to `ArgumentTokenizer`. The scan returns prefix-like words outside that set in their first-occurrence order, including prefixes used by other commands. Positional-only commands accept no prefixes. Commands that ignore arguments produce no prefix notes, and unknown command words retain the global `CliSyntax.ALL_PREFIXES` check. The advisory prefix sets must stay aligned with the corresponding command parsers when formats change.
 
-1. If parsing throws a `ParseException`, `LogicManager` throws a new `ParseException` with the original message followed by a note from `Messages#formatUnrecognisedPrefixErrorNote(List)`, e.g. `Note: x/ is not a recognised prefix, so it was read as part of the value before it.`
+For `find`, the advisory scan uses `CliSyntax.ALL_PREFIXES` instead. `FindCommandParser` explicitly rejects known unsupported filters (`n/`, `a/`, `dt/`, `nt/` and `by/`), so their errors must not also claim that those prefixes were read as ordinary text. Unknown words such as `x/` remain eligible for an advisory note when parsing fails; a successful search changes no supporter data and receives no undo suggestion.
+
+The scanner skips everyday slash words (`s/o`, `d/o`, `c/o`, `w/`, `w/o` and `and/or`) and does not match slashes after digits (`5/3`) or inside links. `LogicManager#execute(String)` uses it in two places:
+
+1. If parsing throws a `ParseException`, `LogicManager` throws a new `ParseException` with the original message followed by a note from `Messages#formatUnrecognisedPrefixErrorNote(List)`, e.g. `Note: by/ is not a recognised prefix for this command, so it was read as part of the value before it.`
 1. If the command runs and the supporter list differs from a copy taken before it ran, `LogicManager` adds a note from `Messages#formatUnrecognisedPrefixNote(List)` with `CommandResult#withNote(String)`. This note suggests `undo`, so a command that changes nothing, such as `find x/Alice`, does not get it.
 
-No command is rejected because of these words; the notes only point them out.
+The advisory scan never rejects input; the notes only point out words treated as text. Explicit validation, including `find`'s unsupported-filter check, can still reject a command. Failures during command execution keep their original error without a prefix note.
 
 #### Design considerations:
 
@@ -309,12 +313,17 @@ Two supporters count as the same supporter if their names match, ignoring case a
   - Pros: Namesakes can be stored without changing either name.
   - Cons: The same person could be added twice as soon as they change jobs and contact details.
 
-### Shared-contact warnings when adding
+### Shared-contact warnings when adding or editing
 
 `AddCommand` checks the existing name-based duplicate rule first. For a new name, it creates
 `SharedContactWarning` from a snapshot of `Model#getAddressBook().getPersonList()` before adding
 the supporter. This includes records hidden by a filter and prevents the new record from being
 reported as its own match.
+
+After validating the displayed index, duplicate-name rule and required contact fields, `EditCommand`
+compares the resulting record against a full-list snapshot excluding the original supporter.
+This avoids self-matches even when a supporter is renamed, and includes matches hidden by a filter.
+Both commands use the same comparison helper; edit feedback describes an update rather than an addition.
 
 The warning compares complete phone-number keys and case-insensitive email addresses, not search
 substrings. Phone formatting and type labels are ignored, but country codes are not inferred.
@@ -323,9 +332,11 @@ digits is not confused with a longer main number, and different extensions remai
 Email dots and `+suffixes` are significant. Missing contact fields never match other missing fields.
 
 Each existing supporter is listed once, in full-list order, with `phone`, `email` or `phone and email`.
-The message is appended to the normal success feedback only when matches exist. Shared contacts
-do not block the addition or update existing supporters. `LogicManager` saves and commits the
-addition normally, producing one undoable change. Editing and loading do not issue these warnings.
+The message is appended to normal success feedback only when matches exist. Shared contacts do not
+block adding or editing, and the warning never changes matching supporters. The entire resulting
+record is checked, including unchanged contact fields that already share a value. `LogicManager`
+saves and commits actual data changes normally; a warning does not create an extra undo point.
+Loading does not issue shared-contact warnings.
 
 `SharedContactWarningTest` covers matching, normalization, optional fields and deterministic messages.
 `SharedContactWarningIntegrationTest` checks the reported examples, hidden matches, persistence,
@@ -409,7 +420,7 @@ The stage is also shown in the UI: `PersonCard` displays it as a badge next to t
 
 A `Person` may belong to an organisation, such as the company a CSR contact speaks for. Individual donors usually have none, so the field is optional. It is represented by the `Organisation` class in the `Model` component.
 
-- `Organisation#isValidOrganisation(String)` accepts any characters, because company names often contain symbols (e.g. `Procter & Gamble`). After leading and trailing spaces are removed and each run of spaces inside is reduced to one, the value must not be blank and must be at most `Organisation.MAX_LENGTH` (100) characters long.
+- `Organisation#isValidOrganisation(String)` accepts any characters, because company names often contain symbols (e.g. `Procter & Gamble`). After leading and trailing spaces are removed and each run of spaces inside is reduced to one, the value must not be blank and must contain at most `Organisation.MAX_LENGTH` (100) Unicode code points. The limit is checked using `String.codePointCount`, so supplementary characters such as 😀 count as one, while combined emoji can contain multiple code points.
 - The `Organisation` constructor applies the same space normalisation before storing the value, so `DBS  Bank` and `DBS Bank` are equal.
 - `Person` stores no organisation as `null` internally, but `Person#getOrganisation()` returns an `Optional<Organisation>`, so callers must handle the missing case explicitly. The `Person` constructors without an organisation parameter create a supporter with none.
 - `EditCommand` and `StageCommand` copy the existing organisation into the `Person` they create, so editing other details or changing the stage never removes it.
@@ -1400,6 +1411,22 @@ testers are expected to do more _exploratory_ testing.
 1. Run `add n/Alex Yeoh p/87438807`.<br>
    Expected: The duplicate name is rejected; an advisory contact warning does not bypass that rule.
 
+### Editing supporters with shared contact details
+
+1. Prerequisites: Use fresh sample data in an isolated test folder and run `list`. Alex Yeoh is 1st,
+   Bernice Yu is 2nd and Charlotte O'Brien is 3rd.
+1. Run `edit 2 p/87438807`.<br>
+   Expected: Bernice's phone is updated. The success feedback includes a warning naming `Alex Yeoh (phone)`.
+1. Run `edit 3 e/ALEXYEOH@example.com`.<br>
+   Expected: Charlotte's email is updated. The warning names `Alex Yeoh (email)` despite the case difference.
+1. Run `undo`, then `redo`.<br>
+   Expected: Charlotte's email change is reverted and restored as one change. Alex's contact details are unchanged.
+1. Run `find Bernice`, then `edit 1 p/8743-8807`.<br>
+   Expected: Bernice is updated and the warning still names Alex, even though he was hidden by the filter.
+   The full list is shown again, and the entered phone formatting is preserved.
+1. Run `find Bernice`, then `edit 1 p/123456789`.<br>
+   Expected: Bernice is updated without a shared-contact warning; her unchanged email does not match herself.
+
 ### Finding and listing supporters
 
 1. Prerequisites: The list contains `Tan Wei Ming`, `Tan Ah Kow` and `Weiling Koh`, added in that order.
@@ -1587,10 +1614,22 @@ testers are expected to do more _exploratory_ testing.
 1. Prerequisites: Start from the sample data and run `list`.
 
 1. Test case: `add n/Tan p/91234567 x/foo`<br>
-   Expected: No supporter is added. The error shows the rules for phone numbers, followed by `Note: x/ is not a recognised prefix, so it was read as part of the value before it.`
+   Expected: No supporter is added. The error shows the rules for phone numbers, followed by `Note: x/ is not a recognised prefix for this command, so it was read as part of the value before it.`
+
+1. Test case: `add n/Lim p/91234567 by/1`<br>
+   Expected: No supporter is added. The phone-format error is followed by a note identifying `by/` as unsupported by this command.
+
+1. Test case: `edit 1 st/giving`<br>
+   Expected: The format error includes a note identifying `st/`. The supporter's stage is unchanged.
+
+1. Test case: `log 1 nt/Called t/vip`<br>
+   Expected: The interaction is saved with the literal note `Called t/vip`, and the result includes a note identifying `t/` as unsupported by this command.
+
+1. Continuing from the previous test case: `undo`<br>
+   Expected: The interaction is removed.
 
 1. Test case: `log 1 nt/Called dte/2024-10-01`<br>
-   Expected: The 1st supporter gets a new interaction dated today, with the note `Called dte/2024-10-01`. The result ends with a note that `dte/` is not a recognised prefix and was saved as part of the value before it.
+   Expected: The 1st supporter gets a new interaction dated today, with the note `Called dte/2024-10-01`. The result ends with a note that `dte/` is not a recognised prefix for this command and was saved as part of the value before it.
 
 1. Continuing from the previous test case: `undo`<br>
    Expected: The interaction is removed.
@@ -1600,6 +1639,12 @@ testers are expected to do more _exploratory_ testing.
 
 1. Test case: `find x/Alex`<br>
    Expected: No note, as `find` changes no data and there is nothing to undo.
+
+1. Test case: `find n/Alex`<br>
+   Expected: The unsupported-search-filter error names `n/` and lists the supported filters and usage. No advisory note claims that `n/` was treated as ordinary text, and the displayed list and viewed supporter are unchanged.
+
+1. Test case: `log 999 nt/Called t/vip` with fewer than 999 supporters displayed<br>
+   Expected: Only the invalid-supporter-index error is shown, without a prefix note or a new interaction.
 
 ### Logging an interaction
 

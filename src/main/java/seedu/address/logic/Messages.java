@@ -21,16 +21,20 @@ public class Messages {
     public static final String MESSAGE_INVALID_PERSON_DISPLAYED_INDEX = "The supporter index provided is invalid.";
     public static final String MESSAGE_INVALID_INTERACTION_INDEX = "The interaction number provided is invalid.";
     public static final String MESSAGE_PERSONS_LISTED_OVERVIEW = "%1$d supporter(s) listed!";
-    public static final String MESSAGE_UNRECOGNISED_PREFIX = "Note: %1$s is not a recognised prefix, "
-            + "so it was saved as part of the value before it. "
-            + "If this was a typo, run undo and enter the command again.";
-    public static final String MESSAGE_UNRECOGNISED_PREFIXES = "Note: %1$s are not recognised prefixes, "
-            + "so they were saved as part of the values before them. "
-            + "If this was a typo, run undo and enter the command again.";
+    public static final String MESSAGE_UNRECOGNISED_PREFIX =
+            "Note: %1$s is not a recognised prefix for this command, "
+                    + "so it was saved as part of the value before it. "
+                    + "If this was a typo, run undo and enter the command again.";
+    public static final String MESSAGE_UNRECOGNISED_PREFIXES =
+            "Note: %1$s are not recognised prefixes for this command, "
+                    + "so they were saved as part of the values before them. "
+                    + "If this was a typo, run undo and enter the command again.";
     public static final String MESSAGE_UNRECOGNISED_PREFIX_IN_ERROR =
-            "Note: %1$s is not a recognised prefix, so it was read as part of the value before it.";
+            "Note: %1$s is not a recognised prefix for this command, "
+                    + "so it was read as part of the value before it.";
     public static final String MESSAGE_UNRECOGNISED_PREFIXES_IN_ERROR =
-            "Note: %1$s are not recognised prefixes, so they were read as part of the values before them.";
+            "Note: %1$s are not recognised prefixes for this command, "
+                    + "so they were read as part of the values before them.";
     public static final String MESSAGE_DUPLICATE_PERSON = "A supporter named %1$s already exists. "
             + "If this is a different person, add something to tell them apart, e.g. n/%1$s DBS";
     public static final String MESSAGE_DUPLICATE_FIELDS =

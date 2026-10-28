@@ -26,6 +26,7 @@ public class CommandHistory {
             commands.add(command);
         }
         cursor = commands.size();
+        assert isCursorInRange();
     }
 
     /**
@@ -38,6 +39,7 @@ public class CommandHistory {
             return Optional.empty();
         }
         cursor = Math.max(0, cursor - 1);
+        assert isCursorInRange();
         return Optional.of(commands.get(cursor));
     }
 
@@ -51,6 +53,12 @@ public class CommandHistory {
             return Optional.empty();
         }
         cursor++;
+        assert isCursorInRange();
         return Optional.of(cursor == commands.size() ? "" : commands.get(cursor));
+    }
+
+    /** Returns true if the cursor is on a stored command or just past the newest one. */
+    private boolean isCursorInRange() {
+        return cursor >= 0 && cursor <= commands.size();
     }
 }

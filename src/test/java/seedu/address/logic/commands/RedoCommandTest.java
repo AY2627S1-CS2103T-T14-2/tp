@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Person;
 
 public class RedoCommandTest {
 
@@ -29,32 +30,22 @@ public class RedoCommandTest {
 
     @Test
     public void execute_afterUndo_reappliesChange() throws Exception {
-        model.deletePerson(ALICE);
-        model.commitAddressBookIfChanged();
-        new UndoCommand().execute(model);
-        Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
-        expectedModel.deletePerson(ALICE);
+        deleteCommitAndUndo(ALICE);
 
-        assertCommandSuccess(new RedoCommand(), model, RedoCommand.MESSAGE_SUCCESS, expectedModel);
+        assertCommandSuccess(new RedoCommand(), model, RedoCommand.MESSAGE_SUCCESS, getModelWithoutAlice());
     }
 
     @Test
     public void execute_filteredList_showsAllSupporters() throws Exception {
-        model.deletePerson(ALICE);
-        model.commitAddressBookIfChanged();
-        new UndoCommand().execute(model);
+        deleteCommitAndUndo(ALICE);
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
-        Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
-        expectedModel.deletePerson(ALICE);
 
-        assertCommandSuccess(new RedoCommand(), model, RedoCommand.MESSAGE_SUCCESS, expectedModel);
+        assertCommandSuccess(new RedoCommand(), model, RedoCommand.MESSAGE_SUCCESS, getModelWithoutAlice());
     }
 
     @Test
     public void execute_viewedPersonNotInRedoneData_clearsViewedPerson() throws Exception {
-        model.deletePerson(BENSON);
-        model.commitAddressBookIfChanged();
-        new UndoCommand().execute(model);
+        deleteCommitAndUndo(BENSON);
         model.setViewedPerson(BENSON);
 
         new RedoCommand().execute(model);
@@ -64,12 +55,25 @@ public class RedoCommandTest {
 
     @Test
     public void execute_newChangeAfterUndo_throwsCommandException() throws Exception {
-        model.deletePerson(ALICE);
-        model.commitAddressBookIfChanged();
-        new UndoCommand().execute(model);
+        deleteCommitAndUndo(ALICE);
         model.addPerson(AMY);
         model.commitAddressBookIfChanged();
 
         assertCommandFailure(new RedoCommand(), model, RedoCommand.MESSAGE_NOTHING_TO_REDO);
+    }
+
+    private static Model getModelWithoutAlice() {
+        Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+        expectedModel.deletePerson(ALICE);
+        return expectedModel;
+    }
+
+    /**
+     * Deletes {@code person}, saves an undo point and undoes it, leaving one change to redo.
+     */
+    private void deleteCommitAndUndo(Person person) throws Exception {
+        model.deletePerson(person);
+        model.commitAddressBookIfChanged();
+        new UndoCommand().execute(model);
     }
 }

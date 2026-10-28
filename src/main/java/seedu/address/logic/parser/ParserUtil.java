@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -32,6 +33,9 @@ public class ParserUtil {
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer (1, 2, 3, ...).";
     public static final String MESSAGE_INVALID_INTERACTION_INDICES =
             "Provide exactly two positive integer indices: INDEX ENTRY.";
+
+    public static final String MESSAGE_BLANK_TAG = "Tag should not be blank. "
+            + "Provide a tag name after " + PREFIX_TAG + ".";
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
@@ -163,6 +167,9 @@ public class ParserUtil {
      */
     public static Tag parseTag(String tag) throws ParseException {
         requireNonNull(tag);
+        if (StringUtil.isUnicodeBlank(tag)) {
+            throw new ParseException(MESSAGE_BLANK_TAG);
+        }
         String trimmedTag = tag.trim();
         if (!Tag.isValidTagName(trimmedTag)) {
             throw new ParseException(Tag.MESSAGE_CONSTRAINTS);
