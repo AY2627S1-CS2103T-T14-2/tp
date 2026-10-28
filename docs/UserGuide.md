@@ -205,7 +205,7 @@ Changes how far the relationship with a supporter has progressed.
 Format: `stage INDEX STAGE`
 
 - Sets the stage of the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list. The index **must be a positive integer** 1, 2, 3, ...
-- `STAGE` must be one of the six stages below. Upper and lower case are both accepted. No prefix is needed before it.
+- `STAGE` must be one of the six stages below. Upper and lower case are both accepted. No prefix is needed before it, but `st/STAGE`, as used by `add` and `find`, also works: `stage 1 st/giving` is the same as `stage 1 giving`.
 - Any stage can be changed to any other stage, e.g. a lapsed donor can be moved back to `cultivating`.
 - If the supporter is already at that stage, their record is unchanged and a message says so.
 - On success, the detail panel switches to this supporter and shows their current stage, including when they are already at the requested stage.
