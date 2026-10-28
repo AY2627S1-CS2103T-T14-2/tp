@@ -93,21 +93,29 @@ public class FindCommandIntegrationTest {
     @Test
     public void execute_nonBreakingSpaceSearch_matchesNamesAndOrganisations() throws Exception {
         logic.execute("clear");
-        logic.execute("add n/Tan Wei Ming p/91234567 o/DBS Bank");
+        logic.execute("add n/Tan Wei Ming p/91234567 o/DBS\u00a0Bank");
         Person expectedPerson = model.getAddressBook().getPersonList().getFirst();
         logic.execute("add n/Unrelated Supporter p/87654321 o/OCBC Bank");
-        AddressBook original = new AddressBook(model.getAddressBook());
 
-        for (String query : List.of("find Tan Wei Ming", "find Tan\u00a0Wei\u00a0Ming",
+        assertSearchMatchesAndPreservesData(expectedPerson, List.of("find Tan Wei Ming", "find Tan\u00a0Wei\u00a0Ming",
                 "find Ming", "find Ming\u00a0", "find o/DBS Bank", "find o/DBS\u00a0Bank",
                 "find o/DBS Bank\u00a0", "find Tan o/DBS Bank",
-                "find \u00a0Tan\u00a0o/\u00a0DBS\u00a0Bank\u00a0")) {
-            CommandResult result = logic.execute(query);
+                "find \u00a0Tan\u00a0o/\u00a0DBS\u00a0Bank\u00a0"));
+    }
 
-            assertEquals(List.of(expectedPerson), model.getFilteredPersonList(), query);
-            assertEquals("1 supporter(s) listed!", result.getFeedbackToUser(), query);
-            assertEquals(original, model.getAddressBook(), query);
-            assertEquals(original, addressBookStorage.readAddressBook().orElseThrow(), query);
+    @Test
+    public void execute_unicodeWhitespaceInEditedOrganisation_matchesSearches() throws Exception {
+        logic.execute("clear");
+        logic.execute("add n/Tan Wei Ming p/91234567 o/OCBC Bank");
+        Person expectedPerson = new PersonBuilder(model.getAddressBook().getPersonList().getFirst())
+                .withOrganisation("DBS Bank").build();
+        logic.execute("add n/Unrelated Supporter p/87654321 o/OCBC Bank");
+
+        for (String whitespace : List.of("\u00a0", "\u202f", "\u2007", "\u2003", "\u3000")) {
+            logic.execute("edit 1 o/DBS" + whitespace + "Bank");
+
+            assertSearchMatchesAndPreservesData(expectedPerson,
+                    List.of("find o/DBS Bank", "find o/DBS" + whitespace + "Bank"));
         }
     }
 
@@ -241,5 +249,20 @@ public class FindCommandIntegrationTest {
 
         logic.execute("undo");
         assertEquals(getTypicalAddressBook(), model.getAddressBook());
+    }
+
+    /**
+     * Verifies that each query finds only the expected supporter and preserves in-memory and saved data.
+     */
+    private void assertSearchMatchesAndPreservesData(Person expectedPerson, List<String> queries) throws Exception {
+        AddressBook original = new AddressBook(model.getAddressBook());
+        for (String query : queries) {
+            CommandResult result = logic.execute(query);
+
+            assertEquals(List.of(expectedPerson), model.getFilteredPersonList(), query);
+            assertEquals("1 supporter(s) listed!", result.getFeedbackToUser(), query);
+            assertEquals(original, model.getAddressBook(), query);
+            assertEquals(original, addressBookStorage.readAddressBook().orElseThrow(), query);
+        }
     }
 }

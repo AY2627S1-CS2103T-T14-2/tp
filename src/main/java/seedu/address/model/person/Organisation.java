@@ -33,8 +33,8 @@ public class Organisation {
     }
 
     /**
-     * Returns true if a given string is a valid organisation name once its spaces are normalised.
-     * The normalised name must not be blank and must contain at most {@link #MAX_LENGTH} Unicode code points.
+     * Returns true if a given string is a valid organisation name once its spaces are normalized.
+     * The normalized name must not be blank and must contain at most {@link #MAX_LENGTH} Unicode code points.
      * Any characters are allowed, as company names often contain symbols such as {@code &} and {@code '}.
      */
     public static boolean isValidOrganisation(String test) {
@@ -44,7 +44,7 @@ public class Organisation {
     }
 
     private static String normalise(String organisation) {
-        return StringUtil.trimUnicodeWhitespace(organisation).replaceAll("\\s+", " ");
+        return StringUtil.trimUnicodeWhitespace(organisation).replaceAll("(?U)\\s+", " ");
     }
 
     @Override
