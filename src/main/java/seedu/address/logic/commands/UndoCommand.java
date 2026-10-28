@@ -18,6 +18,8 @@ public class UndoCommand extends Command {
 
     public static final String MESSAGE_SUCCESS = "Undid the last change.";
     public static final String MESSAGE_NOTHING_TO_UNDO = "There is no change to undo.";
+    public static final String MESSAGE_NO_ARGUMENTS = "undo takes no arguments and undoes one change at a time. "
+            + "To undo more changes, enter undo again for each one.";
 
     private static final Logger logger = LogsCenter.getLogger(UndoCommand.class);
 

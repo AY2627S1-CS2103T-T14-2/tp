@@ -292,6 +292,18 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_undoWithCount_undoesNothing() throws Exception {
+        model.addPerson(ALICE);
+        model.addPerson(BENSON);
+        model.commitAddressBookIfChanged();
+        logic.execute("delete 1");
+        logic.execute("delete 1");
+
+        assertParseException("undo 3", UndoCommand.MESSAGE_NO_ARGUMENTS);
+        assertEquals(List.of(), model.getAddressBook().getPersonList());
+    }
+
+    @Test
     public void execute_changeWithUnrecognisedPrefix_addsNote() throws Exception {
         model.addPerson(ALICE);
         CommandResult result = logic.execute("log 1 nt/Called about the gala dte/2024-01-01");

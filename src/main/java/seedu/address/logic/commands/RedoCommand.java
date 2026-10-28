@@ -18,6 +18,8 @@ public class RedoCommand extends Command {
 
     public static final String MESSAGE_SUCCESS = "Redid the last undone change.";
     public static final String MESSAGE_NOTHING_TO_REDO = "There is no undone change to redo.";
+    public static final String MESSAGE_NO_ARGUMENTS = "redo takes no arguments and redoes one change at a time. "
+            + "To redo more changes, enter redo again for each one.";
 
     private static final Logger logger = LogsCenter.getLogger(RedoCommand.class);
 
