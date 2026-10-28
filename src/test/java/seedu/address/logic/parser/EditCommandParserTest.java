@@ -83,6 +83,27 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_accentedName_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("José Tan").build();
+
+        assertParseSuccess(parser, "1 n/José Tan", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_nonLatinName_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("李伟").build();
+
+        assertParseSuccess(parser, "1 n/李伟", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_curlyApostropheName_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Charlotte O’Brien").build();
+
+        assertParseSuccess(parser, "1 n/Charlotte O’Brien", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
     public void parse_supportedNames_success() {
         String[] names = {"O'Brien", "Lee-Tan", "J. Tan", "Ravi s/o Kumar", "Priya d/o Kumar",
             "Ravi S/O Kumar", "Priya D/O Kumar", "J. O'Brien-Tan d/o Kumar",
