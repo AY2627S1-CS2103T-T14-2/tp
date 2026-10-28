@@ -459,13 +459,17 @@ In tests, `PersonBuilder` builds a `Person` with no organisation unless `PersonB
 
 Each `Person` owns an interaction history. An entry is represented by the immutable `Interaction` class in the `Model` component and contains a `LocalDate` and a short note.
 
+- Dates supplied through `log` and `editlog` must be on or before today because these commands record completed interactions. JSON loading accepts dates through tomorrow to accommodate a one-day local date difference between saving and loading, such as after changing time zones; the stored date is preserved. Dates more than one calendar day ahead of the computer’s local date at loading are still rejected, whether caused by a time-zone change or a clock adjustment.
+- Both command parsing and JSON loading use `Interaction#isValidDate(LocalDate, LocalDate)`, which accepts dates from `Interaction.MIN_DATE` (`1900-01-01`) through a caller-supplied upper bound, inclusive. Callers obtain today from their clock; tests can supply a fixed date or clock. The `Interaction` constructor checks that the date is non-null but does not itself enforce the date range.
 - An interaction note is trimmed before it is stored. It must not be blank after trimming and must be at most `Interaction.MAX_NOTE_LENGTH` (500) Unicode code points long. `Interaction.isValidNote()` counts code points after trimming; supplementary characters count as one, while combining sequences can count as multiple code points.
 - `Person` stores interactions in logging order. Its constructor makes a defensive copy of the supplied list, and `Person#getInteractions()` returns an unmodifiable view.
 - Existing `Person` constructors create an empty interaction history. This keeps existing creation paths compatible with the new field.
 - `EditCommand` and `StageCommand` copy the existing history into the replacement `Person`, so changing other supporter details never removes past interactions.
 - Interaction history is included in `Person#equals(Object)` and `Person#hashCode()`, but not in `Person#isSamePerson(Person)`. Supporter identity therefore remains name-based.
 
-In the `Storage` component, `JsonAdaptedInteraction` stores a date as an ISO `yyyy-MM-dd` string and a note as a string. `JsonAdaptedPerson` stores the entries in an `"interactions"` array while preserving their order. When loading, a missing array means the supporter has an empty history, so data files created before interaction histories existed remain compatible. A missing interaction field, malformed date, blank note or note longer than 500 Unicode code points after trimming makes the data file invalid.
+In the `Storage` component, `JsonAdaptedInteraction` stores a date as an ISO `yyyy-MM-dd` string and a note as a string. `JsonAdaptedPerson` stores the entries in an `"interactions"` array while preserving their order. When loading, a missing array means the supporter has an empty history, so data files created before interaction histories existed remain compatible. A missing interaction field, malformed or out-of-range date, blank note or note longer than 500 Unicode code points after trimming makes the data file invalid. `JsonAdaptedInteraction` throws `IllegalValueException`, which `JsonAddressBookStorage` reports as `DataLoadingException`. At startup, the app then uses an empty address book and displays the existing loading warning; it does not skip individual invalid entries. Loading leaves the file unchanged, but a subsequent successful save overwrites it with the current in-memory data.
+
+The parser and storage adapter share the date-format and minimum-date messages defined in `Interaction`. The parser uses `Interaction.MESSAGE_FUTURE_DATE` for dates after today. The adapter keeps its own missing-field message and uses `MESSAGE_DATE_TOO_FAR_IN_FUTURE` for dates beyond its one-day allowance. Normal loading uses the computer's default-zone clock; the package-private `JsonAdaptedInteraction#toModelType(Clock)` overload lets tests control today's date.
 
 In tests, `PersonBuilder` builds a `Person` with an empty history unless `PersonBuilder#withInteractions(Interaction...)` is called.
 
@@ -1898,5 +1902,17 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: In the data file, change one supporter's `"stage"` value to `"giving"` (lower case), then launch the app.<br>
       Expected: The data loads, as stages are not case-sensitive.
+
+1. Checking interaction date boundaries in the data file
+
+   1. Prerequisites: Use an isolated test folder with the JAR file and at least one supporter. Run `log 1 nt/Date boundary test`, then close the app and back up `data/supporterbook.json`. For each test, edit only this interaction's `"date"`, using `yyyy-MM-dd` format. Dates relative to today refer to the computer's local date when the app is launched.
+
+   1. Test cases: Set the date to `1900-01-01` and relaunch the app. Close the app without running another command, change the same date to today's date, then relaunch again. Repeat with tomorrow's date.<br>
+      Expected: After each launch, all saved supporters and interactions load, including the edited interaction with its specified date, with no load-failure warning.
+
+   1. Test cases: Close the app, set the date to `1899-12-31` and relaunch. Close the app without running another command, change the same date to the day after tomorrow, then relaunch again.<br>
+      Expected: After each launch, the list is empty and the existing load-failure warning is shown. The whole file is rejected rather than partially loaded, and its contents are unchanged at startup.
+
+   1. Cleanup: Close the app without running another command and restore the valid backup.
 
 1. _{ more test cases … }_

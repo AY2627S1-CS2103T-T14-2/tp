@@ -34,12 +34,6 @@ public class ParserUtil {
     public static final String MESSAGE_INVALID_INTERACTION_INDICES =
             "Provide exactly two positive integer indices: INDEX ENTRY.";
 
-    public static final String MESSAGE_INVALID_INTERACTION_DATE =
-            "Interaction dates must be valid dates in yyyy-MM-dd format, e.g. 2026-10-01.";
-    public static final LocalDate MIN_INTERACTION_DATE = LocalDate.of(1900, 1, 1);
-    public static final String MESSAGE_EARLY_INTERACTION_DATE =
-            "Interaction dates must be on or after " + MIN_INTERACTION_DATE + ".";
-    public static final String MESSAGE_FUTURE_INTERACTION_DATE = "Interaction dates cannot be in the future.";
     public static final String MESSAGE_BLANK_TAG = "Tag should not be blank. "
             + "Provide a tag name after " + PREFIX_TAG + ".";
 
@@ -73,59 +67,6 @@ public class ParserUtil {
             return parseIndex(oneBasedIndex);
         } catch (ParseException e) {
             throw new ParseException(e.getMessage() + "\n" + commandUsage, e);
-        }
-    }
-
-    /**
-     * Parses {@code INDEX ENTRY} into a supporter index and an interaction index.
-     * Accepts leading, trailing and separating whitespace. Only parses the indices; commands must check
-     * their bounds and map the displayed interaction number to its stored position.
-     * Command parsers should wrap a failure with their own invalid-format usage message.
-     *
-     * @throws ParseException if there are not exactly two valid positive integer indices.
-     */
-    public static InteractionIndices parseInteractionIndices(String indices) throws ParseException {
-        requireNonNull(indices);
-        String[] parts = indices.trim().split("\\s+");
-        if (parts.length != 2) {
-            throw new ParseException(MESSAGE_INVALID_INTERACTION_INDICES);
-        }
-        try {
-            return new InteractionIndices(parseIndex(parts[0]), parseIndex(parts[1]));
-        } catch (ParseException e) {
-            throw new ParseException(MESSAGE_INVALID_INTERACTION_INDICES, e);
-        }
-    }
-
-    /**
-     * Parses interaction indices, appending the command's usage to the index error if parsing fails.
-     * Uses the same validation as {@link #parseInteractionIndices(String)}; bounds are checked by the command.
-     *
-     * @throws ParseException if there are not exactly two valid positive integer indices.
-     */
-    public static InteractionIndices parseInteractionIndices(String indices, String commandUsage)
-            throws ParseException {
-        requireAllNonNull(indices, commandUsage);
-        try {
-            return parseInteractionIndices(indices);
-        } catch (ParseException e) {
-            throw new ParseException(e.getMessage() + "\n" + commandUsage, e);
-        }
-    }
-
-    /**
-     * The supporter and interaction indices supplied to an interaction-editing or deletion command.
-     * The interaction index identifies the displayed entry number, not its stored list position.
-     *
-     * @param supporterIndex index in the displayed supporter list.
-     * @param interactionIndex chronological entry number shown beside the interaction, with oldest numbered 1.
-     */
-    public record InteractionIndices(Index supporterIndex, Index interactionIndex) {
-        /**
-         * Creates a pair of non-null supporter and interaction indices.
-         */
-        public InteractionIndices {
-            requireAllNonNull(supporterIndex, interactionIndex);
         }
     }
 
@@ -219,75 +160,6 @@ public class ParserUtil {
     }
 
     /**
-     * Parses a {@code String note} into a valid interaction note.
-     * Leading and trailing whitespaces will be trimmed.
-     *
-     * @throws ParseException if the given {@code note} is invalid.
-     */
-    public static String parseInteractionNote(String note) throws ParseException {
-        requireNonNull(note);
-        String trimmedNote = StringUtil.trimUnicodeWhitespace(note);
-        if (!Interaction.isValidNote(trimmedNote)) {
-            throw new ParseException(Interaction.MESSAGE_CONSTRAINTS);
-        }
-        return trimmedNote;
-    }
-
-    /**
-     * Parses a supplied interaction date, or returns an empty {@code Optional} if absent.
-     * A present value, including a blank string, is validated by {@link #parseInteractionDate(String)}.
-     *
-     * @throws ParseException if the supplied date is invalid, before the minimum date, or in the future.
-     */
-    public static Optional<LocalDate> parseOptionalInteractionDate(Optional<String> date) throws ParseException {
-        requireNonNull(date);
-        if (date.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.of(parseInteractionDate(date.get()));
-    }
-
-    /**
-     * Parses an interaction date in yyyy-MM-dd format, trimming leading and trailing whitespace.
-     * Accepts dates from {@link #MIN_INTERACTION_DATE} (1900-01-01) through today, inclusive.
-     * Uses the computer's local date to determine today.
-     *
-     * @throws ParseException if the date is invalid, before {@link #MIN_INTERACTION_DATE}, or in the future.
-     */
-    public static LocalDate parseInteractionDate(String date) throws ParseException {
-        return parseInteractionDate(date, Clock.systemDefaultZone());
-    }
-
-    /**
-     * Parses an interaction date using {@code clock} to determine today's date.
-     * Accepts dates from {@link #MIN_INTERACTION_DATE} (1900-01-01) through today, inclusive.
-     *
-     * @throws ParseException if the date is invalid, before {@link #MIN_INTERACTION_DATE}, or in the future.
-     */
-    static LocalDate parseInteractionDate(String date, Clock clock) throws ParseException {
-        requireNonNull(date);
-        requireNonNull(clock);
-        String trimmedDate = date.trim();
-        if (!trimmedDate.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) {
-            throw new ParseException(MESSAGE_INVALID_INTERACTION_DATE);
-        }
-
-        LocalDate parsedDate;
-        try {
-            parsedDate = LocalDate.parse(trimmedDate);
-        } catch (DateTimeParseException e) {
-            throw new ParseException(MESSAGE_INVALID_INTERACTION_DATE, e);
-        }
-        if (parsedDate.isBefore(MIN_INTERACTION_DATE)) {
-            throw new ParseException(MESSAGE_EARLY_INTERACTION_DATE);
-        }
-        if (parsedDate.isAfter(LocalDate.now(clock))) {
-            throw new ParseException(MESSAGE_FUTURE_INTERACTION_DATE);
-        }
-        return parsedDate;
-    }
-
-    /**
      * Parses a {@code String tag} into a {@code Tag}.
      * Leading and trailing whitespaces will be trimmed.
      *
@@ -322,5 +194,124 @@ public class ParserUtil {
             }
         }
         return tagSet;
+    }
+
+    /**
+     * Parses {@code INDEX ENTRY} into a supporter index and an interaction index.
+     * Accepts leading, trailing and separating whitespace. Only parses the indices; commands must check
+     * their bounds and map the displayed interaction number to its stored position.
+     * Command parsers should wrap a failure with their own invalid-format usage message.
+     *
+     * @throws ParseException if there are not exactly two valid positive integer indices.
+     */
+    public static InteractionIndices parseInteractionIndices(String indices) throws ParseException {
+        requireNonNull(indices);
+        String[] parts = indices.trim().split("\\s+");
+        if (parts.length != 2) {
+            throw new ParseException(MESSAGE_INVALID_INTERACTION_INDICES);
+        }
+        try {
+            return new InteractionIndices(parseIndex(parts[0]), parseIndex(parts[1]));
+        } catch (ParseException e) {
+            throw new ParseException(MESSAGE_INVALID_INTERACTION_INDICES, e);
+        }
+    }
+
+    /**
+     * Parses interaction indices, appending the command's usage to the index error if parsing fails.
+     * Uses the same validation as {@link #parseInteractionIndices(String)}; bounds are checked by the command.
+     *
+     * @throws ParseException if there are not exactly two valid positive integer indices.
+     */
+    public static InteractionIndices parseInteractionIndices(String indices, String commandUsage)
+            throws ParseException {
+        requireAllNonNull(indices, commandUsage);
+        try {
+            return parseInteractionIndices(indices);
+        } catch (ParseException e) {
+            throw new ParseException(e.getMessage() + "\n" + commandUsage, e);
+        }
+    }
+
+    /**
+     * The supporter and interaction indices supplied to an interaction-editing or deletion command.
+     * The interaction index identifies the displayed entry number, not its stored list position.
+     *
+     * @param supporterIndex index in the displayed supporter list.
+     * @param interactionIndex chronological entry number shown beside the interaction, with oldest numbered 1.
+     */
+    public record InteractionIndices(Index supporterIndex, Index interactionIndex) {
+        /**
+         * Creates a pair of non-null supporter and interaction indices.
+         */
+        public InteractionIndices {
+            requireAllNonNull(supporterIndex, interactionIndex);
+        }
+    }
+
+    /**
+     * Parses a {@code String note} into a valid interaction note.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @throws ParseException if the given {@code note} is invalid.
+     */
+    public static String parseInteractionNote(String note) throws ParseException {
+        requireNonNull(note);
+        String trimmedNote = StringUtil.trimUnicodeWhitespace(note);
+        if (!Interaction.isValidNote(trimmedNote)) {
+            throw new ParseException(Interaction.MESSAGE_CONSTRAINTS);
+        }
+        return trimmedNote;
+    }
+
+    /**
+     * Parses a supplied interaction date, or returns an empty {@code Optional} if absent.
+     * A present value, including a blank string, is validated by {@link #parseInteractionDate(String)}.
+     *
+     * @throws ParseException if the supplied date is invalid, before the minimum date, or in the future.
+     */
+    public static Optional<LocalDate> parseOptionalInteractionDate(Optional<String> date) throws ParseException {
+        requireNonNull(date);
+        if (date.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(parseInteractionDate(date.get()));
+    }
+
+    /**
+     * Parses an interaction date in yyyy-MM-dd format, trimming leading and trailing whitespace.
+     * Accepts dates from {@link Interaction#MIN_DATE} (1900-01-01) through today, inclusive.
+     * Uses the computer's local date to determine today.
+     *
+     * @throws ParseException if the date is invalid, before {@link Interaction#MIN_DATE}, or in the future.
+     */
+    public static LocalDate parseInteractionDate(String date) throws ParseException {
+        return parseInteractionDate(date, Clock.systemDefaultZone());
+    }
+
+    /**
+     * Parses an interaction date using {@code clock} to determine today's date.
+     * Accepts dates from {@link Interaction#MIN_DATE} (1900-01-01) through today, inclusive.
+     *
+     * @throws ParseException if the date is invalid, before {@link Interaction#MIN_DATE}, or in the future.
+     */
+    static LocalDate parseInteractionDate(String date, Clock clock) throws ParseException {
+        requireAllNonNull(date, clock);
+        String trimmedDate = date.trim();
+        if (!trimmedDate.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) {
+            throw new ParseException(Interaction.MESSAGE_INVALID_DATE_FORMAT);
+        }
+
+        LocalDate parsedDate;
+        try {
+            parsedDate = LocalDate.parse(trimmedDate);
+        } catch (DateTimeParseException e) {
+            throw new ParseException(Interaction.MESSAGE_INVALID_DATE_FORMAT, e);
+        }
+        if (!Interaction.isValidDate(parsedDate, LocalDate.now(clock))) {
+            throw new ParseException(parsedDate.isBefore(Interaction.MIN_DATE)
+                    ? Interaction.MESSAGE_EARLY_DATE : Interaction.MESSAGE_FUTURE_DATE);
+        }
+        return parsedDate;
     }
 }

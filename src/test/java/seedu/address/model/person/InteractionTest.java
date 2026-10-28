@@ -100,6 +100,28 @@ public class InteractionTest {
     }
 
     @Test
+    public void isValidDate_withinRange_returnsTrue() {
+        // include both limits, their inner neighbours and an ordinary historical date
+        for (LocalDate date : List.of(LocalDate.of(1900, 1, 1), LocalDate.of(1900, 1, 2),
+                LocalDate.of(2024, 2, 29), DATE.minusDays(1), DATE)) {
+            assertTrue(Interaction.isValidDate(date, DATE), date.toString());
+        }
+    }
+
+    @Test
+    public void isValidDate_outsideRange_returnsFalse() {
+        // test just outside each limit with an otherwise valid calendar date
+        assertFalse(Interaction.isValidDate(LocalDate.of(1899, 12, 31), DATE));
+        assertFalse(Interaction.isValidDate(DATE.plusDays(1), DATE));
+    }
+
+    @Test
+    public void isValidDate_nullArguments_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> Interaction.isValidDate(null, DATE));
+        assertThrows(NullPointerException.class, () -> Interaction.isValidDate(DATE, null));
+    }
+
+    @Test
     public void equals() {
         Interaction interaction = new Interaction(DATE, "Called");
 
