@@ -213,6 +213,16 @@ The advisory scan never rejects input; the notes only point out words treated as
   - Pros: A mistyped prefix is never saved.
   - Cons: Real values with slashes could not be saved at all, with no way around it, unless every such word, like `Unit/`, were added to a list of exceptions.
 
+### Index parsing and error feedback
+
+All supporter, introducer and interaction-entry indices are parsed by `ParserUtil#parseIndex(String)`. It trims surrounding whitespace, then uses `StringUtil#isNonZeroUnsignedInteger(String)` to require ASCII digits (`[0-9]+`) and a value from `1` to `2147483647`. Leading zeros are allowed. The ASCII check rejects full-width and Arabic-Indic digits.
+
+`ParserUtil#parseIndex(String, String)` first checks that the trimmed argument contains exactly one value. Empty or multi-word arguments produce `Invalid command format!` followed by the supplied command usage. A single value is delegated to the existing single-argument parser; invalid values produce `Index must be a positive integer (1, 2, 3, ...).` followed by usage, preserving the original exception as the cause. This includes values above the supported maximum of `2147483647`, even though they are positive integers. The overload is used by `delete`, `view`, `edit`, `stage`, `log`, `tag`, `untag`, and both target and introducer index parsing in `intro`.
+
+`ParserUtil#parseInteractionIndices(String, String)` provides the corresponding behavior for `editlog` and `unlog`: missing, extra or invalid indices produce `Provide exactly two positive integer indices: INDEX ENTRY.` followed by command usage. These helpers validate syntax and integer range only; commands still validate supporter indices against the displayed list and interaction numbers against the selected history.
+
+Validation order is unchanged. Missing required arguments can fail a command's format checks before index parsing, and `intro` checks duplicate prefixes before parsing its indices. A blank `by/` still requests removal of the introducer. Valid indices, including leading zeros and surrounding whitespace, retain their existing interpretation.
+
 ### Finding and listing supporters
 
 `FindCommandParser` reads name keywords from the preamble and uses `ArgumentTokenizer` to read
@@ -472,6 +482,7 @@ In tests, `PersonBuilder` builds a `Person` with no organisation unless `PersonB
 Each `Person` owns an interaction history. An entry is represented by the immutable `Interaction` class in the `Model` component and contains a `LocalDate` and a short note.
 
 - Dates supplied through `log` and `editlog` must be on or before today because these commands record completed interactions. JSON loading accepts dates through tomorrow to accommodate a one-day local date difference between saving and loading, such as after changing time zones; the stored date is preserved. Dates more than one calendar day ahead of the computer’s local date at loading are still rejected, whether caused by a time-zone change or a clock adjustment.
+- `Interaction#isValidDateFormat(String)` checks the ASCII `yyyy-MM-dd` format for both command parsing and JSON loading. Each caller then uses `LocalDate#parse(String)` to check calendar validity.
 - Both command parsing and JSON loading use `Interaction#isValidDate(LocalDate, LocalDate)`, which accepts dates from `Interaction.MIN_DATE` (`1900-01-01`) through a caller-supplied upper bound, inclusive. Callers obtain today from their clock; tests can supply a fixed date or clock. The `Interaction` constructor checks that the date is non-null but does not itself enforce the date range.
 - An interaction note is trimmed before it is stored. It must not be blank after trimming and must be at most `Interaction.MAX_NOTE_LENGTH` (500) Unicode code points long. `Interaction.isValidNote()` counts code points after trimming; supplementary characters count as one, while combining sequences can count as multiple code points.
 - `Person` stores interactions in logging order. Its constructor makes a defensive copy of the supplied list, and `Person#getInteractions()` returns an unmodifiable view.
@@ -508,6 +519,8 @@ In tests, `PersonBuilder` builds a `Person` with an empty history unless `Person
   - Cons: It adds a redundant state and prevents older data files from loading.
 
 ### Logging an interaction
+
+`LogCommand`, `EditLogCommand` and `UnlogCommand` share the package-private `InteractionCommandSupport` helper in the `Logic` component. It validates the supporter index against the displayed list and returns the selected supporter. For editing and deletion, it also validates the one-based chronological interaction number and calls `Person#getInteractionStoredIndex(int)` to obtain the zero-based stored index.
 
 **Parsing `log INDEX nt/NOTE [dt/DATE]`:** The command is parsed by `LogCommandParser` as follows.
 
@@ -562,10 +575,12 @@ Identical interactions are appended normally because two calls or messages with 
 1. Validate the supporter index against `Model#getFilteredPersonList()`, then the entry number against that supporter's history size. These failures have distinct messages and leave data and selection unchanged.
 2. Call `Person#getInteractionStoredIndex(int)` on the original supporter to convert the one-based chronological entry number to its zero-based stored index.
 3. Create a replacement `Interaction`, taking omitted fields from the original. Replace the entry at its stored index in a copied list. This distinguishes identical entries and preserves logging position for equal-date ordering.
-4. Create a replacement `Person` preserving all other fields, including the introducer. Call `Model#setPerson(Person, Person)` and `Model#setViewedPerson(Person)` without changing the list filter.
-5. Call `Person#getInteractionEntryNumber(int)` on the updated supporter to convert the edited entry's zero-based stored index to its current one-based chronological number for the success message. `SupporterDetailData` uses the same ordering to refresh the panel.
+4. Create a replacement `Person` preserving all other fields, including the introducer. Call `Model#setPerson(Person, Person)` only if the replacement differs from the original. Use `Model#setViewedPerson(Person)` to select the replacement when changed, or the original otherwise, without changing the list filter.
+5. Call `Person#getInteractionEntryNumber(int)` to convert the edited entry's zero-based stored index to its current one-based chronological number. If anything changed, return this number, the date and the note in the success message. `SupporterDetailData` uses the same ordering to refresh the panel.
 
-Supplying unchanged values succeeds normally. Date edits can renumber other entries, but do not reorder the stored list. Last contact remains derived from the latest interaction date.
+An edit that leaves the note and date unchanged returns `MESSAGE_NOT_CHANGED` and creates no undo point. A following `undo` therefore reverts an earlier change, if one is available. See [Undo/redo feature](#undo-redo-feature) for how changes are recorded.
+
+Date edits can renumber other entries, but do not reorder the stored list. Last contact remains derived from the latest interaction date.
 
 `EditLogCommandTest` checks command behavior, while parser tests cover input validation. `EditLogCommandIntegrationTest` verifies renumbering and display order from command input through detail-panel data, without starting JavaFX.
 
@@ -635,16 +650,6 @@ Undo and redo match immutable record versions by their original object identity 
 * **Alternative 2:** Update selection separately in each command that changes supporters.
   * Pros: Each command controls its own selection behavior.
   * Cons: The same logic is repeated across commands, and a new command can leave selection pointing to an outdated record.
-
-### Index parsing and error feedback
-
-All supporter, introducer and interaction-entry indices are parsed by `ParserUtil#parseIndex(String)`. It trims surrounding whitespace, then uses `StringUtil#isNonZeroUnsignedInteger(String)` to require ASCII digits (`[0-9]+`) and a value from `1` to `2147483647`. Leading zeros are allowed. The ASCII check rejects full-width and Arabic-Indic digits that `Integer.parseInt` would otherwise accept.
-
-`ParserUtil#parseIndex(String, String)` first checks that the trimmed argument contains exactly one value. Empty or multi-word arguments produce `Invalid command format!` followed by the supplied command usage. A single value is delegated to the existing single-argument parser; invalid values produce `Index must be a positive integer (1, 2, 3, ...).` followed by usage, preserving the original exception as the cause. This includes values above the supported maximum of `2147483647`, even though they are positive integers. The overload is used by `delete`, `view`, `edit`, `stage`, `log`, `tag`, `untag`, and both target and introducer index parsing in `intro`.
-
-`ParserUtil#parseInteractionIndices(String, String)` provides the corresponding behavior for `editlog` and `unlog`: missing, extra or invalid indices produce `Provide exactly two positive integer indices: INDEX ENTRY.` followed by command usage. These helpers validate syntax and integer range only; commands still validate supporter indices against the displayed list and interaction numbers against the selected history.
-
-Validation order is unchanged. Missing required arguments can fail a command's format checks before index parsing, and `intro` checks duplicate prefixes before parsing its indices. A blank `by/` still requests removal of the introducer. Valid indices, including leading zeros and surrounding whitespace, retain their existing interpretation.
 
 ### Phone-number validation
 
@@ -1004,7 +1009,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | -------- | ---------- | ----------------------------------------------------------------------------- | ----------------------------------------------------- |
 | `* * *`  | fundraiser | log an interaction against a supporter with a date and a short note           | what was said stops living only in my memory          |
 | `* * *`  | fundraiser | see all logged interactions for a supporter in date order                     | I can see how the relationship has developed          |
-| `* *`    | fundraiser | correct or remove a logged interaction                                        | a mistyped date does not stay wrong forever           |
+| `* *`    | fundraiser | correct or remove a logged interaction                                        | my interaction history remains accurate              |
 | `* *`    | fundraiser | see the date of the most recent interaction beside each supporter in the list | I can see at a glance who has gone quiet              |
 | `*`      | fundraiser | log an interaction dated in the past                                          | I can write up a meeting the week after it happened   |
 | `*`      | fundraiser | record what kind of interaction it was, such as a call, a meeting or an email | I can tell a coffee meeting apart from a mass mailing |
@@ -1250,7 +1255,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case resumes from step 1.
 
-- 1e. The supplied date is empty, is not a valid calendar date in yyyy-MM-dd format, is before 1900-01-01, or is after today.
+- 1e. The supplied date is invalid.
   - 1e1. SupporterBook shows an error message explaining the date constraint.
 
     Use case resumes from step 1.
@@ -1424,6 +1429,44 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case ends.
 
+**Use case: UC12 - Edit a logged interaction**
+
+**Preconditions: A list of supporters is shown, with an index beside each supporter**
+
+**MSS**
+
+1.  User requests to edit a logged interaction, giving the supporter index, the interaction number and a new note, date or both.
+2.  SupporterBook updates only the specified details of that interaction, keeping the supporter's other details and interactions unchanged.
+3.  SupporterBook confirms the edit and shows the supporter's updated interaction history with its current entry numbers.
+
+    Use case ends.
+
+**Extensions**
+
+- 1a. The supporter index or interaction number is invalid.
+  - 1a1. SupporterBook shows an error message explaining the index problem and makes no changes.
+
+    Use case resumes from step 1.
+
+- 1b. User does not give a note or date to edit.
+  - 1b1. SupporterBook shows an error message stating that at least one field is required.
+
+    Use case resumes from step 1.
+
+- 1c. A supplied note or date is invalid, or a field is supplied more than once.
+  - 1c1. SupporterBook shows an error message explaining the invalid value or repeated field and makes no changes.
+
+    Use case resumes from step 1.
+
+- 1d. The supplied details are the same as the interaction's existing details.
+  - 1d1. SupporterBook shows the supporter's interaction history and informs the user that nothing was changed.
+
+    Use case ends.
+
+**Use case: UC13 - Delete a logged interaction**
+
+This is a variation of UC12, with the same precondition and invalid-index handling (extension 1a). The user gives the supporter index and interaction number, requesting deletion instead of supplying replacement details. SupporterBook removes only the identified interaction, keeps the supporter and their other interactions, and confirms the deletion. It shows the remaining interaction history with consecutive entry numbers, or indicates that no interactions remain if the last entry was deleted.
+
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
@@ -1444,14 +1487,14 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 - **CRM (Customer Relationship Management system)**: Software that an organisation uses to keep track of its relationships with customers or supporters. Small charities often cannot afford one.
 - **CSR (Corporate Social Responsibility)**: A company's programme for supporting causes such as charities, e.g. through donations, partnerships or employee volunteering. A _CSR contact_ is the person at a company who manages it.
 - **Cultivation stage**: How far a supporter's relationship with the charity has progressed. Every supporter is at exactly one of these six stages:
-  - **Prospect**: Identified as a possible supporter, not yet approached. This is the stage of a newly added supporter.
+  - **Prospect**: Identified as a possible supporter, not yet approached. This is the default stage when `st/` is omitted from `add`.
   - **Contacted**: First approach made, with no real conversation yet.
   - **Cultivating**: In an active relationship or discussion, not yet giving.
   - **Giving**: Currently donating (an individual) or partnering (a company).
   - **Lapsed**: Gave before, but is no longer giving.
   - **Declined**: Said no.
 - **Epic**: A large user need that is broken down into several smaller user stories. The user stories above are grouped by epic.
-- **Find filter**: The shorter list of supporters shown after a `find` or `quiet` command. It stays in place until another `find` or `quiet` replaces it, or `list`, `add`, `edit`, `undo` or `redo` shows the full list again.
+- **Find filter**: The filtered list of supporters shown after a `find` or `quiet` command. It stays in place until another `find` or `quiet` replaces it, or `list`, `add`, `edit`, `undo` or `redo` shows the full list again.
 - **Index**: The number shown beside a supporter in the currently displayed list, used by commands to refer to that supporter. The same supporter can have a different index after a `find`.
 - **Interaction**: A dated record of one conversation or other contact with a supporter, with a short note of what happened. A supporter's interactions together form their _interaction history_.
 - **Introducer**: The supporter who introduced another supporter to the charity, recorded with `intro`. A supporter has at most one introducer, who must be another supporter in SupporterBook.
@@ -1855,6 +1898,33 @@ testers are expected to do more _exploratory_ testing.
 1. Test case: `log 999 nt/Called t/vip` with fewer than 999 supporters displayed<br>
    Expected: Only the invalid-supporter-index error is shown, without a prefix note or a new interaction.
 
+### Invalid-index feedback
+
+For the non-ASCII test cases below, copy and paste the commands directly from this guide to preserve the digit characters `１`, `２` and `١`.
+
+1. Prerequisites: Use isolated test data with at least two supporters. The second supporter ensures that `stage ２ giving` tests digit validation with an otherwise valid index. Run `list`, then `log 1 nt/Index validation test` and `view 1`, and note the displayed list, selected supporter and interaction history.
+
+1. Test cases: `delete 0`, `delete abc`, `view 0` and `edit 0 n/x`<br>
+   Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the respective command's usage. Data, filtering, selection and the saved data file remain unchanged.
+
+1. Test cases: `stage 0 giving`, `log 0 nt/Called`, `tag 0 t/vip`, `untag 0 t/vip`, `intro 0 by/1` and `intro 1 by/abc`<br>
+   Expected: The same positive-integer explanation followed by the respective command's usage. No data or selection changes.
+
+1. Test cases: Run `view １`, `view ١` and `stage ２ giving` separately.<br>
+   Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the respective command's usage. The indices use full-width or Arabic-Indic digits. Data, filtering, selection and the saved data file remain unchanged.
+
+1. Test cases: `editlog 1 abc nt/Note`, `unlog 0 1`, `unlog 1` and `unlog 1 2 3`<br>
+   Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by the respective command's usage. No data or selection changes.
+
+1. Test cases: Run `editlog １ 1 nt/x` and `editlog 1 １ nt/x` separately.<br>
+   Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by editlog usage. Each command contains one full-width index. The interaction history and selection remain unchanged.
+
+1. Test cases: `delete`, `view`, `edit n/Bob`, `stage 1`, `log 1`, `intro 1`, `tag 1` and `untag 1`<br>
+   Expected: `Invalid command format!` followed by the respective command's usage because required arguments are missing. No data or selection changes.
+
+1. Test cases: `delete 1 2`, `view 1 2`, `edit 1 x n/Bob`, `stage 1 giving extra`, `log 1 x nt/Called`, `intro 1 by/2 3`, `tag 1 2 t/vip` and `untag 1 2 t/vip`<br>
+   Expected: `Invalid command format!` followed by the respective command's usage because extra arguments were supplied. No data or selection changes.
+
 ### Logging an interaction
 
 1. Logging while all supporters are being shown
@@ -2032,33 +2102,6 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: While scrolled down, run `list` or `find`.<br>
       Expected: The same supporter and scroll position remain visible. A subsequent `log` for that supporter refreshes the history and returns it to the top.
-
-### Invalid-index feedback
-
-For the non-ASCII test cases below, copy and paste the commands directly from this guide to preserve the digit characters `１`, `２` and `١`.
-
-1. Prerequisites: Use isolated test data with at least two supporters. The second supporter ensures that `stage ２ giving` tests digit validation with an otherwise valid index. Run `list`, then `log 1 nt/Index validation test` and `view 1`, and note the displayed list, selected supporter and interaction history.
-
-1. Test cases: `delete 0`, `delete abc`, `view 0` and `edit 0 n/x`<br>
-   Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the respective command's usage. Data, filtering, selection and the saved data file remain unchanged.
-
-1. Test cases: `stage 0 giving`, `log 0 nt/Called`, `tag 0 t/vip`, `untag 0 t/vip`, `intro 0 by/1` and `intro 1 by/abc`<br>
-   Expected: The same positive-integer explanation followed by the respective command's usage. No data or selection changes.
-
-1. Test cases: Run `view １`, `view ١` and `stage ２ giving` separately.<br>
-   Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the respective command's usage. The indices use full-width or Arabic-Indic digits. Data, filtering, selection and the saved data file remain unchanged.
-
-1. Test cases: `editlog 1 abc nt/Note`, `unlog 0 1`, `unlog 1` and `unlog 1 2 3`<br>
-   Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by the respective command's usage. No data or selection changes.
-
-1. Test cases: Run `editlog １ 1 nt/x` and `editlog 1 １ nt/x` separately.<br>
-   Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by editlog usage. Each command contains one full-width index. The interaction history and selection remain unchanged.
-
-1. Test cases: `delete`, `view`, `edit n/Bob`, `stage 1`, `log 1`, `intro 1`, `tag 1` and `untag 1`<br>
-   Expected: `Invalid command format!` followed by the respective command's usage because required arguments are missing. No data or selection changes.
-
-1. Test cases: `delete 1 2`, `view 1 2`, `edit 1 x n/Bob`, `stage 1 giving extra`, `log 1 x nt/Called`, `intro 1 by/2 3`, `tag 1 2 t/vip` and `untag 1 2 t/vip`<br>
-   Expected: `Invalid command format!` followed by the respective command's usage because extra arguments were supplied. No data or selection changes.
 
 ### Phone formats and annotations
 
