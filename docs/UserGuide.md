@@ -92,6 +92,9 @@ Shows a message explaining how to access the help page.
 
 Format: `help`
 
+- You can also open the help window with the `Help` menu or by pressing `F1`.
+- Click **Copy URL** to copy the user guide's link. The button shows `Copied!` for 2 seconds to confirm the link was copied.
+
 ### Adding a supporter: `add`
 
 Adds a supporter to SupporterBook.
