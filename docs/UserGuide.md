@@ -577,6 +577,7 @@ Format: `undo`
 - Running `undo` again reverts the change before that, back to when the app was opened.
 - A command that changes nothing, such as `stage` with the supporter's current stage, `tag` with a tag they already have or `edit` with the details they already have, is not recorded. Neither is a command that fails. There is nothing to undo for them.
 - After undoing, all supporters are listed. The detail panel shows the displayed supporter's restored record, or is cleared if that supporter no longer exists.
+- The result display names the command that made the change, as you typed it, e.g. `Undid the last change: tag 1 t/vip`.
 - `undo` takes no parameters and undoes one change at a time. For example, `undo 3` is rejected and nothing is undone; enter `undo` three times instead.
 - Undo history is kept only while the app is open. After you restart the app, earlier changes cannot be undone.
 
@@ -596,6 +597,7 @@ Format: `redo`
 - Running `redo` again re-applies the next undone change, in the order they were undone.
 - Making a new change after `undo` discards the undone changes, so they can no longer be redone.
 - After redoing, all supporters are listed, and the detail panel is updated in the same way as for `undo`.
+- The result display names the command being redone, e.g. `Redid the last undone change: tag 1 t/vip`.
 - `redo` takes no parameters and redoes one change at a time, so `redo 3` is rejected and nothing is redone.
 
 If there is nothing to redo, the result display shows `There is no undone change to redo.` and nothing is changed.
