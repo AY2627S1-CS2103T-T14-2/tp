@@ -91,6 +91,27 @@ public class FindCommandIntegrationTest {
     }
 
     @Test
+    public void execute_nonBreakingSpaceSearch_matchesNamesAndOrganisations() throws Exception {
+        logic.execute("clear");
+        logic.execute("add n/Tan Wei Ming p/91234567 o/DBS Bank");
+        Person expectedPerson = model.getAddressBook().getPersonList().getFirst();
+        logic.execute("add n/Unrelated Supporter p/87654321 o/OCBC Bank");
+        AddressBook original = new AddressBook(model.getAddressBook());
+
+        for (String query : List.of("find Tan Wei Ming", "find Tan\u00a0Wei\u00a0Ming",
+                "find Ming", "find Ming\u00a0", "find o/DBS Bank", "find o/DBS\u00a0Bank",
+                "find o/DBS Bank\u00a0", "find Tan o/DBS Bank",
+                "find \u00a0Tan\u00a0o/\u00a0DBS\u00a0Bank\u00a0")) {
+            CommandResult result = logic.execute(query);
+
+            assertEquals(List.of(expectedPerson), model.getFilteredPersonList(), query);
+            assertEquals("1 supporter(s) listed!", result.getFeedbackToUser(), query);
+            assertEquals(original, model.getAddressBook(), query);
+            assertEquals(original, addressBookStorage.readAddressBook().orElseThrow(), query);
+        }
+    }
+
+    @Test
     public void execute_repeatedStages_retainsOriginalOrder() throws Exception {
         logic.execute("find st/lapsed st/giving");
 
