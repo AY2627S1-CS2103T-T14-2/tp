@@ -275,6 +275,52 @@ public class NameTest {
     }
 
     @Test
+    public void isSameName_differentApostropheStyles_returnsTrue() {
+        Name straightName = new Name("O'Brien");
+        Name curlyName = new Name("O’Brien");
+
+        assertTrue(straightName.isSameName(curlyName));
+        assertTrue(curlyName.isSameName(straightName));
+    }
+
+    @Test
+    public void isSameName_differentApostropheStylesWithCaseAndSpaces_returnsTrue() {
+        Name straightName = new Name("Charlotte O'Brien");
+        Name curlyName = new Name("  CHARLOTTE   O’BRIEN  ");
+
+        assertTrue(straightName.isSameName(curlyName));
+        assertTrue(curlyName.isSameName(straightName));
+    }
+
+    @Test
+    public void isSameName_differentPunctuation_returnsFalse() {
+        Name name = new Name("O'Brien");
+
+        assertFalse(name.isSameName(new Name("OBrien")));
+        assertFalse(name.isSameName(new Name("O-Brien")));
+    }
+
+    @Test
+    public void constructor_differentApostropheStyles_preservesOriginalSpelling() {
+        Name straightName = new Name("Charlotte O'Brien");
+        Name curlyName = new Name("Charlotte O’Brien");
+
+        assertEquals("Charlotte O'Brien", straightName.fullName);
+        assertEquals("Charlotte O'Brien", straightName.toString());
+        assertEquals("Charlotte O’Brien", curlyName.fullName);
+        assertEquals("Charlotte O’Brien", curlyName.toString());
+    }
+
+    @Test
+    public void equals_differentApostropheStyles_returnsFalse() {
+        Name straightName = new Name("O'Brien");
+        Name curlyName = new Name("O’Brien");
+
+        assertFalse(straightName.equals(curlyName));
+        assertFalse(curlyName.equals(straightName));
+    }
+
+    @Test
     public void equals() {
         Name name = new Name("Valid Name");
 

@@ -140,6 +140,15 @@ public class PersonTest {
     }
 
     @Test
+    public void isSamePerson_differentApostropheStylesAndContactDetails_returnsTrue() {
+        Person straightPerson = new PersonBuilder(ALICE).withName("Charlotte O'Brien").build();
+        Person curlyPerson = new PersonBuilder(BOB).withName("Charlotte O’Brien").build();
+
+        assertTrue(straightPerson.isSamePerson(curlyPerson));
+        assertTrue(curlyPerson.isSamePerson(straightPerson));
+    }
+
+    @Test
     public void equals() {
         // same values -> returns true
         Person aliceCopy = new PersonBuilder(ALICE).build();

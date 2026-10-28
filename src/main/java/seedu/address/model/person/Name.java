@@ -54,12 +54,14 @@ public class Name {
     }
 
     /**
-     * Returns true if both names are the same, ignoring case.
+     * Returns true if both names are the same, ignoring case and differences between straight and curly apostrophes.
+     * Apostrophes are normalized only for comparison, preserving each name's stored spelling.
      * Canonically equivalent Unicode spellings and spaces need no special handling,
      * as every {@code Name} has NFC and space normalization applied.
      */
     public boolean isSameName(Name otherName) {
-        return otherName != null && fullName.equalsIgnoreCase(otherName.fullName);
+        return otherName != null
+                && fullName.replace('’', '\'').equalsIgnoreCase(otherName.fullName.replace('’', '\''));
     }
 
 
