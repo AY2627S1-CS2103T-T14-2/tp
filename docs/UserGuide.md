@@ -417,7 +417,7 @@ Format: `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`
 
 - `INDEX` is the supporter index in the displayed list; after `find`, use the search-result index. Both indices must be positive integers.
 - `ENTRY` is the number beside the interaction in the detail panel, not its row position. Use `view INDEX` to check it first.
-- Supply at least one field. Omitted fields remain unchanged; supplying the existing value is allowed.
+- Supply at least one field. Omitted fields remain unchanged; supplying the existing value is allowed. If nothing would change, the result says `Nothing was changed.`, and no undo point is saved, so a following `undo` reverts an earlier change instead.
 - To revert an interaction edited by mistake, run `undo` immediately afterward. Undo history is available only during the current session.
 - `NOTE` must not be blank and may contain at most 500 characters after trimming leading and trailing spaces. Characters are counted as described under [logging an interaction](#logging-an-interaction-log).
 - `DATE` must be a valid `yyyy-MM-dd` date from `1900-01-01` through today (inclusive), using the computer's clock. Empty, invalid and out-of-range dates are rejected.
