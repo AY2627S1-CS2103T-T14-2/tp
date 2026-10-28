@@ -69,6 +69,9 @@ public class StageCommandParserTest {
         // not a number
         assertParseFailure(parser, " x giving", MESSAGE_INVALID_INDEX);
 
+        // non-ASCII digit
+        assertParseFailure(parser, " ２ giving", MESSAGE_INVALID_INDEX);
+
         // zero
         assertParseFailure(parser, " 0 giving", MESSAGE_INVALID_INDEX);
 

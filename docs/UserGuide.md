@@ -57,7 +57,8 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 
 - Command words ignore case. For example, `list`, `LIST` and `List` all list every supporter.
 
-- Supporter indices must be positive integers. For example, `delete 0`, `delete abc`, `view 0` and `edit 0 n/x` report `Index must be a positive integer (1, 2, 3, ...).` followed by the command's usage.<br>
+- Supporter indices (including introducer indices) and interaction-entry indices must be positive integers written with the digits `0` to `9`. Other digit characters, such as the full-width `１` typed by some Chinese or Japanese input methods, are rejected. Leading zeros are allowed: `01` means index `1`.
+  For example, `delete 0`, `delete abc`, `view 0`, `view １` and `edit 0 n/x` report `Index must be a positive integer (1, 2, 3, ...).` followed by the command's usage.<br>
   For `editlog` and `unlog`, missing, extra or invalid indices report `Provide exactly two positive integer indices: INDEX ENTRY.` followed by usage. A positive index that does not identify a displayed supporter or interaction is rejected separately during execution. For commands requiring a single supporter index, a missing index or extra words in the index argument produce `Invalid command format!` followed by usage. Missing required fields can also produce this format error.
 
 - Items in square brackets are optional.<br>

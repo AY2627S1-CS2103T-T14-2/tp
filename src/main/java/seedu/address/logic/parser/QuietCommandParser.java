@@ -23,7 +23,7 @@ public class QuietCommandParser implements Parser<QuietCommand> {
         if (trimmedArgs.isEmpty()) {
             return new QuietCommand();
         }
-        if (!trimmedArgs.matches("[0-9]+") || !StringUtil.isNonZeroUnsignedInteger(trimmedArgs)) {
+        if (!StringUtil.isNonZeroUnsignedInteger(trimmedArgs)) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, QuietCommand.MESSAGE_USAGE));
         }
         return new QuietCommand(Integer.parseInt(trimmedArgs));
