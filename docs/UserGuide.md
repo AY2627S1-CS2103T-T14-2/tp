@@ -490,7 +490,7 @@ Format: `view INDEX`
 * `INDEX` is required and must be a positive integer from the currently displayed supporter list. After a `find`, use the index shown in the search results.
 * Supply exactly one index, with no additional arguments.
 * Viewing a supporter preserves the displayed list, its filter and all supporter data.
-* The panel shows the name, stage, organisation, phone, email, address, tags, introducer and the supporters they introduced. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically.
+* The panel shows the name, stage, organisation, phone, email, address, tags, introducer and the supporters they introduced. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically, ignoring capitalisation, in the same order as on the supporter card and in command results.
 * Above the interaction history, the panel shows the same last-contact line as the supporter card, for example `Last contact: 03 Oct 2026`, or `No interactions yet` if there are no logged interactions. The line updates when the displayed supporter's interaction history changes.
 * Interactions appear newest first, e.g. `#4  16 Sep 2026  Sent partnership deck by email`. Numbers descend to `#1`, the oldest entry. On equal dates, later-logged entries appear first.
 * If the window is too short to show everything, the panel gets a scroll bar, so you can scroll down to the interaction history.

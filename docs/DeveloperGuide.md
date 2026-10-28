@@ -729,7 +729,7 @@ The walk takes at most as many steps as there are supporters. A chain without lo
 
 `tag` adds tags to a supporter and `untag` removes them, keeping the supporter's other tags. Before these commands, the only way to change tags was `edit INDEX t/...`, which replaces all of a supporter's tags.
 
-`TagCommandParser` and `UntagCommandParser` parse the index and tags. `ParserUtil#parseTags(Collection<String>)` keeps only the first spelling of tags that differ only in case, so `t/vip t/VIP` gives one tag. `JsonAdaptedPerson` applies the same rule when loading the data file, keeping the spelling that comes first. The two commands share their behaviour through the abstract class `TagChangeCommand`, as shown below.
+`TagCommandParser` and `UntagCommandParser` parse the index and tags. `ParserUtil#parseTags(Collection<String>)` keeps only the first spelling of tags that differ only in case, so `t/vip t/VIP` gives one tag. `JsonAdaptedPerson` applies the same rule when loading the data file, keeping the spelling that comes first. Command results (`Messages`), `PersonCard` and `SupporterDetailData` all list tags in `Tag.ALPHABETICAL_ORDER`, which ignores case, so tags appear in the same order everywhere. The two commands share their behaviour through the abstract class `TagChangeCommand`, as shown below.
 
 <puml src="diagrams/TagChangeClassDiagram.puml" alt="Class diagram of TagChangeCommand and its subclasses TagCommand and UntagCommand" />
 
@@ -1564,6 +1564,9 @@ testers are expected to do more _exploratory_ testing.
 
 1. Test case: `tag 1 t/vip t/VIP t/monthlydonor`<br>
    Expected: The message is `Added tags to Alex Yeoh: [vip]`, then `Skipped tags they already have: [monthlydonor]` on a second line. `t/VIP` counts as the same tag as `t/vip`, and Alex keeps `monthlyDonor` as it was spelt.
+
+1. Continuing from the previous test case: `tag 1 t/Zakat`, then `view 1`<br>
+   Expected: The card and the detail panel both list Alex's tags as `monthlyDonor`, `vip`, `Zakat`, alphabetically ignoring capitalisation.
 
 1. Continuing from the previous test case: `untag 1 t/VIP t/gala2025`<br>
    Expected: The message is `Removed tags from Alex Yeoh: [vip]`, then `Skipped tags they do not have: [gala2025]`.
