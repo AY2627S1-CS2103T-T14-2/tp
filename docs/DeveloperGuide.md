@@ -78,6 +78,8 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 
 `SupporterDetailPanel` displays the viewed supporter's details and interaction history using values prepared by `SupporterDetailData`. Both `PersonCard` and `SupporterDetailData` use `LastContactFormatter` to format the last-contact line consistently.
 
+`PersonListCard.fxml` lets long names and organisations wrap within the available card width, so supporters with similar long names remain distinguishable. The index and stage badge retain their preferred widths and align with the name's first baseline; cards grow vertically as text wraps. `PersonCardTest` covers full text rendering, alignment, non-overlapping content, resizing, and single-line short values.
+
 `CommandBox` also keeps a `CommandHistory` of the commands entered this session, which it uses to bring back earlier commands when the user presses Up or Down. `CommandHistory` is plain Java with no JavaFX code, so its behavior is tested without starting the UI. It stays in the `UI` component because it only recalls typed text; it does not affect how commands are parsed or executed.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T14-2/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T14-2/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
@@ -1450,6 +1452,22 @@ testers are expected to do more _exploratory_ testing.
 
 1. Test case: `find` without keywords<br>
    Expected: An invalid-command-format message is shown and the displayed list is unchanged.
+
+### Long names and organisations in supporter cards
+
+1. Prerequisites: Launch the app with fresh sample data in an isolated test folder.
+
+1. Run `add n/Muhammad Abdul Rahman bin Mohamed Iskandar Shah e/rahman@example.com o/Singapore Society for the Prevention of Cruelty to Animals`.
+   Then run `add n/Muhammad Abdul Rahman bin Mohamed Iskandar Shafiq e/shafiq@example.com o/Singapore Society for the Prevention of Cruelty to Animals`.
+
+1. Scroll to the two new cards.<br>
+   Expected: Both full names and organisations are readable, wrapping onto additional lines as needed without ellipses. The different name endings remain visible. The index and stage badge stay beside the name, aligned with its first line, and the organisation and last-contact line do not overlap the name or badge.
+
+1. Narrow and widen the window or move the divider to change the supporter list's width.<br>
+   Expected: Text reflows and card heights adjust to the available width. Short names and organisations remain on one line when they fit.
+
+1. Scroll away from the new cards and back again.<br>
+   Expected: The full names and organisations remain readable, with no clipped text or overlapping cards.
 
 ### Deleting a supporter
 
