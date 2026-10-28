@@ -714,18 +714,18 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t/TAG]... `<br> e.g., `edit 2 p/91234567 a/1 HarbourFront Avenue`
 **Editlog** | `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`<br> e.g., `editlog 1 2 nt/Corrected meeting dt/2024-03-15`
+**Exit**   | `exit`
+**Find**   | `find [KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...`<br> e.g., `find yu o/DBS st/cultivating`
+**Help**   | `help`
 **Intro**  | `intro INDEX by/[INTRODUCER_INDEX]`<br> e.g., `intro 3 by/1`
-**Tag**    | `tag INDEX t/TAG [t/TAG]...`<br> e.g., `tag 2 t/vip t/boardIntro`
-**Untag**  | `untag INDEX t/TAG [t/TAG]...`<br> e.g., `untag 2 t/vip`
-**Quiet**  | `quiet [DAYS]`<br> e.g., `quiet 60`
-**Find**   | `find [KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...`<br> e.g., `find tan o/DBS st/giving`
 **List**   | `list`
 **Log**    | `log INDEX nt/NOTE [dt/DATE]`<br> e.g., `log 2 nt/Called about the year-end appeal dt/2026-10-01`
-**Unlog**  | `unlog INDEX ENTRY`<br> e.g., `unlog 2 1`
+**Quiet**  | `quiet [DAYS]`<br> e.g., `quiet 60`
 **Redo**   | `redo`
-**Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`
+**Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 giving`
 **Stats**  | `stats`
+**Tag**    | `tag INDEX t/TAG [t/TAG]...`<br> e.g., `tag 2 t/vip t/gala2026`
 **Undo**   | `undo`
+**Unlog**  | `unlog INDEX ENTRY`<br> e.g., `unlog 2 1`
+**Untag**  | `untag INDEX t/TAG [t/TAG]...`<br> e.g., `untag 2 t/csr`
 **View**   | `view INDEX`<br> e.g., `view 2`
-**Help**   | `help`
-**Exit**   | `exit`
