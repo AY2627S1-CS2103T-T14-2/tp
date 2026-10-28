@@ -626,7 +626,7 @@ Press <kbd>Up</kbd> in the command box to bring back the commands you have enter
 
 - Every command you entered is remembered, including commands that failed, so you can fix a typo and try again.
 - Pressing <kbd>Up</kbd> at the oldest command keeps it in the box.
-- Pressing <kbd>Down</kbd> past the newest command leaves the box empty.
+- Pressing <kbd>Down</kbd> past the newest command brings back what you were typing before you first pressed <kbd>Up</kbd>, so an unfinished command is not lost. If the box was empty, it is left empty.
 - Pressing <kbd>Down</kbd> while typing a new command, without having pressed <kbd>Up</kbd>, keeps what you typed.
 - Entering the same command several times in a row stores it only once.
 - The command history is cleared when you close the app. It is not saved to the data file.

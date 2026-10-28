@@ -60,6 +60,22 @@ public class CommandBoxTest {
     }
 
     @Test
+    public void pressDown_pastNewestCommand_restoresUnfinishedCommand() throws Exception {
+        runOnFxThread(() -> {
+            TextField textField = createCommandBoxField();
+            submit(textField, "list");
+            textField.setText("find Alex");
+
+            press(textField, KeyCode.UP);
+            assertEquals("list", textField.getText());
+
+            press(textField, KeyCode.DOWN);
+            assertEquals("find Alex", textField.getText());
+            assertEquals("find Alex".length(), textField.getCaretPosition());
+        });
+    }
+
+    @Test
     public void pressUp_afterFailedCommand_showsFailedCommand() throws Exception {
         runOnFxThread(() -> {
             TextField textField = createCommandBoxField();
