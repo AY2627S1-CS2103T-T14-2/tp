@@ -113,6 +113,7 @@ How the `Logic` component works:
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).
 1. The result of the command execution is encapsulated as a `CommandResult` object.
 1. Before returning it from `Logic`, `LogicManager` calls `commitAddressBookIfChanged()` to record changes for undo/redo and saves the data through `Storage`.
+   If saving fails after the command changed the data, the change stays in the `Model` and `LogicManager` throws a `CommandException` whose message starts with the command's result and ends with `LogicManager.MESSAGE_CHANGE_NOT_SAVED`, so the user does not repeat a command such as `delete 1`, which would change another supporter.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -1890,6 +1891,16 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: Preserve a copy of the invalid test file, then run `list`.<br>
       Expected: `Listed all supporters.` replaces the warning. The list remains empty and an empty valid data file replaces the invalid file.
+
+1. Dealing with a failed save
+
+   1. Prerequisites: Use an isolated test folder with at least two supporters. Run `list` so that the data file exists, then make it read-only, e.g. with `chmod a-w data/supporterbook.json` on macOS or Linux.
+
+   1. Test case: `delete 1`<br>
+      Expected: The error shows the deletion message, then that the data could not be saved, then that the change was made but not saved and should not be repeated. The first supporter is no longer in the list.
+
+   1. Test case: Make the file writable again, e.g. with `chmod u+w data/supporterbook.json`, run `list`, then close and relaunch the app.<br>
+      Expected: `Listed all supporters.` is shown. After relaunching, only the supporter deleted in the previous test is missing.
 
 1. Dealing with an invalid cultivation stage in the data file
    1. Prerequisites: Run the app once and close it, so that the data file has been created.
