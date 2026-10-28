@@ -80,13 +80,25 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_undo() throws Exception {
         assertTrue(parser.parseCommand(UndoCommand.COMMAND_WORD) instanceof UndoCommand);
-        assertTrue(parser.parseCommand(UndoCommand.COMMAND_WORD + " 3") instanceof UndoCommand);
+        assertTrue(parser.parseCommand("  undo  ") instanceof UndoCommand);
+    }
+
+    @Test
+    public void parseCommand_undoWithArguments_throwsParseException() {
+        // a count would otherwise undo only one change while looking like it undid several
+        assertThrows(ParseException.class, UndoCommand.MESSAGE_NO_ARGUMENTS, () -> parser.parseCommand("undo 3"));
+        assertThrows(ParseException.class, UndoCommand.MESSAGE_NO_ARGUMENTS, () -> parser.parseCommand("undo all"));
     }
 
     @Test
     public void parseCommand_redo() throws Exception {
         assertTrue(parser.parseCommand(RedoCommand.COMMAND_WORD) instanceof RedoCommand);
-        assertTrue(parser.parseCommand(RedoCommand.COMMAND_WORD + " 3") instanceof RedoCommand);
+        assertTrue(parser.parseCommand("  redo  ") instanceof RedoCommand);
+    }
+
+    @Test
+    public void parseCommand_redoWithArguments_throwsParseException() {
+        assertThrows(ParseException.class, RedoCommand.MESSAGE_NO_ARGUMENTS, () -> parser.parseCommand("redo 3"));
     }
 
     @Test

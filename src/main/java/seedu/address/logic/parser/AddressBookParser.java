@@ -55,14 +55,15 @@ public class AddressBookParser {
      */
     private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
-    private static final Set<String> COMMANDS_IGNORING_ARGUMENTS = Set.of(ClearCommand.COMMAND_WORD,
+    private static final Set<String> COMMANDS_WITHOUT_ARGUMENTS = Set.of(ClearCommand.COMMAND_WORD,
             ListCommand.COMMAND_WORD, StatsCommand.COMMAND_WORD, ExitCommand.COMMAND_WORD, HelpCommand.COMMAND_WORD,
             UndoCommand.COMMAND_WORD, RedoCommand.COMMAND_WORD);
 
     /**
      * Returns prefix-like words not supported by the command's own format, without changing parsing.
      * Find's parser rejects unsupported known filters itself, so its advisory scan checks only unknown words.
-     * Commands that ignore arguments produce no notes. Unknown command words retain the global prefix check.
+     * Commands that take no arguments produce no notes, as they ignore or reject any.
+     * Unknown command words retain the global prefix check.
      *
      * @throws NullPointerException if {@code userInput} is null.
      */
@@ -73,7 +74,7 @@ public class AddressBookParser {
             return ArgumentTokenizer.findUnrecognisedPrefixes(userInput);
         }
         String commandWord = getCommandWord(matcher);
-        if (COMMANDS_IGNORING_ARGUMENTS.contains(commandWord)) {
+        if (COMMANDS_WITHOUT_ARGUMENTS.contains(commandWord)) {
             return List.of();
         }
         List<Prefix> recognisedPrefixes = switch (commandWord) {
@@ -134,13 +135,29 @@ public class AddressBookParser {
             case StatsCommand.COMMAND_WORD -> new StatsCommand();
             case ExitCommand.COMMAND_WORD -> new ExitCommand();
             case HelpCommand.COMMAND_WORD -> new HelpCommand();
-            case UndoCommand.COMMAND_WORD -> new UndoCommand();
-            case RedoCommand.COMMAND_WORD -> new RedoCommand();
+            case UndoCommand.COMMAND_WORD -> {
+                requireNoArguments(arguments, UndoCommand.MESSAGE_NO_ARGUMENTS);
+                yield new UndoCommand();
+            }
+            case RedoCommand.COMMAND_WORD -> {
+                requireNoArguments(arguments, RedoCommand.MESSAGE_NO_ARGUMENTS);
+                yield new RedoCommand();
+            }
             default -> {
                 logger.finer("This user input caused a ParseException: " + userInput);
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
             }
         };
+    }
+
+    /**
+     * Throws a {@code ParseException} with {@code message} if {@code arguments} contains anything but spaces.
+     * Used by commands where extra text, e.g. a count in {@code undo 3}, suggests the user expects something else.
+     */
+    private static void requireNoArguments(String arguments, String message) throws ParseException {
+        if (!arguments.isBlank()) {
+            throw new ParseException(message);
+        }
     }
 
     /**
