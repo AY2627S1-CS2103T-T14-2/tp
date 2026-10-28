@@ -80,6 +80,27 @@ public class NameContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_differentApostropheStyles_returnsTrue() {
+        Person straightPerson = new PersonBuilder().withName("Charlotte O'Brien").build();
+        Person curlyPerson = new PersonBuilder().withName("Eleanor O’Brien").build();
+
+        for (String keyword : List.of("O'Brien", "O’Brien", "O’BRIEN")) {
+            NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of(keyword));
+
+            assertTrue(predicate.test(straightPerson));
+            assertTrue(predicate.test(curlyPerson));
+        }
+    }
+
+    @Test
+    public void test_canonicallyEquivalentKeywords_returnsTrue() {
+        Person person = new PersonBuilder().withName("José Tan").build();
+
+        assertTrue(new NameContainsKeywordsPredicate(List.of("JOSE\u0301")).test(person));
+        assertFalse(new NameContainsKeywordsPredicate(List.of("Jose")).test(person));
+    }
+
+    @Test
     public void test_keywordAcrossSpace_returnsFalse() {
         Person person = new PersonBuilder().withName("Tan Wei Ming").build();
 

@@ -126,6 +126,29 @@ public class PersonTest {
     }
 
     @Test
+    public void isSamePerson_canonicallyEquivalentNames_returnsTrue() {
+        Person composedPerson = new PersonBuilder(ALICE).withName("José Tan").build();
+        Person decomposedPerson = new PersonBuilder(BOB).withName("Jose\u0301 Tan").build();
+        Person decomposedPersonWithDifferentCaseAndSpaces = new PersonBuilder(BOB)
+                .withName("  JOSE\u0301  TAN  ").build();
+        Person personWithoutAccent = new PersonBuilder(ALICE).withName("Jose Tan").build();
+
+        assertTrue(composedPerson.isSamePerson(decomposedPerson));
+        assertTrue(decomposedPerson.isSamePerson(composedPerson));
+        assertTrue(composedPerson.isSamePerson(decomposedPersonWithDifferentCaseAndSpaces));
+        assertFalse(composedPerson.isSamePerson(personWithoutAccent));
+    }
+
+    @Test
+    public void isSamePerson_differentApostropheStylesAndContactDetails_returnsTrue() {
+        Person straightPerson = new PersonBuilder(ALICE).withName("Charlotte O'Brien").build();
+        Person curlyPerson = new PersonBuilder(BOB).withName("Charlotte O’Brien").build();
+
+        assertTrue(straightPerson.isSamePerson(curlyPerson));
+        assertTrue(curlyPerson.isSamePerson(straightPerson));
+    }
+
+    @Test
     public void equals() {
         // same values -> returns true
         Person aliceCopy = new PersonBuilder(ALICE).build();
@@ -390,6 +413,17 @@ public class PersonTest {
         assertEquals(new PersonBuilder(person).withInteractions(replacement).build(), updated);
         assertEquals(List.of(original), person.getInteractions());
         assertEquals(new PersonBuilder(person).withInteractions().build(), person.withInteractions(List.of()));
+    }
+
+    @Test
+    public void withStage_keepsOtherDetails() {
+        Person aliceByBenson = new PersonBuilder(ALICE).withIntroducer(BENSON.getName().fullName)
+                .withInteractions(new Interaction(LocalDate.of(2026, 9, 16), "Called")).build();
+
+        Person updated = aliceByBenson.withStage(Stage.GIVING);
+
+        assertEquals(new PersonBuilder(aliceByBenson).withStage("giving").build(), updated);
+        assertEquals(aliceByBenson.getInteractions(), updated.getInteractions());
     }
 
     @Test

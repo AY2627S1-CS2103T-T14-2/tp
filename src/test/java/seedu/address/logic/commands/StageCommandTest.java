@@ -31,7 +31,7 @@ import seedu.address.testutil.PersonBuilder;
  */
 public class StageCommandTest {
 
-    private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+    private final Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
     public void constructor_nullArguments_throwsNullPointerException() {
@@ -41,35 +41,13 @@ public class StageCommandTest {
 
     @Test
     public void execute_newStageUnfilteredList_success() {
-        Person personToUpdate = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
-        Person updatedPerson = new PersonBuilder(personToUpdate).withStage("cultivating").build();
-        StageCommand stageCommand = new StageCommand(INDEX_FIRST_PERSON, Stage.CULTIVATING);
-
-        String expectedMessage = String.format(StageCommand.MESSAGE_STAGE_CHANGED,
-                personToUpdate.getName(), Stage.PROSPECT, Stage.CULTIVATING);
-
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-        expectedModel.setPerson(personToUpdate, updatedPerson);
-        expectedModel.setViewedPerson(updatedPerson);
-
-        assertCommandSuccess(stageCommand, model, expectedMessage, expectedModel);
+        assertStageChanged(INDEX_FIRST_PERSON, Stage.CULTIVATING, copyOfModel());
     }
 
     @Test
     public void execute_anyStageToAnyStage_success() {
         // relationships do not move in a straight line: a giving supporter can go back to prospect
-        Person personToUpdate = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
-        Person updatedPerson = new PersonBuilder(personToUpdate).withStage("prospect").build();
-        StageCommand stageCommand = new StageCommand(INDEX_SECOND_PERSON, Stage.PROSPECT);
-
-        String expectedMessage = String.format(StageCommand.MESSAGE_STAGE_CHANGED,
-                personToUpdate.getName(), Stage.GIVING, Stage.PROSPECT);
-
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-        expectedModel.setPerson(personToUpdate, updatedPerson);
-        expectedModel.setViewedPerson(updatedPerson);
-
-        assertCommandSuccess(stageCommand, model, expectedMessage, expectedModel);
+        assertStageChanged(INDEX_SECOND_PERSON, Stage.PROSPECT, copyOfModel());
     }
 
     @Test
@@ -162,20 +140,10 @@ public class StageCommandTest {
     @Test
     public void execute_validIndexFilteredList_successAndFilterKept() {
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
-
-        Person personToUpdate = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
-        Person updatedPerson = new PersonBuilder(personToUpdate).withStage("giving").build();
-        StageCommand stageCommand = new StageCommand(INDEX_FIRST_PERSON, Stage.GIVING);
-
-        String expectedMessage = String.format(StageCommand.MESSAGE_STAGE_CHANGED,
-                personToUpdate.getName(), Stage.PROSPECT, Stage.GIVING);
-
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        Model expectedModel = copyOfModel();
         showPersonAtIndex(expectedModel, INDEX_FIRST_PERSON);
-        expectedModel.setPerson(personToUpdate, updatedPerson);
-        expectedModel.setViewedPerson(updatedPerson);
 
-        assertCommandSuccess(stageCommand, model, expectedMessage, expectedModel);
+        assertStageChanged(INDEX_FIRST_PERSON, Stage.GIVING, expectedModel);
         assertEquals(1, model.getFilteredPersonList().size());
     }
 
@@ -226,5 +194,24 @@ public class StageCommandTest {
         String expected = StageCommand.class.getCanonicalName() + "{targetIndex=" + INDEX_FIRST_PERSON
                 + ", stage=" + Stage.GIVING + "}";
         assertEquals(expected, stageCommand.toString());
+    }
+
+    /**
+     * Executes a stage command for the supporter at {@code index} and checks that only their stage changes and
+     * that they become the viewed supporter. {@code expectedModel} starts as a copy of {@code model}.
+     */
+    private void assertStageChanged(Index index, Stage newStage, Model expectedModel) {
+        Person personToUpdate = model.getFilteredPersonList().get(index.getZeroBased());
+        Person updatedPerson = new PersonBuilder(personToUpdate).withStage(newStage.toString()).build();
+        String expectedMessage = String.format(StageCommand.MESSAGE_STAGE_CHANGED,
+                personToUpdate.getName(), personToUpdate.getStage(), newStage);
+        expectedModel.setPerson(personToUpdate, updatedPerson);
+        expectedModel.setViewedPerson(updatedPerson);
+
+        assertCommandSuccess(new StageCommand(index, newStage), model, expectedMessage, expectedModel);
+    }
+
+    private Model copyOfModel() {
+        return new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
     }
 }

@@ -86,8 +86,15 @@ public interface Model {
     /**
      * Saves the current address book state to the undo/redo history if supporter data has changed since the
      * last saved state. Any undone states are then discarded, so they can no longer be redone.
+     * The change is saved without a description.
      */
     void commitAddressBookIfChanged();
+
+    /**
+     * Saves an undo point in the same way as {@link #commitAddressBookIfChanged()}, recording
+     * {@code changeDescription}, e.g. the command that made the change, so that undo and redo can name it.
+     */
+    void commitAddressBookIfChanged(String changeDescription);
 
     /**
      * Returns true if there is an earlier address book state to restore.
@@ -102,16 +109,18 @@ public interface Model {
     /**
      * Restores the previous address book state from the undo/redo history.
      *
+     * @return the description of the undone change, which is empty if it was saved without one.
      * @throws IllegalStateException if there is no earlier state.
      */
-    void undoAddressBook();
+    String undoAddressBook();
 
     /**
      * Restores the next undone address book state from the undo/redo history.
      *
+     * @return the description of the redone change, which is empty if it was saved without one.
      * @throws IllegalStateException if there is no later state.
      */
-    void redoAddressBook();
+    String redoAddressBook();
 
     /**
      * Returns the supporter being viewed, or an empty {@code Optional} if none has been selected.

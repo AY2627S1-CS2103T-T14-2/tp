@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import seedu.address.commons.util.DisplayDateFormatter;
 import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Person;
+import seedu.address.model.tag.Tag;
 
 /**
  * Prepares an immutable snapshot of the supporter details and history displayed in the detail panel.
@@ -98,12 +99,13 @@ public final class SupporterDetailData {
     }
 
     /**
-     * Returns alphabetically ordered tag names separated by commas, or {@code -} when none are set.
+     * Returns tag names in {@link Tag#ALPHABETICAL_ORDER} separated by commas,
+     * or {@code -} when none are set.
      */
     public String getTags() {
         String tags = viewedPerson.map(person -> person.getTags().stream()
+                .sorted(Tag.ALPHABETICAL_ORDER)
                 .map(tag -> tag.tagName)
-                .sorted()
                 .collect(Collectors.joining(", "))).orElse("");
         return tags.isEmpty() ? UNSET_FIELD : tags;
     }

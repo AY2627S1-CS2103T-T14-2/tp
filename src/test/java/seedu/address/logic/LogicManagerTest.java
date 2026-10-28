@@ -31,6 +31,7 @@ import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RedoCommand;
+import seedu.address.logic.commands.StageCommand;
 import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -41,6 +42,7 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Stage;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -283,12 +285,36 @@ public class LogicManagerTest {
         logic.execute("delete 1");
 
         isSaveFailing.set(true);
-        String expectedMessage = UndoCommand.MESSAGE_SUCCESS + "\n"
+        String expectedMessage = String.format(UndoCommand.MESSAGE_UNDID_CHANGE, "delete 1") + "\n"
                 + String.format(LogicManager.FILE_OPS_ERROR_FORMAT, dummyIoException.getMessage()) + "\n"
                 + String.format(LogicManager.MESSAGE_CHANGE_NOT_SAVED_FORMAT, RedoCommand.COMMAND_WORD);
         // another undo would reverse an earlier change instead of this one
         assertThrows(CommandException.class, expectedMessage, () -> logic.execute(UndoCommand.COMMAND_WORD));
         assertEquals(List.of(ALICE), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_undoAndRedo_nameTheCommandThatMadeTheChange() throws Exception {
+        model.addPerson(ALICE);
+        model.commitAddressBookIfChanged();
+        logic.execute("  tag 1 t/k8test ");
+
+        assertEquals(String.format(UndoCommand.MESSAGE_UNDID_CHANGE, "tag 1 t/k8test"),
+                logic.execute(UndoCommand.COMMAND_WORD).getFeedbackToUser());
+        assertEquals(String.format(RedoCommand.MESSAGE_REDID_CHANGE, "tag 1 t/k8test"),
+                logic.execute(RedoCommand.COMMAND_WORD).getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_undoWithCount_undoesNothing() throws Exception {
+        model.addPerson(ALICE);
+        model.addPerson(BENSON);
+        model.commitAddressBookIfChanged();
+        logic.execute("delete 1");
+        logic.execute("delete 1");
+
+        assertParseException("undo 3", UndoCommand.MESSAGE_NO_ARGUMENTS);
+        assertEquals(List.of(), model.getAddressBook().getPersonList());
     }
 
     @Test
@@ -314,6 +340,15 @@ public class LogicManagerTest {
         CommandResult result = logic.execute("log 1 nt/Called about the gala, and/or the dinner");
 
         assertEquals(1, result.getFeedbackToUser().lines().count());
+    }
+
+    @Test
+    public void execute_stageWithStagePrefix_changesStageWithoutNote() throws Exception {
+        model.addPerson(ALICE);
+        CommandResult result = logic.execute("stage 1 st/declined");
+
+        assertEquals(String.format(StageCommand.MESSAGE_STAGE_CHANGED, ALICE.getName(), ALICE.getStage(),
+                Stage.DECLINED), result.getFeedbackToUser());
     }
 
     @Test

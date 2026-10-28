@@ -55,6 +55,8 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 - Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
+- Command words ignore case. For example, `list`, `LIST` and `List` all list every supporter.
+
 - Supporter indices must be positive integers. For example, `delete 0`, `delete abc`, `view 0` and `edit 0 n/x` report `Index must be a positive integer (1, 2, 3, ...).` followed by the command's usage.<br>
   For `editlog` and `unlog`, missing, extra or invalid indices report `Provide exactly two positive integer indices: INDEX ENTRY.` followed by usage. A positive index that does not identify a displayed supporter or interaction is rejected separately during execution. For commands requiring a single supporter index, a missing index or extra words in the index argument produce `Invalid command format!` followed by usage. Missing required fields can also produce this format error.
 
@@ -76,7 +78,7 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 
   Everyday words such as `s/o`, `c/o`, `w/` and `and/or` are not flagged. If a note points out a word you meant to type, such as `Unit/` in an address, you can ignore it.
 
-- Extraneous parameters for commands that take no parameters, such as `help`, `list`, `stats`, `exit`, `clear`, `undo` and `redo`, are ignored.<br>
+- Extraneous parameters for commands that take no parameters, such as `help`, `list`, `stats`, `exit` and `clear`, are ignored. `undo` and `redo` instead reject any parameters, so that `undo 3` cannot look like it undid three changes.<br>
   For example, `help 123` is interpreted as `help`. Prefix-like words in these ignored parameters do not produce a note.
 
 - If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -114,12 +116,14 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
   Labels contain English letters, optionally separated by single spaces, e.g. `(HP)`, `(Home)`
   and `(Office Fax)`. Extension digits do not count towards the main number's 3-to-15-digit limit.
   Your formatting, including the extension and label, is preserved when displayed and saved.
-- `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'`), hyphens (`-`), periods (`.`), commas (`,`), round brackets (`(` and `)`) and at signs (`@`), e.g. `O'Brien`, `Lee-Tan`, `J. Tan`, `Tan, Ah Kow`, `Tan Ah Kow (Chen Ah Kow)` and `Ahmad bin Ali @ Ah Mat`.
+- `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'` or `’`), hyphens (`-`), periods (`.`), commas (`,`), round brackets (`(` and `)`) and at signs (`@`), e.g. `O'Brien`, `Lee-Tan`, `J. Tan`, `Tan, Ah Kow`, `Tan Ah Kow (Chen Ah Kow)` and `Ahmad bin Ali @ Ah Mat`.
+- Accented and non-Latin letters, including letters with combining marks, are accepted in `NAME`, e.g. `José Tan`, `கவி` and `李伟`.
 - `NAME` can also contain `s/o` or `d/o` as separate words, e.g. `Ravi s/o Kumar` and `Priya d/o Kumar`. Upper and lower case are both accepted.
 - SupporterBook only checks which characters a name uses, not whether it looks like a real name. For example, `s/o Kumar` or a name with only initials is accepted.
 - Round brackets in `NAME` do not need to be balanced, and spaces around punctuation are optional. The name must still start with a letter or digit, so `(Tan)` and `@Tan` are rejected. These name rules apply to both `add` and `edit`.
 - Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`.
-- Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
+- Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. Typing an accented letter directly or adding its accent separately also counts as the same name. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
+- Straight (`'`) and curly (`’`) apostrophes also count as the same character when comparing names, so `Charlotte O'Brien` and `Charlotte O’Brien` count as the same supporter. The apostrophe style you enter is preserved when the name is saved and displayed.
 - `TAG` must be alphanumeric, with no spaces, e.g. `t/boardIntro`. Tags that differ only in capitalisation, e.g. `t/vip t/VIP`, count as one tag, and the spelling typed first is kept.
 - After adding, the list shows all supporters in the order they were added (any `find` or `quiet` filter is cleared), with the new supporter at the bottom.
 
@@ -145,6 +149,8 @@ the new supporter and includes a warning identifying `Alex Yeoh (phone)`.
 Examples:
 
 - `add n/Aisha Rahman e/aisha.r@gmail.com` adds an online donor who gave only an email.
+- `add n/李伟 e/li@example.com` adds a supporter whose name uses Chinese characters.
+- `add n/Eleanor O’Brien e/eleanor@example.com` adds a supporter whose name contains a curly apostrophe.
 - `add n/Marie Laurent p/+33 1 42 68 53 00` adds a supporter with an international phone number.
 - `add n/Phone Label Test p/9123 4567 (HP)` stores a phone number with a type label.
 - `add n/Phone Extension Test p/(65) 9123-4567 ext 12 (Office)` stores a country code, extension and label.
@@ -205,7 +211,7 @@ Changes how far the relationship with a supporter has progressed.
 Format: `stage INDEX STAGE`
 
 - Sets the stage of the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list. The index **must be a positive integer** 1, 2, 3, ...
-- `STAGE` must be one of the six stages below. Upper and lower case are both accepted. No prefix is needed before it.
+- `STAGE` must be one of the six stages below. Upper and lower case are both accepted. No prefix is needed before it, but `st/STAGE`, as used by `add` and `find`, also works: `stage 1 st/giving` is the same as `stage 1 giving`.
 - Any stage can be changed to any other stage, e.g. a lapsed donor can be moved back to `cultivating`.
 - If the supporter is already at that stage, their record is unchanged and a message says so.
 - On success, the detail panel switches to this supporter and shows their current stage, including when they are already at the requested stage.
@@ -262,6 +268,8 @@ Supply at least one name keyword or nonempty prefix value. Name keywords are opt
 | Phone | `p/PHONE` | Digit substring after ignoring formatting, a trailing type label and the `ext` marker; extension digits remain searchable |
 | Email | `e/EMAIL` | Case-insensitive substring; `e/@gmail` matches an address containing `@gmail` |
 
+- Text searches ignore case and treat straight (`'`) and curly (`’`) apostrophes as the same character. For example, both `find O'Brien` and `find O’Brien` match `Charlotte O'Brien` and `Eleanor O’Brien`. The same rule applies to organisation searches.
+- Typing an accented letter directly or adding its accent separately produces the same search results for names and organisations. Accents remain significant, so `Jose` does not match `José`. Searching preserves the spelling saved in each supporter record.
 - **OR within a field:** any name keyword can match, and repeated values of a prefix are alternatives. For example, `find st/giving st/lapsed` finds supporters at either stage.
 - **AND between fields:** every specified field must match. For example, `find tan o/DBS st/giving` finds supporters whose names contain `tan`, whose organisation contains `DBS`, and whose stage is `Giving`.
 - Repeating an identical value does not duplicate supporters or change the matches.
@@ -409,7 +417,7 @@ Format: `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`
 
 - `INDEX` is the supporter index in the displayed list; after `find`, use the search-result index. Both indices must be positive integers.
 - `ENTRY` is the number beside the interaction in the detail panel, not its row position. Use `view INDEX` to check it first.
-- Supply at least one field. Omitted fields remain unchanged; supplying the existing value is allowed.
+- Supply at least one field. Omitted fields remain unchanged; supplying the existing value is allowed. If nothing would change, the result says `Nothing was changed.`, and no undo point is saved, so a following `undo` reverts an earlier change instead.
 - To revert an interaction edited by mistake, run `undo` immediately afterward. Undo history is available only during the current session.
 - `NOTE` must not be blank and may contain at most 500 characters after trimming leading and trailing spaces. Characters are counted as described under [logging an interaction](#logging-an-interaction-log).
 - `DATE` must be a valid `yyyy-MM-dd` date from `1900-01-01` through today (inclusive), using the computer's clock. Empty, invalid and out-of-range dates are rejected.
@@ -482,7 +490,7 @@ Format: `view INDEX`
 * `INDEX` is required and must be a positive integer from the currently displayed supporter list. After a `find`, use the index shown in the search results.
 * Supply exactly one index, with no additional arguments.
 * Viewing a supporter preserves the displayed list, its filter and all supporter data.
-* The panel shows the name, stage, organisation, phone, email, address, tags, introducer and the supporters they introduced. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically.
+* The panel shows the name, stage, organisation, phone, email, address, tags, introducer and the supporters they introduced. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically, ignoring capitalisation, in the same order as on the supporter card and in command results.
 * Above the interaction history, the panel shows the same last-contact line as the supporter card, for example `Last contact: 03 Oct 2026`, or `No interactions yet` if there are no logged interactions. The line updates when the displayed supporter's interaction history changes.
 * Interactions appear newest first, e.g. `#4  16 Sep 2026  Sent partnership deck by email`. Numbers descend to `#1`, the oldest entry. On equal dates, later-logged entries appear first.
 * If the window is too short to show everything, the panel gets a scroll bar, so you can scroll down to the interaction history.
@@ -492,6 +500,7 @@ Format: `view INDEX`
 * Deleting the displayed supporter or running `clear` clears the details and history. Deleting another supporter keeps the panel unchanged.
 * After `undo` or `redo`, the panel shows the displayed supporter's restored record, or is cleared if that supporter no longer exists.
 * Selection is not remembered after restarting the app.
+* Clicking a supporter card does not select it or change the panel. Use `view INDEX` to show a supporter.
 
 Examples:
 
@@ -575,7 +584,8 @@ Format: `undo`
 - Running `undo` again reverts the change before that, back to when the app was opened.
 - A command that changes nothing, such as `stage` with the supporter's current stage, `tag` with a tag they already have or `edit` with the details they already have, is not recorded. Neither is a command that fails. There is nothing to undo for them.
 - After undoing, all supporters are listed. The detail panel shows the displayed supporter's restored record, or is cleared if that supporter no longer exists.
-- Text after `undo` is ignored.
+- The result display names the command that made the change, as you typed it, e.g. `Undid the last change: tag 1 t/vip`.
+- `undo` takes no parameters and undoes one change at a time. For example, `undo 3` is rejected and nothing is undone; enter `undo` three times instead.
 - Undo history is kept only while the app is open. After you restart the app, earlier changes cannot be undone.
 
 If there is nothing to undo, the result display shows `There is no change to undo.` and nothing is changed.
@@ -594,7 +604,8 @@ Format: `redo`
 - Running `redo` again re-applies the next undone change, in the order they were undone.
 - Making a new change after `undo` discards the undone changes, so they can no longer be redone.
 - After redoing, all supporters are listed, and the detail panel is updated in the same way as for `undo`.
-- Text after `redo` is ignored.
+- The result display names the command being redone, e.g. `Redid the last undone change: tag 1 t/vip`.
+- `redo` takes no parameters and redoes one change at a time, so `redo 3` is rejected and nothing is redone.
 
 If there is nothing to redo, the result display shows `There is no undone change to redo.` and nothing is changed.
 

@@ -26,7 +26,7 @@ public class UnlogCommandIntegrationTest {
     @Test
     public void execute_chronologicalEntry_selectsTargetAndRenumbersFilteredHistory() throws Exception {
         // set up a filtered supporter whose stored history differs from chronological order
-        Interaction middle = new Interaction(LocalDate.of(2024, 2, 29), "Middle meeting");
+        Interaction middle = new Interaction(LocalDate.of(2024, 2, 29), "Middle meeting.");
         Interaction oldest = new Interaction(LocalDate.of(2024, 2, 20), "Earlier call");
         Interaction newest = new Interaction(LocalDate.of(2024, 3, 10), "Recent call");
         Person other = new PersonBuilder().withName("Other Supporter").build();
@@ -59,7 +59,7 @@ public class UnlogCommandIntegrationTest {
         // the next command uses the refreshed number: #2 now identifies the newest remaining interaction
         CommandResult newestDeletionResult = parser.parseCommand("unlog 1 2").execute(model);
         SupporterDetailData displayAfterNewestDeletion = new SupporterDetailData(model.getViewedPerson());
-        assertEquals("Deleted interaction #2 with " + target.getName() + " (10 Mar 2024): Recent call.",
+        assertEquals("Deleted interaction #2 with " + target.getName() + " (10 Mar 2024): Recent call",
                 newestDeletionResult.getFeedbackToUser());
         assertHistory(displayAfterNewestDeletion, List.of(1), List.of("20 Feb 2024"), List.of("Earlier call"));
         assertEquals(Optional.of(oldest.getDate()), model.getViewedPerson().orElseThrow().getLastInteractionDate());

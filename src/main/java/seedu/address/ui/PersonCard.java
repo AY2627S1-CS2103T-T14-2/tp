@@ -1,6 +1,5 @@
 package seedu.address.ui;
 
-import java.util.Comparator;
 import java.util.Optional;
 
 import javafx.fxml.FXML;
@@ -9,6 +8,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import seedu.address.model.person.Person;
+import seedu.address.model.tag.Tag;
 
 /**
  * A UI component that displays information of a {@code Person}.
@@ -17,6 +17,8 @@ public class PersonCard extends UiPart<Region> {
 
     private static final String FXML = "PersonListCard.fxml";
     private static final String NO_ORGANISATION = "(no organisation)";
+    /** Prefix of the style class that colors the stage label, e.g. {@code stage_giving}. */
+    private static final String STAGE_STYLE_CLASS_PREFIX = "stage_";
 
     /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
@@ -57,14 +59,14 @@ public class PersonCard extends UiPart<Region> {
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
         stage.setText(person.getStage().toString());
-        stage.getStyleClass().add("stage_" + person.getStage().name().toLowerCase());
+        stage.getStyleClass().add(STAGE_STYLE_CLASS_PREFIX + person.getStage().name().toLowerCase());
         organisation.setText(person.getOrganisation().map(org -> org.value).orElse(NO_ORGANISATION));
         lastContact.setText(LastContactFormatter.format(person.getLastInteractionDate()));
         showIfPresent(phone, person.getPhone().map(p -> p.value));
         showIfPresent(address, person.getAddress().map(a -> a.value));
         showIfPresent(email, person.getEmail().map(e -> e.value));
         person.getTags().stream()
-                .sorted(Comparator.comparing(tag -> tag.tagName))
+                .sorted(Tag.ALPHABETICAL_ORDER)
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
     }
 

@@ -35,8 +35,10 @@ public class EditLogCommand extends Command {
             + "DATE must be a valid date in yyyy-MM-dd format, from 1900-01-01 through today.\n"
             + "Example: " + COMMAND_WORD + " 2 1 " + PREFIX_NOTE + "Updated meeting notes "
             + PREFIX_DATE + "2026-10-01";
-    public static final String MESSAGE_SUCCESS = "Edited interaction #%1$d with %2$s (%3$s): %4$s.";
+    public static final String MESSAGE_SUCCESS = "Edited interaction #%1$d with %2$s (%3$s): %4$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
+    public static final String MESSAGE_NOT_CHANGED =
+            "Interaction #%1$d with %2$s already has those details. Nothing was changed.";
 
     private final Index targetIndex;
     private final Index interactionIndex;
@@ -77,9 +79,13 @@ public class EditLogCommand extends Command {
         // retain the logging position for equal-date ordering and distinguish identical interactions
         updatedInteractions.set(storedIndex, updatedInteraction);
         Person updatedPerson = personToUpdate.withInteractions(updatedInteractions);
-        if (!updatedPerson.equals(personToUpdate)) {
-            model.setPerson(personToUpdate, updatedPerson);
+        if (updatedPerson.equals(personToUpdate)) {
+            // say so, as no undo point is saved and a following undo reverts an earlier change
+            model.setViewedPerson(personToUpdate);
+            return new CommandResult(String.format(MESSAGE_NOT_CHANGED, interactionIndex.getOneBased(),
+                    personToUpdate.getName()));
         }
+        model.setPerson(personToUpdate, updatedPerson);
         model.setViewedPerson(updatedPerson);
 
         int displayedEntryNumber = updatedPerson.getInteractionEntryNumber(storedIndex);
