@@ -290,7 +290,7 @@ verifies tied ordering after tag changes and after an interaction update creates
 
 ### Deleting a supporter and their history
 
-`DeleteCommand#execute(Model)` validates its index against `Model#getFilteredPersonList()`, so deletion after `find` targets the displayed supporter rather than the same index in the full list. It reads `Person#getInteractions().size()` before calling `Model#deletePerson(Person)` and reports that count on the second line of its success message. Every history entry is counted, including identical interactions.
+`DeleteCommand#execute(Model)` validates its index against `Model#getFilteredPersonList()`, so deletion after `find` targets the displayed supporter rather than the same index in the full list. It reads `Person#getInteractionCount()` before calling `Model#deletePerson(Person)` and reports that count on the second line of its success message. Every history entry is counted, including identical interactions.
 
 Interactions are stored within each immutable `Person`. Removing that supporter from the `AddressBook` removes their history from stored data without a separate interaction-deletion loop. `Messages#format(Person)` supplies the deleted supporter's details, preserving the shared formatting of stages and optional fields.
 

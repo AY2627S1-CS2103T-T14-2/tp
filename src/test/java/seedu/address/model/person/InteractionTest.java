@@ -101,7 +101,7 @@ public class InteractionTest {
 
     @Test
     public void isValidDate_withinRange_returnsTrue() {
-        // include both limits, their inner neighbours and an ordinary historical date
+        // include both limits, their inner neighbors and an ordinary historical date
         for (LocalDate date : List.of(LocalDate.of(1900, 1, 1), LocalDate.of(1900, 1, 2),
                 LocalDate.of(2024, 2, 29), DATE.minusDays(1), DATE)) {
             assertTrue(Interaction.isValidDate(date, DATE), date.toString());

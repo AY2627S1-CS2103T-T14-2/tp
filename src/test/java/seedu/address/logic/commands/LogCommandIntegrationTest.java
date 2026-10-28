@@ -41,7 +41,7 @@ public class LogCommandIntegrationTest {
                 backdatedResult.getFeedbackToUser());
         assertHistory(displayAfterBackdatedLog, List.of(2, 1),
                 List.of("10 Mar 2024", "29 Feb 2024"), List.of("Recent call", "Earlier meeting"));
-        assertEquals(2, supporterAfterBackdatedLog.getInteractions().size());
+        assertEquals(2, supporterAfterBackdatedLog.getInteractionCount());
 
         // another entry on the same past date refreshes the selected history and shows the later-logged entry first
         CommandResult equalDateResult = parser.parseCommand("log 1 dt/2024-02-29 nt/Second earlier meeting")

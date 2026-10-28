@@ -85,6 +85,29 @@ public class PersonTest {
     }
 
     @Test
+    public void getInteractionStoredIndex_invalidMappedPosition_throwsAssertionError() {
+        for (int invalidStoredIndex : List.of(-1, 1)) {
+            Person person = new PersonWithDisplayOrderStub(List.of(invalidStoredIndex));
+
+            assertThrows(AssertionError.class, () -> person.getInteractionStoredIndex(1));
+        }
+    }
+
+    @Test
+    public void getInteractionEntryNumber_missingStoredPosition_throwsAssertionError() {
+        Person person = new PersonWithDisplayOrderStub(List.of());
+
+        assertThrows(AssertionError.class, () -> person.getInteractionEntryNumber(0));
+    }
+
+    @Test
+    public void getInteractionEntryNumber_outOfRangeDisplayPosition_throwsAssertionError() {
+        Person person = new PersonWithDisplayOrderStub(List.of(1, 0));
+
+        assertThrows(AssertionError.class, () -> person.getInteractionEntryNumber(0));
+    }
+
+    @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
         Person person = new PersonBuilder().build();
         assertThrows(UnsupportedOperationException.class, () -> person.getTags().remove(0));
@@ -462,5 +485,24 @@ public class PersonTest {
                 + ", introducer=" + ALICE.getIntroducer().orElse(null) + ", stage=" + ALICE.getStage()
                 + ", interactions=" + ALICE.getInteractions() + ", tags=" + ALICE.getTags() + "}";
         assertEquals(expected, ALICE.toString());
+    }
+
+    /**
+     * A supporter with one interaction and a supplied display order for testing inconsistent mappings.
+     */
+    private static class PersonWithDisplayOrderStub extends Person {
+        private final List<Integer> displayOrder;
+
+        PersonWithDisplayOrderStub(List<Integer> displayOrder) {
+            super(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
+                    ALICE.getOrganisation(), ALICE.getIntroducer(), ALICE.getStage(),
+                    List.of(new Interaction(LocalDate.of(2024, 2, 29), "Called")), ALICE.getTags());
+            this.displayOrder = displayOrder;
+        }
+
+        @Override
+        public List<Integer> getInteractionIndicesInDisplayOrder() {
+            return displayOrder;
+        }
     }
 }

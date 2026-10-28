@@ -10,11 +10,13 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.DisplayDateFormatter;
+import seedu.address.commons.util.StringUtil;
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Interaction;
@@ -32,13 +34,16 @@ public class EditLogCommand extends Command {
             + "Parameters: INDEX ENTRY (both must be positive integers) "
             + "[" + PREFIX_NOTE + "NOTE] [" + PREFIX_DATE + "DATE]\n"
             + "ENTRY is the interaction number shown in the detail panel. At least one field is required.\n"
-            + "DATE must be a valid date in yyyy-MM-dd format, from 1900-01-01 through today.\n"
+            + "DATE must be a valid date in yyyy-MM-dd format, from " + Interaction.MIN_DATE
+            + " through today.\n"
             + "Example: " + COMMAND_WORD + " 2 1 " + PREFIX_NOTE + "Updated meeting notes "
             + PREFIX_DATE + "2026-10-01";
     public static final String MESSAGE_SUCCESS = "Edited interaction #%1$d with %2$s (%3$s): %4$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_NOT_CHANGED =
             "Interaction #%1$d with %2$s already has those details. Nothing was changed.";
+
+    private static final Logger logger = LogsCenter.getLogger(EditLogCommand.class);
 
     private final Index targetIndex;
     private final Index interactionIndex;
@@ -54,41 +59,47 @@ public class EditLogCommand extends Command {
         note.ifPresent(value -> checkArgument(Interaction.isValidNote(value), Interaction.MESSAGE_CONSTRAINTS));
         this.targetIndex = targetIndex;
         this.interactionIndex = interactionIndex;
-        this.note = note.map(String::trim);
+        this.note = note.map(StringUtil::trimUnicodeWhitespace);
         this.date = date;
     }
 
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        List<Person> lastShownList = model.getFilteredPersonList();
-        if (targetIndex.getZeroBased() >= lastShownList.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        }
 
-        Person personToUpdate = lastShownList.get(targetIndex.getZeroBased());
+        Person personToUpdate = InteractionCommandSupport.getDisplayedPerson(
+                model.getFilteredPersonList(), targetIndex);
+        int storedIndex = InteractionCommandSupport.getStoredInteractionIndex(personToUpdate, interactionIndex);
+
         List<Interaction> updatedInteractions = new ArrayList<>(personToUpdate.getInteractions());
-        if (interactionIndex.getZeroBased() >= updatedInteractions.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_INTERACTION_INDEX);
-        }
-
-        int storedIndex = personToUpdate.getInteractionStoredIndex(interactionIndex.getOneBased());
         Interaction originalInteraction = updatedInteractions.get(storedIndex);
         Interaction updatedInteraction = new Interaction(date.orElse(originalInteraction.getDate()),
                 note.orElse(originalInteraction.getNote()));
         // retain the logging position for equal-date ordering and distinguish identical interactions
         updatedInteractions.set(storedIndex, updatedInteraction);
+
         Person updatedPerson = personToUpdate.withInteractions(updatedInteractions);
-        if (updatedPerson.equals(personToUpdate)) {
+        assert updatedPerson.getInteractionCount() == personToUpdate.getInteractionCount()
+                : "editing must preserve the number of interactions";
+
+        boolean hasChanges = !updatedPerson.equals(personToUpdate);
+        if (hasChanges) {
+            model.setPerson(personToUpdate, updatedPerson);
+        }
+        model.setViewedPerson(hasChanges ? updatedPerson : personToUpdate);
+
+        int displayedEntryNumber = updatedPerson.getInteractionEntryNumber(storedIndex);
+        logger.fine("Processed editlog for displayed supporter " + targetIndex.getOneBased()
+                + ": interaction #" + interactionIndex.getOneBased() + " -> #" + displayedEntryNumber
+                + ", changed: " + hasChanges + ", interaction count: " + updatedPerson.getInteractionCount());
+
+        if (!hasChanges) {
             // say so, as no undo point is saved and a following undo reverts an earlier change
             model.setViewedPerson(personToUpdate);
             return new CommandResult(String.format(MESSAGE_NOT_CHANGED, interactionIndex.getOneBased(),
                     personToUpdate.getName()));
         }
-        model.setPerson(personToUpdate, updatedPerson);
-        model.setViewedPerson(updatedPerson);
 
-        int displayedEntryNumber = updatedPerson.getInteractionEntryNumber(storedIndex);
         return new CommandResult(String.format(MESSAGE_SUCCESS, displayedEntryNumber,
                 personToUpdate.getName(), DisplayDateFormatter.format(updatedInteraction.getDate()),
                 updatedInteraction.getNote()));

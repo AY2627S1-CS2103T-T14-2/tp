@@ -5,11 +5,12 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.DisplayDateFormatter;
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Interaction;
@@ -29,6 +30,8 @@ public class UnlogCommand extends Command {
             + "Example: " + COMMAND_WORD + " 2 1";
     public static final String MESSAGE_SUCCESS = "Deleted interaction #%1$d with %2$s (%3$s): %4$s";
 
+    private static final Logger logger = LogsCenter.getLogger(UnlogCommand.class);
+
     private final Index targetIndex;
     private final Index interactionIndex;
 
@@ -44,23 +47,24 @@ public class UnlogCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        List<Person> lastShownList = model.getFilteredPersonList();
-        if (targetIndex.getZeroBased() >= lastShownList.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        }
 
-        Person personToUpdate = lastShownList.get(targetIndex.getZeroBased());
+        Person personToUpdate = InteractionCommandSupport.getDisplayedPerson(
+                model.getFilteredPersonList(), targetIndex);
+        int storedIndex = InteractionCommandSupport.getStoredInteractionIndex(personToUpdate, interactionIndex);
+
         List<Interaction> updatedInteractions = new ArrayList<>(personToUpdate.getInteractions());
-        if (interactionIndex.getZeroBased() >= updatedInteractions.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_INTERACTION_INDEX);
-        }
-
-        int storedIndex = personToUpdate.getInteractionStoredIndex(interactionIndex.getOneBased());
         // remove by position so identical interactions remain distinguishable
         Interaction removedInteraction = updatedInteractions.remove(storedIndex);
+
         Person updatedPerson = personToUpdate.withInteractions(updatedInteractions);
+        assert updatedPerson.getInteractionCount() == personToUpdate.getInteractionCount() - 1
+                : "removing must delete exactly one interaction";
+
         model.setPerson(personToUpdate, updatedPerson);
         model.setViewedPerson(updatedPerson);
+
+        logger.fine("Removed interaction #" + interactionIndex.getOneBased() + " from displayed supporter "
+                + targetIndex.getOneBased() + " (interaction count: " + updatedPerson.getInteractionCount() + ")");
 
         return new CommandResult(String.format(MESSAGE_SUCCESS, interactionIndex.getOneBased(),
                 personToUpdate.getName(), DisplayDateFormatter.format(removedInteraction.getDate()),
