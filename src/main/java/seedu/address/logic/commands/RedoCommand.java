@@ -17,6 +17,7 @@ public class RedoCommand extends Command {
     public static final String COMMAND_WORD = "redo";
 
     public static final String MESSAGE_SUCCESS = "Redid the last undone change.";
+    public static final String MESSAGE_REDID_CHANGE = "Redid the last undone change: %1$s";
     public static final String MESSAGE_NOTHING_TO_REDO = "There is no undone change to redo.";
     public static final String MESSAGE_NO_ARGUMENTS = "redo takes no arguments and redoes one change at a time. "
             + "To redo more changes, enter redo again for each one.";
@@ -31,10 +32,12 @@ public class RedoCommand extends Command {
             throw new CommandException(MESSAGE_NOTHING_TO_REDO);
         }
 
-        model.redoAddressBook();
+        String redoneChange = model.redoAddressBook();
         assert model.canUndoAddressBook() : "a redone change can always be undone";
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
         logger.fine("Redid the last undone change and showed all supporters");
-        return new CommandResult(MESSAGE_SUCCESS);
+        return new CommandResult(redoneChange.isEmpty()
+                ? MESSAGE_SUCCESS
+                : String.format(MESSAGE_REDID_CHANGE, redoneChange));
     }
 }

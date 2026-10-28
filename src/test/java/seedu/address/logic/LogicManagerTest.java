@@ -285,12 +285,24 @@ public class LogicManagerTest {
         logic.execute("delete 1");
 
         isSaveFailing.set(true);
-        String expectedMessage = UndoCommand.MESSAGE_SUCCESS + "\n"
+        String expectedMessage = String.format(UndoCommand.MESSAGE_UNDID_CHANGE, "delete 1") + "\n"
                 + String.format(LogicManager.FILE_OPS_ERROR_FORMAT, dummyIoException.getMessage()) + "\n"
                 + String.format(LogicManager.MESSAGE_CHANGE_NOT_SAVED_FORMAT, RedoCommand.COMMAND_WORD);
         // another undo would reverse an earlier change instead of this one
         assertThrows(CommandException.class, expectedMessage, () -> logic.execute(UndoCommand.COMMAND_WORD));
         assertEquals(List.of(ALICE), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_undoAndRedo_nameTheCommandThatMadeTheChange() throws Exception {
+        model.addPerson(ALICE);
+        model.commitAddressBookIfChanged();
+        logic.execute("  tag 1 t/k8test ");
+
+        assertEquals(String.format(UndoCommand.MESSAGE_UNDID_CHANGE, "tag 1 t/k8test"),
+                logic.execute(UndoCommand.COMMAND_WORD).getFeedbackToUser());
+        assertEquals(String.format(RedoCommand.MESSAGE_REDID_CHANGE, "tag 1 t/k8test"),
+                logic.execute(RedoCommand.COMMAND_WORD).getFeedbackToUser());
     }
 
     @Test

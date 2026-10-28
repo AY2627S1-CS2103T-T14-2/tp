@@ -1,5 +1,7 @@
 package seedu.address.model;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -17,6 +19,8 @@ public class VersionedAddressBook extends AddressBook {
     private static final Logger logger = LogsCenter.getLogger(VersionedAddressBook.class);
 
     private final List<ReadOnlyAddressBook> addressBookStateList = new ArrayList<>();
+    /** Describes each saved change: entry {@code i} is the change from state {@code i} to state {@code i + 1}. */
+    private final List<String> changeDescriptionList = new ArrayList<>();
     private int currentStatePointer;
 
     /**
@@ -29,13 +33,27 @@ public class VersionedAddressBook extends AddressBook {
     }
 
     /**
-     * Saves a copy of the current address book state, discarding any undone states.
+     * Saves a copy of the current address book state with no description of the change,
+     * discarding any undone states.
      */
     public void commit() {
+        commit("");
+    }
+
+    /**
+     * Saves a copy of the current address book state, discarding any undone states.
+     * {@code changeDescription}, e.g. the command that made the change, is returned when the change is undone
+     * or redone.
+     */
+    public void commit(String changeDescription) {
+        requireNonNull(changeDescription);
         addressBookStateList.subList(currentStatePointer + 1, addressBookStateList.size()).clear();
+        changeDescriptionList.subList(currentStatePointer, changeDescriptionList.size()).clear();
         addressBookStateList.add(new AddressBook(this));
+        changeDescriptionList.add(changeDescription);
         currentStatePointer++;
         assert !canRedo() : "a new state is always the latest one";
+        assert changeDescriptionList.size() == addressBookStateList.size() - 1 : "one description per change";
         logger.fine("Saved undo point " + describeHistoryPosition());
     }
 
@@ -70,9 +88,10 @@ public class VersionedAddressBook extends AddressBook {
     /**
      * Restores the previous address book state.
      *
+     * @return the description of the undone change, which is empty if it was saved without one.
      * @throws IllegalStateException if there is no earlier state.
      */
-    public void undo() {
+    public String undo() {
         if (!canUndo()) {
             throw new IllegalStateException("There is no earlier state to undo to.");
         }
@@ -80,14 +99,16 @@ public class VersionedAddressBook extends AddressBook {
         resetData(addressBookStateList.get(currentStatePointer));
         assert canRedo() : "an undone state can always be redone";
         logger.fine("Undid to " + describeHistoryPosition());
+        return changeDescriptionList.get(currentStatePointer);
     }
 
     /**
      * Restores the next undone address book state.
      *
+     * @return the description of the redone change, which is empty if it was saved without one.
      * @throws IllegalStateException if there is no later state.
      */
-    public void redo() {
+    public String redo() {
         if (!canRedo()) {
             throw new IllegalStateException("There is no later state to redo to.");
         }
@@ -95,6 +116,7 @@ public class VersionedAddressBook extends AddressBook {
         resetData(addressBookStateList.get(currentStatePointer));
         assert canUndo() : "a redone state can always be undone";
         logger.fine("Redid to " + describeHistoryPosition());
+        return changeDescriptionList.get(currentStatePointer - 1);
     }
 
     /**

@@ -142,6 +142,11 @@ public class AddCommandTest {
         }
 
         @Override
+        public void commitAddressBookIfChanged(String changeDescription) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public boolean canUndoAddressBook() {
             throw new AssertionError("This method should not be called.");
         }
@@ -152,12 +157,12 @@ public class AddCommandTest {
         }
 
         @Override
-        public void undoAddressBook() {
+        public String undoAddressBook() {
             throw new AssertionError("This method should not be called.");
         }
 
         @Override
-        public void redoAddressBook() {
+        public String redoAddressBook() {
             throw new AssertionError("This method should not be called.");
         }
 

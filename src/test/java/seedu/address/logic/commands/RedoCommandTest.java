@@ -36,6 +36,16 @@ public class RedoCommandTest {
     }
 
     @Test
+    public void execute_describedChange_namesRedoneChange() throws Exception {
+        model.deletePerson(ALICE);
+        model.commitAddressBookIfChanged("delete 1");
+        new UndoCommand().execute(model);
+
+        String expectedMessage = String.format(RedoCommand.MESSAGE_REDID_CHANGE, "delete 1");
+        assertCommandSuccess(new RedoCommand(), model, expectedMessage, getModelWithoutAlice());
+    }
+
+    @Test
     public void execute_filteredList_showsAllSupporters() throws Exception {
         deleteCommitAndUndo(ALICE);
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
