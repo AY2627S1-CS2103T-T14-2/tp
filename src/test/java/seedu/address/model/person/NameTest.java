@@ -190,6 +190,12 @@ public class NameTest {
         assertTrue(Name.isValidName("J. O'Brien-Tan"));
         assertTrue(Name.isValidName("2nd Lee-Tan"));
         assertTrue(Name.isValidName("Tan'-.."));
+        assertTrue(Name.isValidName("Ahmad bin Ali @ Ah Mat"));
+        assertTrue(Name.isValidName("Tan Ah Kow (Chen Ah Kow)"));
+        assertTrue(Name.isValidName("Tan, Ah Kow"));
+        assertTrue(Name.isValidName("Tan(Ah Kow)@Chen,Ah Kow"));
+        assertTrue(Name.isValidName("Tan (Ah Kow"));
+        assertTrue(Name.isValidName("Tan Ah Kow)"));
     }
 
     @Test
@@ -199,6 +205,12 @@ public class NameTest {
         assertFalse(Name.isValidName(".Tan"));
         assertFalse(Name.isValidName("  .Tan  "));
         assertFalse(Name.isValidName("'-."));
+        assertFalse(Name.isValidName(",Tan"));
+        assertFalse(Name.isValidName("(Tan)"));
+        assertFalse(Name.isValidName(")Tan"));
+        assertFalse(Name.isValidName("@Tan"));
+        assertFalse(Name.isValidName("  @Tan  "));
+        assertFalse(Name.isValidName(",()@"));
     }
 
     @Test
@@ -240,12 +252,18 @@ public class NameTest {
     @Test
     public void constructor_supportedName_preservesPunctuationAndCase() {
         assertEquals("J. O'Brien-Tan D/O Kumar", new Name("J. O'Brien-Tan D/O Kumar").fullName);
+        assertEquals("Ahmad bin Ali @ Ah Mat", new Name("Ahmad bin Ali @ Ah Mat").fullName);
+        assertEquals("Tan Ah Kow (Chen Ah Kow)", new Name("Tan Ah Kow (Chen Ah Kow)").fullName);
+        assertEquals("Tan, Ah Kow", new Name("Tan, Ah Kow").fullName);
     }
 
     @Test
     public void constructor_supportedNameWithExtraSpaces_spacesNormalised() {
         assertEquals("Ravi s/o Kumar", new Name("  Ravi   s/o\tKumar  ").fullName);
         assertEquals("J. O'Brien-Tan", new Name("  J.   O'Brien-Tan  ").fullName);
+        assertEquals("Ahmad bin Ali @ Ah Mat", new Name("  Ahmad   bin Ali\t@   Ah Mat  ").fullName);
+        assertEquals("Tan Ah Kow (Chen Ah Kow)", new Name("  Tan  Ah Kow   (Chen\tAh Kow)  ").fullName);
+        assertEquals("Tan, Ah Kow", new Name("  Tan,\tAh   Kow  ").fullName);
     }
 
     @Test

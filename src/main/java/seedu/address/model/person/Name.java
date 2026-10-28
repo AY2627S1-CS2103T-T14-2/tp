@@ -13,7 +13,8 @@ public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
             "Names must start with a letter or digit, and may only contain Unicode letters, digits, spaces, "
-                    + "apostrophes (' or ’), hyphens (-), periods (.), and whole words s/o or d/o (case-insensitive). "
+                    + "apostrophes (' or ’), hyphens (-), periods (.), commas (,), round brackets (()), at signs (@), "
+                    + "and whole words s/o or d/o (case-insensitive). "
                     + "Unicode combining marks are allowed only after a letter or another mark attached to that letter";
 
     /*
@@ -26,7 +27,7 @@ public class Name {
      * on long names without changing the accepted characters or imposing a length limit.
      */
     public static final String VALIDATION_REGEX =
-            "(?=[\\p{L}0-9])(?:(?<!\\S)(?i:[sd]/o)(?!\\S)|\\p{L}\\p{M}*+|[0-9 '’.-])++";
+            "(?=[\\p{L}0-9])(?:(?<!\\S)(?i:[sd]/o)(?!\\S)|\\p{L}\\p{M}*+|[0-9 '’.,()@-])++";
 
     public final String fullName;
 

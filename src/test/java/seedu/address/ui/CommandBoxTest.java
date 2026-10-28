@@ -1,7 +1,7 @@
 package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -136,7 +136,7 @@ public class CommandBoxTest {
             return new CommandResult("Done.");
         });
         TextField textField = (TextField) commandBox.getRoot().lookup("#commandTextField");
-        assertTrue(textField != null);
+        assertNotNull(textField);
         return textField;
     }
 

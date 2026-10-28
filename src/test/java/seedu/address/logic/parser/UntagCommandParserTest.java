@@ -78,8 +78,8 @@ public class UntagCommandParserTest {
         assertParseFailure(parser, " 1 t/hubby*", Tag.MESSAGE_CONSTRAINTS);
 
         // empty, alone or with valid tags
-        assertParseFailure(parser, " 1 t/", Tag.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, " 1 t/vip t/", Tag.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " 1 t/", ParserUtil.MESSAGE_BLANK_TAG);
+        assertParseFailure(parser, " 1 t/vip t/", ParserUtil.MESSAGE_BLANK_TAG);
 
         // tags cannot contain spaces
         assertParseFailure(parser, " 1 t/board intro", Tag.MESSAGE_CONSTRAINTS);

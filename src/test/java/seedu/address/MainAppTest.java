@@ -101,6 +101,12 @@ public class MainAppTest {
     }
 
     @Test
+    public void initModelManager_outOfRangeInteractionDate_startsEmptyWithWarning() throws Exception {
+        assertInvalidFileStartsEmpty(TEST_DATA_FOLDER.resolve("JsonAddressBookStorageTest")
+                .resolve("outOfRangeInteractionDateAddressBook.json"));
+    }
+
+    @Test
     public void initModelManager_nullTag_startsEmptyWithWarning() throws Exception {
         assertInvalidFileStartsEmpty(TEST_DATA_FOLDER.resolve("JsonAddressBookStorageTest")
                 .resolve("nullTagAddressBook.json"));
