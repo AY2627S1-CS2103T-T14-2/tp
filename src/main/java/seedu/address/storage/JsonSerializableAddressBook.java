@@ -22,8 +22,11 @@ import seedu.address.model.person.Person;
 class JsonSerializableAddressBook {
 
     public static final String MESSAGE_DUPLICATE_PERSON = "Supporters list contains duplicate supporter(s).";
+    public static final String MESSAGE_NULL_PERSON = "Supporters list contains a null supporter.";
     public static final String MESSAGE_UNKNOWN_INTRODUCER =
             "Supporters list contains an introducer who is not a supporter.";
+    public static final String MESSAGE_INTRODUCTION_LOOP =
+            "Supporters list contains introductions that form a loop.";
 
     private final List<JsonAdaptedPerson> persons = new ArrayList<>();
 
@@ -52,6 +55,9 @@ class JsonSerializableAddressBook {
     public AddressBook toModelType() throws IllegalValueException {
         AddressBook addressBook = new AddressBook();
         for (JsonAdaptedPerson jsonAdaptedPerson : persons) {
+            if (jsonAdaptedPerson == null) {
+                throw new IllegalValueException(MESSAGE_NULL_PERSON);
+            }
             Person person = jsonAdaptedPerson.toModelType();
             if (addressBook.hasPerson(person)) {
                 throw new IllegalValueException(MESSAGE_DUPLICATE_PERSON);
@@ -64,6 +70,11 @@ class JsonSerializableAddressBook {
             Optional<Name> introducer = person.getIntroducer();
             if (introducer.isPresent() && !hasPersonNamed(addressBook, introducer.get())) {
                 throw new IllegalValueException(MESSAGE_UNKNOWN_INTRODUCER);
+            }
+        }
+        for (Person person : addressBook.getPersonList()) {
+            if (addressBook.isIntroducedThrough(person, person.getName())) {
+                throw new IllegalValueException(MESSAGE_INTRODUCTION_LOOP);
             }
         }
         return addressBook;

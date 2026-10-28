@@ -22,12 +22,7 @@ import seedu.address.testutil.PersonBuilder;
 public class StatsCommandTest {
 
     private static final String EXPECTED_MESSAGE = "Supporters by stage (4 in total):\n"
-            + "Prospect: 1\n"
-            + "Contacted: 0\n"
-            + "Cultivating: 0\n"
-            + "Giving: 2\n"
-            + "Lapsed: 1\n"
-            + "Declined: 0";
+            + "Prospect: 1, Contacted: 0, Cultivating: 0, Giving: 2, Lapsed: 1, Declined: 0";
 
     private Model model;
     private Model expectedModel;
@@ -53,12 +48,7 @@ public class StatsCommandTest {
     @Test
     public void execute_noSupporters_allCountsZero() {
         String expectedMessage = "Supporters by stage (0 in total):\n"
-                + "Prospect: 0\n"
-                + "Contacted: 0\n"
-                + "Cultivating: 0\n"
-                + "Giving: 0\n"
-                + "Lapsed: 0\n"
-                + "Declined: 0";
+                + "Prospect: 0, Contacted: 0, Cultivating: 0, Giving: 0, Lapsed: 0, Declined: 0";
         assertCommandSuccess(new StatsCommand(), new ModelManager(), expectedMessage, new ModelManager());
     }
 

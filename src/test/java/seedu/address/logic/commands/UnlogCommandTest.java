@@ -149,7 +149,7 @@ public class UnlogCommandTest {
         model.setViewedPerson(model.getFilteredPersonList().get(1));
         Optional<Person> previouslyViewed = model.getViewedPerson();
         assertCommandFailure(new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2)), model,
-                UnlogCommand.MESSAGE_INVALID_INTERACTION_INDEX);
+                Messages.MESSAGE_INVALID_INTERACTION_INDEX);
         assertEquals(previouslyViewed, model.getViewedPerson());
     }
 
@@ -159,7 +159,7 @@ public class UnlogCommandTest {
         model.setViewedPerson(model.getFilteredPersonList().get(1));
         Optional<Person> previouslyViewed = model.getViewedPerson();
         assertCommandFailure(new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(1)), model,
-                UnlogCommand.MESSAGE_INVALID_INTERACTION_INDEX);
+                Messages.MESSAGE_INVALID_INTERACTION_INDEX);
         assertEquals(previouslyViewed, model.getViewedPerson());
     }
 

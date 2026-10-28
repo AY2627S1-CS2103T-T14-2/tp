@@ -1,12 +1,21 @@
 package seedu.address.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.logging.Logger;
+
+import seedu.address.commons.core.LogsCenter;
+import seedu.address.model.person.Person;
 
 /**
  * Wraps all data at the address-book level, with a history of saved states for undo and redo.
  */
 public class VersionedAddressBook extends AddressBook {
+    private static final Logger logger = LogsCenter.getLogger(VersionedAddressBook.class);
+
     private final List<ReadOnlyAddressBook> addressBookStateList = new ArrayList<>();
     private int currentStatePointer;
 
@@ -26,11 +35,26 @@ public class VersionedAddressBook extends AddressBook {
         addressBookStateList.subList(currentStatePointer + 1, addressBookStateList.size()).clear();
         addressBookStateList.add(new AddressBook(this));
         currentStatePointer++;
+        assert !canRedo() : "a new state is always the latest one";
+        logger.fine("Saved undo point " + describeHistoryPosition());
     }
 
     /** Returns true if the current data differs from the state at {@code currentStatePointer}. */
     public boolean hasChangesSinceLastCommit() {
         return !equals(addressBookStateList.get(currentStatePointer));
+    }
+
+    /**
+     * Returns an identity-based set of record instances retained by the current data or undo/redo history.
+     * This allows session-only selection metadata for discarded record versions to be released.
+     */
+    Set<Person> getRetainedPersonVersions() {
+        Set<Person> retainedPersons = Collections.newSetFromMap(new IdentityHashMap<>());
+        retainedPersons.addAll(getPersonList());
+        for (ReadOnlyAddressBook state : addressBookStateList) {
+            retainedPersons.addAll(state.getPersonList());
+        }
+        return retainedPersons;
     }
 
     /** Returns true if there is an earlier state to restore. */
@@ -54,6 +78,8 @@ public class VersionedAddressBook extends AddressBook {
         }
         currentStatePointer--;
         resetData(addressBookStateList.get(currentStatePointer));
+        assert canRedo() : "an undone state can always be redone";
+        logger.fine("Undid to " + describeHistoryPosition());
     }
 
     /**
@@ -67,5 +93,14 @@ public class VersionedAddressBook extends AddressBook {
         }
         currentStatePointer++;
         resetData(addressBookStateList.get(currentStatePointer));
+        assert canUndo() : "a redone state can always be undone";
+        logger.fine("Redid to " + describeHistoryPosition());
+    }
+
+    /**
+     * Returns the current position in the history for log messages, e.g. {@code state 2 of 3}.
+     */
+    private String describeHistoryPosition() {
+        return "state " + (currentStatePointer + 1) + " of " + addressBookStateList.size();
     }
 }

@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
@@ -31,7 +32,7 @@ public class ParserUtilTest {
     private static final Clock INTERACTION_CLOCK = Clock.fixed(
             Instant.parse("2026-10-19T16:30:00Z"), ZoneId.of("Asia/Singapore"));
 
-    private static final String INVALID_NAME = "R@chel";
+    private static final String INVALID_NAME = "R&chel";
     private static final String INVALID_PHONE = "+65 123--4";
     private static final String INVALID_ADDRESS = " ";
     private static final String INVALID_EMAIL = "example.com";
@@ -65,6 +66,62 @@ public class ParserUtilTest {
 
         // Leading and trailing whitespaces
         assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseIndex("  1  "));
+    }
+
+    @Test
+    public void parseIndex_withUsageValidInput_returnsIndex() throws Exception {
+        assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseIndex(WHITESPACE + "01" + WHITESPACE, "delete INDEX"));
+        assertEquals(Index.fromOneBased(Integer.MAX_VALUE),
+                ParserUtil.parseIndex("2147483647", "delete INDEX"));
+    }
+
+    @Test
+    public void parseIndex_withUsageInvalidInput_reportsReasonAndUsage() {
+        String usage = "delete INDEX\nDeletes a supporter.";
+        String expectedMessage = "Index must be a positive integer (1, 2, 3, ...).\n" + usage;
+        for (String input : List.of("0", "-1", "+1", "1.5", "abc", "2147483648")) {
+            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseIndex(input, usage));
+        }
+    }
+
+    @Test
+    public void parseIndex_withUsageMalformedInput_reportsFormatAndUsage() {
+        String usage = "delete INDEX";
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage);
+        for (String input : List.of("", WHITESPACE, "1 2", "1 extra", "1\t2", "1\n2")) {
+            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseIndex(input, usage));
+        }
+    }
+
+    @Test
+    public void parseIndex_withUsageNullArguments_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseIndex(null, "delete INDEX"));
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseIndex("1", null));
+    }
+
+    @Test
+    public void parseInteractionIndices_withUsageValidInput_returnsIndices() throws Exception {
+        InteractionIndices expected = new InteractionIndices(Index.fromOneBased(2), Index.fromOneBased(3));
+        assertEquals(expected,
+                ParserUtil.parseInteractionIndices(WHITESPACE + "02 \t 003" + WHITESPACE, "unlog INDEX ENTRY"));
+    }
+
+    @Test
+    public void parseInteractionIndices_withUsageInvalidInput_reportsReasonAndUsage() {
+        String usage = "unlog INDEX ENTRY\nDeletes an interaction.";
+        String expectedMessage = "Provide exactly two positive integer indices: INDEX ENTRY.\n" + usage;
+        for (String input : List.of("", WHITESPACE, "1", "1 2 3", "0 1", "1 0", "abc 1", "1 abc",
+                "-1 1", "1 -1", "+1 1", "1 +1", "1.5 1", "1 1.5", "2147483648 1", "1 2147483648")) {
+            assertThrows(ParseException.class, expectedMessage, () ->
+                    ParserUtil.parseInteractionIndices(input, usage));
+        }
+    }
+
+    @Test
+    public void parseInteractionIndices_withUsageNullArguments_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () ->
+                ParserUtil.parseInteractionIndices(null, "unlog INDEX ENTRY"));
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseInteractionIndices("1 2", null));
     }
 
     @Test
@@ -178,6 +235,12 @@ public class ParserUtilTest {
         String addressWithWhitespace = WHITESPACE + VALID_ADDRESS + WHITESPACE;
         Address expectedAddress = new Address(VALID_ADDRESS);
         assertEquals(expectedAddress, ParserUtil.parseAddress(addressWithWhitespace));
+        assertEquals(expectedAddress, ParserUtil.parseAddress("\u00a0" + VALID_ADDRESS + "\u2003"));
+    }
+
+    @Test
+    public void parseAddress_unicodeBlank_throwsParseException() {
+        assertThrows(ParseException.class, Address.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseAddress("\u00a0"));
     }
 
     @Test
@@ -256,7 +319,7 @@ public class ParserUtilTest {
     public void parseInteractionDate_invalidFormat_throwsParseException() {
         for (String date : List.of("", WHITESPACE, "2026-1-01", "2026-01-1", "26-01-01", "2026/01/01",
                 "01-01-2026", "+2026-01-01", "10000-01-01", "2026-01-01T12:00:00", "2026- 01-01")) {
-            assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_DATE, () ->
+            assertThrows(ParseException.class, Interaction.MESSAGE_INVALID_DATE_FORMAT, () ->
                     ParserUtil.parseInteractionDate(date, INTERACTION_CLOCK));
         }
     }
@@ -265,7 +328,7 @@ public class ParserUtilTest {
     public void parseInteractionDate_invalidCalendarDate_throwsParseException() {
         for (String date : List.of("2026-02-29", "2024-02-30", "2026-04-31", "2026-00-10",
                 "2026-13-10", "2026-01-00", "2026-01-32")) {
-            assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_DATE, () ->
+            assertThrows(ParseException.class, Interaction.MESSAGE_INVALID_DATE_FORMAT, () ->
                     ParserUtil.parseInteractionDate(date, INTERACTION_CLOCK));
         }
     }
@@ -279,7 +342,7 @@ public class ParserUtilTest {
     @Test
     public void parseInteractionDate_beforeMinimumDate_throwsParseException() {
         for (String date : List.of("1899-12-31", "0000-01-01", "0001-01-01")) {
-            assertThrows(ParseException.class, ParserUtil.MESSAGE_EARLY_INTERACTION_DATE, () ->
+            assertThrows(ParseException.class, Interaction.MESSAGE_EARLY_DATE, () ->
                     ParserUtil.parseInteractionDate(date, INTERACTION_CLOCK));
         }
     }
@@ -311,7 +374,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseInteractionDate_futureDate_throwsParseException() {
-        assertThrows(ParseException.class, ParserUtil.MESSAGE_FUTURE_INTERACTION_DATE, () ->
+        assertThrows(ParseException.class, Interaction.MESSAGE_FUTURE_DATE, () ->
                 ParserUtil.parseInteractionDate("2026-10-21", INTERACTION_CLOCK));
     }
 
@@ -350,7 +413,19 @@ public class ParserUtilTest {
 
     @Test
     public void parseTag_invalidValue_throwsParseException() {
-        assertThrows(ParseException.class, () -> ParserUtil.parseTag(INVALID_TAG));
+        assertThrows(ParseException.class, Tag.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseTag(INVALID_TAG));
+    }
+
+    @Test
+    public void parseTag_emptyValue_throwsParseException() {
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_BLANK_TAG, () -> ParserUtil.parseTag(""));
+    }
+
+    @Test
+    public void parseTag_whitespaceOnlyValue_throwsParseException() {
+        for (String tag : List.of(" ", WHITESPACE, "\u00a0", "\u2003", "\u0085", " \t\u00a0\u2003\u0085\r\n")) {
+            assertThrows(ParseException.class, ParserUtil.MESSAGE_BLANK_TAG, () -> ParserUtil.parseTag(tag));
+        }
     }
 
     @Test
@@ -387,5 +462,12 @@ public class ParserUtilTest {
         Set<Tag> expectedTagSet = Set.of(new Tag(VALID_TAG_1), new Tag(VALID_TAG_2));
 
         assertEquals(expectedTagSet, actualTagSet);
+    }
+
+    @Test
+    public void parseTags_tagsDifferingOnlyInCase_keepsFirstTyped() throws Exception {
+        Set<Tag> actualTagSet = ParserUtil.parseTags(List.of("vip", VALID_TAG_1, "VIP", "Vip"));
+
+        assertEquals(List.of(new Tag("vip"), new Tag(VALID_TAG_1)), List.copyOf(actualTagSet));
     }
 }

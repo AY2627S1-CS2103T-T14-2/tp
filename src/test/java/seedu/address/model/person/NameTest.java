@@ -21,6 +21,27 @@ public class NameTest {
     }
 
     @Test
+    public void constructor_longName_preservesNameWithoutStackOverflow() {
+        String longName = "A".repeat(50_000);
+
+        assertEquals(longName, new Name(longName).fullName);
+    }
+
+    @Test
+    public void isValidName_longNameWithSlashWords_returnsTrue() {
+        assertTrue(Name.isValidName("s/o " + "A".repeat(5_000) + " D/o " + "O'Brien-Tan. ".repeat(5_000)));
+        assertTrue(Name.isValidName("A".repeat(5_000) + " s/o"));
+    }
+
+    @Test
+    public void isValidName_longInvalidName_returnsFalse() {
+        assertFalse(Name.isValidName("A".repeat(50_000) + "*"));
+        assertFalse(Name.isValidName("A".repeat(5_000) + " s/oKumar"));
+        assertFalse(Name.isValidName("A".repeat(5_000) + " s/o.Kumar"));
+        assertFalse(Name.isValidName("A".repeat(5_000) + "s/o"));
+    }
+
+    @Test
     public void isValidName() {
         // null name
         assertThrows(NullPointerException.class, () -> Name.isValidName(null));
@@ -48,6 +69,12 @@ public class NameTest {
         assertTrue(Name.isValidName("J. O'Brien-Tan"));
         assertTrue(Name.isValidName("2nd Lee-Tan"));
         assertTrue(Name.isValidName("Tan'-.."));
+        assertTrue(Name.isValidName("Ahmad bin Ali @ Ah Mat"));
+        assertTrue(Name.isValidName("Tan Ah Kow (Chen Ah Kow)"));
+        assertTrue(Name.isValidName("Tan, Ah Kow"));
+        assertTrue(Name.isValidName("Tan(Ah Kow)@Chen,Ah Kow"));
+        assertTrue(Name.isValidName("Tan (Ah Kow"));
+        assertTrue(Name.isValidName("Tan Ah Kow)"));
     }
 
     @Test
@@ -57,6 +84,12 @@ public class NameTest {
         assertFalse(Name.isValidName(".Tan"));
         assertFalse(Name.isValidName("  .Tan  "));
         assertFalse(Name.isValidName("'-."));
+        assertFalse(Name.isValidName(",Tan"));
+        assertFalse(Name.isValidName("(Tan)"));
+        assertFalse(Name.isValidName(")Tan"));
+        assertFalse(Name.isValidName("@Tan"));
+        assertFalse(Name.isValidName("  @Tan  "));
+        assertFalse(Name.isValidName(",()@"));
     }
 
     @Test
@@ -98,12 +131,18 @@ public class NameTest {
     @Test
     public void constructor_supportedName_preservesPunctuationAndCase() {
         assertEquals("J. O'Brien-Tan D/O Kumar", new Name("J. O'Brien-Tan D/O Kumar").fullName);
+        assertEquals("Ahmad bin Ali @ Ah Mat", new Name("Ahmad bin Ali @ Ah Mat").fullName);
+        assertEquals("Tan Ah Kow (Chen Ah Kow)", new Name("Tan Ah Kow (Chen Ah Kow)").fullName);
+        assertEquals("Tan, Ah Kow", new Name("Tan, Ah Kow").fullName);
     }
 
     @Test
     public void constructor_supportedNameWithExtraSpaces_spacesNormalised() {
         assertEquals("Ravi s/o Kumar", new Name("  Ravi   s/o\tKumar  ").fullName);
         assertEquals("J. O'Brien-Tan", new Name("  J.   O'Brien-Tan  ").fullName);
+        assertEquals("Ahmad bin Ali @ Ah Mat", new Name("  Ahmad   bin Ali\t@   Ah Mat  ").fullName);
+        assertEquals("Tan Ah Kow (Chen Ah Kow)", new Name("  Tan  Ah Kow   (Chen\tAh Kow)  ").fullName);
+        assertEquals("Tan, Ah Kow", new Name("  Tan,\tAh   Kow  ").fullName);
     }
 
     @Test

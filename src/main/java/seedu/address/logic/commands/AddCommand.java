@@ -11,6 +11,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
+import seedu.address.logic.SharedContactWarning;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
@@ -42,6 +43,13 @@ public class AddCommand extends Command {
     public static final String MESSAGE_MISSING_CONTACT = "A supporter needs at least one way to reach them. "
             + "Provide " + PREFIX_PHONE + "PHONE, " + PREFIX_EMAIL + "EMAIL, or both.";
 
+    public static final String MESSAGE_BLANK_PHONE = "Phone number should not be blank. "
+            + "Leave out " + PREFIX_PHONE + " if the supporter has no phone number.";
+    public static final String MESSAGE_BLANK_EMAIL = "Email should not be blank. "
+            + "Leave out " + PREFIX_EMAIL + " if the supporter has no email.";
+    public static final String MESSAGE_BLANK_ADDRESS = "Address should not be blank. "
+            + "Leave out " + PREFIX_ADDRESS + " if you do not know the supporter's address.";
+
     public static final String MESSAGE_SUCCESS = "New supporter added: %1$s";
 
     private final Person toAdd;
@@ -63,8 +71,13 @@ public class AddCommand extends Command {
                     Messages.getErrorMessageForDuplicatePerson(model.getAddressBook().getPersonList(), toAdd));
         }
 
+        String warning = new SharedContactWarning(model.getAddressBook().getPersonList(), toAdd).getMessage();
         model.addPerson(toAdd);
-        return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(toAdd)));
+        String feedback = String.format(MESSAGE_SUCCESS, Messages.format(toAdd));
+        if (!warning.isEmpty()) {
+            feedback += "\n" + warning;
+        }
+        return new CommandResult(feedback);
     }
 
     @Override

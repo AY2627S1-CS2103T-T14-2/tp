@@ -1,5 +1,8 @@
 package seedu.address.storage;
 
+import static java.util.Objects.requireNonNull;
+
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
@@ -15,7 +18,10 @@ import seedu.address.model.person.Interaction;
 class JsonAdaptedInteraction {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Interaction's %s field is missing!";
-    public static final String DATE_MESSAGE_CONSTRAINTS = "Interaction dates should be in yyyy-MM-dd format";
+    public static final String MESSAGE_DATE_TOO_FAR_IN_FUTURE =
+            "Stored interaction dates cannot be more than one day after today.";
+
+    private static final int FUTURE_DATE_ALLOWANCE_DAYS = 1;
 
     private final String date;
     private final String note;
@@ -43,6 +49,17 @@ class JsonAdaptedInteraction {
      * @throws IllegalValueException if there were any data constraints violated in the adapted interaction.
      */
     public Interaction toModelType() throws IllegalValueException {
+        return toModelType(Clock.systemDefaultZone());
+    }
+
+    /**
+     * Converts this interaction using {@code clock} to determine today's local date.
+     * Allows dates up to one day after today to accommodate a one-day local date difference between saving and loading.
+     *
+     * @throws IllegalValueException if any stored interaction constraint is violated.
+     */
+    Interaction toModelType(Clock clock) throws IllegalValueException {
+        requireNonNull(clock);
         if (date == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, "date"));
         }
@@ -51,7 +68,13 @@ class JsonAdaptedInteraction {
         try {
             modelDate = LocalDate.parse(date);
         } catch (DateTimeParseException exception) {
-            throw new IllegalValueException(DATE_MESSAGE_CONSTRAINTS);
+            throw new IllegalValueException(Interaction.MESSAGE_INVALID_DATE_FORMAT, exception);
+        }
+
+        LocalDate latestAllowedDate = LocalDate.now(clock).plusDays(FUTURE_DATE_ALLOWANCE_DAYS);
+        if (!Interaction.isValidDate(modelDate, latestAllowedDate)) {
+            throw new IllegalValueException(modelDate.isBefore(Interaction.MIN_DATE)
+                    ? Interaction.MESSAGE_EARLY_DATE : MESSAGE_DATE_TOO_FAR_IN_FUTURE);
         }
 
         if (note == null) {

@@ -36,6 +36,14 @@ public class CommandResult {
         this(feedbackToUser, false, false);
     }
 
+    /**
+     * Returns a copy of this result with {@code note} added on a new line after the feedback.
+     */
+    public CommandResult withNote(String note) {
+        requireNonNull(note);
+        return new CommandResult(feedbackToUser + "\n" + note, showHelp, exit);
+    }
+
     public String getFeedbackToUser() {
         return feedbackToUser;
     }

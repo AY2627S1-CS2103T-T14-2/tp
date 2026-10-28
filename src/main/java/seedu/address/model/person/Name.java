@@ -11,15 +11,18 @@ public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
             "Names must start with a letter or digit, and may only contain letters, digits, spaces, "
-                    + "apostrophes ('), hyphens (-), periods (.), and whole words s/o or d/o (case-insensitive)";
+                    + "apostrophes ('), hyphens (-), periods (.), commas (,), round brackets (()), at signs (@), "
+                    + "and whole words s/o or d/o (case-insensitive)";
 
     /*
      * The first character must be a letter or digit after space normalization.
      * Slashes are allowed only in whole words s/o or d/o, ignoring case.
      * The lookahead checks the first character without consuming it, allowing s/o or d/o at the start.
+     * Match slash words before individual letters. Possessive repetition avoids recursive backtracking
+     * on long names without changing the accepted characters or imposing a length limit.
      */
     public static final String VALIDATION_REGEX =
-            "(?=\\p{Alnum})(?:[\\p{Alnum} '.-]|(?<!\\S)(?i:[sd]/o)(?!\\S))+";
+            "(?=\\p{Alnum})(?:(?<!\\S)(?i:[sd]/o)(?!\\S)|[\\p{Alnum} '.,()@-])++";
 
     public final String fullName;
 

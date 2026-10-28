@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static seedu.address.testutil.InteractionHistoryTestUtil.assertHistory;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,7 +16,6 @@ import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.ui.SupporterDetailData;
-import seedu.address.ui.SupporterDetailData.InteractionEntry;
 
 /**
  * Tests interaction editing from command parsing through the model to detail-panel data, without starting JavaFX.
@@ -114,16 +114,4 @@ public class EditLogCommandIntegrationTest {
                 List.of("29 Feb 2024", "29 Feb 2024", "29 Feb 2024"),
                 List.of("Corrected meeting", "Follow-up", "Meeting"));
     }
-
-    /**
-     * Verifies entry numbers, formatted dates and notes in display order.
-     */
-    private void assertHistory(SupporterDetailData display, List<Integer> expectedNumbers,
-            List<String> expectedDates, List<String> expectedNotes) {
-        List<InteractionEntry> entries = display.getInteractionEntries();
-        assertEquals(expectedNumbers, entries.stream().map(InteractionEntry::getNumber).toList());
-        assertEquals(expectedDates, entries.stream().map(InteractionEntry::getDate).toList());
-        assertEquals(expectedNotes, entries.stream().map(InteractionEntry::getNote).toList());
-    }
-
 }

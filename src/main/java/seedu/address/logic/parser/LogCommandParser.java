@@ -31,20 +31,12 @@ public class LogCommandParser implements Parser<LogCommand> {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, LogCommand.MESSAGE_USAGE));
         }
 
-        Index index;
-        try {
-            index = ParserUtil.parseIndex(argMultimap.getPreamble());
-        } catch (ParseException pe) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, LogCommand.MESSAGE_USAGE), pe);
-        }
+        Index index = ParserUtil.parseIndex(argMultimap.getPreamble(), LogCommand.MESSAGE_USAGE);
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NOTE, PREFIX_DATE);
 
         String note = ParserUtil.parseInteractionNote(argMultimap.getValue(PREFIX_NOTE).get());
-        Optional<LocalDate> date = Optional.empty();
-        if (argMultimap.getValue(PREFIX_DATE).isPresent()) {
-            date = Optional.of(ParserUtil.parseInteractionDate(argMultimap.getValue(PREFIX_DATE).get()));
-        }
+        Optional<LocalDate> date = ParserUtil.parseOptionalInteractionDate(argMultimap.getValue(PREFIX_DATE));
         return new LogCommand(index, note, date);
     }
 }

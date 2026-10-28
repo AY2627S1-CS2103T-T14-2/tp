@@ -15,6 +15,8 @@
 
 This project is based on the AddressBook-Level3 project created by the [SE-EDU initiative](https://se-education.org).
 
+Libraries used: [JavaFX](https://openjfx.io/), [Jackson](https://github.com/FasterXML/jackson), [JUnit5](https://github.com/junit-team/junit5)
+
 ---
 
 ## **Setting up, getting started**
@@ -74,6 +76,8 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
+`SupporterDetailPanel` displays the viewed supporter's details and interaction history using values prepared by `SupporterDetailData`. Both `PersonCard` and `SupporterDetailData` use `LastContactFormatter` to format the last-contact line consistently.
+
 `CommandBox` also keeps a `CommandHistory` of the commands entered this session, which it uses to bring back earlier commands when the user presses Up or Down. `CommandHistory` is plain Java with no JavaFX code, so its behavior is tested without starting the UI. It stays in the `UI` component because it only recalls typed text; it does not affect how commands are parsed or executed.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T14-2/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T14-2/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
@@ -109,6 +113,7 @@ How the `Logic` component works:
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).
 1. The result of the command execution is encapsulated as a `CommandResult` object.
 1. Before returning it from `Logic`, `LogicManager` calls `commitAddressBookIfChanged()` to record changes for undo/redo and saves the data through `Storage`.
+   If saving fails after the command changed the data, the change stays in the `Model` and `LogicManager` throws a `CommandException` whose message starts with the command's result and ends with `LogicManager.MESSAGE_CHANGE_NOT_SAVED_FORMAT`, so the user does not repeat a command such as `delete 1`, which would change another supporter. The message suggests `undo` to reverse the change, or `redo` after an `undo`, since another `undo` would reverse an earlier change.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -128,6 +133,7 @@ How the parsing works:
 The `Model` component,
 
 - stores the supporter data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+- keeps the supporter data in a `VersionedAddressBook`, an `AddressBook` that also saves read-only copies of earlier states for [undo and redo](#undo-redo-feature).
 - stores each supporter's optional introducer as the introducer's `Name`, not as a reference to their `Person` object. Names are unique, so the `Name` identifies one supporter, and it stays valid when that supporter's immutable `Person` object is replaced by a change. When the introducer is renamed with `edit`, `ModelManager#replaceIntroducer(...)` updates every link to the new name, and when they are deleted, it clears those links.
 - stores the `Person` objects selected by the current filter in a `FilteredList`, wrapped by a `SortedList` for optional display ordering. It exposes the sorted view as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so both filter and order changes update the UI without reordering stored data.
 - stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
@@ -176,6 +182,33 @@ Later command results and errors replace the warning through the existing comman
 
 `MainAppTest` covers valid, empty, missing, malformed, invalid and duplicate data files, verifies that loading preserves the file's bytes, and checks that a subsequent successful command saves normally. UI testing should also verify the initial warning and replacement by command feedback using the scenarios in the manual testing appendix.
 
+### Detecting mistyped prefixes
+
+`ArgumentTokenizer` splits a command's arguments only at the prefixes its parser asks for. Any other word ending in `/`, such as `em/` mistyped for `e/`, stays part of the value before it. On its own, this would save a mistyped prefix silently inside an address or a note, or make the parser blame a field the user typed correctly: `add n/Tan p/91234567 x/foo` reads the phone number as `91234567 x/foo` and reports an invalid phone number.
+
+`AddressBookParser#findUnrecognisedPrefixes(String)` selects the prefixes supported by the command's own format, then delegates scanning to `ArgumentTokenizer`. The scan returns prefix-like words outside that set in their first-occurrence order, including prefixes used by other commands. Positional-only commands accept no prefixes. Commands that ignore arguments produce no prefix notes, and unknown command words retain the global `CliSyntax.ALL_PREFIXES` check. The advisory prefix sets must stay aligned with the corresponding command parsers when formats change.
+
+For `find`, the advisory scan uses `CliSyntax.ALL_PREFIXES` instead. `FindCommandParser` explicitly rejects known unsupported filters (`n/`, `a/`, `dt/`, `nt/` and `by/`), so their errors must not also claim that those prefixes were read as ordinary text. Unknown words such as `x/` remain eligible for an advisory note when parsing fails; a successful search changes no supporter data and receives no undo suggestion.
+
+The scanner skips everyday slash words (`s/o`, `d/o`, `c/o`, `w/`, `w/o` and `and/or`) and does not match slashes after digits (`5/3`) or inside links. `LogicManager#execute(String)` uses it in two places:
+
+1. If parsing throws a `ParseException`, `LogicManager` throws a new `ParseException` with the original message followed by a note from `Messages#formatUnrecognisedPrefixErrorNote(List)`, e.g. `Note: by/ is not a recognised prefix for this command, so it was read as part of the value before it.`
+1. If the command runs and the supporter list differs from a copy taken before it ran, `LogicManager` adds a note from `Messages#formatUnrecognisedPrefixNote(List)` with `CommandResult#withNote(String)`. This note suggests `undo`, so a command that changes nothing, such as `find x/Alice`, does not get it.
+
+The advisory scan never rejects input; the notes only point out words treated as text. Explicit validation, including `find`'s unsupported-filter check, can still reject a command. Failures during command execution keep their original error without a prefix note.
+
+#### Design considerations:
+
+**Aspect: What to do with a word that looks like a prefix but is not one**
+
+- **Alternative 1 (current choice):** Run the command as the parser reads it, and add a note naming the word.
+  - Pros: Addresses, organisations and notes can contain slashes, e.g. `a/Blk 5 Unit/3` or `nt/A/C details to follow`, and are saved as typed. A wrongly flagged word only costs an extra line in the result.
+  - Cons: A mistyped prefix inside an address or a note is still saved, so the user has to run `undo`.
+
+- **Alternative 2:** Reject any command that contains such a word.
+  - Pros: A mistyped prefix is never saved.
+  - Cons: Real values with slashes could not be saved at all, with no way around it, unless every such word, like `Unit/`, were added to a list of exceptions.
+
 ### Finding and listing supporters
 
 `FindCommandParser` reads name keywords from the preamble and uses `ArgumentTokenizer` to read
@@ -185,15 +218,16 @@ tokenization, allowing multiword organisation values and whitespace between pref
 
 The parser rejects missing criteria and empty prefix values. Stage values use
 `ParserUtil#parseStage(String)` so invalid or partial stage names produce the existing stage error.
-Phone queries must contain digits after removing plus signs, spaces and hyphens, and may not
-contain other characters. They are search fragments rather than complete `Phone` values, so the
-phone-number length constraints do not apply to queries.
+Phone queries use `Phone#isValidPhoneSearch(String)` to check the same formatting, parentheses,
+extension and label syntax as stored numbers. They are search fragments rather than complete
+`Phone` values, so the main-number length constraints do not apply to queries.
 
 `PersonMatchesSearchPredicate` defensively copies its criteria and normalizes text with
 `Locale.ROOT`. Names, organisations, tags and emails use literal, case-insensitive substring
-matching; stages match exactly. `normalizePhone(String)` removes formatting from both phone
-criteria and stored numbers before substring matching. Missing optional fields do not satisfy
-criteria on those fields.
+matching; stages match exactly. `normalizePhone(String)` delegates to `Phone#normalizeForSearch(String)`
+to remove separators, parentheses, trailing type labels and extension markers from both phone
+criteria and stored numbers. Extension digits remain in the searchable sequence. Missing optional
+fields do not satisfy criteria on those fields.
 
 Alternatives within a field use OR and different field groups use AND. For example,
 `find tan lim o/DBS o/OCBC st/giving` requires any name keyword, any organisation alternative and
@@ -280,6 +314,35 @@ Two supporters count as the same supporter if their names match, ignoring case a
   - Pros: Namesakes can be stored without changing either name.
   - Cons: The same person could be added twice as soon as they change jobs and contact details.
 
+### Shared-contact warnings when adding or editing
+
+`AddCommand` checks the existing name-based duplicate rule first. For a new name, it creates
+`SharedContactWarning` from a snapshot of `Model#getAddressBook().getPersonList()` before adding
+the supporter. This includes records hidden by a filter and prevents the new record from being
+reported as its own match.
+
+After validating the displayed index, duplicate-name rule and required contact fields, `EditCommand`
+compares the resulting record against a full-list snapshot excluding the original supporter.
+This avoids self-matches even when a supporter is renamed, and includes matches hidden by a filter.
+Both commands use the same comparison helper; edit feedback describes an update rather than an addition.
+
+The warning compares complete phone-number keys and case-insensitive email addresses, not search
+substrings. Phone formatting and type labels are ignored, but country codes are not inferred.
+An extension marker is retained in the comparison key, so a main number followed by extension
+digits is not confused with a longer main number, and different extensions remain distinct.
+Email dots and `+suffixes` are significant. Missing contact fields never match other missing fields.
+
+Each existing supporter is listed once, in full-list order, with `phone`, `email` or `phone and email`.
+The message is appended to normal success feedback only when matches exist. Shared contacts do not
+block adding or editing, and the warning never changes matching supporters. The entire resulting
+record is checked, including unchanged contact fields that already share a value. `LogicManager`
+saves and commits actual data changes normally; a warning does not create an extra undo point.
+Loading does not issue shared-contact warnings.
+
+`SharedContactWarningTest` covers matching, normalization, optional fields and deterministic messages.
+`SharedContactWarningIntegrationTest` checks the reported examples, hidden matches, persistence,
+selection, unchanged rejection rules and undo/redo through `LogicManager`.
+
 ### Cultivation stage field
 
 Every `Person` has exactly one cultivation stage (see the [Glossary](#glossary) for what each stage means). The stage is represented by the `Stage` enumeration in the `Model` component, with the six values `PROSPECT`, `CONTACTED`, `CULTIVATING`, `GIVING`, `LAPSED` and `DECLINED`.
@@ -324,7 +387,7 @@ A stage can be set when a supporter is added, and changed afterwards with the `s
 **Changing a stage with `stage INDEX STAGE`:** The command is implemented by `StageCommandParser` and `StageCommand`, and works as follows.
 
 1. `AddressBookParser` passes the arguments after the command word to `StageCommandParser#parse(String)`.
-2. `StageCommandParser` splits the arguments on whitespace. Anything other than exactly two parts gives an invalid command format error. The first part is parsed with `ParserUtil#parseIndex(String)` (also an invalid command format error if it fails), and the second with `ParserUtil#parseStage(String)` (which gives the stage error message if it fails).
+2. `StageCommandParser` splits the arguments on whitespace. Anything other than exactly two parts gives an invalid command format error. The first part is parsed with `ParserUtil#parseIndex(String, String)` with the command usage (a positive-integer explanation followed by usage if it fails), and the second with `ParserUtil#parseStage(String)` (which gives the stage error message if it fails).
 3. `StageCommand#execute(Model)` checks the index against the filtered list from `Model#getFilteredPersonList()`.
 4. If the supporter is already at the given stage, it returns a normal `CommandResult` saying that nothing was changed. Otherwise, it creates a copy of the `Person` with the new stage and calls `Model#setPerson(Person, Person)`.
 
@@ -358,7 +421,7 @@ The stage is also shown in the UI: `PersonCard` displays it as a badge next to t
 
 A `Person` may belong to an organisation, such as the company a CSR contact speaks for. Individual donors usually have none, so the field is optional. It is represented by the `Organisation` class in the `Model` component.
 
-- `Organisation#isValidOrganisation(String)` accepts any characters, because company names often contain symbols (e.g. `Procter & Gamble`). After leading and trailing spaces are removed and each run of spaces inside is reduced to one, the value must not be blank and must be at most `Organisation.MAX_LENGTH` (100) characters long.
+- `Organisation#isValidOrganisation(String)` accepts any characters, because company names often contain symbols (e.g. `Procter & Gamble`). After leading and trailing spaces are removed and each run of spaces inside is reduced to one, the value must not be blank and must contain at most `Organisation.MAX_LENGTH` (100) Unicode code points. The limit is checked using `String.codePointCount`, so supplementary characters such as 😀 count as one, while combined emoji can contain multiple code points.
 - The `Organisation` constructor applies the same space normalisation before storing the value, so `DBS  Bank` and `DBS Bank` are equal.
 - `Person` stores no organisation as `null` internally, but `Person#getOrganisation()` returns an `Optional<Organisation>`, so callers must handle the missing case explicitly. The `Person` constructors without an organisation parameter create a supporter with none.
 - `EditCommand` and `StageCommand` copy the existing organisation into the `Person` they create, so editing other details or changing the stage never removes it.
@@ -397,13 +460,17 @@ In tests, `PersonBuilder` builds a `Person` with no organisation unless `PersonB
 
 Each `Person` owns an interaction history. An entry is represented by the immutable `Interaction` class in the `Model` component and contains a `LocalDate` and a short note.
 
-- An interaction note is trimmed before it is stored. It must not be blank after trimming and must be at most `Interaction.MAX_NOTE_LENGTH` (500) characters long.
+- Dates supplied through `log` and `editlog` must be on or before today because these commands record completed interactions. JSON loading accepts dates through tomorrow to accommodate a one-day local date difference between saving and loading, such as after changing time zones; the stored date is preserved. Dates more than one calendar day ahead of the computer’s local date at loading are still rejected, whether caused by a time-zone change or a clock adjustment.
+- Both command parsing and JSON loading use `Interaction#isValidDate(LocalDate, LocalDate)`, which accepts dates from `Interaction.MIN_DATE` (`1900-01-01`) through a caller-supplied upper bound, inclusive. Callers obtain today from their clock; tests can supply a fixed date or clock. The `Interaction` constructor checks that the date is non-null but does not itself enforce the date range.
+- An interaction note is trimmed before it is stored. It must not be blank after trimming and must be at most `Interaction.MAX_NOTE_LENGTH` (500) Unicode code points long. `Interaction.isValidNote()` counts code points after trimming; supplementary characters count as one, while combining sequences can count as multiple code points.
 - `Person` stores interactions in logging order. Its constructor makes a defensive copy of the supplied list, and `Person#getInteractions()` returns an unmodifiable view.
 - Existing `Person` constructors create an empty interaction history. This keeps existing creation paths compatible with the new field.
 - `EditCommand` and `StageCommand` copy the existing history into the replacement `Person`, so changing other supporter details never removes past interactions.
 - Interaction history is included in `Person#equals(Object)` and `Person#hashCode()`, but not in `Person#isSamePerson(Person)`. Supporter identity therefore remains name-based.
 
-In the `Storage` component, `JsonAdaptedInteraction` stores a date as an ISO `yyyy-MM-dd` string and a note as a string. `JsonAdaptedPerson` stores the entries in an `"interactions"` array while preserving their order. When loading, a missing array means the supporter has an empty history, so data files created before interaction histories existed remain compatible. A missing interaction field, malformed date, blank note or note longer than 500 characters makes the data file invalid.
+In the `Storage` component, `JsonAdaptedInteraction` stores a date as an ISO `yyyy-MM-dd` string and a note as a string. `JsonAdaptedPerson` stores the entries in an `"interactions"` array while preserving their order. When loading, a missing array means the supporter has an empty history, so data files created before interaction histories existed remain compatible. A missing interaction field, malformed or out-of-range date, blank note or note longer than 500 Unicode code points after trimming makes the data file invalid. `JsonAdaptedInteraction` throws `IllegalValueException`, which `JsonAddressBookStorage` reports as `DataLoadingException`. At startup, the app then uses an empty address book and displays the existing loading warning; it does not skip individual invalid entries. Loading leaves the file unchanged, but a subsequent successful save overwrites it with the current in-memory data.
+
+The parser and storage adapter share the date-format and minimum-date messages defined in `Interaction`. The parser uses `Interaction.MESSAGE_FUTURE_DATE` for dates after today. The adapter keeps its own missing-field message and uses `MESSAGE_DATE_TOO_FAR_IN_FUTURE` for dates beyond its one-day allowance. Normal loading uses the computer's default-zone clock; the package-private `JsonAdaptedInteraction#toModelType(Clock)` overload lets tests control today's date.
 
 In tests, `PersonBuilder` builds a `Person` with an empty history unless `PersonBuilder#withInteractions(Interaction...)` is called.
 
@@ -434,7 +501,7 @@ In tests, `PersonBuilder` builds a `Person` with an empty history unless `Person
 **Parsing `log INDEX nt/NOTE [dt/DATE]`:** The command is parsed by `LogCommandParser` as follows.
 
 1. `AddressBookParser` passes the arguments after the command word to `LogCommandParser#parse(String)`.
-2. The parser requires `INDEX` and `nt/NOTE`, and accepts optional `dt/DATE` in either prefix order. It parses the index with `ParserUtil#parseIndex(String)`, reporting an invalid command format if it fails, then rejects repeated prefixes.
+2. The parser requires `INDEX` and `nt/NOTE`, and accepts optional `dt/DATE` in either prefix order. It parses the index with `ParserUtil#parseIndex(String, String)`. A single invalid index value produces a positive-integer explanation followed by log usage; extra words in the index argument produce an invalid-command-format message followed by usage. The parser then rejects repeated prefixes.
 3. It validates the note with `ParserUtil#parseInteractionNote(String)` and any supplied date with `ParserUtil#parseInteractionDate(String)`. Dates must be valid calendar dates in `yyyy-MM-dd` format, from `1900-01-01` through today (inclusive), using the computer's clock. The lower bound allows historical records while rejecting implausibly old dates and likely year-entry mistakes.
 4. It creates a `LogCommand` with the parsed index, note and an `Optional<LocalDate>`. An omitted date remains empty until execution.
 
@@ -444,7 +511,7 @@ In tests, `PersonBuilder` builds a `Person` with an empty history unless `Person
 2. It creates an `Interaction` using the supplied date, or today's date at execution if none was supplied. The default uses the computer's clock; tests can supply a fixed `Clock`.
 3. It copies the supporter's existing interactions in logging order and appends the new interaction. The new entry's zero-based stored index is the updated list size minus one.
 4. It creates a replacement `Person` with the updated history and copies every other field unchanged, including the cultivation stage and tags. It then calls `Model#setPerson(Person, Person)` and selects the updated supporter with `Model#setViewedPerson(Person)`.
-5. It finds the new entry's position in `Person#getInteractionIndicesInDisplayOrder()`. Subtracting that zero-based display position from the history size gives its chronological number: oldest is `#1`, newest is largest. The returned `CommandResult` reports this number, supporter, date and note.
+5. It calls `Person#getInteractionEntryNumber(int)` on the updated supporter to convert the new entry's zero-based stored index to its one-based chronological number: oldest is `#1`, newest is largest. The returned `CommandResult` reports this number, supporter, date and note.
 
 Identical interactions are appended normally because two calls or messages with the same note can happen on the same day. `LogCommand` also does not call `Model#updateFilteredPersonList(Predicate)`, so logging against a supporter in a `find` result keeps that filter in place.
 
@@ -475,17 +542,17 @@ Identical interactions are appended normally because two calls or messages with 
 **Parsing `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`:** The command is parsed by `EditLogCommandParser` as follows.
 
 1. `AddressBookParser` passes the arguments to `EditLogCommandParser#parse(String)`, which tokenizes `nt/` and `dt/`.
-2. Parse the preamble with `ParserUtil#parseInteractionIndices(String)`, reporting malformed indices with the command's usage message, then reject duplicate prefixes.
+2. Parse the preamble with `ParserUtil#parseInteractionIndices(String, String)`, reporting `Provide exactly two positive integer indices: INDEX ENTRY.` followed by editlog usage for missing, extra or invalid indices, then reject duplicate prefixes.
 3. Require at least one edit field. Validate supplied values using `ParserUtil#parseInteractionNote(String)` and `ParserUtil#parseInteractionDate(String)`. The existing note constraints and date range of `1900-01-01` through today apply. Note validation precedes date validation regardless of prefix order.
 4. Create an `EditLogCommand` with the two indices, an `Optional<String>` note and an `Optional<LocalDate>` date. Empty optionals represent omitted fields, not requests to clear them.
 
 `EditLogCommand` performs the model update as follows.
 
 1. Validate the supporter index against `Model#getFilteredPersonList()`, then the entry number against that supporter's history size. These failures have distinct messages and leave data and selection unchanged.
-2. Convert the chronological entry number to a zero-based display position using `historySize - entryNumber`. Look up that position in `Person#getInteractionIndicesInDisplayOrder()` to obtain the stored index.
+2. Call `Person#getInteractionStoredIndex(int)` on the original supporter to convert the one-based chronological entry number to its zero-based stored index.
 3. Create a replacement `Interaction`, taking omitted fields from the original. Replace the entry at its stored index in a copied list. This distinguishes identical entries and preserves logging position for equal-date ordering.
 4. Create a replacement `Person` preserving all other fields, including the introducer. Call `Model#setPerson(Person, Person)` and `Model#setViewedPerson(Person)` without changing the list filter.
-5. Find the stored index in the updated display-order mapping. Subtract its display position from the history size to obtain the edited entry's new chronological number for the success message. `SupporterDetailData` uses the same ordering to refresh the panel.
+5. Call `Person#getInteractionEntryNumber(int)` on the updated supporter to convert the edited entry's zero-based stored index to its current one-based chronological number for the success message. `SupporterDetailData` uses the same ordering to refresh the panel.
 
 Supplying unchanged values succeeds normally. Date edits can renumber other entries, but do not reorder the stored list. Last contact remains derived from the latest interaction date.
 
@@ -493,12 +560,12 @@ Supplying unchanged values succeeds normally. Date edits can renumber other entr
 
 ### Deleting an interaction
 
-**Parsing `unlog INDEX ENTRY`:** `AddressBookParser` passes the arguments to `UnlogCommandParser`. It uses `ParserUtil#parseInteractionIndices(String)` to require exactly two positive integers and creates an `UnlogCommand`. Parsing failures are reported with the command's usage message.
+**Parsing `unlog INDEX ENTRY`:** `AddressBookParser` passes the arguments to `UnlogCommandParser`. It uses `ParserUtil#parseInteractionIndices(String, String)` to require exactly two positive integers and creates an `UnlogCommand`. Missing, extra or invalid indices report `Provide exactly two positive integer indices: INDEX ENTRY.` followed by unlog usage.
 
 `UnlogCommand` performs the model update as follows.
 
 1. Validate the supporter index against `Model#getFilteredPersonList()`, then validate the entry number against that supporter's history size. These failures have distinct messages and leave data and selection unchanged.
-2. Convert the chronological entry number to a zero-based display position using `historySize - entryNumber`. Look up that position in `Person#getInteractionIndicesInDisplayOrder()` to obtain the stored index.
+2. Call `Person#getInteractionStoredIndex(int)` on the original supporter to convert the one-based chronological entry number to its zero-based stored index.
 3. Copy the interaction list and remove the entry at that stored index. Removing by position distinguishes identical interactions and preserves the remaining logging order.
 4. Create a replacement `Person`, preserving all other fields, including the introducer. Call `Model#setPerson(Person, Person)` and `Model#setViewedPerson(Person)` without changing the list filter.
 5. Return the removed entry's pre-deletion number, date and note. `SupporterDetailData` derives contiguous chronological numbers from the updated history and supplies the empty-history state when none remain.
@@ -534,6 +601,8 @@ Selection follows these rules:
 
 Editing or deleting another supporter preserves selection. Parsing and index-validation failures also preserve it.
 
+Undo and redo match immutable record versions by their original object identity rather than by name or list index. `ModelManager` records this session-only lineage in an `IdentityHashMap` whenever `setPerson` succeeds, including dependent records updated after an introducer is renamed. Restoring a snapshot selects the corresponding record even after a rename or a no-op edit; it clears selection if that supporter does not exist in the restored state. Equal-valued records belonging to different supporters do not share lineage, and no identity is written to JSON.
+
 #### Design considerations:
 
 **Aspect: How to record the viewed supporter**
@@ -556,13 +625,38 @@ Editing or deleting another supporter preserves selection. Parsing and index-val
   * Pros: Each command controls its own selection behavior.
   * Cons: The same logic is repeated across commands, and a new command can leave selection pointing to an outdated record.
 
+### Index parsing and error feedback
+
+`ParserUtil#parseIndex(String, String)` first checks that the trimmed argument contains exactly one value. Empty or multi-word arguments produce `Invalid command format!` followed by the supplied command usage. A single value is delegated to the existing single-argument parser; invalid values produce `Index must be a positive integer (1, 2, 3, ...).` followed by usage, preserving the original exception as the cause. This includes values above the supported maximum of `2147483647`, even though they are positive integers. The overload is used by `delete`, `view`, `edit`, `stage`, `log`, `tag`, `untag`, and both target and introducer index parsing in `intro`.
+
+`ParserUtil#parseInteractionIndices(String, String)` provides the corresponding behavior for `editlog` and `unlog`: missing, extra or invalid indices produce `Provide exactly two positive integer indices: INDEX ENTRY.` followed by command usage. These helpers validate syntax and integer range only; commands still validate supporter indices against the displayed list and interaction numbers against the selected history.
+
+Validation order is unchanged. Missing required arguments can fail a command's format checks before index parsing, and `intro` checks duplicate prefixes before parsing its indices. A blank `by/` still requests removal of the introducer. Valid indices, including leading zeros and surrounding whitespace, retain their existing interpretation.
+
+### Phone-number validation
+
+`Phone` validates a main number followed by an optional extension and an optional type label.
+The main number accepts a leading plus sign and digit groups, optionally enclosed in balanced
+parentheses, separated by single spaces or hyphens. An extension uses case-insensitive `ext`
+followed by 1 to 6 digits; a trailing parenthesized label contains English alphabetic words.
+The main number must contain 3 to 15 digits, excluding the extension. Both annotations are optional;
+when both are present, the extension precedes the label.
+
+`ParserUtil#parsePhone(String)` and `JsonAdaptedPerson` use this model validation, keeping `add`,
+`edit` and storage consistent. `Phone#value` preserves the entered formatting; normalization is
+used only for searching, not for display or persistence. Search fragments reuse the syntax
+without imposing the main-number digit-count limits.
+
+`PhoneCommandIntegrationTest` checks annotated phones through `LogicManager`, including add/edit,
+searching, undo/redo, JSON round trips and rejected commands that must preserve the current state.
+
 ### Optional contact fields
 
 A supporter's phone number, email and address are optional, but every supporter has at least one of a phone number and an email, so there is always a way to reach them.
 
 - `Person` stores a missing field as `null` internally, and `Person#getPhone()`, `Person#getEmail()` and `Person#getAddress()` return an `Optional`, in the same way as `Person#getOrganisation()`.
 - The main `Person` constructor takes each optional field as an `Optional`, and throws an `IllegalArgumentException` if both the phone number and the email are empty. `Person#isValidContact(Optional, Optional)` holds this rule so that other components can check it first.
-- `AddCommandParser` requires only `n/NAME`. If neither `p/PHONE` nor `e/EMAIL` is given, it reports `AddCommand.MESSAGE_MISSING_CONTACT`, which names the two prefixes so the user knows how to fix the command.
+- `AddCommandParser` requires only `n/NAME`. If neither `p/PHONE` nor `e/EMAIL` is given, it reports `AddCommand.MESSAGE_MISSING_CONTACT`, which names the two prefixes so the user knows how to fix the command. A `p/`, `e/` or `a/` with nothing after it is reported with `AddCommand.MESSAGE_BLANK_PHONE`, `MESSAGE_BLANK_EMAIL` or `MESSAGE_BLANK_ADDRESS`, which tell the user to leave the prefix out, as the organisation message does for an empty `o/`. This differs from `edit`, where an empty prefix clears the field.
 - `EditCommand` keeps a field's current value, which may be empty, when the edit leaves it out. A prefix with nothing after it (`p/`, `e/`, `a/` or `o/`) clears that field: `EditCommandParser` marks it with `EditPersonDescriptor#clearPhone()` and the like. Before creating the edited `Person`, `EditCommand` checks `Person#isValidContact(Optional, Optional)` and reports `EditCommand.MESSAGE_NO_CONTACT_LEFT` if the edit would leave neither a phone number nor an email.
 - `JsonAdaptedPerson` leaves out the keys of missing fields when saving. When loading, a missing key means the field is empty, and a supporter with neither a phone number nor an email makes the whole data file invalid.
 - `Messages#format(Person)` and `PersonCard` show only the fields a supporter has. `PersonCard` hides the label of a missing field, so it takes up no space.
@@ -578,6 +672,86 @@ A supporter's phone number, email and address are optional, but every supporter 
 - **Alternative 2:** Both required, as in AB3.
   - Pros: Simpler; every supporter can be reached in both ways.
   - Cons: The user would have to invent a phone number or email for many real supporters.
+
+### Recording an introducer
+
+A supporter can have an introducer, the supporter who introduced them, e.g. the board member who introduced a company's CSR lead. As described in the [Model component](#model-component), `Person` stores the introducer's `Name`, and `Person#getIntroducer()` returns an `Optional<Name>`. Each supporter has at most one introducer, so following introducers from any supporter leads back to someone with no introducer recorded.
+
+`IntroCommandParser` parses `intro INDEX by/[INTRODUCER_INDEX]` into an `IntroCommand` holding the supporter's `Index` and an `Optional<Index>` for the introducer. An empty `by/` gives an empty `Optional`, which removes the record. The activity diagram below shows how `IntroCommand#execute(Model)` handles the command.
+
+<puml src="diagrams/IntroActivityDiagram.puml" alt="Activity diagram of how IntroCommand records, keeps or rejects an introducer" />
+
+1. `IntroCommand` looks up both supporters in `Model#getFilteredPersonList()`, so the user can only link supporters they can see. An index past the end of the displayed list gives `Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX`, as in other commands.
+1. It rejects a supporter as their own introducer with `Person.MESSAGE_SELF_INTRODUCTION`, and an introduction that would form a loop with `IntroCommand.MESSAGE_INTRODUCTION_LOOP`, which names both supporters.
+1. If the introducer would not change (the same introducer again, or removing a record that does not exist), it shows the supporter with `Model#setViewedPerson(Person)` and reports that nothing was changed. No `Person` is replaced, so no undo state is saved.
+1. Otherwise, it creates a copy of the supporter with `Person#withIntroducer(Optional<Name>)`, and calls `Model#setPerson(Person, Person)` and `Model#setViewedPerson(Person)`. The displayed list is not changed, so a `find` result is kept.
+
+**Preventing loops:** `AddressBook#isIntroducedThrough(Person person, Name name)`, which `Model` exposes, returns true if the supporter called `name` introduced `person`, directly or through other supporters. It starts at `person`'s introducer and keeps moving to that supporter's own introducer, comparing names with `Name#isSameName(Name)`, which ignores case and extra spaces. `IntroCommand` checks whether the proposed introducer was introduced through the target supporter. If so, the new introduction would close a loop.
+
+For example, suppose Alex introduced Bernice, and Bernice introduced David. When the user tries to record David as Alex's introducer, `isIntroducedThrough(david, alexName)` moves from David to Bernice, then to Alex, and returns true, so the command is rejected.
+
+The walk takes at most as many steps as there are supporters. A chain without loops visits each supporter at most once, so this limit never stops a valid walk early, and it makes sure the walk ends even if a hand-edited data file already contains a loop.
+
+**Keeping introductions valid:** Introductions are stored by name, so they are updated when a supporter's name changes or the supporter is removed.
+
+- When `edit` changes a supporter's name, `EditCommand` calls `Model#replaceIntroducer(Name, Optional<Name>)` to point every supporter they introduced at the new name. `DeleteCommand` calls it with an empty `Optional`, removing the deleted supporter as everyone's introducer. Both changes happen in one command, so one `undo` reverts them together.
+- When loading, `JsonSerializableAddressBook` checks introducers after adding every supporter, since an introducer may appear later in the file. An introducer who is not a supporter, or a supporter introduced through themselves (`AddressBook#isIntroducedThrough(person, person's name)`), makes the data file invalid.
+- The detail panel shows the viewed supporter's introducer, and lists the supporters returned by `Logic#getPersonsIntroducedBy(Name)` under `Introduced`.
+
+#### Design considerations:
+
+**Aspect: How to store an introduction**
+
+- **Alternative 1 (current choice):** The introduced supporter's `Person` holds the introducer's `Name`.
+  - Pros: Each supporter has at most one introducer by design. The data file stays a flat list of supporters, with the introducer saved as a string.
+  - Cons: A rename or deletion must update every link (`Model#replaceIntroducer(...)`), and finding everyone a supporter introduced means checking every supporter.
+
+- **Alternative 2:** The introduced supporter's `Person` holds a reference to the introducer's `Person` object.
+  - Pros: The introducer's details can be read without a search.
+  - Cons: `Person` is immutable and is replaced whenever a supporter changes, so the reference would point at an old copy. The data file would still need a name or ID to save the link.
+
+**Aspect: Whether to allow introduction loops**
+
+- **Alternative 1 (current choice):** Reject a loop in `intro` and when loading the data file.
+  - Pros: A loop makes no sense (two supporters cannot each have introduced the other), and code that follows introducers, such as a future feature showing an introduction chain, can rely on every chain ending.
+  - Cons: Every `intro` walks up to one chain, which takes time proportional to the number of supporters. This is fast for the few hundred supporters a small charity has.
+
+- **Alternative 2:** Allow loops.
+  - Pros: `intro` would be simpler.
+  - Cons: The data could record impossible histories, and every feature that follows introducers would need its own check to avoid looping forever.
+
+### Adding and removing tags
+
+`tag` adds tags to a supporter and `untag` removes them, keeping the supporter's other tags. Before these commands, the only way to change tags was `edit INDEX t/...`, which replaces all of a supporter's tags.
+
+`TagCommandParser` and `UntagCommandParser` parse the index and tags. `ParserUtil#parseTags(Collection<String>)` keeps only the first spelling of tags that differ only in case, so `t/vip t/VIP` gives one tag. `JsonAdaptedPerson` applies the same rule when loading the data file, keeping the spelling that comes first. The two commands share their behaviour through the abstract class `TagChangeCommand`, as shown below.
+
+<puml src="diagrams/TagChangeClassDiagram.puml" alt="Class diagram of TagChangeCommand and its subclasses TagCommand and UntagCommand" />
+
+`TagChangeCommand#execute(Model)` is a template method. It looks up the supporter in the displayed list, copies their tags into a new set, and calls `changeTag(...)` once for each tag the user gave. Each subclass decides what a change means:
+
+- `TagCommand#changeTag(...)` adds the tag, unless the supporter already has it ignoring case (`Tag#isSameTag(Tag)`), so `t/vip` does not add a second tag next to `VIP`.
+- `UntagCommand#changeTag(...)` removes every tag that matches ignoring case, and returns them as the supporter had them, so the message for `untag 1 t/vip` shows `[VIP]`.
+
+A tag for which `changeTag(...)` returns an empty list is reported as skipped. If every tag is skipped, nothing is changed, and the command shows the supporter with a message saying so, rather than an error, since what the user wanted is already true. Otherwise, `execute` replaces the supporter with `Person#withTags(Set<Tag>)` and shows them in the detail panel. The result lists the tags changed and, on a second line, any tags skipped. The subclasses provide these messages through three abstract `get...Message()` methods.
+
+#### Design considerations:
+
+**Aspect: How to share code between `tag` and `untag`**
+
+- **Alternative 1 (current choice):** An abstract `TagChangeCommand` with a template method, and one `changeTag(...)` per subclass.
+  - Pros: The index check, skipping, messages and model updates are written and tested once. The two commands cannot drift apart.
+  - Cons: Readers must look at two classes to follow one command.
+
+- **Alternative 2:** Two independent commands.
+  - Pros: Each command reads on its own.
+  - Cons: Almost all of `execute` would be repeated in both classes, as it was before the shared class was added in v1.5, and a fix to one could be missed in the other.
+
+### Counting supporters by stage
+
+`stats` shows how many supporters are at each cultivation stage. `StatsCommand#execute(Model)` counts every supporter in `Model#getAddressBook()`, not just the displayed list, so a `find` filter does not change the result. Neither the displayed list nor the detail panel changes, and since no supporter changes, no undo state is saved.
+
+The counts are kept in an `EnumMap<Stage, Integer>` that starts with every stage at 0, so stages with no supporters are still listed, in the order of `Stage.values()`. The result has a header with the total, then every count on one line, e.g. `Prospect: 1, Contacted: 0, ...`, so the whole result fits in the result display without scrolling.
 
 ### Undo/redo feature
 
@@ -742,6 +916,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | `* *`    | fundraiser recording Singaporean names      | save names containing hyphens, apostrophes, s/o and d/o                  | I can record my supporters' names as they actually are               |
 | `* *`    | fundraiser with overseas corporate contacts | save phone numbers that include a country code                           | I can store the numbers I actually dial                              |
 | `* *`    | fundraiser                                  | mark whether a contact is an individual supporter or a corporate contact | I can tell the two kinds of relationship apart                       |
+| `* *`    | fundraiser                                  | clear a contact detail that no longer applies                            | the record does not keep a number or address that no longer works    |
 | `*`      | fundraiser                                  | record a contact's job title                                             | I know whether I am talking to someone who can approve a partnership |
 | `*`      | fundraiser                                  | record how a supporter prefers to be addressed                           | I do not open a letter to a major donor with the wrong name          |
 
@@ -787,6 +962,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | `* * *`  | fundraiser | set a cultivation stage on a supporter                                          | I know whether they have been approached, are giving, have lapsed or have declined |
 | `* * *`  | fundraiser | change a supporter's stage in a single command                                  | updating where things stand after a meeting takes seconds                          |
 | `* *`    | fundraiser | tag supporters with labels of my own                                            | I can group them in ways I did not anticipate when I started                       |
+| `* *`    | fundraiser | add or remove one tag without retyping the others                               | I do not lose a supporter's other tags by mistake                                  |
 | `*`      | fundraiser | see how many supporters sit at each stage                                       | I can tell early in the year whether I have enough prospects                       |
 | `*`      | fundraiser | record that a supporter declined, together with a reason                        | I do not approach them again the same way                                          |
 | `*`      | fundraiser | pin a small number of key relationships                                         | the handful my year depends on stay in front of me                                 |
@@ -848,7 +1024,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case resumes from step 1.
 
-- 1c. User provided a detail that is invalid (e.g. a name with symbols, a phone number with spaces, an unknown stage).
+- 1c. User provided a detail that is invalid (e.g. a name with unsupported symbols, a phone number with unbalanced parentheses, an unknown stage).
   - 1c1. SupporterBook shows an error message for that detail.
 
     Use case resumes from step 1.
@@ -939,6 +1115,16 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case resumes from step 1.
 
+- 1f. User gives a field (e.g. the address) with no value, to clear it.
+  - 1f1. SupporterBook treats the empty field as a request to remove that detail.
+
+    Use case resumes from step 2.
+
+- 1g. The edit would leave the supporter with neither a phone number nor an email.
+  - 1g1. SupporterBook shows an error message stating that at least one is required, and makes no changes.
+
+    Use case resumes from step 1.
+
 **Use case: UC05 - Delete a supporter**
 
 **Preconditions: A list of supporters is shown, with an index beside each supporter**
@@ -969,8 +1155,8 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 **MSS**
 
-1.  User requests to log an interaction with a specific supporter in the list, giving an index and a short note.
-2.  SupporterBook records the interaction, dated today, in the supporter's interaction history.
+1.  User requests to log an interaction with a specific supporter in the list, giving an index, a short note and, optionally, an interaction date.
+2.  SupporterBook records the interaction using the supplied date, or today's date if none was supplied, in the supporter's interaction history.
 3.  SupporterBook confirms the logged interaction and shows the supporter's details and updated interaction history.
 
     Use case ends.
@@ -987,13 +1173,23 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case resumes from step 1.
 
-- 1c. The given note is blank or longer than 500 characters.
+- 1c. The given note is blank or longer than 500 Unicode code points after trimming.
   - 1c1. SupporterBook shows an error message stating the rules for a note.
 
     Use case resumes from step 1.
 
 - 1d. User gives more than one note.
   - 1d1. SupporterBook shows an error message, indicating that only one note can be given.
+
+    Use case resumes from step 1.
+
+- 1e. The supplied date is empty, is not a valid calendar date in yyyy-MM-dd format, is before 1900-01-01, or is after today.
+  - 1e1. SupporterBook shows an error message explaining the date constraint.
+
+    Use case resumes from step 1.
+
+- 1f. User supplies the date parameter more than once.
+  - 1f1. SupporterBook shows an error message, indicating that only one date can be given.
 
     Use case resumes from step 1.
 
@@ -1046,6 +1242,83 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 - 1c. The supporter is already at the requested cultivation stage.
   - 1c1. SupporterBook informs the user that the supporter is already at that cultivation stage and makes no changes.
+
+    Use case ends.
+
+**Use case: UC09 - Record who introduced a supporter**
+
+**Preconditions: A list of supporters is shown, with an index beside each supporter, and both supporters are in it**
+
+**MSS**
+
+1.  User requests to record that one supporter in the list introduced another.
+2.  SupporterBook records the introducer and shows the introduced supporter, whose details list the introducer.
+
+    Use case ends.
+
+**Extensions**
+
+- 1a. A given index is invalid.
+  - 1a1. SupporterBook shows an error message.
+
+    Use case resumes from step 1.
+
+- 1b. The user gives the same supporter as both the introducer and the introduced supporter.
+  - 1b1. SupporterBook shows an error message stating that a supporter cannot be their own introducer.
+
+    Use case resumes from step 1.
+
+- 1c. The introduced supporter already introduced the given introducer, directly or through other supporters.
+  - 1c1. SupporterBook shows an error message naming both supporters, explaining that the introductions would form a loop.
+
+    Use case resumes from step 1.
+
+- 1d. The supporter already has a different introducer.
+  - 1d1. SupporterBook replaces the introducer and shows the old and new introducers.
+
+    Use case ends.
+
+- 1e. The given introducer is already recorded as the supporter's introducer.
+  - 1e1. SupporterBook informs the user that the introducer is already recorded and makes no changes.
+
+    Use case ends.
+
+- 1f. The user gives no introducer, to remove the record.
+  - 1f1. SupporterBook removes the supporter's introducer, or informs the user that the supporter has none.
+
+    Use case ends.
+
+**Use case: UC10 - Add or remove a supporter's tags**
+
+**Preconditions: A list of supporters is shown, with an index beside each supporter**
+
+**MSS**
+
+1.  User requests to add tags to, or remove tags from, a specific supporter in the list.
+2.  SupporterBook adds or removes the tags, keeping the supporter's other tags.
+3.  SupporterBook shows the supporter and lists the tags added or removed.
+
+    Use case ends.
+
+**Extensions**
+
+- 1a. The given index is invalid.
+  - 1a1. SupporterBook shows an error message.
+
+    Use case resumes from step 1.
+
+- 1b. The user gives no tag, or a tag that is not alphanumeric.
+  - 1b1. SupporterBook shows an error message.
+
+    Use case resumes from step 1.
+
+- 2a. Some tags are skipped, because the supporter already has them (when adding) or does not have them (when removing). Capital letters are ignored.
+  - 2a1. SupporterBook changes the other tags, and lists the skipped tags after the changed ones.
+
+    Use case ends.
+
+- 2b. Every tag is skipped.
+  - 2b1. SupporterBook informs the user that nothing was changed, and shows the supporter.
 
     Use case ends.
 
@@ -1111,7 +1384,50 @@ testers are expected to do more _exploratory_ testing.
    1. Relaunch the app by double-clicking the JAR file.<br>
       Expected: The most recent window size and location are retained.
 
+1. Launching with invalid window preferences
+   1. Prerequisites: Close the app. In the folder containing the JAR, replace the contents of `preferences.json` with `{"guiSettings":null}`.
+
+   1. Test case: Launch the app.<br>
+      Expected: The app opens with the default window size. `preferences.json` is rewritten with the default window settings.
+
+   1. Test case: Close the app, replace the contents of `preferences.json` with `null`, then launch the app.<br>
+      Expected: Similar to previous.
+
 1. _{ more test cases … }_
+
+### Adding supporters with shared contact details
+
+1. Prerequisites: Use fresh sample data in an isolated test folder. Alex Yeoh has phone `87438807`
+   and email `alexyeoh@example.com`.
+1. Run `add n/Dup Phone p/87438807`.<br>
+   Expected: The supporter is added and saved. Feedback includes `Alex Yeoh (phone)` in a warning.
+1. Run `add n/Dup Email e/ALEXYEOH@EXAMPLE.COM`.<br>
+   Expected: The supporter is added. The warning includes `Alex Yeoh (email)` despite the case difference.
+1. Run `undo`, then `redo`.<br>
+   Expected: The second addition is removed and restored as one change; existing supporters are unchanged.
+1. Run `find Bernice`, then `add n/Hidden Phone Match p/8743-8807`.<br>
+   Expected: The warning still names Alex Yeoh even though he was hidden by the filter. Other existing
+   supporters sharing that number are also named. The full list is restored after adding.
+1. Run `add n/Unrelated Supporter p/123456789`.<br>
+   Expected: The normal success feedback appears without a shared-contact warning.
+1. Run `add n/Alex Yeoh p/87438807`.<br>
+   Expected: The duplicate name is rejected; an advisory contact warning does not bypass that rule.
+
+### Editing supporters with shared contact details
+
+1. Prerequisites: Use fresh sample data in an isolated test folder and run `list`. Alex Yeoh is 1st,
+   Bernice Yu is 2nd and Charlotte O'Brien is 3rd.
+1. Run `edit 2 p/87438807`.<br>
+   Expected: Bernice's phone is updated. The success feedback includes a warning naming `Alex Yeoh (phone)`.
+1. Run `edit 3 e/ALEXYEOH@example.com`.<br>
+   Expected: Charlotte's email is updated. The warning names `Alex Yeoh (email)` despite the case difference.
+1. Run `undo`, then `redo`.<br>
+   Expected: Charlotte's email change is reverted and restored as one change. Alex's contact details are unchanged.
+1. Run `find Bernice`, then `edit 1 p/8743-8807`.<br>
+   Expected: Bernice is updated and the warning still names Alex, even though he was hidden by the filter.
+   The full list is shown again, and the entered phone formatting is preserved.
+1. Run `find Bernice`, then `edit 1 p/123456789`.<br>
+   Expected: Bernice is updated without a shared-contact warning; her unchanged email does not match herself.
 
 ### Finding and listing supporters
 
@@ -1153,13 +1469,114 @@ testers are expected to do more _exploratory_ testing.
    1. Prerequisites: Run a `find` showing exactly one supporter.
 
    1. Test case: `delete 0`<br>
-      Expected: An invalid-command-format message is shown. No supporter or history is deleted, and the list is unchanged.
+      Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by delete usage. No supporter or history is deleted, and the list is unchanged.
 
    1. Test case: `delete 2`<br>
       Expected: `The supporter index provided is invalid.` is shown, even if the full supporter list has more supporters. The displayed list and data are unchanged.
 
-   1. Other incorrect commands to try: `delete`, `delete abc`, `delete -1` and `delete 1 2`.<br>
-      Expected: An invalid-command-format message, with no data or list changes.
+   1. Other invalid index values to try: `delete abc` and `delete -1`.<br>
+      Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by delete usage, with no data or list changes.
+
+   1. Missing or extra arguments: `delete` and `delete 1 2`.<br>
+      Expected: `Invalid command format!` followed by delete usage, with no data or list changes.
+
+### Adding and editing supporters
+
+1. Adding a supporter with only some contact details
+   1. Prerequisites: Start from the sample data, e.g. in a new empty folder.
+
+   1. Test case: `add n/Mei Lin Tan e/meilin@example.org o/Temasek Foundation`<br>
+      Expected: Mei Lin Tan is added at the end of the list at stage `Prospect`. The message shows only the details given, her email and organisation, and her card has no phone or address.
+
+   1. Test case: `add n/Kumar Raj a/1 Test Road`<br>
+      Expected: No supporter is added. The message says a supporter needs at least one way to reach them, and asks for `p/PHONE`, `e/EMAIL`, or both.
+
+   1. Test case: `add n/Kumar Raj p/81234567 e/`<br>
+      Expected: No supporter is added. The message says the email should not be blank, and to leave out `e/` if the supporter has no email.
+
+1. Clearing details with `edit`
+   1. Prerequisites: Start from the sample data and run `list`. The 3rd supporter, Charlotte O'Brien, has an email but no phone number.
+
+   1. Test case: `edit 3 e/`<br>
+      Expected: Nothing is changed. The message says a supporter needs at least one way to reach them.
+
+   1. Test case: `edit 3 p/81234567 e/`<br>
+      Expected: Charlotte now has the phone number `81234567` and no email.
+
+   1. Test case: `edit 1 a/`<br>
+      Expected: Alex Yeoh's address is removed, and his card no longer shows one.
+
+### Recording introducers
+
+1. Prerequisites: Start from the sample data and run `list`. The sample data records that Bernice Yu (2nd) introduced David Li (4th).
+
+1. Test case: `intro 3 by/4`<br>
+   Expected: The message is `Recorded that David Li introduced Charlotte O'Brien.` The detail panel shows Charlotte, with `David Li` as her `Introducer`.
+
+1. Continuing from the previous test case: `intro 2 by/3`<br>
+   Expected: Nothing is changed, because Bernice introduced David, who introduced Charlotte. The message says that Charlotte O'Brien cannot be recorded as the introducer of Bernice Yu.
+
+1. Continuing from the previous test case: `view 4`<br>
+   Expected: The detail panel shows David Li, with `Bernice Yu` as his `Introducer` and `Charlotte O'Brien` under `Introduced`.
+
+1. Continuing from the previous test case: `intro 3 by/4` again<br>
+   Expected: The message says David Li is already recorded as the introducer of Charlotte O'Brien and nothing was changed. It is not shown as an error.
+
+1. Continuing from the previous test case: `edit 4 n/David Lee`, then `view 3`<br>
+   Expected: Charlotte's introducer is now shown as `David Lee`.
+
+1. Continuing from the previous test case: `intro 3 by/`<br>
+   Expected: The message is `Removed David Lee as the introducer of Charlotte O'Brien.`
+
+1. Other incorrect commands to try: `intro 3 by/3`, `intro 3 4`, `intro 3 by/0`, `intro 3 by/x` (where x is larger than the list size)<br>
+   Expected: Nothing is changed. The message shows error details.
+
+### Adding and removing tags
+
+1. Prerequisites: Start from the sample data and run `list`. The 1st supporter, Alex Yeoh, has the tag `monthlyDonor`.
+
+1. Test case: `tag 1 t/vip t/VIP t/monthlydonor`<br>
+   Expected: The message is `Added tags to Alex Yeoh: [vip]`, then `Skipped tags they already have: [monthlydonor]` on a second line. `t/VIP` counts as the same tag as `t/vip`, and Alex keeps `monthlyDonor` as it was spelt.
+
+1. Continuing from the previous test case: `untag 1 t/VIP t/gala2025`<br>
+   Expected: The message is `Removed tags from Alex Yeoh: [vip]`, then `Skipped tags they do not have: [gala2025]`.
+
+1. Test case: `untag 1 t/gala2025`<br>
+   Expected: The message says Alex Yeoh has none of these tags and nothing was changed. It is not shown as an error.
+
+1. Other incorrect commands to try: `tag 1`, `tag 1 t/board intro`, `untag 0 t/vip`, `tag x t/vip` (where x is larger than the list size)<br>
+   Expected: No tags are changed. The message shows error details.
+
+1. Removing a tag used by the active search filter
+   1. Prerequisites: Use isolated test data with no supporter named `TagFilterProbe`. Run `add n/TagFilterProbe p/87654321 t/uniquetesttag`, then `find TagFilterProbe t/uniquetesttag`. Ensure exactly one supporter is displayed.
+
+   1. Test case: `untag 1 t/uniquetesttag`<br>
+      Expected: The displayed list becomes empty because the supporter no longer matches the retained filter. The detail panel shows `TagFilterProbe` with no tags. The supporter has not been deleted.
+
+   1. Continuing from the previous test case: `list`<br>
+      Expected: `TagFilterProbe` is present in the full list with the tag removed.
+
+1. Loading tags that differ only in case
+   1. Prerequisites: Use an isolated test folder. Run `list`, then close the app. In the data file, change Alex Yeoh's `"tags"` to `[ "monthlyDonor", "MONTHLYDONOR" ]`.
+
+   1. Test case: Relaunch the app and run `view 1`.<br>
+      Expected: No load-failure warning is shown, and Alex Yeoh has the single tag `monthlyDonor`.
+
+   1. Continuing from the previous test case: `untag 1 t/monthlydonor`<br>
+      Expected: The message is `Removed tags from Alex Yeoh: [monthlyDonor]`.
+
+### Counting supporters by stage
+
+1. Prerequisites: Start from the sample data, which has six supporters, one at each stage.
+
+1. Test case: `stats`<br>
+   Expected: `Supporters by stage (6 in total):`, then `Prospect: 1, Contacted: 1, Cultivating: 1, Giving: 1, Lapsed: 1, Declined: 1` on one line. The displayed list and detail panel do not change.
+
+1. Test case: `find Alex`, then `stats`<br>
+   Expected: The same counts, since every supporter is counted. The list still shows only Alex Yeoh.
+
+1. Test case: `list`, `stage 3 giving`, then `stats`<br>
+   Expected: `Prospect: 0` and `Giving: 2`, with the total still 6.
 
 ### Setting a supporter's stage
 
@@ -1182,17 +1599,63 @@ testers are expected to do more _exploratory_ testing.
       Expected: No stage is changed. The status message shows error details.
 
 1. Changing the stage after a `find`
-   1. Prerequisites: Run a `find` command that shows at least one supporter.
+   1. Prerequisites: Run a name-only `find` command, with no field filters, that shows at least one supporter.
 
    1. Test case: `stage 1 cultivating`<br>
-      Expected: The 1st supporter in the results moves to `Cultivating`, and the list still shows only the `find` results.
+      Expected: The 1st supporter in the results moves to `Cultivating`. The name filter remains active and the same supporters remain displayed because their names have not changed.
+
+1. Changing a stage used by the active search filter
+   1. Prerequisites: Use isolated test data with no supporter named `StageFilterProbe`. Run `add n/StageFilterProbe p/12345678 st/giving`, then `find StageFilterProbe st/giving`. Ensure exactly one supporter is displayed.
+
+   1. Test case: `stage 1 lapsed`<br>
+      Expected: The displayed list becomes empty because the supporter no longer matches the retained filter. The detail panel shows `StageFilterProbe` at stage `Lapsed`. The supporter has not been deleted.
+
+   1. Continuing from the previous test case: `list`<br>
+      Expected: `StageFilterProbe` is present in the full list at stage `Lapsed`.
 
 1. Setting a stage when adding a supporter
-   1. Test case: `add n/Stage Tester p/91234567 e/tester@example.com a/1 Test Street st/contacted`<br>
+   1. Test case: `add n/StageTester p/91234567 e/tester@example.com a/1 Test Street st/contacted`<br>
       Expected: The new supporter is added with the `Contacted` badge.
 
    1. Test case: the same command without `st/contacted`, and with a different name<br>
       Expected: The new supporter is added with the `Prospect` badge.
+
+### Mistyped prefixes
+
+1. Prerequisites: Start from the sample data and run `list`.
+
+1. Test case: `add n/Tan p/91234567 x/foo`<br>
+   Expected: No supporter is added. The error shows the rules for phone numbers, followed by `Note: x/ is not a recognised prefix for this command, so it was read as part of the value before it.`
+
+1. Test case: `add n/Lim p/91234567 by/1`<br>
+   Expected: No supporter is added. The phone-format error is followed by a note identifying `by/` as unsupported by this command.
+
+1. Test case: `edit 1 st/giving`<br>
+   Expected: The format error includes a note identifying `st/`. The supporter's stage is unchanged.
+
+1. Test case: `log 1 nt/Called t/vip`<br>
+   Expected: The interaction is saved with the literal note `Called t/vip`, and the result includes a note identifying `t/` as unsupported by this command.
+
+1. Continuing from the previous test case: `undo`<br>
+   Expected: The interaction is removed.
+
+1. Test case: `log 1 nt/Called dte/2024-10-01`<br>
+   Expected: The 1st supporter gets a new interaction dated today, with the note `Called dte/2024-10-01`. The result ends with a note that `dte/` is not a recognised prefix for this command and was saved as part of the value before it.
+
+1. Continuing from the previous test case: `undo`<br>
+   Expected: The interaction is removed.
+
+1. Test case: `log 1 nt/Met w/ the CEO c/o the board, and/or by email`<br>
+   Expected: The interaction is logged, with no note, as `w/`, `c/o` and `and/or` are everyday words.
+
+1. Test case: `find x/Alex`<br>
+   Expected: No note, as `find` changes no data and there is nothing to undo.
+
+1. Test case: `find n/Alex`<br>
+   Expected: The unsupported-search-filter error names `n/` and lists the supported filters and usage. No advisory note claims that `n/` was treated as ordinary text, and the displayed list and viewed supporter are unchanged.
+
+1. Test case: `log 999 nt/Called t/vip` with fewer than 999 supporters displayed<br>
+   Expected: Only the invalid-supporter-index error is shown, without a prefix note or a new interaction.
 
 ### Logging an interaction
 
@@ -1213,7 +1676,7 @@ testers are expected to do more _exploratory_ testing.
 
 1. Invalid interaction logging commands
    1. Test case: `log 1 nt/`<br>
-      Expected: No interaction is logged. The status message says that an interaction note must not be blank and must be at most 500 characters long.
+      Expected: No interaction is logged. The status message says: `Interaction notes should not be blank and should be at most 500 characters long, excluding spaces at the beginning and end.`
 
    1. Test case: `log 1 nt/Called nt/Emailed`<br>
       Expected: No interaction is logged. The status message reports the repeated `nt/` prefix.
@@ -1224,7 +1687,7 @@ testers are expected to do more _exploratory_ testing.
 ### Editing an interaction
 
 1. Editing a date and then using the refreshed number
-   1. Prerequisites: Add a supporter with a unique name using `add n/Editlog Tester p/91234567`, then run `find Editlog Tester`. Ensure exactly one supporter is displayed with no interactions. Run `log 1 nt/Middle meeting dt/2024-02-29`, `log 1 nt/First meeting dt/2024-02-20`, then `log 1 nt/Recent call dt/2024-03-10`.
+   1. Prerequisites: Add a supporter with a unique name using `add n/EditlogTester p/91234567`, then run `find EditlogTester`. Ensure exactly one supporter is displayed with no interactions. Run `log 1 nt/Middle meeting dt/2024-02-29`, `log 1 nt/First meeting dt/2024-02-20`, then `log 1 nt/Recent call dt/2024-03-10`.
 
    1. Test case: `editlog 1 2 dt/2024-03-15`<br>
       Expected: `Middle meeting` moves to #3 above `Recent call` (#2) and `First meeting` (#1). The success message reports #3, and last contact becomes 15 March 2024. The note, supporter details and find result are preserved.
@@ -1236,14 +1699,14 @@ testers are expected to do more _exploratory_ testing.
       Expected: `Recent call` appears as #3 above `Corrected meeting` (#2). Both have the same date, but `Recent call` was logged later. Last contact becomes 10 March 2024.
 
 1. Editing one of two identical entries
-   1. Prerequisites: Add another uniquely named supporter with `add n/Editlog Duplicate Tester p/91234567`, then run `find Duplicate`. Ensure only that supporter is displayed with no interactions. Run `log 1 nt/Meeting dt/2024-02-29`, `log 1 nt/Follow-up dt/2024-02-29`, then `log 1 nt/Meeting dt/2024-02-29`.
+   1. Prerequisites: Add another uniquely named supporter with `add n/EditlogDuplicateTester p/91234567`, then run `find EditlogDuplicateTester`. Ensure only that supporter is displayed with no interactions. Run `log 1 nt/Meeting dt/2024-02-29`, `log 1 nt/Follow-up dt/2024-02-29`, then `log 1 nt/Meeting dt/2024-02-29`.
 
    1. Test case: `editlog 1 3 nt/Corrected meeting`<br>
       Expected: The panel shows `Corrected meeting` (#3), `Follow-up` (#2) and the unchanged `Meeting` (#1).
 
 1. Invalid edit commands
    1. Test cases: `editlog`, `editlog 1 nt/Note`, `editlog 1 abc nt/Note` and `editlog 1 2 3 nt/Note`<br>
-      Expected: Invalid-command-format feedback with editlog usage.
+      Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by editlog usage.
 
    1. Test case: `editlog 1 1`<br>
       Expected: A message requiring at least one field to edit.
@@ -1260,7 +1723,7 @@ testers are expected to do more _exploratory_ testing.
 ### Deleting an interaction
 
 1. Deleting by chronological number after a `find`
-   1. Prerequisites: Add a supporter with a unique name using `add n/Unlog Tester p/91234567`, then run `find Unlog Tester`. Ensure exactly one supporter is displayed with no interactions. Run these commands in order: `log 1 nt/Middle meeting dt/2024-02-29`, `log 1 nt/First meeting dt/2024-02-20`, `log 1 nt/Recent call dt/2024-03-10`.
+   1. Prerequisites: Add a supporter with a unique name using `add n/UnlogTester p/91234567`, then run `find UnlogTester`. Ensure exactly one supporter is displayed with no interactions. Run these commands in order: `log 1 nt/Middle meeting dt/2024-02-29`, `log 1 nt/First meeting dt/2024-02-20`, `log 1 nt/Recent call dt/2024-03-10`.
 
    1. Test case: `unlog 1 2`<br>
       Expected: The success message identifies `Middle meeting` as deleted entry #2. The panel shows `Recent call` as #2 and `First meeting` as #1. The find result and supporter details remain unchanged.
@@ -1269,14 +1732,14 @@ testers are expected to do more _exploratory_ testing.
       Expected: `Recent call` is removed first, then `First meeting`. The supporter remains selected with an empty history and `No interactions yet` as last contact.
 
 1. Deleting one of two identical entries
-   1. Prerequisites: With Unlog Tester still the only displayed supporter and their history empty, run `log 1 nt/Meeting dt/2024-02-29`, `log 1 nt/Follow-up dt/2024-02-29`, then `log 1 nt/Meeting dt/2024-02-29`.
+   1. Prerequisites: With UnlogTester still the only displayed supporter and their history empty, run `log 1 nt/Meeting dt/2024-02-29`, `log 1 nt/Follow-up dt/2024-02-29`, then `log 1 nt/Meeting dt/2024-02-29`.
 
    1. Test case: `unlog 1 3`<br>
       Expected: Only the later `Meeting` entry is removed. The panel shows `Follow-up` as #2 above the remaining `Meeting` as #1.
 
 1. Invalid deletion commands
    1. Test cases: `unlog`, `unlog 1`, `unlog 1 2 3`, `unlog 0 1` and `unlog 1 abc`<br>
-      Expected: An invalid-format message with unlog usage. Data and selection remain unchanged.
+      Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by unlog usage. Data and selection remain unchanged.
 
    1. Test cases: `unlog 2 1` when only one supporter is displayed; `unlog 1 3` when that supporter has only two entries<br>
       Expected: An invalid-supporter-index error for the first command and an invalid-interaction-number error for the second. Neither changes data or selection.
@@ -1285,17 +1748,17 @@ testers are expected to do more _exploratory_ testing.
 
 1. Viewing a supporter with no interactions
 
-   1. Prerequisites: Add a supporter with a unique name using `add n/View Tester p/91234567`, then run `find View Tester`. Ensure exactly one supporter is displayed.
+   1. Prerequisites: Add a supporter with a unique name using `add n/ViewTester p/91234567`, then run `find ViewTester`. Ensure exactly one supporter is displayed.
 
    1. Test case: `view 1`<br>
-      Expected: `Showing View Tester: no interactions logged yet`. The panel shows the name, stage and phone, with organisation, email, address and tags shown as `-`. The history area reads `No interactions yet. Log one with: log INDEX nt/NOTE.` The list and filter are unchanged.
+      Expected: `Showing ViewTester: no interactions logged yet`. The panel shows the name, stage and phone, with organisation, email, address and tags shown as `-`. The history area reads `No interactions yet. Log one with: log INDEX nt/NOTE.` The list and filter are unchanged.
 
 1. Viewing a supporter with interactions
 
-   1. Prerequisites: Keep View Tester as the only displayed supporter. Run `log 1 nt/Called about volunteering` and `log 1 nt/Met to discuss the appeal`.
+   1. Prerequisites: Keep ViewTester as the only displayed supporter. Run `log 1 nt/Called about volunteering` and `log 1 nt/Met to discuss the appeal`.
 
    1. Test case: `view 1`<br>
-      Expected: `Showing View Tester: 2 interaction(s) logged`. The panel shows `#2` before `#1` because both entries have today's date. Each row shows its number, date and complete note, with no list or filter change.
+      Expected: `Showing ViewTester: 2 interaction(s) logged`. The panel shows `#2` before `#1` because both entries have today's date. Each row shows its number, date and complete note, with no list or filter change.
 
 1. Viewing by the current displayed index
 
@@ -1313,7 +1776,13 @@ testers are expected to do more _exploratory_ testing.
 
 1. Invalid view commands
 
-   1. Test cases: `view`, `view abc`, `view 0`, `view -1`, `view 1.5`, `view 2147483648` and `view 1 2`<br>
+   1. Test cases: `view abc`, `view 0`, `view -1` and `view 1.5`<br>
+      Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the `view` usage message.
+
+   1. Test case: `view 2147483648` (a positive integer exceeding the supported maximum of `2147483647`)<br>
+      Expected: The same index error and `view` usage message. The value is rejected because it exceeds the supported integer range.
+
+   1. Test cases: `view` and `view 1 2`<br>
       Expected: `Invalid command format!` followed by the `view` usage message.
 
    1. Test case: With exactly one supporter displayed, run `view 2`.<br>
@@ -1331,7 +1800,7 @@ testers are expected to do more _exploratory_ testing.
 
    1. Prerequisites: Run `list` with at least two supporters, then `view 1`. Note the displayed supporter's name.
 
-   1. Test case: Run `find` with a name that excludes the viewed supporter, then `list`, then `add n/Panel Retention Tester p/91234567` using a unique name.<br>
+   1. Test case: Run `find` with a name that excludes the viewed supporter, then `list`, then `add n/PanelRetentionTester p/91234567` using a unique name.<br>
       Expected: The list changes after each command, but the panel keeps showing the original supporter and retains its history scroll position.
 
 1. Switching and clearing selection
@@ -1363,7 +1832,52 @@ testers are expected to do more _exploratory_ testing.
    1. Test case: While scrolled down, run `list` or `find`.<br>
       Expected: The same supporter and scroll position remain visible. A subsequent `log` for that supporter refreshes the history and returns it to the top.
 
+### Invalid-index feedback
+
+1. Prerequisites: Use isolated test data with at least one supporter. Run `list`, then `view 1`, and note the displayed list and selected supporter.
+
+1. Test cases: `delete 0`, `delete abc`, `view 0` and `edit 0 n/x`<br>
+   Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the respective command's usage. Data, filtering, selection and the saved data file remain unchanged.
+
+1. Test cases: `stage 0 giving`, `log 0 nt/Called`, `tag 0 t/vip`, `untag 0 t/vip`, `intro 0 by/1` and `intro 1 by/abc`<br>
+   Expected: The same positive-integer explanation followed by the respective command's usage. No data or selection changes.
+
+1. Test cases: `editlog 1 abc nt/Note`, `unlog 0 1`, `unlog 1` and `unlog 1 2 3`<br>
+   Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by the respective command's usage. No data or selection changes.
+
+1. Test cases: `delete`, `view`, `edit n/Bob`, `stage 1`, `log 1`, `intro 1`, `tag 1` and `untag 1`<br>
+   Expected: `Invalid command format!` followed by the respective command's usage because required arguments are missing. No data or selection changes.
+
+1. Test cases: `delete 1 2`, `view 1 2`, `edit 1 x n/Bob`, `stage 1 giving extra`, `log 1 x nt/Called`, `intro 1 by/2 3`, `tag 1 2 t/vip` and `untag 1 2 t/vip`<br>
+   Expected: `Invalid command format!` followed by the respective command's usage because extra arguments were supplied. No data or selection changes.
+
+### Phone formats and annotations
+
+1. Prerequisites: Use an isolated test folder with no supporters named `Phone Label Test`,
+   `Country Code Test` or `Phone Extension Test`.
+1. Run `add n/Phone Label Test p/9123 4567 (HP)`,
+   `add n/Country Code Test p/(65) 9123 4567` and
+   `add n/Phone Extension Test p/9123 4567 ext 12`.<br>
+   Expected: All three additions succeed and preserve their phone formatting.
+1. Run `find Phone p/9123`.<br>
+   Expected: `Phone Label Test` and `Phone Extension Test` match.
+1. Run `find Country p/(65)`, then `view 1`.<br>
+   Expected: Only `Country Code Test` matches and is shown with the entered parentheses preserved.
+1. Run `edit 1 p/+65 8123-4567 ext 1 (Office)`, then `find p/8123-4567 EXT 1`.<br>
+   Expected: The edited supporter matches; the extension marker's case does not affect searching.
+1. Close and reopen the app, then find and view that supporter.<br>
+   Expected: The complete formatted number, extension and label remain unchanged.
+1. Try `edit 1 p/12 ext 123456`, `edit 1 p/9123 ext 1234567` and `find p/(HP)`.<br>
+   Expected: Each command is rejected without changing data or the active view.
+
 ### Saving data
+
+1. Reloading a supporter with a long valid name
+
+   1. Prerequisites: Use an isolated test folder and generate an `add n/NAME p/123` command whose `NAME` is 5,000 letters long.
+
+   1. Test case: Paste the command into the app, run `exit`, then relaunch from the same folder.<br>
+      Expected: Adding succeeds and the saved supporter loads without a stack-overflow error or load-failure warning.
 
 1. Dealing with missing/corrupted data files
 
@@ -1378,11 +1892,24 @@ testers are expected to do more _exploratory_ testing.
    1. Test case: Close the app, replace the test data file's contents with `not json format!`, then relaunch.<br>
       Expected: The list is empty and the result display warns that the file could not be loaded and that the next command will overwrite it. The invalid file's contents are unchanged at startup.
 
+   1. Test case: Close the app and repeat the preceding test with `null`, then with `{"persons":[null]}` as the entire test data file.<br>
+      Expected: Both files produce the same empty-list fallback and warning without crashing or changing the file at startup. A null entry alongside valid supporters also rejects the whole file rather than loading partial data.
+
    1. Test case: After the warning, enter an unknown command.<br>
       Expected: `Unknown command.` replaces the warning, and the invalid file is unchanged.
 
    1. Test case: Preserve a copy of the invalid test file, then run `list`.<br>
       Expected: `Listed all supporters.` replaces the warning. The list remains empty and an empty valid data file replaces the invalid file.
+
+1. Dealing with a failed save
+
+   1. Prerequisites: Use an isolated test folder with at least two supporters. Run `list` so that the data file exists, then make it read-only, e.g. with `chmod a-w data/supporterbook.json` on macOS or Linux.
+
+   1. Test case: `delete 1`<br>
+      Expected: The error shows the deletion message, then that the data could not be saved, then that the change was made but not saved and should not be repeated. The first supporter is no longer in the list.
+
+   1. Test case: Make the file writable again, e.g. with `chmod u+w data/supporterbook.json`, run `list`, then close and relaunch the app.<br>
+      Expected: `Listed all supporters.` is shown. After relaunching, only the supporter deleted in the previous test is missing.
 
 1. Dealing with an invalid cultivation stage in the data file
    1. Prerequisites: Run the app once and close it, so that the data file has been created.
@@ -1395,5 +1922,17 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: In the data file, change one supporter's `"stage"` value to `"giving"` (lower case), then launch the app.<br>
       Expected: The data loads, as stages are not case-sensitive.
+
+1. Checking interaction date boundaries in the data file
+
+   1. Prerequisites: Use an isolated test folder with the JAR file and at least one supporter. Run `log 1 nt/Date boundary test`, then close the app and back up `data/supporterbook.json`. For each test, edit only this interaction's `"date"`, using `yyyy-MM-dd` format. Dates relative to today refer to the computer's local date when the app is launched.
+
+   1. Test cases: Set the date to `1900-01-01` and relaunch the app. Close the app without running another command, change the same date to today's date, then relaunch again. Repeat with tomorrow's date.<br>
+      Expected: After each launch, all saved supporters and interactions load, including the edited interaction with its specified date, with no load-failure warning.
+
+   1. Test cases: Close the app, set the date to `1899-12-31` and relaunch. Close the app without running another command, change the same date to the day after tomorrow, then relaunch again.<br>
+      Expected: After each launch, the list is empty and the existing load-failure warning is shown. The whole file is rejected rather than partially loaded, and its contents are unchanged at startup.
+
+   1. Cleanup: Close the app without running another command and restore the valid backup.
 
 1. _{ more test cases … }_

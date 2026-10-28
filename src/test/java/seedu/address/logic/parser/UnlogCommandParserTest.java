@@ -1,6 +1,5 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -36,7 +35,7 @@ public class UnlogCommandParserTest {
 
     @Test
     public void parse_missingOrExtraArguments_throwsParseException() {
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, UnlogCommand.MESSAGE_USAGE);
+        String expectedMessage = ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES + "\n" + UnlogCommand.MESSAGE_USAGE;
         for (String args : new String[]{"", "  ", "1", "1 2 3", "1 2 nt/Note"}) {
             assertParseFailure(parser, args, expectedMessage);
         }
@@ -44,9 +43,9 @@ public class UnlogCommandParserTest {
 
     @Test
     public void parse_invalidIndexInEitherPosition_throwsParseException() {
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, UnlogCommand.MESSAGE_USAGE);
+        String expectedMessage = ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES + "\n" + UnlogCommand.MESSAGE_USAGE;
         // the shared helper validates the numbers; this parser must report unlog's usage for either failure
-        for (String invalidIndex : new String[]{"0", "-1", "abc", "1.5", "2147483648"}) {
+        for (String invalidIndex : new String[]{"0", "-1", "+1", "abc", "1.5", "2147483648"}) {
             assertParseFailure(parser, invalidIndex + " 2", expectedMessage);
             assertParseFailure(parser, "1 " + invalidIndex, expectedMessage);
         }

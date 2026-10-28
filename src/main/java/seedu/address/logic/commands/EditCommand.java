@@ -20,6 +20,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.CollectionUtil;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
+import seedu.address.logic.SharedContactWarning;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Address;
@@ -99,6 +100,10 @@ public class EditCommand extends Command {
         }
 
         Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
+        List<Person> otherPersons = model.getAddressBook().getPersonList().stream()
+                .filter(person -> !person.equals(personToEdit))
+                .toList();
+        String warning = new SharedContactWarning(otherPersons, editedPerson).getEditMessage();
 
         model.setPerson(personToEdit, editedPerson);
         if (!personToEdit.getName().equals(editedPerson.getName())) {
@@ -106,7 +111,11 @@ public class EditCommand extends Command {
             model.replaceIntroducer(personToEdit.getName(), Optional.of(editedPerson.getName()));
         }
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
-        return new CommandResult(String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)));
+        String feedback = String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+        if (!warning.isEmpty()) {
+            feedback += "\n" + warning;
+        }
+        return new CommandResult(feedback);
     }
 
     /**

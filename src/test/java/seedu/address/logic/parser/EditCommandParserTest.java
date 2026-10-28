@@ -46,6 +46,7 @@ import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Organisation;
 import seedu.address.model.person.Phone;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
@@ -54,15 +55,38 @@ public class EditCommandParserTest {
 
     private static final String TAG_EMPTY = " " + PREFIX_TAG;
 
+    private static final String MESSAGE_INVALID_INDEX =
+            ParserUtil.MESSAGE_INVALID_INDEX + "\n" + EditCommand.MESSAGE_USAGE;
+
     private static final String MESSAGE_INVALID_FORMAT =
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE);
 
     private EditCommandParser parser = new EditCommandParser();
 
     @Test
+    public void parse_organisationUnicodeLengthBoundary_checksCodePoints() {
+        String organisationAtLimit = "a".repeat(99) + "😀";
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withOrganisation(organisationAtLimit).build();
+        String input = INDEX_FIRST_PERSON.getOneBased() + " " + PREFIX_ORGANISATION + organisationAtLimit;
+
+        assertParseSuccess(parser, input, new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        assertParseFailure(parser, input + "a", Organisation.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_invalidIndexValues_reportsIndexErrorAndUsage() {
+        String expectedMessage = ParserUtil.MESSAGE_INVALID_INDEX + "\n" + EditCommand.MESSAGE_USAGE;
+        for (String index : new String[]{"0", "-1", "+1", "abc", "1.5", "2147483648"}) {
+            assertParseFailure(parser, index + " n/Amy", expectedMessage);
+        }
+    }
+
+    @Test
     public void parse_supportedNames_success() {
         String[] names = {"O'Brien", "Lee-Tan", "J. Tan", "Ravi s/o Kumar", "Priya d/o Kumar",
-            "Ravi S/O Kumar", "Priya D/O Kumar", "J. O'Brien-Tan d/o Kumar"};
+            "Ravi S/O Kumar", "Priya D/O Kumar", "J. O'Brien-Tan d/o Kumar",
+            "Ahmad bin Ali @ Ah Mat", "Tan Ah Kow (Chen Ah Kow)", "Tan, Ah Kow"};
 
         for (String name : names) {
             EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(name).build();
@@ -73,7 +97,8 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_supportedNamesWithAddress_success() {
-        String[] names = {"Ravi s/o Kumar", "Priya d/o Kumar", "J. O'Brien-Tan D/O Kumar"};
+        String[] names = {"Ravi s/o Kumar", "Priya d/o Kumar", "J. O'Brien-Tan D/O Kumar",
+            "Ahmad bin Ali @ Ah Mat", "Tan Ah Kow (Chen Ah Kow)", "Tan, Ah Kow"};
 
         for (String name : names) {
             EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(name)
@@ -106,7 +131,7 @@ public class EditCommandParserTest {
     @Test
     public void parse_missingParts_failure() {
         // no index specified
-        assertParseFailure(parser, VALID_NAME_AMY, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, NAME_DESC_AMY, MESSAGE_INVALID_FORMAT);
 
         // no field specified
         assertParseFailure(parser, "1", EditCommand.MESSAGE_NOT_EDITED);
@@ -118,10 +143,12 @@ public class EditCommandParserTest {
     @Test
     public void parse_invalidPreamble_failure() {
         // negative index
-        assertParseFailure(parser, "-5" + NAME_DESC_AMY, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "-5" + NAME_DESC_AMY, MESSAGE_INVALID_INDEX);
 
         // zero index
-        assertParseFailure(parser, "0" + NAME_DESC_AMY, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "0" + NAME_DESC_AMY, MESSAGE_INVALID_INDEX);
+
+        assertParseFailure(parser, "1 x n/Bob", MESSAGE_INVALID_FORMAT);
 
         // invalid arguments being parsed as preamble
         assertParseFailure(parser, "1 some random string", MESSAGE_INVALID_FORMAT);
@@ -142,9 +169,12 @@ public class EditCommandParserTest {
 
         // while parsing {@code PREFIX_TAG} alone will reset the tags of the {@code Person} being edited,
         // parsing it together with a valid tag results in error
-        assertParseFailure(parser, "1" + TAG_DESC_FRIEND + TAG_DESC_HUSBAND + TAG_EMPTY, Tag.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "1" + TAG_DESC_FRIEND + TAG_EMPTY + TAG_DESC_HUSBAND, Tag.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, "1" + TAG_EMPTY + TAG_DESC_FRIEND + TAG_DESC_HUSBAND, Tag.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1" + TAG_DESC_FRIEND + TAG_DESC_HUSBAND + TAG_EMPTY,
+                ParserUtil.MESSAGE_BLANK_TAG);
+        assertParseFailure(parser, "1" + TAG_DESC_FRIEND + TAG_EMPTY + TAG_DESC_HUSBAND,
+                ParserUtil.MESSAGE_BLANK_TAG);
+        assertParseFailure(parser, "1" + TAG_EMPTY + TAG_DESC_FRIEND + TAG_DESC_HUSBAND,
+                ParserUtil.MESSAGE_BLANK_TAG);
 
         // multiple invalid values, but only the first invalid value is captured
         assertParseFailure(parser, "1" + INVALID_NAME_DESC + INVALID_EMAIL_DESC + VALID_ADDRESS_AMY + VALID_PHONE_AMY,
@@ -187,6 +217,23 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_annotatedPhone_preservesFormatting() {
+        String[] phones = {"9123 4567 (HP)", "(65) 9123 4567", "9123 4567 ext 12", "+65 9123-4567 ext 12 (Office)"};
+        for (String phone : phones) {
+            EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(phone).build();
+            assertParseSuccess(parser, "1 " + PREFIX_PHONE + phone, new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        }
+    }
+
+    @Test
+    public void parse_malformedPhoneAnnotations_failure() {
+        String[] phones = {"(65 9123 4567", "9123 4567 (HP2)", "9123 4567 ext 1234567", "12 ext 123"};
+        for (String phone : phones) {
+            assertParseFailure(parser, "1 " + PREFIX_PHONE + phone, Phone.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
     public void parse_oneFieldSpecified_success() {
         // name
         Index targetIndex = INDEX_THIRD_PERSON;
@@ -213,7 +260,7 @@ public class EditCommandParserTest {
         expectedCommand = new EditCommand(targetIndex, descriptor);
         assertParseSuccess(parser, userInput, expectedCommand);
 
-        // organisation
+        // organization
         userInput = targetIndex.getOneBased() + ORGANISATION_DESC_AMY;
         descriptor = new EditPersonDescriptorBuilder().withOrganisation(VALID_ORGANISATION_AMY).build();
         expectedCommand = new EditCommand(targetIndex, descriptor);
@@ -250,7 +297,7 @@ public class EditCommandParserTest {
         assertParseFailure(parser, userInput,
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS));
 
-        // multiple organisations
+        // multiple organizations
         userInput = targetIndex.getOneBased() + ORGANISATION_DESC_AMY + ORGANISATION_DESC_BOB;
 
         assertParseFailure(parser, userInput, Messages.getErrorMessageForDuplicatePrefixes(PREFIX_ORGANISATION));
@@ -280,6 +327,12 @@ public class EditCommandParserTest {
         // only spaces after the prefix also clears it
         assertParseSuccess(parser, targetIndex.getOneBased() + INVALID_ORGANISATION_DESC,
                 new EditCommand(targetIndex, new EditPersonDescriptorBuilder().withoutOrganisation().build()));
+
+        // so do no-break spaces, which String#isBlank does not recognize
+        EditPersonDescriptor clearedDescriptor = new EditPersonDescriptorBuilder().withoutAddress()
+                .withoutOrganisation().build();
+        assertParseSuccess(parser, targetIndex.getOneBased() + " " + PREFIX_ADDRESS + "\u00a0 "
+                + PREFIX_ORGANISATION + "\u00a0", new EditCommand(targetIndex, clearedDescriptor));
 
         // cleared fields together with an edited one
         String userInput = targetIndex.getOneBased() + INVALID_ADDRESS_DESC + PHONE_DESC_AMY + " " + PREFIX_EMAIL;

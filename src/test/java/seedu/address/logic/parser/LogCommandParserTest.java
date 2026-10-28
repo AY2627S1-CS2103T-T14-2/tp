@@ -7,6 +7,8 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailur
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalInteractionNotes.CHARACTER_PRESERVATION_NOTES;
+import static seedu.address.testutil.TypicalInteractionNotes.SUPPLEMENTARY_NOTES_AT_LIMIT;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -24,7 +26,45 @@ public class LogCommandParserTest {
     private static final String MESSAGE_INVALID_FORMAT =
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, LogCommand.MESSAGE_USAGE);
 
+    private static final String MESSAGE_INVALID_INDEX =
+            ParserUtil.MESSAGE_INVALID_INDEX + "\n" + LogCommand.MESSAGE_USAGE;
+
     private LogCommandParser parser = new LogCommandParser();
+
+    @Test
+    public void parse_unicodeBlankNote_failure() {
+        for (String note : List.of("\u0085", "\u2003", "\u00a0", " \t\u0085\u2003\u00a0\u202f\u3000 ")) {
+            assertParseFailure(parser, " 1 nt/" + note, Interaction.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
+    public void parse_unicodePaddedNote_preservesInternalSpacing() {
+        String note = "Called  about\u00a0the\u2003appeal";
+        assertParseSuccess(parser, " 1 nt/\u2003\u00a0" + note + "\u202f\u3000",
+                new LogCommand(INDEX_FIRST_PERSON, note));
+    }
+
+    @Test
+    public void parse_specialCharacters_preservesNote() {
+        for (String note : CHARACTER_PRESERVATION_NOTES) {
+            assertParseSuccess(parser, " 1 nt/" + note,
+                    new LogCommand(INDEX_FIRST_PERSON, note));
+        }
+    }
+
+    @Test
+    public void parse_supplementaryCharactersAtLengthBoundary_checksCodePoints() {
+        // both notes contain 500 code points, but exceed 500 UTF-16 code units
+        for (String note : SUPPLEMENTARY_NOTES_AT_LIMIT) {
+            // surrounding spaces are trimmed before checking the limit
+            assertParseSuccess(parser, " 1 nt/ " + note + " ",
+                    new LogCommand(INDEX_FIRST_PERSON, note));
+            // one additional ASCII character takes the note to 501 code points
+            assertParseFailure(parser, " 1 nt/ " + note + "a ",
+                    Interaction.MESSAGE_CONSTRAINTS);
+        }
+    }
 
     @Test
     public void parse_validArgs_returnsLogCommand() {
@@ -54,22 +94,22 @@ public class LogCommandParserTest {
     @Test
     public void parse_invalidIndex_failure() {
         // not a number
-        assertParseFailure(parser, " x nt/" + VALID_NOTE, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " x nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
 
         // zero
-        assertParseFailure(parser, " 0 nt/" + VALID_NOTE, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 0 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
 
         // negative
-        assertParseFailure(parser, " -1 nt/" + VALID_NOTE, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " -1 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
 
         // signed
-        assertParseFailure(parser, " +1 nt/" + VALID_NOTE, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " +1 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
 
         // decimal
-        assertParseFailure(parser, " 1.5 nt/" + VALID_NOTE, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 1.5 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
 
         // larger than the maximum int
-        assertParseFailure(parser, " 2147483648 nt/" + VALID_NOTE, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 2147483648 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
     }
 
     @Test
@@ -110,14 +150,14 @@ public class LogCommandParserTest {
     public void parse_invalidDate_failure() {
         for (String date : List.of("", "   ", "2024-2-29", "2024/02/29", "2024-02-30", "2023-02-29")) {
             assertParseFailure(parser, " 1 nt/" + VALID_NOTE + " dt/" + date,
-                    ParserUtil.MESSAGE_INVALID_INTERACTION_DATE);
+                    Interaction.MESSAGE_INVALID_DATE_FORMAT);
         }
     }
 
     @Test
     public void parse_futureDate_failure() {
         assertParseFailure(parser, " 1 nt/" + VALID_NOTE + " dt/" + LocalDate.now().plusYears(1),
-                ParserUtil.MESSAGE_FUTURE_INTERACTION_DATE);
+                Interaction.MESSAGE_FUTURE_DATE);
     }
 
     @Test
@@ -130,8 +170,8 @@ public class LogCommandParserTest {
 
     @Test
     public void parse_multipleErrors_reportsInValidationOrder() {
-        // Format errors take precedence over duplicate prefixes and invalid parameter values.
-        assertParseFailure(parser, " x nt/ dt/invalid dt/invalid", MESSAGE_INVALID_FORMAT);
+        // Index errors take precedence over duplicate prefixes and invalid parameter values.
+        assertParseFailure(parser, " x nt/ dt/invalid dt/invalid", MESSAGE_INVALID_INDEX);
         // Duplicate prefixes take precedence over note/date validation.
         assertParseFailure(parser, " 1 nt/ dt/invalid dt/invalid",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_DATE));
@@ -149,7 +189,7 @@ public class LogCommandParserTest {
     @Test
     public void parse_dateBeforeMinimum_failure() {
         assertParseFailure(parser, " 1 nt/" + VALID_NOTE + " dt/1899-12-31",
-                ParserUtil.MESSAGE_EARLY_INTERACTION_DATE);
+                Interaction.MESSAGE_EARLY_DATE);
     }
 
     @Test

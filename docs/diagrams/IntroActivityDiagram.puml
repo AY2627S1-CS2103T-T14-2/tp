@@ -1,0 +1,33 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+start
+:User executes intro INDEX by/[INTRODUCER_INDEX];
+:Look up the supporter, and the
+introducer if one is given;
+
+'Since the beta syntax does not support placing the condition outside the
+'diamond we place it as the true branch instead.
+
+if () then ([an index is past the end
+of the displayed list])
+    :Show that the index
+    is invalid;
+elseif () then ([the introducer is the supporter,
+or the supporter introduced the
+introducer, directly or through
+other supporters])
+    :Show why the introduction
+    cannot be recorded;
+elseif () then ([the introducer
+would not change])
+    :Show that nothing
+    was changed;
+else ([else])
+    :Record the new introducer,
+    or remove the record if
+    none is given;
+endif
+stop
+@enduml

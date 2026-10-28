@@ -3,13 +3,12 @@ package seedu.address.ui;
 import static java.util.Objects.requireNonNull;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import seedu.address.commons.util.DisplayDateFormatter;
 import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Person;
 
@@ -23,8 +22,6 @@ public final class SupporterDetailData {
     public static final String MESSAGE_EMPTY_HISTORY = "No interactions yet. Log one with: log INDEX nt/NOTE.";
 
     private static final String UNSET_FIELD = "-";
-    private static final DateTimeFormatter DATE_FORMATTER =
-            DateTimeFormatter.ofPattern("dd MMM uuuu", Locale.ENGLISH);
 
     private final Optional<Person> viewedPerson;
     private final List<Person> introducedPersons;
@@ -176,7 +173,7 @@ public final class SupporterDetailData {
          * Returns the date formatted as {@code dd MMM uuuu} using English month abbreviations.
          */
         public String getDate() {
-            return date.format(DATE_FORMATTER);
+            return DisplayDateFormatter.format(date);
         }
 
         public String getNote() {

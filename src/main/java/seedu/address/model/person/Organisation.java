@@ -3,6 +3,8 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import seedu.address.commons.util.StringUtil;
+
 /**
  * Represents the organisation a supporter belongs to, e.g. the company a CSR contact speaks for.
  * Guarantees: immutable; is valid as declared in {@link #isValidOrganisation(String)}
@@ -12,7 +14,9 @@ public class Organisation {
     public static final int MAX_LENGTH = 100;
 
     public static final String MESSAGE_CONSTRAINTS = "Organisation names should not be blank and should be at most "
-            + MAX_LENGTH + " characters long. Leave out o/ if the supporter has no organisation.";
+            + MAX_LENGTH + " characters long after removing surrounding spaces "
+            + "and reducing repeated internal spaces to one. "
+            + "Leave out o/ if the supporter has no organisation.";
 
     public final String value;
 
@@ -30,16 +34,17 @@ public class Organisation {
 
     /**
      * Returns true if a given string is a valid organisation name once its spaces are normalised.
+     * The normalised name must not be blank and must contain at most {@link #MAX_LENGTH} Unicode code points.
      * Any characters are allowed, as company names often contain symbols such as {@code &} and {@code '}.
      */
     public static boolean isValidOrganisation(String test) {
         requireNonNull(test);
         String normalised = normalise(test);
-        return !normalised.isEmpty() && normalised.length() <= MAX_LENGTH;
+        return !normalised.isEmpty() && normalised.codePointCount(0, normalised.length()) <= MAX_LENGTH;
     }
 
     private static String normalise(String organisation) {
-        return organisation.trim().replaceAll("\\s+", " ");
+        return StringUtil.trimUnicodeWhitespace(organisation).replaceAll("\\s+", " ");
     }
 
     @Override

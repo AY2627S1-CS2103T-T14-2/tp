@@ -55,6 +55,9 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 - Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
+- Supporter indices must be positive integers. For example, `delete 0`, `delete abc`, `view 0` and `edit 0 n/x` report `Index must be a positive integer (1, 2, 3, ...).` followed by the command's usage.<br>
+  For `editlog` and `unlog`, missing, extra or invalid indices report `Provide exactly two positive integer indices: INDEX ENTRY.` followed by usage. A positive index that does not identify a displayed supporter or interaction is rejected separately during execution. For commands requiring a single supporter index, a missing index or extra words in the index argument produce `Invalid command format!` followed by usage. Missing required fields can also produce this format error.
+
 - Items in square brackets are optional.<br>
   For example, `n/NAME [t/TAG]` can be used as `n/John Doe t/friend` or as `n/John Doe`.
 
@@ -65,8 +68,16 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
   For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
   For `find`, name keywords must come before the first prefix; its prefixed filters can be in any order.
 
+- A command only recognises the prefixes in its own format. Other prefix-like words normally stay part of the value before them, e.g. `em/` mistyped for `e/`, or `e/` used in `log`. The exception is `find`: known prefixes outside its search format are rejected with an unsupported-search-filter error. Other prefix-like words are not automatically rejected, since addresses and notes can contain slashes, e.g. `Unit/3`.<br>
+  For words treated as ordinary text, SupporterBook adds an advisory note in the cases below. This includes prefixes that belong to another command, e.g. `by/` in `add`, `st/` in `edit` or `t/` in `log`:
+  - If the command saves the word, e.g. into an address or a note, the note follows the result, so you can run `undo` and enter the command again. For example, `log 1 nt/Called dte/2024-10-01` logs the note `Called dte/2024-10-01` dated today, and points out `dte/`.
+  - If the command's format or one of its values is invalid, the note follows the error, as the mistyped prefix may be what made the value before it invalid. For example, `add n/Tan p/91234567 by/1` shows the rules for phone numbers, followed by `Note: by/ is not a recognised prefix for this command, so it was read as part of the value before it.`
+  - If the format and values are valid but the command still cannot be carried out, only the error is shown. For example, `log 999 nt/Called dte/2024-10-01` with fewer than 999 supporters displayed reports the invalid index without a note.
+
+  Everyday words such as `s/o`, `c/o`, `w/` and `and/or` are not flagged. If a note points out a word you meant to type, such as `Unit/` in an address, you can ignore it.
+
 - Extraneous parameters for commands that take no parameters, such as `help`, `list`, `stats`, `exit`, `clear`, `undo` and `redo`, are ignored.<br>
-  For example, `help 123` is interpreted as `help`.
+  For example, `help 123` is interpreted as `help`. Prefix-like words in these ignored parameters do not produce a note.
 
 - If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
   </box>
@@ -87,17 +98,44 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 
 - At least one of `p/PHONE` and `e/EMAIL` must be given, so that there is a way to reach the supporter. Online donors often give only an email, and people met at events often give only a number.
 - `a/ADDRESS` can be left out, e.g. when you do not know a corporate contact's postal address.
+- To leave out a field the supporter does not have, leave out its prefix too. A prefix with nothing after it, e.g. `e/` on its own, is rejected with a message saying which field is blank. (In `edit`, an empty prefix clears the field instead.)
 - `ORGANISATION` is the company or group the supporter belongs to, e.g. the company a CSR contact speaks for. Leave out `o/ORGANISATION` for individual donors.
-- `ORGANISATION` can contain any characters (e.g. `Procter & Gamble`), must not be blank, and can be at most 100 characters long. Extra spaces are removed.
+- `ORGANISATION` can contain any characters (e.g. `Procter & Gamble`), with the exception of a space followed by a recognised command prefix such as `a/` or `t/` (e.g. `Bang & Olufsen a/s`, where `a/s` is interpreted as another field). It must not be blank, and can be at most 100 characters long after leading and trailing spaces are removed and repeated internal spaces are reduced to one. For this limit, simple emoji such as 😀 count as one character, while combined emoji or a letter with a combining accent can count as more than one.
+- `EMAIL` must be of the form `local-part@domain`. The local part can contain letters, digits and the special characters `+`, `_`, `-` and `.`, e.g. `wei_ming+donations@dbs.com`. A period cannot start or end the local part, or appear twice in a row. The domain is made up of labels separated by periods, e.g. `u.nus.edu`.
 - `STAGE` is the supporter's cultivation stage, and must be one of `prospect`, `contacted`, `cultivating`, `giving`, `lapsed` or `declined`. Upper and lower case are both accepted.
 - If `st/STAGE` is left out, the new supporter starts at stage `Prospect`.
-- `PHONE` may start with `+` and must contain between 3 and 15 digits. Digit groups may be separated by single spaces or hyphens, including a mixture of both. For example, `+65 9123 4567`, `+65-9123-4567` and `+65 9123-4567` are accepted. Consecutive separators such as `+65  9123` or `+65- 9123` are not accepted. Your formatting is preserved when the number is displayed and saved.
-- `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'`), hyphens (`-`) and periods (`.`), e.g. `O'Brien`, `Lee-Tan` and `J. Tan`.
+- `PHONE` may start with `+` and must contain between 3 and 15 main-number digits.
+  Digit groups may be separated by single spaces or hyphens, including a mixture of both.
+  A digit group may be enclosed in balanced parentheses, e.g. `(65) 9123 4567`.
+  Consecutive separators such as `+65  9123` or `+65- 9123` are not accepted.
+- A phone number may end with `ext` followed by 1 to 6 extension digits and/or an alphabetic
+  label in parentheses, with single spaces between parts. `ext` is case-insensitive.
+  If both are supplied, the extension comes before the label, e.g. `9123 4567 ext 12 (Office)`.
+  Labels contain English letters, optionally separated by single spaces, e.g. `(HP)`, `(Home)`
+  and `(Office Fax)`. Extension digits do not count towards the main number's 3-to-15-digit limit.
+  Your formatting, including the extension and label, is preserved when displayed and saved.
+- `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'`), hyphens (`-`), periods (`.`), commas (`,`), round brackets (`(` and `)`) and at signs (`@`), e.g. `O'Brien`, `Lee-Tan`, `J. Tan`, `Tan, Ah Kow`, `Tan Ah Kow (Chen Ah Kow)` and `Ahmad bin Ali @ Ah Mat`.
 - `NAME` can also contain `s/o` or `d/o` as separate words, e.g. `Ravi s/o Kumar` and `Priya d/o Kumar`. Upper and lower case are both accepted.
 - SupporterBook only checks which characters a name uses, not whether it looks like a real name. For example, `s/o Kumar` or a name with only initials is accepted.
+- Round brackets in `NAME` do not need to be balanced, and spaces around punctuation are optional. The name must still start with a letter or digit, so `(Tan)` and `@Tan` are rejected. These name rules apply to both `add` and `edit`.
 - Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`.
 - Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
+- `TAG` must be alphanumeric, with no spaces, e.g. `t/boardIntro`. Tags that differ only in capitalisation, e.g. `t/vip t/VIP`, count as one tag, and the spelling typed first is kept.
 - After adding, the list shows all supporters in the order they were added (any `find` or `quiet` filter is cleared), with the new supporter at the bottom.
+
+If another supporter has the same phone number or email, the addition still succeeds, but a
+warning names the existing supporters and identifies the shared fields. Shared contact details
+may be legitimate, so the warning does not block saving. Check the named records before deciding
+whether to keep or undo the addition.
+
+Phone comparison uses the complete number, ignoring formatting; country codes are not inferred,
+so `+65 9123-4567` and `6591234567` match, but `91234567` is not assumed to be the same number.
+Email comparison ignores case but does not remove dots or `+suffixes`.
+The check includes supporters hidden by `find` or `quiet`. It applies when adding, not when editing
+or loading existing data, and does not change the rule that duplicate names are rejected.
+
+For example, if Alex Yeoh already has phone `87438807`, `add n/Dup Phone p/87438807` still adds
+the new supporter and includes a warning identifying `Alex Yeoh (phone)`.
 
 <box type="tip" seamless>
 
@@ -108,7 +146,12 @@ Examples:
 
 - `add n/Aisha Rahman e/aisha.r@gmail.com` adds an online donor who gave only an email.
 - `add n/Marie Laurent p/+33 1 42 68 53 00` adds a supporter with an international phone number.
+- `add n/Phone Label Test p/9123 4567 (HP)` stores a phone number with a type label.
+- `add n/Phone Extension Test p/(65) 9123-4567 ext 12 (Office)` stores a country code, extension and label.
 - `add n/J. O'Brien-Tan p/91234567` adds a supporter whose name contains periods, apostrophes and hyphens.
+- `add n/Ahmad bin Ali @ Ah Mat e/a1@example.com` adds a supporter whose name contains an alias marked with `@`.
+- `add n/Tan Ah Kow (Chen Ah Kow) e/a2@example.com` adds a supporter whose name contains a dialect name in round brackets.
+- `add n/Tan, Ah Kow e/a3@example.com` adds a supporter whose name contains a comma.
 - `add n/Ravi s/o Kumar p/81112222 a/Bedok North Ave 1 st/contacted` adds a supporter named `Ravi s/o Kumar` at stage `Contacted`.
 - `add n/John Lim p/81112222 e/johnlim@example.com a/Bedok North Ave 1 st/lapsed` adds a past donor at stage `Lapsed`.
 - `add n/Tan Wei Ming p/91234567 e/weiming@dbs.com a/12 Marina Boulevard o/DBS Bank t/boardIntro` adds a CSR contact at DBS Bank who was introduced by a board member.
@@ -142,6 +185,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t
 - A supporter's logged interactions are kept when their details are edited.
 - A supporter's introducer is kept when their details are edited. If you rename a supporter who introduced others, those supporters show the new name as their introducer.
 - A supporter's name cannot be changed to the name of another supporter, using the same comparison as `add`. Changing only the capitalisation of their own name is allowed.
+- If the edited record shares a phone number or email with another supporter, the edit still succeeds and a warning names the matching supporters and fields, using the same comparison rules as `add`. Hidden supporters are included, but the edited supporter is not compared with their own original record. The warning reflects the resulting record, including contact details you did not change; check whether the sharing is intentional before keeping or undoing the edit.
 - After editing, the list shows all supporters in the order they were added (any `find` or `quiet` filter is cleared).
 
 Examples:
@@ -165,7 +209,7 @@ Format: `stage INDEX STAGE`
 - Any stage can be changed to any other stage, e.g. a lapsed donor can be moved back to `cultivating`.
 - If the supporter is already at that stage, their record is unchanged and a message says so.
 - On success, the detail panel switches to this supporter and shows their current stage, including when they are already at the requested stage.
-- The displayed list stays the same, so a `find` result is kept.
+- The current list filter remains active. Changing a supporter's stage can remove them from a `find` or `quiet` result if they no longer match. Check the displayed indices again after making a change.
 
 | Stage         | Meaning                                                                            |
 | ------------- | ---------------------------------------------------------------------------------- |
@@ -190,7 +234,7 @@ Shows how many supporters are at each cultivation stage, e.g. to check whether t
 Format: `stats`
 
 - Every supporter is counted, including those hidden by a `find` filter.
-- All six stages are listed in order, including stages with no supporters.
+- All six stages are listed in order on one line, including stages with no supporters.
 - The displayed list and the detail panel do not change.
 - Anything typed after the command word is ignored; `stats 123` behaves as `stats`.
 
@@ -198,12 +242,7 @@ For example, with four supporters:
 
 ```text
 Supporters by stage (4 in total):
-Prospect: 1
-Contacted: 0
-Cultivating: 0
-Giving: 2
-Lapsed: 1
-Declined: 0
+Prospect: 1, Contacted: 0, Cultivating: 0, Giving: 2, Lapsed: 1, Declined: 0
 ```
 
 ### Finding supporters by name or other fields: `find`
@@ -220,16 +259,22 @@ Supply at least one name keyword or nonempty prefix value. Name keywords are opt
 | Organisation | `o/ORG` | Case-insensitive substring; `o/dbs` matches `DBS Bank` |
 | Tag | `t/TAG` | Case-insensitive substring of any tag; `t/board` matches `boardIntro` |
 | Stage | `st/STAGE` | Complete stage name, ignoring case; `st/GIVING` matches `Giving`, but `st/giv` is invalid |
-| Phone | `p/PHONE` | Substring after removing `+`, spaces and hyphens from both the query and saved number |
+| Phone | `p/PHONE` | Digit substring after ignoring formatting, a trailing type label and the `ext` marker; extension digits remain searchable |
 | Email | `e/EMAIL` | Case-insensitive substring; `e/@gmail` matches an address containing `@gmail` |
 
 - **OR within a field:** any name keyword can match, and repeated values of a prefix are alternatives. For example, `find st/giving st/lapsed` finds supporters at either stage.
 - **AND between fields:** every specified field must match. For example, `find tan o/DBS st/giving` finds supporters whose names contain `tan`, whose organisation contains `DBS`, and whose stage is `Giving`.
 - Repeating an identical value does not duplicate supporters or change the matches.
 - Name keywords must appear before the first prefix, without quotation marks. Use `find tan o/DBS Bank`, not `find o/DBS Bank tan`: the latter searches for the organisation text `DBS Bank tan`.
+- Prefixes used by other commands (`n/`, `a/`, `dt/`, `nt/` and `by/`) are rejected anywhere in a search. The error lists each unsupported prefix, states that `find` supports only `o/`, `t/`, `st/`, `p/` and `e/`, and includes the usage message. Use `find alex` to search by name; `find n/alex`, `find a/geylang` and `find o/dbs a/geylang` are rejected.
 - Prefix values may contain multiple words. Each prefix value is one search phrase; `o/DBS Bank` searches for that phrase. Name keywords are separated by whitespace and use OR; `weiming` does not match `Wei Ming`.
 - Prefixed filters can appear in any order. To provide alternatives, repeat the prefix: use `st/giving st/lapsed`, not `st/giving lapsed`.
-- Phone queries can be shorter than a complete number. For example, `p/91-23` matches `91234567`, and `p/659123` matches the same digits in a formatted number such as `+65 9123-4567`. Phone queries must contain at least one digit and can contain only digits, `+`, spaces and hyphens; a query such as `p/+` is rejected.
+- Phone queries follow the phone format above, but the main-number length limit does not apply.
+  For example, `p/91-23` matches `91234567`, `p/(65) 9123` matches `(65) 9123-4567 (HP)`,
+  and `p/4567 ext 12` matches `9123 4567 ext 12 (Office)`.
+  Formatting, the `ext` marker and type labels are ignored; the main and extension digits form
+  the searchable digit sequence. Queries must contain main-number digits: `p/+` and `p/(HP)`
+  are rejected. Labels cannot be searched by themselves using `p/`.
 - A supporter without an organisation, phone number, email or tags does not match a search on that missing field.
 - Results stay in their original list order and are numbered from 1. Other commands use these displayed indices.
 - A new `find` searches all supporters and replaces the previous filter. `list`, `add`, `edit`, `undo` and `redo` show the full list again.
@@ -324,7 +369,7 @@ Records an interaction with a supporter, dated today or on a specified past date
 Format: `log INDEX nt/NOTE [dt/DATE]`
 
 - Logs the interaction against the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and must be a positive integer.
-- `NOTE` records what happened. It can contain any characters, must not be blank, and can be at most 500 characters long. Leading and trailing spaces are removed.
+- `NOTE` records what happened. It can contain any characters, must not be blank, and can be at most 500 characters long. Leading and trailing spaces are removed. For this limit, simple emoji such as 😀 count as one character, while combined emoji or a letter with a combining accent can count as more than one.
 - Without `dt/`, the date defaults to today when the command runs, using the computer's clock.
 - `DATE` must be a valid date in `yyyy-MM-dd` format, e.g. `2024-02-29`, from `1900-01-01` through today (inclusive). Empty or out-of-range dates are rejected. Today is determined by the computer's clock.
 - `nt/` and `dt/` can appear in either order. Each prefix may only be supplied once.
@@ -366,7 +411,7 @@ Format: `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`
 - `ENTRY` is the number beside the interaction in the detail panel, not its row position. Use `view INDEX` to check it first.
 - Supply at least one field. Omitted fields remain unchanged; supplying the existing value is allowed.
 - To revert an interaction edited by mistake, run `undo` immediately afterward. Undo history is available only during the current session.
-- `NOTE` must not be blank and may contain at most 500 characters after trimming leading and trailing spaces.
+- `NOTE` must not be blank and may contain at most 500 characters after trimming leading and trailing spaces. Characters are counted as described under [logging an interaction](#logging-an-interaction-log).
 - `DATE` must be a valid `yyyy-MM-dd` date from `1900-01-01` through today (inclusive), using the computer's clock. Empty, invalid and out-of-range dates are rejected.
 - `nt/` and `dt/` may appear in either order, but each may appear only once. As with `log`, a space followed by either prefix inside a note is interpreted as a parameter prefix.
 - Date changes can reorder and renumber entries: oldest is `#1`, newest has the largest number, and the panel displays newest first. Equal dates retain the original logging order, with later-logged entries first.
@@ -440,6 +485,7 @@ Format: `view INDEX`
 * The panel shows the name, stage, organisation, phone, email, address, tags, introducer and the supporters they introduced. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically.
 * Above the interaction history, the panel shows the same last-contact line as the supporter card, for example `Last contact: 03 Oct 2026`, or `No interactions yet` if there are no logged interactions. The line updates when the displayed supporter's interaction history changes.
 * Interactions appear newest first, e.g. `#4  16 Sep 2026  Sent partnership deck by email`. Numbers descend to `#1`, the oldest entry. On equal dates, later-logged entries appear first.
+* If the window is too short to show everything, the panel gets a scroll bar, so you can scroll down to the interaction history.
 * The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
 * A successful `view`, `log`, `editlog`, `unlog`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
 * Invalid commands leave the displayed supporter unchanged.
@@ -463,6 +509,7 @@ Format: `intro INDEX by/[INTRODUCER_INDEX]`
 - Running `intro` again for the same supporter replaces their introducer. Each supporter has at most one introducer.
 - Leave out `INTRODUCER_INDEX` to remove the record, e.g. `intro 3 by/`.
 - A supporter cannot be their own introducer.
+- Introductions cannot go in a circle. If a supporter introduced someone, directly or through other supporters, that person cannot be recorded as their introducer. For example, if Alex introduced Bernice, and Bernice introduced David, then neither Bernice nor David can be recorded as Alex's introducer.
 - If nothing would change (the same introducer again, or removing a record that does not exist), a message says so and the record is unchanged.
 - On success, the detail panel switches to the introduced supporter. The displayed list stays the same, so a `find` result is kept.
 - The detail panel shows each supporter's `Introducer`, and under `Introduced`, everyone they introduced.
@@ -483,7 +530,7 @@ Format: `tag INDEX t/TAG [t/TAG]...`
 - Tags the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and **must be a positive integer** 1, 2, 3, ...
 - At least one `t/TAG` must be given. Each `TAG` must be alphanumeric, with no spaces, as in `add`.
 - Tags the supporter already has are skipped. Capital letters are ignored when checking, so `t/vip` is skipped if the supporter is tagged `VIP`, and the existing tag keeps its capitalisation.
-- Tags given more than once in different capitalisation, e.g. `t/vip t/VIP`, count as one tag. The same applies to `untag`.
+- Tags given more than once in different capitalisation, e.g. `t/vip t/VIP`, count as one tag, and the spelling typed first is kept. The same applies to `untag`.
 - The result display lists the tags added and the tags skipped. If every tag is skipped, nothing is changed and a message says so.
 - On success, the detail panel switches to this supporter. The displayed list stays the same, so a `find` result is kept.
 
@@ -503,7 +550,7 @@ Format: `untag INDEX t/TAG [t/TAG]...`
 - Capital letters are ignored, so `untag 1 t/vip` removes the tag `VIP`.
 - Tags the supporter does not have are skipped.
 - The result display lists the tags removed and the tags skipped. If every tag is skipped, nothing is changed and a message says so.
-- On success, the detail panel switches to this supporter. The displayed list stays the same, so a `find` result is kept.
+- On success, the detail panel switches to this supporter. The current list filter remains active, but removing a tag can remove the supporter from a `find` result if they no longer match. Check the displayed indices again before another command.
 - To remove all of a supporter's tags at once, use `edit INDEX t/`.
 
 Examples:
@@ -579,6 +626,8 @@ Example: after `log 2 nt/Called about the gala`, press <kbd>Up</kbd>, change the
 
 SupporterBook automatically saves data after every command that executes successfully. You do not need to save manually.
 
+If saving fails, e.g. because the data file or its folder is read-only, the error says why. If the command changed the data, the error first shows the command's result, and the change is kept but not saved, so do not repeat the command: repeating `delete 1`, for example, would delete another supporter. Once the problem is fixed, run any command, e.g. `list`, to save all changes, or run `undo` to reverse the change (`redo` if the command that failed to save was `undo`). Changes that are not saved are lost when you close SupporterBook.
+
 ### Loading data at startup
 
 SupporterBook loads `data/supporterbook.json` from the folder the app is launched from. The data file path is shown in the status bar.
@@ -589,7 +638,7 @@ SupporterBook loads `data/supporterbook.json` from the folder the app is launche
 
 > Could not load data/supporterbook.json because it is not in the expected format. Starting with an empty list. Your next command will overwrite the file, so copy it somewhere safe now if you want to repair it.
 
-The message includes the path of the file that could not be loaded. Invalid JSON, missing required fields, invalid field values, duplicate supporters or an introducer who is not in the file can cause this warning.
+The message includes the path of the file that could not be loaded. Invalid JSON, missing required fields, invalid field values, duplicate supporters, an introducer who is not in the file or introductions that go in a circle can cause this warning.
 
 Startup does not overwrite the unreadable file. Copy it somewhere safe before running another command if you want to recover its contents. Even `list` saves data after executing, so it can replace the file with the empty list. A command that fails parsing or validation does not overwrite it.
 
@@ -603,13 +652,15 @@ Each supporter in the data file has a `"stage"`, which records how far the relat
 
 A supporter's `"phone"`, `"email"` and `"address"` keys can each be left out if the supporter does not have one, but every supporter must have at least one of `"phone"` and `"email"`.
 
-A supporter may also have an `"organisation"`, such as the company a CSR contact works for. Leave the key out if the supporter has no organisation. If present, it must not be blank and must be at most 100 characters long.
+A supporter may also have an `"organisation"`, such as the company a CSR contact works for. Leave the key out if the supporter has no organisation. If present, it must not be blank and must contain at most 100 Unicode code points after leading and trailing spaces are removed and repeated internal spaces are reduced to one.
 
 Each supporter card in the list shows the supporter's organisation, or `(no organisation)` if they have none.
 
-A supporter may also have an `"introducer"`, the name of the supporter who introduced them, e.g. a board member. Leave the key out if no introducer is recorded. If present, it must be the name of another supporter in the same file (capital letters and extra spaces are ignored), and cannot be the supporter's own name.
+A supporter may also have an `"introducer"`, the name of the supporter who introduced them, e.g. a board member. Leave the key out if no introducer is recorded. If present, it must be the name of another supporter in the same file (capital letters and extra spaces are ignored), and cannot be the supporter's own name. Introductions in the file cannot go in a circle, e.g. Alex introduced by Bernice while Bernice is introduced by Alex.
 
-A supporter's `"interactions"` array stores entries in logging order. Each entry has a `"date"` in `yyyy-MM-dd` format and a non-blank `"note"` of at most 500 characters. For example:
+A supporter's `"tags"` array lists their tags, each of which must be alphanumeric. Tags that differ only in capitalisation count as one tag, as they do in commands: if the file has both `"vip"` and `"VIP"`, only the one that comes first is loaded, and the other is removed the next time SupporterBook saves.
+
+A supporter's `"interactions"` array stores entries in logging order. Each entry has a `"date"` that must be a valid calendar date in `yyyy-MM-dd` format, from `1900-01-01` through tomorrow (inclusive) when loading. Today and tomorrow are determined by the computer's local clock when the file is loaded. This one-day allowance lets a previously saved interaction load when a time-zone change makes its date appear to be tomorrow. The stored date is kept unchanged. Dates entered through `log` and `editlog` must still be on or before today, as these commands record completed interactions. Each entry also has a non-blank `"note"` of at most 500 Unicode code points after trimming. For example:
 
 ```json
 "interactions" : [ {
@@ -623,7 +674,7 @@ The array may be empty or left out when the supporter has no interactions. A mis
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid (e.g., a supporter's `"stage"` is missing or is not one of the six stages), SupporterBook starts with an empty list and shows the startup warning described above. Back up the file before editing it, and preserve the invalid file before running another command if you need to repair it.<br>
+If your changes make the data file invalid (e.g., a supporter's `"stage"` is missing or is not one of the six stages, or an interaction date is before `1900-01-01` or more than one day after today), SupporterBook starts with an empty list and shows the startup warning described above. Back up the file before editing it, and preserve the invalid file before running another command if you need to repair it.<br>
 Edit the data file only if you are confident that you can follow the validation rules.
 </box>
 
@@ -638,9 +689,8 @@ Edit the data file only if you are confident that you can follow the validation 
 
 ## Known issues
 
-1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
-3. **Names containing `a/l` or `a/p` are not supported.** In `add` and `edit`, a space followed by `a/` is treated as an address prefix, so names such as `Ravi a/l Kumar` cannot be entered as intended.
+1. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+2. **Names containing `a/l` or `a/p` are not supported.** In `add` and `edit`, a space followed by `a/` is treated as an address prefix, so names such as `Ravi a/l Kumar` cannot be entered as intended.
 
 ---
 

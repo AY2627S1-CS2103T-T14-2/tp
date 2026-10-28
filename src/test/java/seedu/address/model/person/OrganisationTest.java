@@ -5,9 +5,36 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 public class OrganisationTest {
+
+    @Test
+    public void constructor_unicodeLengthBoundaries_checksCodePoints() {
+        String organisationAtLimit = "a".repeat(99) + "😀";
+        // the joined emoji contains three code points, despite appearing as one symbol
+        for (String name : List.of(organisationAtLimit, "😀".repeat(100),
+                "a".repeat(97) + "👩‍💻")) {
+            assertTrue(Organisation.isValidOrganisation(name));
+            assertEquals(name, new Organisation(name).value);
+            assertFalse(Organisation.isValidOrganisation(name + "a"));
+            assertThrows(IllegalArgumentException.class,
+                    Organisation.MESSAGE_CONSTRAINTS, () -> new Organisation(name + "a"));
+        }
+    }
+
+    @Test
+    public void constructor_unicodeBoundaryWithExtraSpaces_countsNormalisedName() {
+        // the single internal space counts towards the limit; extra spaces do not
+        String normalised = "a".repeat(98) + " 😀";
+        String padded = "  " + "a".repeat(98) + "   😀  ";
+
+        assertEquals(normalised, new Organisation(padded).value);
+        assertThrows(IllegalArgumentException.class,
+                Organisation.MESSAGE_CONSTRAINTS, () -> new Organisation("  " + normalised + "a  "));
+    }
 
     @Test
     public void constructor_null_throwsNullPointerException() {
@@ -23,6 +50,7 @@ public class OrganisationTest {
     @Test
     public void constructor_extraSpaces_spacesNormalised() {
         assertEquals("DBS Bank", new Organisation("  DBS   Bank  ").value);
+        assertEquals("DBS Bank", new Organisation(" DBS Bank ").value);
         assertEquals(new Organisation("DBS Bank"), new Organisation("DBS  Bank"));
     }
 
@@ -34,6 +62,8 @@ public class OrganisationTest {
         // invalid organisations
         assertFalse(Organisation.isValidOrganisation("")); // empty string
         assertFalse(Organisation.isValidOrganisation("   ")); // spaces only
+        assertFalse(Organisation.isValidOrganisation(" ")); // no-break space only
+        assertFalse(Organisation.isValidOrganisation("     ")); // Unicode spaces only
         assertFalse(Organisation.isValidOrganisation("a".repeat(Organisation.MAX_LENGTH + 1))); // too long
 
         // valid organisations

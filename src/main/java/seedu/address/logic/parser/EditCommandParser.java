@@ -1,7 +1,6 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
@@ -13,8 +12,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -36,44 +37,23 @@ public class EditCommandParser implements Parser<EditCommand> {
                 ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
                         PREFIX_ORGANISATION, PREFIX_TAG);
 
-        Index index;
-
-        try {
-            index = ParserUtil.parseIndex(argMultimap.getPreamble());
-        } catch (ParseException pe) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE), pe);
-        }
+        Index index = ParserUtil.parseIndex(argMultimap.getPreamble(), EditCommand.MESSAGE_USAGE);
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
                 PREFIX_ORGANISATION);
 
         EditPersonDescriptor editPersonDescriptor = new EditPersonDescriptor();
-
         if (argMultimap.getValue(PREFIX_NAME).isPresent()) {
             editPersonDescriptor.setName(ParserUtil.parseName(argMultimap.getValue(PREFIX_NAME).get()));
         }
-        // an optional field given with an empty value, e.g. "a/", is cleared
-        if (isCleared(argMultimap, PREFIX_PHONE)) {
-            editPersonDescriptor.clearPhone();
-        } else if (argMultimap.getValue(PREFIX_PHONE).isPresent()) {
-            editPersonDescriptor.setPhone(ParserUtil.parsePhone(argMultimap.getValue(PREFIX_PHONE).get()));
-        }
-        if (isCleared(argMultimap, PREFIX_EMAIL)) {
-            editPersonDescriptor.clearEmail();
-        } else if (argMultimap.getValue(PREFIX_EMAIL).isPresent()) {
-            editPersonDescriptor.setEmail(ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get()));
-        }
-        if (isCleared(argMultimap, PREFIX_ADDRESS)) {
-            editPersonDescriptor.clearAddress();
-        } else if (argMultimap.getValue(PREFIX_ADDRESS).isPresent()) {
-            editPersonDescriptor.setAddress(ParserUtil.parseAddress(argMultimap.getValue(PREFIX_ADDRESS).get()));
-        }
-        if (isCleared(argMultimap, PREFIX_ORGANISATION)) {
-            editPersonDescriptor.clearOrganisation();
-        } else if (argMultimap.getValue(PREFIX_ORGANISATION).isPresent()) {
-            editPersonDescriptor.setOrganisation(
-                    ParserUtil.parseOrganisation(argMultimap.getValue(PREFIX_ORGANISATION).get()));
-        }
+        parseClearableField(argMultimap, PREFIX_PHONE, ParserUtil::parsePhone, editPersonDescriptor::setPhone,
+                editPersonDescriptor::clearPhone);
+        parseClearableField(argMultimap, PREFIX_EMAIL, ParserUtil::parseEmail, editPersonDescriptor::setEmail,
+                editPersonDescriptor::clearEmail);
+        parseClearableField(argMultimap, PREFIX_ADDRESS, ParserUtil::parseAddress,
+                editPersonDescriptor::setAddress, editPersonDescriptor::clearAddress);
+        parseClearableField(argMultimap, PREFIX_ORGANISATION, ParserUtil::parseOrganisation,
+                editPersonDescriptor::setOrganisation, editPersonDescriptor::clearOrganisation);
         parseTagsForEdit(argMultimap.getAllValues(PREFIX_TAG)).ifPresent(editPersonDescriptor::setTags);
 
         if (!editPersonDescriptor.isAnyFieldEdited()) {
@@ -84,10 +64,23 @@ public class EditCommandParser implements Parser<EditCommand> {
     }
 
     /**
-     * Returns true if {@code prefix} is given with nothing but spaces after it.
+     * Parses the field given with {@code prefix} using {@code fieldParser} and passes it to {@code setter}.
+     * A field given with nothing but spaces after its prefix, e.g. {@code a/}, is cleared with
+     * {@code clearer} instead, and a field that is not given is left unchanged.
+     *
+     * @throws ParseException if the given value is invalid.
      */
-    private static boolean isCleared(ArgumentMultimap argMultimap, Prefix prefix) {
-        return argMultimap.getValue(prefix).map(String::isBlank).orElse(false);
+    private static <T> void parseClearableField(ArgumentMultimap argMultimap, Prefix prefix,
+            FieldParser<T> fieldParser, Consumer<T> setter, Runnable clearer) throws ParseException {
+        Optional<String> value = argMultimap.getValue(prefix);
+        if (value.isEmpty()) {
+            return;
+        }
+        if (StringUtil.isUnicodeBlank(value.get())) {
+            clearer.run();
+            return;
+        }
+        setter.accept(fieldParser.parse(value.get()));
     }
 
     /**

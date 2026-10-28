@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.PersonMatchesSearchPredicate;
+import seedu.address.model.person.Phone;
 import seedu.address.model.person.Stage;
 
 /**
@@ -21,20 +22,36 @@ import seedu.address.model.person.Stage;
  */
 public class FindCommandParser implements Parser<FindCommand> {
     public static final String MESSAGE_INVALID_PHONE_SEARCH =
-            "Phone search values must contain at least one digit and may only contain digits, "
-                    + "plus signs, spaces or hyphens";
+            "Phone search values must contain digits and follow the phone format: "
+                    + "an optional leading +, digit groups separated by single spaces or hyphens, "
+                    + "optional parentheses around digit groups, optional ext with 1 to 6 digits, "
+                    + "and an optional trailing alphabetic label in parentheses";
+
+    private static final List<Prefix> SEARCH_PREFIXES = List.of(PREFIX_ORGANISATION, PREFIX_TAG,
+            PREFIX_STAGE, PREFIX_PHONE, PREFIX_EMAIL);
 
     /**
      * Parses the given arguments into a command combining name keywords and field filters.
      *
-     * @throws ParseException if criteria are empty, a stage is invalid, or a phone query is invalid.
+     * @throws ParseException if a filter is unsupported, criteria are empty, a stage is invalid,
+     *     or a phone query is invalid.
      */
     @Override
     public FindCommand parse(String args) throws ParseException {
         // The tokenizer requires a preceding space, including when a prefix is the first argument.
         String tokenizableArgs = " " + args.replaceAll("\\s+", " ").trim();
         ArgumentMultimap arguments = ArgumentTokenizer.tokenize(tokenizableArgs,
-                PREFIX_ORGANISATION, PREFIX_TAG, PREFIX_STAGE, PREFIX_PHONE, PREFIX_EMAIL);
+                CliSyntax.ALL_PREFIXES.toArray(Prefix[]::new));
+        List<String> unsupportedPrefixes = CliSyntax.ALL_PREFIXES.stream()
+                .filter(prefix -> !SEARCH_PREFIXES.contains(prefix))
+                .filter(prefix -> !arguments.getAllValues(prefix).isEmpty())
+                .map(Prefix::getPrefix)
+                .toList();
+        if (!unsupportedPrefixes.isEmpty()) {
+            throw new ParseException("Unsupported search filter(s): " + String.join(", ", unsupportedPrefixes) + ".\n"
+                    + "find supports only o/, t/, st/, p/ and e/.\n" + FindCommand.MESSAGE_USAGE);
+        }
+
         String preamble = arguments.getPreamble();
         List<String> nameKeywords = preamble.isEmpty() ? List.of() : List.of(preamble.split("\\s+"));
         List<String> organisations = parseSearchValues(arguments, PREFIX_ORGANISATION);
@@ -47,7 +64,7 @@ public class FindCommandParser implements Parser<FindCommand> {
         }
 
         for (String phone : phones) {
-            if (!PersonMatchesSearchPredicate.normalizePhone(phone).matches("[0-9]+")) {
+            if (!Phone.isValidPhoneSearch(phone)) {
                 throw new ParseException(MESSAGE_INVALID_PHONE_SEARCH);
             }
         }

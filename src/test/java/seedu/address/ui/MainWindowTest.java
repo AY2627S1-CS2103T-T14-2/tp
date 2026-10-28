@@ -2,8 +2,10 @@ package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.Point;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
@@ -24,7 +27,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
+import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.LogicManager;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -47,6 +52,49 @@ public class MainWindowTest {
     @Test
     public void executeCommand_selectionLifecycle_updatesDetailPanel() throws Exception {
         runOnFxThread(() -> verifySelectionLifecycle());
+    }
+
+    @Test
+    public void constructor_savedSizeLargerThanScreenAndPositionOffScreen_fitsOnScreen() throws Exception {
+        runOnFxThread(() -> {
+            Stage stage = createStage(new GuiSettings(100_000, 100_000, -100_000, -100_000));
+            try {
+                Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+                assertTrue(stage.getWidth() <= screenBounds.getWidth());
+                assertTrue(stage.getHeight() <= screenBounds.getHeight());
+                assertNotEquals(-100_000, stage.getX());
+                assertNotEquals(-100_000, stage.getY());
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
+    public void constructor_savedPositionOnScreen_restoresPosition() throws Exception {
+        runOnFxThread(() -> {
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+            int x = (int) screenBounds.getMinX() + 10;
+            int y = (int) screenBounds.getMinY() + 10;
+            Stage stage = createStage(new GuiSettings(700, 450, x, y));
+            try {
+                assertEquals(x, stage.getX());
+                assertEquals(y, stage.getY());
+            } finally {
+                stage.close();
+            }
+        });
+    }
+
+    @Test
+    public void isOnAnyScreen() throws Exception {
+        runOnFxThread(() -> {
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+            Point centre = new Point((int) (screenBounds.getMinX() + screenBounds.getWidth() / 2),
+                    (int) (screenBounds.getMinY() + screenBounds.getHeight() / 2));
+            assertTrue(MainWindow.isOnAnyScreen(centre));
+            assertFalse(MainWindow.isOnAnyScreen(new Point(-100_000, -100_000)));
+        });
     }
 
     @Test
@@ -138,6 +186,13 @@ public class MainWindowTest {
         } finally {
             window.getPrimaryStage().close();
         }
+    }
+
+    private Stage createStage(GuiSettings savedGuiSettings) {
+        Model model = new ModelManager();
+        model.setGuiSettings(savedGuiSettings);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("book.json"));
+        return createWindow(model, storage).getPrimaryStage();
     }
 
     private MainWindow createWindow(Model model, JsonAddressBookStorage addressBookStorage) {

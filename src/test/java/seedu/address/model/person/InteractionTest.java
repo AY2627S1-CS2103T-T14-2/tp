@@ -4,14 +4,64 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalInteractionNotes.ASCII_AND_EMOJI_AT_NOTE_LIMIT;
+import static seedu.address.testutil.TypicalInteractionNotes.EMOJI_ONLY_AT_NOTE_LIMIT;
+import static seedu.address.testutil.TypicalInteractionNotes.JOINED_EMOJI;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
 public class InteractionTest {
 
     private static final LocalDate DATE = LocalDate.of(2026, 9, 16);
+
+    @Test
+    public void constructor_unicodeBlankNote_throwsIllegalArgumentException() {
+        for (String note : List.of("\u0085", "\u2003", "\u00a0", " \t\u0085\u2003\u00a0\u202f\u3000 ")) {
+            assertFalse(Interaction.isValidNote(note));
+            assertThrows(IllegalArgumentException.class, Interaction.MESSAGE_CONSTRAINTS, () ->
+                    new Interaction(DATE, note));
+        }
+    }
+
+    @Test
+    public void constructor_unicodePaddedNote_preservesContent() {
+        String note = "Called  about\u00a0the\u2003appeal \ud83d\ude00";
+        assertEquals(note, new Interaction(DATE, "\u2003\u00a0" + note + "\u202f\u3000").getNote());
+    }
+
+    @Test
+    public void constructor_unicodePaddingAtLengthLimit_acceptsTrimmedNote() {
+        String note = "a".repeat(Interaction.MAX_NOTE_LENGTH);
+        assertEquals(note, new Interaction(DATE, "\u2003" + note + "\u00a0").getNote());
+        assertFalse(Interaction.isValidNote("\u2003" + note + "a\u00a0"));
+    }
+
+    @Test
+    public void constructor_joinedEmojiAtLengthBoundary_countsJoiner() {
+        // woman + zero-width joiner + laptop occupy three code points, not one
+        String note = "a".repeat(497) + JOINED_EMOJI;
+        assertTrue(Interaction.isValidNote(note));
+        assertEquals(note, new Interaction(DATE, note).getNote());
+        assertFalse(Interaction.isValidNote("a" + note));
+        assertThrows(IllegalArgumentException.class, Interaction.MESSAGE_CONSTRAINTS, () ->
+                new Interaction(DATE, "a" + note));
+    }
+
+    @Test
+    public void constructor_codePointLengthBoundary_acceptsLimitAndRejectsOverflow() {
+        // each input has 500 code points; e + combining acute accent uses two code points per repetition
+        for (String note : List.of(ASCII_AND_EMOJI_AT_NOTE_LIMIT, EMOJI_ONLY_AT_NOTE_LIMIT,
+                "e\u0301".repeat(250))) {
+            assertTrue(Interaction.isValidNote(note));
+            assertEquals(note, new Interaction(DATE, " " + note + " ").getNote());
+            assertFalse(Interaction.isValidNote(note + "a"));
+            assertThrows(IllegalArgumentException.class, Interaction.MESSAGE_CONSTRAINTS, () ->
+                    new Interaction(DATE, " " + note + "a "));
+        }
+    }
 
     @Test
     public void constructor_nullArguments_throwsNullPointerException() {
@@ -47,6 +97,28 @@ public class InteractionTest {
         assertTrue(Interaction.isValidNote("Coffee at Raffles Place; keen on Q4."));
         assertTrue(Interaction.isValidNote("a".repeat(Interaction.MAX_NOTE_LENGTH)));
         assertTrue(Interaction.isValidNote(" " + "a".repeat(Interaction.MAX_NOTE_LENGTH) + " "));
+    }
+
+    @Test
+    public void isValidDate_withinRange_returnsTrue() {
+        // include both limits, their inner neighbours and an ordinary historical date
+        for (LocalDate date : List.of(LocalDate.of(1900, 1, 1), LocalDate.of(1900, 1, 2),
+                LocalDate.of(2024, 2, 29), DATE.minusDays(1), DATE)) {
+            assertTrue(Interaction.isValidDate(date, DATE), date.toString());
+        }
+    }
+
+    @Test
+    public void isValidDate_outsideRange_returnsFalse() {
+        // test just outside each limit with an otherwise valid calendar date
+        assertFalse(Interaction.isValidDate(LocalDate.of(1899, 12, 31), DATE));
+        assertFalse(Interaction.isValidDate(DATE.plusDays(1), DATE));
+    }
+
+    @Test
+    public void isValidDate_nullArguments_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> Interaction.isValidDate(null, DATE));
+        assertThrows(NullPointerException.class, () -> Interaction.isValidDate(DATE, null));
     }
 
     @Test

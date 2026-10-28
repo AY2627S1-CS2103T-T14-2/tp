@@ -1,6 +1,5 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
@@ -8,6 +7,8 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSucces
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalInteractionNotes.CHARACTER_PRESERVATION_NOTES;
+import static seedu.address.testutil.TypicalInteractionNotes.SUPPLEMENTARY_NOTES_AT_LIMIT;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -24,9 +25,47 @@ import seedu.address.model.person.Interaction;
  */
 public class EditLogCommandParserTest {
 
-    private static final String MESSAGE_INVALID_FORMAT =
-            String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditLogCommand.MESSAGE_USAGE);
+    private static final String MESSAGE_INVALID_INDICES =
+            ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES + "\n" + EditLogCommand.MESSAGE_USAGE;
     private final EditLogCommandParser parser = new EditLogCommandParser();
+
+    @Test
+    public void parse_unicodeBlankNote_failure() {
+        for (String note : List.of("\u0085", "\u2003", "\u00a0", " \t\u0085\u2003\u00a0\u202f\u3000 ")) {
+            assertParseFailure(parser, " 1 2 nt/" + note, Interaction.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
+    public void parse_unicodePaddedNote_preservesInternalSpacing() {
+        String note = "Called  about\u00a0the\u2003appeal";
+        assertParseSuccess(parser, " 1 2 nt/\u2003\u00a0" + note + "\u202f\u3000",
+                new EditLogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON,
+                        Optional.of(note), Optional.empty()));
+    }
+
+    @Test
+    public void parse_specialCharacters_preservesNote() {
+        for (String note : CHARACTER_PRESERVATION_NOTES) {
+            assertParseSuccess(parser, " 1 2 nt/" + note,
+                    new EditLogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON,
+                            Optional.of(note), Optional.empty()));
+        }
+    }
+
+    @Test
+    public void parse_supplementaryCharactersAtLengthBoundary_checksCodePoints() {
+        // both notes contain 500 code points, but exceed 500 UTF-16 code units
+        for (String note : SUPPLEMENTARY_NOTES_AT_LIMIT) {
+            // surrounding spaces are trimmed before checking the limit
+            assertParseSuccess(parser, " 1 2 nt/ " + note + " ",
+                    new EditLogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON,
+                            Optional.of(note), Optional.empty()));
+            // one additional ASCII character takes the note to 501 code points
+            assertParseFailure(parser, " 1 2 nt/ " + note + "a ",
+                    Interaction.MESSAGE_CONSTRAINTS);
+        }
+    }
 
     @Test
     public void parse_nullArgs_throwsNullPointerException() {
@@ -59,15 +98,15 @@ public class EditLogCommandParserTest {
     @Test
     public void parse_missingOrExtraIndices_failure() {
         for (String args : List.of("", " ", "1", "nt/Note", "1 nt/Note", "1 2 3 nt/Note", "1 2 extra dt/2024-02-29")) {
-            assertParseFailure(parser, args, MESSAGE_INVALID_FORMAT);
+            assertParseFailure(parser, args, MESSAGE_INVALID_INDICES);
         }
     }
 
     @Test
     public void parse_invalidIndexInEitherPosition_failure() {
         for (String invalidIndex : List.of("0", "-1", "+1", "abc", "1.5", "2147483648")) {
-            assertParseFailure(parser, invalidIndex + " 2 nt/Note", MESSAGE_INVALID_FORMAT);
-            assertParseFailure(parser, "1 " + invalidIndex + " nt/Note", MESSAGE_INVALID_FORMAT);
+            assertParseFailure(parser, invalidIndex + " 2 nt/Note", MESSAGE_INVALID_INDICES);
+            assertParseFailure(parser, "1 " + invalidIndex + " nt/Note", MESSAGE_INVALID_INDICES);
         }
     }
 
@@ -86,11 +125,11 @@ public class EditLogCommandParserTest {
     @Test
     public void parse_invalidDate_failure() {
         for (String date : List.of("", "   ", "2024-2-29", "2024/02/29", "2024-02-30", "2023-02-29")) {
-            assertParseFailure(parser, " 1 2 dt/" + date, ParserUtil.MESSAGE_INVALID_INTERACTION_DATE);
+            assertParseFailure(parser, " 1 2 dt/" + date, Interaction.MESSAGE_INVALID_DATE_FORMAT);
         }
-        assertParseFailure(parser, " 1 2 dt/1899-12-31", ParserUtil.MESSAGE_EARLY_INTERACTION_DATE);
+        assertParseFailure(parser, " 1 2 dt/1899-12-31", Interaction.MESSAGE_EARLY_DATE);
         assertParseFailure(parser, " 1 2 dt/" + LocalDate.now().plusYears(1),
-                ParserUtil.MESSAGE_FUTURE_INTERACTION_DATE);
+                Interaction.MESSAGE_FUTURE_DATE);
     }
 
     @Test
@@ -114,7 +153,7 @@ public class EditLogCommandParserTest {
     @Test
     public void parse_multipleErrors_reportsInValidationOrder() {
         // malformed indices precede duplicate prefixes, which precede field validation
-        assertParseFailure(parser, " 1 abc nt/ dt/invalid dt/invalid", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 1 abc nt/ dt/invalid dt/invalid", MESSAGE_INVALID_INDICES);
         assertParseFailure(parser, " 1 2 nt/ dt/invalid dt/invalid",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_DATE));
         // note validation precedes date validation regardless of prefix order

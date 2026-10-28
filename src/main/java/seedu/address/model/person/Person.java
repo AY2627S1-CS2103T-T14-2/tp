@@ -179,6 +179,15 @@ public class Person {
                 interactions, newTags);
     }
 
+    /**
+     * Returns a copy of this supporter with {@code newInteractions} as their history.
+     * Every other detail is unchanged. The supplied list is defensively copied in its given order.
+     */
+    public Person withInteractions(List<Interaction> newInteractions) {
+        return new Person(name, getPhone(), getEmail(), getAddress(), getOrganisation(), getIntroducer(), stage,
+                newInteractions, tags);
+    }
+
     public Stage getStage() {
         return stage;
     }
@@ -210,6 +219,28 @@ public class Person {
                 .sorted(Comparator.comparing((Integer index) -> interactions.get(index).getDate())
                         .thenComparingInt(Integer::intValue).reversed())
                 .toList();
+    }
+
+    /**
+     * Returns the zero-based stored position for a one-based chronological entry number.
+     * Entry 1 is the oldest interaction; equal dates are numbered in logging order.
+     *
+     * @throws IndexOutOfBoundsException if {@code entryNumber} does not identify an existing entry.
+     */
+    public int getInteractionStoredIndex(int entryNumber) {
+        Objects.checkIndex(entryNumber - 1, interactions.size());
+        return getInteractionIndicesInDisplayOrder().get(interactions.size() - entryNumber);
+    }
+
+    /**
+     * Returns the one-based chronological entry number for a zero-based stored position.
+     * The number reflects this supporter's current history, including any date edits.
+     *
+     * @throws IndexOutOfBoundsException if {@code storedIndex} does not identify an existing interaction.
+     */
+    public int getInteractionEntryNumber(int storedIndex) {
+        Objects.checkIndex(storedIndex, interactions.size());
+        return interactions.size() - getInteractionIndicesInDisplayOrder().indexOf(storedIndex);
     }
 
     /**

@@ -15,10 +15,20 @@ import seedu.address.model.tag.Tag;
 
 public class TagCommandParserTest {
 
+    private static final String MESSAGE_INVALID_INDEX =
+            ParserUtil.MESSAGE_INVALID_INDEX + "\n" + TagCommand.MESSAGE_USAGE;
     private static final String MESSAGE_INVALID_FORMAT =
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, TagCommand.MESSAGE_USAGE);
 
     private TagCommandParser parser = new TagCommandParser();
+
+    @Test
+    public void parse_invalidIndexValues_reportsIndexErrorAndUsage() {
+        String expectedMessage = ParserUtil.MESSAGE_INVALID_INDEX + "\n" + TagCommand.MESSAGE_USAGE;
+        for (String index : new String[]{"0", "-1", "+1", "abc", "1.5", "2147483648"}) {
+            assertParseFailure(parser, index + " t/vip", expectedMessage);
+        }
+    }
 
     @Test
     public void parse_oneTag_success() {
@@ -40,6 +50,14 @@ public class TagCommandParserTest {
     }
 
     @Test
+    public void parse_tagsDifferingOnlyInCase_keepsFirstTyped() {
+        assertParseSuccess(parser, " 1 t/vip t/VIP",
+                new TagCommand(INDEX_FIRST_PERSON, Set.of(new Tag("vip"))));
+        assertParseSuccess(parser, " 1 t/VIP t/vip",
+                new TagCommand(INDEX_FIRST_PERSON, Set.of(new Tag("VIP"))));
+    }
+
+    @Test
     public void parse_missingParts_failure() {
         // nothing given
         assertParseFailure(parser, "", MESSAGE_INVALID_FORMAT);
@@ -54,9 +72,9 @@ public class TagCommandParserTest {
 
     @Test
     public void parse_invalidIndex_failure() {
-        assertParseFailure(parser, " 0 t/vip", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " -1 t/vip", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " abc t/vip", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 0 t/vip", MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, " -1 t/vip", MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, " abc t/vip", MESSAGE_INVALID_INDEX);
 
         // text before the prefix that is not a single index
         assertParseFailure(parser, " 1 2 t/vip", MESSAGE_INVALID_FORMAT);
@@ -68,8 +86,8 @@ public class TagCommandParserTest {
         assertParseFailure(parser, " 1 t/hubby*", Tag.MESSAGE_CONSTRAINTS);
 
         // empty, alone or with valid tags
-        assertParseFailure(parser, " 1 t/", Tag.MESSAGE_CONSTRAINTS);
-        assertParseFailure(parser, " 1 t/vip t/", Tag.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " 1 t/", ParserUtil.MESSAGE_BLANK_TAG);
+        assertParseFailure(parser, " 1 t/vip t/", ParserUtil.MESSAGE_BLANK_TAG);
 
         // tags cannot contain spaces
         assertParseFailure(parser, " 1 t/board intro", Tag.MESSAGE_CONSTRAINTS);

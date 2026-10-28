@@ -4,7 +4,9 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -28,6 +30,8 @@ public class ModelManager implements Model {
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
     private final SortedList<Person> sortedPersons;
+    // Immutable record versions share their original instance as a session-only identity, not a name or index.
+    private final Map<Person, Person> personOrigins = new IdentityHashMap<>();
     private Person viewedPerson = null;
     private boolean hasUncommittedChanges = false;
 
@@ -107,7 +111,12 @@ public class ModelManager implements Model {
     public void setPerson(Person target, Person editedPerson) {
         requireAllNonNull(target, editedPerson);
 
+        Person storedTarget = versionedAddressBook.getPersonList().stream()
+                .filter(target::equals)
+                .findFirst()
+                .orElse(target);
         versionedAddressBook.setPerson(target, editedPerson);
+        personOrigins.put(editedPerson, getPersonOrigin(storedTarget));
         hasUncommittedChanges = true;
         if (target.equals(viewedPerson)) {
             viewedPerson = editedPerson;
@@ -135,12 +144,30 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public boolean isIntroducedThrough(Person person, Name name) {
+        return versionedAddressBook.isIntroducedThrough(person, name);
+    }
+
+    @Override
     public void commitAddressBookIfChanged() {
         // a command can write back identical data, e.g. an edit to the same phone number
         if (hasUncommittedChanges && versionedAddressBook.hasChangesSinceLastCommit()) {
+            boolean isDiscardingRedo = versionedAddressBook.canRedo();
             versionedAddressBook.commit();
+            if (isDiscardingRedo) {
+                discardUnusedPersonOrigins();
+            }
+        } else if (hasUncommittedChanges) {
+            discardUnusedPersonOrigins();
         }
         hasUncommittedChanges = false;
+    }
+
+    /**
+     * Releases metadata for discarded redo branches and replaced no-op records.
+     */
+    private void discardUnusedPersonOrigins() {
+        personOrigins.keySet().retainAll(versionedAddressBook.getRetainedPersonVersions());
     }
 
     @Override
@@ -173,11 +200,19 @@ public class ModelManager implements Model {
         if (viewedPerson == null) {
             return;
         }
-        Person previouslyViewed = viewedPerson;
+        Person viewedOrigin = getPersonOrigin(viewedPerson);
         viewedPerson = versionedAddressBook.getPersonList().stream()
-                .filter(previouslyViewed::isSamePerson)
+                .filter(person -> getPersonOrigin(person) == viewedOrigin)
                 .findFirst()
                 .orElse(null);
+    }
+
+    /**
+     * Returns the shared original instance for a supporter's immutable record versions.
+     * Identity-based keys keep unrelated supporters distinct even if they have identical field values.
+     */
+    private Person getPersonOrigin(Person person) {
+        return personOrigins.getOrDefault(person, person);
     }
 
     @Override
@@ -188,7 +223,10 @@ public class ModelManager implements Model {
     @Override
     public void setViewedPerson(Person person) {
         requireNonNull(person);
-        viewedPerson = person;
+        viewedPerson = versionedAddressBook.getPersonList().stream()
+                .filter(person::equals)
+                .findFirst()
+                .orElse(person);
     }
 
     //=========== Filtered Person List Accessors =============================================================
