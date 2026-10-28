@@ -11,6 +11,9 @@ import org.junit.jupiter.api.Test;
 
 public class OrganisationTest {
 
+    private static final List<String> WHITESPACE_SEQUENCES = List.of(" ", "\t", "\r\n", "\u0085", "\u00a0",
+            "\u1680", "\u2003", "\u2007", "\u2028", "\u2029", "\u202f", "\u205f", "\u3000");
+
     @Test
     public void constructor_unicodeLengthBoundaries_checksCodePoints() {
         String organisationAtLimit = "a".repeat(99) + "😀";
@@ -52,6 +55,34 @@ public class OrganisationTest {
         assertEquals("DBS Bank", new Organisation("  DBS   Bank  ").value);
         assertEquals("DBS Bank", new Organisation(" DBS Bank ").value);
         assertEquals(new Organisation("DBS Bank"), new Organisation("DBS  Bank"));
+    }
+
+    @Test
+    public void constructor_unicodeWhitespace_normalizesSpacesAndPreservesEquality() {
+        Organisation expectedOrganisation = new Organisation("Keppel Land");
+        for (String whitespace : WHITESPACE_SEQUENCES) {
+            String name = whitespace + "Keppel" + whitespace.repeat(2) + "Land" + whitespace;
+            Organisation organisation = new Organisation(name);
+
+            assertEquals("Keppel Land", organisation.value, name);
+            assertEquals(expectedOrganisation, organisation, name);
+            assertEquals(expectedOrganisation.hashCode(), organisation.hashCode(), name);
+        }
+    }
+
+    @Test
+    public void constructor_unicodeWhitespaceLengthBoundary_countsNormalizedName() {
+        String normalizedName = "a".repeat(Organisation.MAX_LENGTH - 2) + " X";
+        for (String whitespace : WHITESPACE_SEQUENCES) {
+            String paddedName = whitespace + normalizedName.replace(" ", whitespace.repeat(3)) + whitespace;
+            String tooLongName = whitespace + (normalizedName + "a").replace(" ", whitespace.repeat(3)) + whitespace;
+
+            assertTrue(Organisation.isValidOrganisation(paddedName), paddedName);
+            assertEquals(normalizedName, new Organisation(paddedName).value, paddedName);
+            assertFalse(Organisation.isValidOrganisation(tooLongName), tooLongName);
+            assertThrows(IllegalArgumentException.class,
+                    Organisation.MESSAGE_CONSTRAINTS, () -> new Organisation(tooLongName));
+        }
     }
 
     @Test

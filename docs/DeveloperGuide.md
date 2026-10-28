@@ -217,8 +217,12 @@ The advisory scan never rejects input; the notes only point out words treated as
 
 `FindCommandParser` reads name keywords from the preamble and uses `ArgumentTokenizer` to read
 repeatable `o/`, `t/`, `st/`, `p/` and `e/` filters. Name keywords must precede the first prefix;
-each prefix value extends up to the next recognized prefix. Whitespace is normalized before
-tokenization, allowing multiword organisation values and whitespace between prefixes.
+each prefix value extends up to the next recognized prefix. Before tokenization, the parser uses
+`replaceAll("(?U)\\s+", " ").trim()` to collapse runs of characters in Unicode's `White_Space`
+property, including non-breaking spaces (NBSPs, U+00A0), into single ordinary spaces and trim the result.
+This allows pasted NBSPs between name keywords, inside organisation phrases and around prefixes
+to behave like ordinary spaces. NBSP-only search criteria and filter values become empty,
+so existing validation rejects them.
 
 The parser rejects missing criteria and empty prefix values. Stage values use
 `ParserUtil#parseStage(String)` so invalid or partial stage names produce the existing stage error.

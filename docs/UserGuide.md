@@ -281,6 +281,7 @@ Supply at least one name keyword or nonempty prefix value. Name keywords are opt
 - Name keywords must appear before the first prefix, without quotation marks. Use `find tan o/DBS Bank`, not `find o/DBS Bank tan`: the latter searches for the organisation text `DBS Bank tan`.
 - Prefixes used by other commands (`n/`, `a/`, `dt/`, `nt/` and `by/`) are rejected anywhere in a search. The error lists each unsupported prefix, states that `find` supports only `o/`, `t/`, `st/`, `p/` and `e/`, and includes the usage message. Use `find alex` to search by name; `find n/alex`, `find a/geylang` and `find o/dbs a/geylang` are rejected.
 - Prefix values may contain multiple words. Each prefix value is one search phrase; `o/DBS Bank` searches for that phrase. Name keywords are separated by whitespace and use OR; `weiming` does not match `Wei Ming`.
+- Non-breaking spaces (NBSPs, U+00A0) pasted into search criteria are treated like ordinary spaces. Repeated ordinary spaces or NBSPs are reduced to one space, and leading or trailing ones are ignored. For example, `find Tan Wei Ming` and `find o/DBS Bank` return the same results when the spaces between the name or organisation words are NBSPs.
 - Prefixed filters can appear in any order. To provide alternatives, repeat the prefix: use `st/giving st/lapsed`, not `st/giving lapsed`.
 - Phone queries follow the phone format above, but the main-number length limit does not apply.
   For example, `p/91-23` matches `91234567`, `p/(65) 9123` matches `(65) 9123-4567 (HP)`,

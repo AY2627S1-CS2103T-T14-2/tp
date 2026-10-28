@@ -39,7 +39,7 @@ public class FindCommandParser implements Parser<FindCommand> {
     @Override
     public FindCommand parse(String args) throws ParseException {
         // The tokenizer requires a preceding space, including when a prefix is the first argument.
-        String tokenizableArgs = " " + args.replaceAll("\\s+", " ").trim();
+        String tokenizableArgs = " " + args.replaceAll("(?U)\\s+", " ").trim();
         ArgumentMultimap arguments = ArgumentTokenizer.tokenize(tokenizableArgs,
                 CliSyntax.ALL_PREFIXES.toArray(Prefix[]::new));
         List<String> unsupportedPrefixes = CliSyntax.ALL_PREFIXES.stream()
