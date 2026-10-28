@@ -36,6 +36,13 @@ public class StageCommandParserTest {
     }
 
     @Test
+    public void parse_stagePrefix_returnsStageCommand() {
+        // add and find take the stage as st/STAGE, so the same form is accepted here
+        assertParseSuccess(parser, " 2 st/giving", new StageCommand(INDEX_SECOND_PERSON, Stage.GIVING));
+        assertParseSuccess(parser, " 1 st/LAPSED", new StageCommand(INDEX_FIRST_PERSON, Stage.LAPSED));
+    }
+
+    @Test
     public void parse_missingParts_failure() {
         // nothing given
         assertParseFailure(parser, "", MESSAGE_INVALID_FORMAT);
@@ -89,7 +96,11 @@ public class StageCommandParserTest {
         // abbreviations are not accepted
         assertParseFailure(parser, " 2 cult", Stage.MESSAGE_CONSTRAINTS);
 
-        // prefixed stage is not accepted
-        assertParseFailure(parser, " 2 st/giving", Stage.MESSAGE_CONSTRAINTS);
+        // st/ with no stage after it
+        assertParseFailure(parser, " 2 st/", Stage.MESSAGE_CONSTRAINTS);
+
+        // only st/ is removed, as other prefixes are not part of the stage
+        assertParseFailure(parser, " 2 t/giving", Stage.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " 2 ST/giving", Stage.MESSAGE_CONSTRAINTS);
     }
 }

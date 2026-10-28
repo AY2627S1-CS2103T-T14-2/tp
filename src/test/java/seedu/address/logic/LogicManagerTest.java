@@ -31,6 +31,7 @@ import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RedoCommand;
+import seedu.address.logic.commands.StageCommand;
 import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -41,6 +42,7 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Stage;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -289,6 +291,15 @@ public class LogicManagerTest {
         // another undo would reverse an earlier change instead of this one
         assertThrows(CommandException.class, expectedMessage, () -> logic.execute(UndoCommand.COMMAND_WORD));
         assertEquals(List.of(ALICE), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_stageWithStagePrefix_changesStageWithoutNote() throws Exception {
+        model.addPerson(ALICE);
+        CommandResult result = logic.execute("stage 1 st/declined");
+
+        assertEquals(String.format(StageCommand.MESSAGE_STAGE_CHANGED, ALICE.getName(), ALICE.getStage(),
+                Stage.DECLINED), result.getFeedbackToUser());
     }
 
     @Test

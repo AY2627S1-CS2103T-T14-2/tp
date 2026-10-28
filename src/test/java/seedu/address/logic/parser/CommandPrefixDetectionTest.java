@@ -44,9 +44,15 @@ public class CommandPrefixDetectionTest {
 
     @Test
     public void findUnrecognisedPrefixes_positionalCommands_doNotRecognisePrefixes() {
-        for (String command : List.of("delete 1", "view 1", "stage 1", "unlog 1 1", "quiet")) {
+        for (String command : List.of("delete 1", "view 1", "unlog 1 1", "quiet")) {
             assertEquals(List.of("st/"), parser.findUnrecognisedPrefixes(command + " st/giving"), command);
         }
+    }
+
+    @Test
+    public void findUnrecognisedPrefixes_stageWithOptionalStagePrefix_returnsOnlyOtherPrefixes() {
+        assertEquals(List.of(), parser.findUnrecognisedPrefixes("stage 1 st/giving"));
+        assertEquals(List.of("t/"), parser.findUnrecognisedPrefixes("stage 1 t/giving"));
     }
 
     @Test
