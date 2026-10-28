@@ -113,6 +113,7 @@ How the `Logic` component works:
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).
 1. The result of the command execution is encapsulated as a `CommandResult` object.
 1. Before returning it from `Logic`, `LogicManager` calls `commitAddressBookIfChanged()` to record changes for undo/redo and saves the data through `Storage`.
+   If saving fails after the command changed the data, the change stays in the `Model` and `LogicManager` throws a `CommandException` whose message starts with the command's result and ends with `LogicManager.MESSAGE_CHANGE_NOT_SAVED_FORMAT`, so the user does not repeat a command such as `delete 1`, which would change another supporter. The message suggests `undo` to reverse the change, or `redo` after an `undo`, since another `undo` would reverse an earlier change.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -185,12 +186,16 @@ Later command results and errors replace the warning through the existing comman
 
 `ArgumentTokenizer` splits a command's arguments only at the prefixes its parser asks for. Any other word ending in `/`, such as `em/` mistyped for `e/`, stays part of the value before it. On its own, this would save a mistyped prefix silently inside an address or a note, or make the parser blame a field the user typed correctly: `add n/Tan p/91234567 x/foo` reads the phone number as `91234567 x/foo` and reports an invalid phone number.
 
-`ArgumentTokenizer#findUnrecognisedPrefixes(String)` scans the whole command text for words made of letters followed by `/`, at the start or after a space, and returns those that are not in `CliSyntax.ALL_PREFIXES`, in the order they first appear. It skips everyday words written with a slash (`s/o`, `d/o`, `c/o`, `w/`, `w/o` and `and/or`), and does not match slashes after digits (`5/3`) or inside links. `LogicManager#execute(String)` uses it in two places:
+`AddressBookParser#findUnrecognisedPrefixes(String)` selects the prefixes supported by the command's own format, then delegates scanning to `ArgumentTokenizer`. The scan returns prefix-like words outside that set in their first-occurrence order, including prefixes used by other commands. Positional-only commands accept no prefixes. Commands that ignore arguments produce no prefix notes, and unknown command words retain the global `CliSyntax.ALL_PREFIXES` check. The advisory prefix sets must stay aligned with the corresponding command parsers when formats change.
 
-1. If parsing throws a `ParseException`, `LogicManager` throws a new `ParseException` with the original message followed by a note from `Messages#formatUnrecognisedPrefixErrorNote(List)`, e.g. `Note: x/ is not a recognised prefix, so it was read as part of the value before it.`
+For `find`, the advisory scan uses `CliSyntax.ALL_PREFIXES` instead. `FindCommandParser` explicitly rejects known unsupported filters (`n/`, `a/`, `dt/`, `nt/` and `by/`), so their errors must not also claim that those prefixes were read as ordinary text. Unknown words such as `x/` remain eligible for an advisory note when parsing fails; a successful search changes no supporter data and receives no undo suggestion.
+
+The scanner skips everyday slash words (`s/o`, `d/o`, `c/o`, `w/`, `w/o` and `and/or`) and does not match slashes after digits (`5/3`) or inside links. `LogicManager#execute(String)` uses it in two places:
+
+1. If parsing throws a `ParseException`, `LogicManager` throws a new `ParseException` with the original message followed by a note from `Messages#formatUnrecognisedPrefixErrorNote(List)`, e.g. `Note: by/ is not a recognised prefix for this command, so it was read as part of the value before it.`
 1. If the command runs and the supporter list differs from a copy taken before it ran, `LogicManager` adds a note from `Messages#formatUnrecognisedPrefixNote(List)` with `CommandResult#withNote(String)`. This note suggests `undo`, so a command that changes nothing, such as `find x/Alice`, does not get it.
 
-No command is rejected because of these words; the notes only point them out.
+The advisory scan never rejects input; the notes only point out words treated as text. Explicit validation, including `find`'s unsupported-filter check, can still reject a command. Failures during command execution keep their original error without a prefix note.
 
 #### Design considerations:
 
@@ -455,13 +460,17 @@ In tests, `PersonBuilder` builds a `Person` with no organisation unless `PersonB
 
 Each `Person` owns an interaction history. An entry is represented by the immutable `Interaction` class in the `Model` component and contains a `LocalDate` and a short note.
 
+- Dates supplied through `log` and `editlog` must be on or before today because these commands record completed interactions. JSON loading accepts dates through tomorrow to accommodate a one-day local date difference between saving and loading, such as after changing time zones; the stored date is preserved. Dates more than one calendar day ahead of the computer’s local date at loading are still rejected, whether caused by a time-zone change or a clock adjustment.
+- Both command parsing and JSON loading use `Interaction#isValidDate(LocalDate, LocalDate)`, which accepts dates from `Interaction.MIN_DATE` (`1900-01-01`) through a caller-supplied upper bound, inclusive. Callers obtain today from their clock; tests can supply a fixed date or clock. The `Interaction` constructor checks that the date is non-null but does not itself enforce the date range.
 - An interaction note is trimmed before it is stored. It must not be blank after trimming and must be at most `Interaction.MAX_NOTE_LENGTH` (500) Unicode code points long. `Interaction.isValidNote()` counts code points after trimming; supplementary characters count as one, while combining sequences can count as multiple code points.
 - `Person` stores interactions in logging order. Its constructor makes a defensive copy of the supplied list, and `Person#getInteractions()` returns an unmodifiable view.
 - Existing `Person` constructors create an empty interaction history. This keeps existing creation paths compatible with the new field.
 - `EditCommand` and `StageCommand` copy the existing history into the replacement `Person`, so changing other supporter details never removes past interactions.
 - Interaction history is included in `Person#equals(Object)` and `Person#hashCode()`, but not in `Person#isSamePerson(Person)`. Supporter identity therefore remains name-based.
 
-In the `Storage` component, `JsonAdaptedInteraction` stores a date as an ISO `yyyy-MM-dd` string and a note as a string. `JsonAdaptedPerson` stores the entries in an `"interactions"` array while preserving their order. When loading, a missing array means the supporter has an empty history, so data files created before interaction histories existed remain compatible. A missing interaction field, malformed date, blank note or note longer than 500 Unicode code points after trimming makes the data file invalid.
+In the `Storage` component, `JsonAdaptedInteraction` stores a date as an ISO `yyyy-MM-dd` string and a note as a string. `JsonAdaptedPerson` stores the entries in an `"interactions"` array while preserving their order. When loading, a missing array means the supporter has an empty history, so data files created before interaction histories existed remain compatible. A missing interaction field, malformed or out-of-range date, blank note or note longer than 500 Unicode code points after trimming makes the data file invalid. `JsonAdaptedInteraction` throws `IllegalValueException`, which `JsonAddressBookStorage` reports as `DataLoadingException`. At startup, the app then uses an empty address book and displays the existing loading warning; it does not skip individual invalid entries. Loading leaves the file unchanged, but a subsequent successful save overwrites it with the current in-memory data.
+
+The parser and storage adapter share the date-format and minimum-date messages defined in `Interaction`. The parser uses `Interaction.MESSAGE_FUTURE_DATE` for dates after today. The adapter keeps its own missing-field message and uses `MESSAGE_DATE_TOO_FAR_IN_FUTURE` for dates beyond its one-day allowance. Normal loading uses the computer's default-zone clock; the package-private `JsonAdaptedInteraction#toModelType(Clock)` overload lets tests control today's date.
 
 In tests, `PersonBuilder` builds a `Person` with an empty history unless `PersonBuilder#withInteractions(Interaction...)` is called.
 
@@ -715,7 +724,7 @@ The walk takes at most as many steps as there are supporters. A chain without lo
 
 `tag` adds tags to a supporter and `untag` removes them, keeping the supporter's other tags. Before these commands, the only way to change tags was `edit INDEX t/...`, which replaces all of a supporter's tags.
 
-`TagCommandParser` and `UntagCommandParser` parse the index and tags. `ParserUtil#parseTags(Collection<String>)` keeps only the first spelling of tags that differ only in case, so `t/vip t/VIP` gives one tag. The two commands share their behaviour through the abstract class `TagChangeCommand`, as shown below.
+`TagCommandParser` and `UntagCommandParser` parse the index and tags. `ParserUtil#parseTags(Collection<String>)` keeps only the first spelling of tags that differ only in case, so `t/vip t/VIP` gives one tag. `JsonAdaptedPerson` applies the same rule when loading the data file, keeping the spelling that comes first. The two commands share their behaviour through the abstract class `TagChangeCommand`, as shown below.
 
 <puml src="diagrams/TagChangeClassDiagram.puml" alt="Class diagram of TagChangeCommand and its subclasses TagCommand and UntagCommand" />
 
@@ -1547,6 +1556,15 @@ testers are expected to do more _exploratory_ testing.
    1. Continuing from the previous test case: `list`<br>
       Expected: `TagFilterProbe` is present in the full list with the tag removed.
 
+1. Loading tags that differ only in case
+   1. Prerequisites: Use an isolated test folder. Run `list`, then close the app. In the data file, change Alex Yeoh's `"tags"` to `[ "monthlyDonor", "MONTHLYDONOR" ]`.
+
+   1. Test case: Relaunch the app and run `view 1`.<br>
+      Expected: No load-failure warning is shown, and Alex Yeoh has the single tag `monthlyDonor`.
+
+   1. Continuing from the previous test case: `untag 1 t/monthlydonor`<br>
+      Expected: The message is `Removed tags from Alex Yeoh: [monthlyDonor]`.
+
 ### Counting supporters by stage
 
 1. Prerequisites: Start from the sample data, which has six supporters, one at each stage.
@@ -1607,10 +1625,22 @@ testers are expected to do more _exploratory_ testing.
 1. Prerequisites: Start from the sample data and run `list`.
 
 1. Test case: `add n/Tan p/91234567 x/foo`<br>
-   Expected: No supporter is added. The error shows the rules for phone numbers, followed by `Note: x/ is not a recognised prefix, so it was read as part of the value before it.`
+   Expected: No supporter is added. The error shows the rules for phone numbers, followed by `Note: x/ is not a recognised prefix for this command, so it was read as part of the value before it.`
+
+1. Test case: `add n/Lim p/91234567 by/1`<br>
+   Expected: No supporter is added. The phone-format error is followed by a note identifying `by/` as unsupported by this command.
+
+1. Test case: `edit 1 st/giving`<br>
+   Expected: The format error includes a note identifying `st/`. The supporter's stage is unchanged.
+
+1. Test case: `log 1 nt/Called t/vip`<br>
+   Expected: The interaction is saved with the literal note `Called t/vip`, and the result includes a note identifying `t/` as unsupported by this command.
+
+1. Continuing from the previous test case: `undo`<br>
+   Expected: The interaction is removed.
 
 1. Test case: `log 1 nt/Called dte/2024-10-01`<br>
-   Expected: The 1st supporter gets a new interaction dated today, with the note `Called dte/2024-10-01`. The result ends with a note that `dte/` is not a recognised prefix and was saved as part of the value before it.
+   Expected: The 1st supporter gets a new interaction dated today, with the note `Called dte/2024-10-01`. The result ends with a note that `dte/` is not a recognised prefix for this command and was saved as part of the value before it.
 
 1. Continuing from the previous test case: `undo`<br>
    Expected: The interaction is removed.
@@ -1620,6 +1650,12 @@ testers are expected to do more _exploratory_ testing.
 
 1. Test case: `find x/Alex`<br>
    Expected: No note, as `find` changes no data and there is nothing to undo.
+
+1. Test case: `find n/Alex`<br>
+   Expected: The unsupported-search-filter error names `n/` and lists the supported filters and usage. No advisory note claims that `n/` was treated as ordinary text, and the displayed list and viewed supporter are unchanged.
+
+1. Test case: `log 999 nt/Called t/vip` with fewer than 999 supporters displayed<br>
+   Expected: Only the invalid-supporter-index error is shown, without a prefix note or a new interaction.
 
 ### Logging an interaction
 
@@ -1865,6 +1901,16 @@ testers are expected to do more _exploratory_ testing.
    1. Test case: Preserve a copy of the invalid test file, then run `list`.<br>
       Expected: `Listed all supporters.` replaces the warning. The list remains empty and an empty valid data file replaces the invalid file.
 
+1. Dealing with a failed save
+
+   1. Prerequisites: Use an isolated test folder with at least two supporters. Run `list` so that the data file exists, then make it read-only, e.g. with `chmod a-w data/supporterbook.json` on macOS or Linux.
+
+   1. Test case: `delete 1`<br>
+      Expected: The error shows the deletion message, then that the data could not be saved, then that the change was made but not saved and should not be repeated. The first supporter is no longer in the list.
+
+   1. Test case: Make the file writable again, e.g. with `chmod u+w data/supporterbook.json`, run `list`, then close and relaunch the app.<br>
+      Expected: `Listed all supporters.` is shown. After relaunching, only the supporter deleted in the previous test is missing.
+
 1. Dealing with an invalid cultivation stage in the data file
    1. Prerequisites: Run the app once and close it, so that the data file has been created.
 
@@ -1876,5 +1922,17 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: In the data file, change one supporter's `"stage"` value to `"giving"` (lower case), then launch the app.<br>
       Expected: The data loads, as stages are not case-sensitive.
+
+1. Checking interaction date boundaries in the data file
+
+   1. Prerequisites: Use an isolated test folder with the JAR file and at least one supporter. Run `log 1 nt/Date boundary test`, then close the app and back up `data/supporterbook.json`. For each test, edit only this interaction's `"date"`, using `yyyy-MM-dd` format. Dates relative to today refer to the computer's local date when the app is launched.
+
+   1. Test cases: Set the date to `1900-01-01` and relaunch the app. Close the app without running another command, change the same date to today's date, then relaunch again. Repeat with tomorrow's date.<br>
+      Expected: After each launch, all saved supporters and interactions load, including the edited interaction with its specified date, with no load-failure warning.
+
+   1. Test cases: Close the app, set the date to `1899-12-31` and relaunch. Close the app without running another command, change the same date to the day after tomorrow, then relaunch again.<br>
+      Expected: After each launch, the list is empty and the existing load-failure warning is shown. The whole file is rejected rather than partially loaded, and its contents are unchanged at startup.
+
+   1. Cleanup: Close the app without running another command and restore the valid backup.
 
 1. _{ more test cases … }_

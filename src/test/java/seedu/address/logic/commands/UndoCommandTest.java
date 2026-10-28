@@ -21,7 +21,7 @@ import seedu.address.testutil.PersonBuilder;
 
 public class UndoCommandTest {
 
-    private final Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+    private final Model model = getTypicalModel();
 
     @Test
     public void execute_noChange_throwsCommandException() {
@@ -30,21 +30,17 @@ public class UndoCommandTest {
 
     @Test
     public void execute_afterChange_restoresPreviousData() {
-        model.deletePerson(ALICE);
-        model.commitAddressBookIfChanged();
-        Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+        deleteAliceAndCommit();
 
-        assertCommandSuccess(new UndoCommand(), model, UndoCommand.MESSAGE_SUCCESS, expectedModel);
+        assertCommandSuccess(new UndoCommand(), model, UndoCommand.MESSAGE_SUCCESS, getTypicalModel());
     }
 
     @Test
     public void execute_filteredList_showsAllSupporters() {
-        model.deletePerson(ALICE);
-        model.commitAddressBookIfChanged();
+        deleteAliceAndCommit();
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
-        Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
-        assertCommandSuccess(new UndoCommand(), model, UndoCommand.MESSAGE_SUCCESS, expectedModel);
+        assertCommandSuccess(new UndoCommand(), model, UndoCommand.MESSAGE_SUCCESS, getTypicalModel());
     }
 
     @Test
@@ -72,10 +68,18 @@ public class UndoCommandTest {
 
     @Test
     public void execute_allChangesUndone_throwsCommandException() throws Exception {
-        model.deletePerson(ALICE);
-        model.commitAddressBookIfChanged();
+        deleteAliceAndCommit();
         new UndoCommand().execute(model);
 
         assertCommandFailure(new UndoCommand(), model, UndoCommand.MESSAGE_NOTHING_TO_UNDO);
+    }
+
+    private static Model getTypicalModel() {
+        return new ModelManager(getTypicalAddressBook(), new UserPrefs());
+    }
+
+    private void deleteAliceAndCommit() {
+        model.deletePerson(ALICE);
+        model.commitAddressBookIfChanged();
     }
 }

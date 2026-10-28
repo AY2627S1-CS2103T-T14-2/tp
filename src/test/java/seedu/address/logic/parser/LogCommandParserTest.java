@@ -150,14 +150,14 @@ public class LogCommandParserTest {
     public void parse_invalidDate_failure() {
         for (String date : List.of("", "   ", "2024-2-29", "2024/02/29", "2024-02-30", "2023-02-29")) {
             assertParseFailure(parser, " 1 nt/" + VALID_NOTE + " dt/" + date,
-                    ParserUtil.MESSAGE_INVALID_INTERACTION_DATE);
+                    Interaction.MESSAGE_INVALID_DATE_FORMAT);
         }
     }
 
     @Test
     public void parse_futureDate_failure() {
         assertParseFailure(parser, " 1 nt/" + VALID_NOTE + " dt/" + LocalDate.now().plusYears(1),
-                ParserUtil.MESSAGE_FUTURE_INTERACTION_DATE);
+                Interaction.MESSAGE_FUTURE_DATE);
     }
 
     @Test
@@ -189,7 +189,7 @@ public class LogCommandParserTest {
     @Test
     public void parse_dateBeforeMinimum_failure() {
         assertParseFailure(parser, " 1 nt/" + VALID_NOTE + " dt/1899-12-31",
-                ParserUtil.MESSAGE_EARLY_INTERACTION_DATE);
+                Interaction.MESSAGE_EARLY_DATE);
     }
 
     @Test

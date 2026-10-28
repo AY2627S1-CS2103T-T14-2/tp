@@ -319,7 +319,7 @@ public class ParserUtilTest {
     public void parseInteractionDate_invalidFormat_throwsParseException() {
         for (String date : List.of("", WHITESPACE, "2026-1-01", "2026-01-1", "26-01-01", "2026/01/01",
                 "01-01-2026", "+2026-01-01", "10000-01-01", "2026-01-01T12:00:00", "2026- 01-01")) {
-            assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_DATE, () ->
+            assertThrows(ParseException.class, Interaction.MESSAGE_INVALID_DATE_FORMAT, () ->
                     ParserUtil.parseInteractionDate(date, INTERACTION_CLOCK));
         }
     }
@@ -328,7 +328,7 @@ public class ParserUtilTest {
     public void parseInteractionDate_invalidCalendarDate_throwsParseException() {
         for (String date : List.of("2026-02-29", "2024-02-30", "2026-04-31", "2026-00-10",
                 "2026-13-10", "2026-01-00", "2026-01-32")) {
-            assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_DATE, () ->
+            assertThrows(ParseException.class, Interaction.MESSAGE_INVALID_DATE_FORMAT, () ->
                     ParserUtil.parseInteractionDate(date, INTERACTION_CLOCK));
         }
     }
@@ -342,7 +342,7 @@ public class ParserUtilTest {
     @Test
     public void parseInteractionDate_beforeMinimumDate_throwsParseException() {
         for (String date : List.of("1899-12-31", "0000-01-01", "0001-01-01")) {
-            assertThrows(ParseException.class, ParserUtil.MESSAGE_EARLY_INTERACTION_DATE, () ->
+            assertThrows(ParseException.class, Interaction.MESSAGE_EARLY_DATE, () ->
                     ParserUtil.parseInteractionDate(date, INTERACTION_CLOCK));
         }
     }
@@ -374,7 +374,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseInteractionDate_futureDate_throwsParseException() {
-        assertThrows(ParseException.class, ParserUtil.MESSAGE_FUTURE_INTERACTION_DATE, () ->
+        assertThrows(ParseException.class, Interaction.MESSAGE_FUTURE_DATE, () ->
                 ParserUtil.parseInteractionDate("2026-10-21", INTERACTION_CLOCK));
     }
 

@@ -11,9 +11,10 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.RedoCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
-import seedu.address.logic.parser.ArgumentTokenizer;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Name;
@@ -28,6 +29,10 @@ public class LogicManager implements Logic {
 
     public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
             "Could not save data to file %s due to insufficient permissions to write to the file or the folder.";
+
+    public static final String MESSAGE_CHANGE_NOT_SAVED_FORMAT = "This change was made but not saved, "
+            + "so do not repeat the command. Once the problem is fixed, run any command, e.g. list, "
+            + "to save it, or run %1$s to reverse it.";
 
     private final Logger logger = LogsCenter.getLogger(LogicManager.class);
 
@@ -52,19 +57,38 @@ public class LogicManager implements Logic {
         List<Person> personsBeforeCommand = List.copyOf(model.getAddressBook().getPersonList());
         CommandResult commandResult = command.execute(model);
         model.commitAddressBookIfChanged();
-        if (!personsBeforeCommand.equals(model.getAddressBook().getPersonList())) {
+        boolean hasChangedData = !personsBeforeCommand.equals(model.getAddressBook().getPersonList());
+        if (hasChangedData) {
             commandResult = addUnrecognisedPrefixNote(commandResult, commandText);
         }
 
+        saveAddressBook(command, commandResult, hasChangedData);
+        return commandResult;
+    }
+
+    /**
+     * Saves the address book. If saving fails after {@code command} changed the data, the error also shows
+     * {@code commandResult} and says the change was kept, since repeating a command such as {@code delete 1}
+     * would change another supporter. It names {@code redo} as the way to reverse an {@code undo}.
+     */
+    private void saveAddressBook(Command command, CommandResult commandResult, boolean hasChangedData)
+            throws CommandException {
         try {
             storage.saveAddressBook(model.getAddressBook());
-        } catch (AccessDeniedException e) {
-            throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
         } catch (IOException ioe) {
-            throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
+            String saveError = ioe instanceof AccessDeniedException
+                    ? String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, ioe.getMessage())
+                    : String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage());
+            if (!hasChangedData) {
+                throw new CommandException(saveError, ioe);
+            }
+            logger.warning("Kept a change that could not be saved: " + ioe.getMessage());
+            String reversingCommandWord = command instanceof UndoCommand
+                    ? RedoCommand.COMMAND_WORD
+                    : UndoCommand.COMMAND_WORD;
+            throw new CommandException(commandResult.getFeedbackToUser() + "\n" + saveError + "\n"
+                    + String.format(MESSAGE_CHANGE_NOT_SAVED_FORMAT, reversingCommandWord), ioe);
         }
-
-        return commandResult;
     }
 
     /**
@@ -76,7 +100,7 @@ public class LogicManager implements Logic {
         try {
             return addressBookParser.parseCommand(commandText);
         } catch (ParseException pe) {
-            List<String> unrecognisedPrefixes = ArgumentTokenizer.findUnrecognisedPrefixes(commandText);
+            List<String> unrecognisedPrefixes = addressBookParser.findUnrecognisedPrefixes(commandText);
             if (unrecognisedPrefixes.isEmpty()) {
                 throw pe;
             }
@@ -91,7 +115,7 @@ public class LogicManager implements Logic {
      * are not, since the command has just saved them as part of a value (e.g. an address or a note).
      */
     private CommandResult addUnrecognisedPrefixNote(CommandResult commandResult, String commandText) {
-        List<String> unrecognisedPrefixes = ArgumentTokenizer.findUnrecognisedPrefixes(commandText);
+        List<String> unrecognisedPrefixes = addressBookParser.findUnrecognisedPrefixes(commandText);
         if (unrecognisedPrefixes.isEmpty()) {
             return commandResult;
         }
