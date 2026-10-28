@@ -30,6 +30,8 @@ import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.RedoCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
@@ -218,7 +220,7 @@ public class LogicManagerTest {
         expectedModel.addPerson(expectedPerson);
         String addFeedback = String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(expectedPerson));
         String expectedMessage = addFeedback + "\n" + expectedSaveError + "\n"
-                + LogicManager.MESSAGE_CHANGE_NOT_SAVED;
+                + String.format(LogicManager.MESSAGE_CHANGE_NOT_SAVED_FORMAT, UndoCommand.COMMAND_WORD);
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
     }
 
@@ -263,13 +265,30 @@ public class LogicManagerTest {
         String saveError = String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT,
                 dummyAdException.getMessage());
         String expectedMessage = deleteResult.getFeedbackToUser() + "\n" + saveError + "\n"
-                + LogicManager.MESSAGE_CHANGE_NOT_SAVED;
+                + String.format(LogicManager.MESSAGE_CHANGE_NOT_SAVED_FORMAT, UndoCommand.COMMAND_WORD);
         // the error shows that Alice was deleted, so the user does not repeat delete 1 and delete Benson
         assertCommandFailure("delete 1", CommandException.class, expectedMessage, expectedModel);
 
         isSaveFailing.set(false);
         logic.execute(ListCommand.COMMAND_WORD);
         assertEquals(List.of(BENSON), addressBookStorage.readAddressBook().orElseThrow().getPersonList());
+    }
+
+    @Test
+    public void execute_undoNotSaved_suggestsRedoToReverseIt() throws Exception {
+        model.addPerson(ALICE);
+        model.commitAddressBookIfChanged();
+        AtomicBoolean isSaveFailing = new AtomicBoolean(false);
+        useStorageFailingWhile(dummyIoException, isSaveFailing::get);
+        logic.execute("delete 1");
+
+        isSaveFailing.set(true);
+        String expectedMessage = UndoCommand.MESSAGE_SUCCESS + "\n"
+                + String.format(LogicManager.FILE_OPS_ERROR_FORMAT, dummyIoException.getMessage()) + "\n"
+                + String.format(LogicManager.MESSAGE_CHANGE_NOT_SAVED_FORMAT, RedoCommand.COMMAND_WORD);
+        // another undo would reverse an earlier change instead of this one
+        assertThrows(CommandException.class, expectedMessage, () -> logic.execute(UndoCommand.COMMAND_WORD));
+        assertEquals(List.of(ALICE), model.getAddressBook().getPersonList());
     }
 
     @Test

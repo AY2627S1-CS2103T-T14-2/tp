@@ -11,6 +11,8 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.RedoCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -28,9 +30,9 @@ public class LogicManager implements Logic {
     public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
             "Could not save data to file %s due to insufficient permissions to write to the file or the folder.";
 
-    public static final String MESSAGE_CHANGE_NOT_SAVED = "This change was made but not saved, so do not "
-            + "repeat the command. Once the problem is fixed, run any command, e.g. list, to save it, "
-            + "or run undo to reverse it.";
+    public static final String MESSAGE_CHANGE_NOT_SAVED_FORMAT = "This change was made but not saved, "
+            + "so do not repeat the command. Once the problem is fixed, run any command, e.g. list, "
+            + "to save it, or run %1$s to reverse it.";
 
     private final Logger logger = LogsCenter.getLogger(LogicManager.class);
 
@@ -60,16 +62,16 @@ public class LogicManager implements Logic {
             commandResult = addUnrecognisedPrefixNote(commandResult, commandText);
         }
 
-        saveAddressBook(commandResult, hasChangedData);
+        saveAddressBook(command, commandResult, hasChangedData);
         return commandResult;
     }
 
     /**
-     * Saves the address book. If saving fails after the command changed the data, the error also shows
+     * Saves the address book. If saving fails after {@code command} changed the data, the error also shows
      * {@code commandResult} and says the change was kept, since repeating a command such as {@code delete 1}
-     * would change another supporter.
+     * would change another supporter. It names {@code redo} as the way to reverse an {@code undo}.
      */
-    private void saveAddressBook(CommandResult commandResult, boolean hasChangedData)
+    private void saveAddressBook(Command command, CommandResult commandResult, boolean hasChangedData)
             throws CommandException {
         try {
             storage.saveAddressBook(model.getAddressBook());
@@ -81,8 +83,11 @@ public class LogicManager implements Logic {
                 throw new CommandException(saveError, ioe);
             }
             logger.warning("Kept a change that could not be saved: " + ioe.getMessage());
+            String reversingCommandWord = command instanceof UndoCommand
+                    ? RedoCommand.COMMAND_WORD
+                    : UndoCommand.COMMAND_WORD;
             throw new CommandException(commandResult.getFeedbackToUser() + "\n" + saveError + "\n"
-                    + MESSAGE_CHANGE_NOT_SAVED, ioe);
+                    + String.format(MESSAGE_CHANGE_NOT_SAVED_FORMAT, reversingCommandWord), ioe);
         }
     }
 

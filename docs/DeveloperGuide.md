@@ -113,7 +113,7 @@ How the `Logic` component works:
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).
 1. The result of the command execution is encapsulated as a `CommandResult` object.
 1. Before returning it from `Logic`, `LogicManager` calls `commitAddressBookIfChanged()` to record changes for undo/redo and saves the data through `Storage`.
-   If saving fails after the command changed the data, the change stays in the `Model` and `LogicManager` throws a `CommandException` whose message starts with the command's result and ends with `LogicManager.MESSAGE_CHANGE_NOT_SAVED`, so the user does not repeat a command such as `delete 1`, which would change another supporter.
+   If saving fails after the command changed the data, the change stays in the `Model` and `LogicManager` throws a `CommandException` whose message starts with the command's result and ends with `LogicManager.MESSAGE_CHANGE_NOT_SAVED_FORMAT`, so the user does not repeat a command such as `delete 1`, which would change another supporter. The message suggests `undo` to reverse the change, or `redo` after an `undo`, since another `undo` would reverse an earlier change.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
