@@ -150,10 +150,16 @@ public class ModelManager implements Model {
 
     @Override
     public void commitAddressBookIfChanged() {
+        commitAddressBookIfChanged("");
+    }
+
+    @Override
+    public void commitAddressBookIfChanged(String changeDescription) {
+        requireNonNull(changeDescription);
         // a command can write back identical data, e.g. an edit to the same phone number
         if (hasUncommittedChanges && versionedAddressBook.hasChangesSinceLastCommit()) {
             boolean isDiscardingRedo = versionedAddressBook.canRedo();
-            versionedAddressBook.commit();
+            versionedAddressBook.commit(changeDescription);
             if (isDiscardingRedo) {
                 discardUnusedPersonOrigins();
             }
@@ -181,15 +187,17 @@ public class ModelManager implements Model {
     }
 
     @Override
-    public void undoAddressBook() {
-        versionedAddressBook.undo();
+    public String undoAddressBook() {
+        String undoneChange = versionedAddressBook.undo();
         refreshViewedPerson();
+        return undoneChange;
     }
 
     @Override
-    public void redoAddressBook() {
-        versionedAddressBook.redo();
+    public String redoAddressBook() {
+        String redoneChange = versionedAddressBook.redo();
         refreshViewedPerson();
+        return redoneChange;
     }
 
     /**
