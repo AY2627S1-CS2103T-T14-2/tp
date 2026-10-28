@@ -81,7 +81,7 @@ deactivate CommandResult
 DeleteCommand --> LogicManager : r
 deactivate DeleteCommand
 
-LogicManager -> Model : commitAddressBookIfChanged()
+LogicManager -> Model : commitAddressBookIfChanged(commandText)
 activate Model
 Model --> LogicManager
 deactivate Model
