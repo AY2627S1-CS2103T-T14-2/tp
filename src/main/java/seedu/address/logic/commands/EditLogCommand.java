@@ -71,14 +71,7 @@ public class EditLogCommand extends Command {
                 model.getFilteredPersonList(), targetIndex);
         int storedIndex = InteractionCommandSupport.getStoredInteractionIndex(personToUpdate, interactionIndex);
 
-        List<Interaction> updatedInteractions = new ArrayList<>(personToUpdate.getInteractions());
-        Interaction originalInteraction = updatedInteractions.get(storedIndex);
-        Interaction updatedInteraction = new Interaction(date.orElse(originalInteraction.getDate()),
-                note.orElse(originalInteraction.getNote()));
-        // retain the logging position for equal-date ordering and distinguish identical interactions
-        updatedInteractions.set(storedIndex, updatedInteraction);
-
-        Person updatedPerson = personToUpdate.withInteractions(updatedInteractions);
+        Person updatedPerson = createEditedPerson(personToUpdate, storedIndex);
         assert updatedPerson.getInteractionCount() == personToUpdate.getInteractionCount()
                 : "editing must preserve the number of interactions";
 
@@ -99,9 +92,24 @@ public class EditLogCommand extends Command {
                     personToUpdate.getName()));
         }
 
+        Interaction updatedInteraction = updatedPerson.getInteractions().get(storedIndex);
         return new CommandResult(String.format(MESSAGE_SUCCESS, displayedEntryNumber,
                 personToUpdate.getName(), DisplayDateFormatter.format(updatedInteraction.getDate()),
                 updatedInteraction.getNote()));
+    }
+
+    /**
+     * Creates a copy of {@code personToUpdate} with the interaction at the zero-based {@code storedIndex} edited.
+     * Omitted fields and the entry's stored position are preserved.
+     */
+    private Person createEditedPerson(Person personToUpdate, int storedIndex) {
+        List<Interaction> updatedInteractions = new ArrayList<>(personToUpdate.getInteractions());
+        Interaction originalInteraction = updatedInteractions.get(storedIndex);
+        Interaction updatedInteraction = new Interaction(date.orElse(originalInteraction.getDate()),
+                note.orElse(originalInteraction.getNote()));
+        // retain the logging position for equal-date ordering and distinguish identical interactions
+        updatedInteractions.set(storedIndex, updatedInteraction);
+        return personToUpdate.withInteractions(updatedInteractions);
     }
 
     @Override
