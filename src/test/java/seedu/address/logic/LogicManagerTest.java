@@ -9,6 +9,7 @@ import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.STAGE_DESC_AMY;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.AMY;
 import static seedu.address.testutil.TypicalPersons.BENSON;
@@ -16,7 +17,10 @@ import static seedu.address.testutil.TypicalPersons.BENSON;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +28,10 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.RedoCommand;
+import seedu.address.logic.commands.UndoCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
@@ -200,32 +207,88 @@ public class LogicManagerTest {
      * Tests the Logic component's handling of an {@code IOException} thrown by the Storage component.
      *
      * @param e the exception to be thrown by the Storage component.
-     * @param expectedMessage the message expected inside exception thrown by the Logic component.
+     * @param expectedSaveError the save error expected inside the exception thrown by the Logic component.
      */
-    private void assertCommandFailureForExceptionFromStorage(IOException e, String expectedMessage) {
-        Path prefPath = temporaryFolder.resolve("ExceptionUserPrefs.json");
+    private void assertCommandFailureForExceptionFromStorage(IOException e, String expectedSaveError) {
+        useStorageFailingWhile(e, () -> true);
 
-        // Inject LogicManager with a JsonAddressBookStorage that throws the IOException e when saving
-        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(prefPath) {
-            @Override
-            public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
-                throw e;
-            }
-        };
-
-        JsonUserPrefsStorage userPrefsStorage =
-                new JsonUserPrefsStorage(temporaryFolder.resolve("ExceptionUserPrefs.json"));
-        StorageManager storage = new StorageManager(addressBookStorage, userPrefsStorage);
-
-        logic = new LogicManager(model, storage);
-
-        // Triggers the saveAddressBook method by executing an add command
+        // Triggers the saveAddressBook method by executing an add command, which is kept despite the error
         String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
                 + EMAIL_DESC_AMY + ADDRESS_DESC_AMY + STAGE_DESC_AMY;
         Person expectedPerson = new PersonBuilder(AMY).withTags().build();
         ModelManager expectedModel = new ModelManager();
         expectedModel.addPerson(expectedPerson);
+        String addFeedback = String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(expectedPerson));
+        String expectedMessage = addFeedback + "\n" + expectedSaveError + "\n"
+                + String.format(LogicManager.MESSAGE_CHANGE_NOT_SAVED_FORMAT, UndoCommand.COMMAND_WORD);
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
+    }
+
+    /**
+     * Injects LogicManager with a JsonAddressBookStorage that throws {@code e} when saving while
+     * {@code isSaveFailing} is true, and saves to {@code addressBookStorage}'s file otherwise.
+     */
+    private void useStorageFailingWhile(IOException e, BooleanSupplier isSaveFailing) {
+        addressBookStorage = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json")) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                if (isSaveFailing.getAsBoolean()) {
+                    throw e;
+                }
+                super.saveAddressBook(addressBook);
+            }
+        };
+
+        JsonUserPrefsStorage userPrefsStorage =
+                new JsonUserPrefsStorage(temporaryFolder.resolve("ExceptionUserPrefs.json"));
+        logic = new LogicManager(model, new StorageManager(addressBookStorage, userPrefsStorage));
+    }
+
+    @Test
+    public void execute_storageThrowsWithoutChange_throwsOnlySaveError() {
+        model.addPerson(ALICE);
+        useStorageFailingWhile(dummyIoException, () -> true);
+
+        assertCommandException(ListCommand.COMMAND_WORD,
+                String.format(LogicManager.FILE_OPS_ERROR_FORMAT, dummyIoException.getMessage()));
+    }
+
+    @Test
+    public void execute_deleteNotSaved_keepsDeletionAndNextCommandSavesIt() throws Exception {
+        model.addPerson(ALICE);
+        model.addPerson(BENSON);
+        AtomicBoolean isSaveFailing = new AtomicBoolean(true);
+        useStorageFailingWhile(dummyAdException, isSaveFailing::get);
+
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        CommandResult deleteResult = new DeleteCommand(INDEX_FIRST_PERSON).execute(expectedModel);
+        String saveError = String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT,
+                dummyAdException.getMessage());
+        String expectedMessage = deleteResult.getFeedbackToUser() + "\n" + saveError + "\n"
+                + String.format(LogicManager.MESSAGE_CHANGE_NOT_SAVED_FORMAT, UndoCommand.COMMAND_WORD);
+        // the error shows that Alice was deleted, so the user does not repeat delete 1 and delete Benson
+        assertCommandFailure("delete 1", CommandException.class, expectedMessage, expectedModel);
+
+        isSaveFailing.set(false);
+        logic.execute(ListCommand.COMMAND_WORD);
+        assertEquals(List.of(BENSON), addressBookStorage.readAddressBook().orElseThrow().getPersonList());
+    }
+
+    @Test
+    public void execute_undoNotSaved_suggestsRedoToReverseIt() throws Exception {
+        model.addPerson(ALICE);
+        model.commitAddressBookIfChanged();
+        AtomicBoolean isSaveFailing = new AtomicBoolean(false);
+        useStorageFailingWhile(dummyIoException, isSaveFailing::get);
+        logic.execute("delete 1");
+
+        isSaveFailing.set(true);
+        String expectedMessage = UndoCommand.MESSAGE_SUCCESS + "\n"
+                + String.format(LogicManager.FILE_OPS_ERROR_FORMAT, dummyIoException.getMessage()) + "\n"
+                + String.format(LogicManager.MESSAGE_CHANGE_NOT_SAVED_FORMAT, RedoCommand.COMMAND_WORD);
+        // another undo would reverse an earlier change instead of this one
+        assertThrows(CommandException.class, expectedMessage, () -> logic.execute(UndoCommand.COMMAND_WORD));
+        assertEquals(List.of(ALICE), model.getAddressBook().getPersonList());
     }
 
     @Test

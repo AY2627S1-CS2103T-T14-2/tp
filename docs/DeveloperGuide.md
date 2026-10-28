@@ -113,6 +113,7 @@ How the `Logic` component works:
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).
 1. The result of the command execution is encapsulated as a `CommandResult` object.
 1. Before returning it from `Logic`, `LogicManager` calls `commitAddressBookIfChanged()` to record changes for undo/redo and saves the data through `Storage`.
+   If saving fails after the command changed the data, the change stays in the `Model` and `LogicManager` throws a `CommandException` whose message starts with the command's result and ends with `LogicManager.MESSAGE_CHANGE_NOT_SAVED_FORMAT`, so the user does not repeat a command such as `delete 1`, which would change another supporter. The message suggests `undo` to reverse the change, or `redo` after an `undo`, since another `undo` would reverse an earlier change.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -723,7 +724,7 @@ The walk takes at most as many steps as there are supporters. A chain without lo
 
 `tag` adds tags to a supporter and `untag` removes them, keeping the supporter's other tags. Before these commands, the only way to change tags was `edit INDEX t/...`, which replaces all of a supporter's tags.
 
-`TagCommandParser` and `UntagCommandParser` parse the index and tags. `ParserUtil#parseTags(Collection<String>)` keeps only the first spelling of tags that differ only in case, so `t/vip t/VIP` gives one tag. The two commands share their behaviour through the abstract class `TagChangeCommand`, as shown below.
+`TagCommandParser` and `UntagCommandParser` parse the index and tags. `ParserUtil#parseTags(Collection<String>)` keeps only the first spelling of tags that differ only in case, so `t/vip t/VIP` gives one tag. `JsonAdaptedPerson` applies the same rule when loading the data file, keeping the spelling that comes first. The two commands share their behaviour through the abstract class `TagChangeCommand`, as shown below.
 
 <puml src="diagrams/TagChangeClassDiagram.puml" alt="Class diagram of TagChangeCommand and its subclasses TagCommand and UntagCommand" />
 
@@ -1555,6 +1556,15 @@ testers are expected to do more _exploratory_ testing.
    1. Continuing from the previous test case: `list`<br>
       Expected: `TagFilterProbe` is present in the full list with the tag removed.
 
+1. Loading tags that differ only in case
+   1. Prerequisites: Use an isolated test folder. Run `list`, then close the app. In the data file, change Alex Yeoh's `"tags"` to `[ "monthlyDonor", "MONTHLYDONOR" ]`.
+
+   1. Test case: Relaunch the app and run `view 1`.<br>
+      Expected: No load-failure warning is shown, and Alex Yeoh has the single tag `monthlyDonor`.
+
+   1. Continuing from the previous test case: `untag 1 t/monthlydonor`<br>
+      Expected: The message is `Removed tags from Alex Yeoh: [monthlyDonor]`.
+
 ### Counting supporters by stage
 
 1. Prerequisites: Start from the sample data, which has six supporters, one at each stage.
@@ -1890,6 +1900,16 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: Preserve a copy of the invalid test file, then run `list`.<br>
       Expected: `Listed all supporters.` replaces the warning. The list remains empty and an empty valid data file replaces the invalid file.
+
+1. Dealing with a failed save
+
+   1. Prerequisites: Use an isolated test folder with at least two supporters. Run `list` so that the data file exists, then make it read-only, e.g. with `chmod a-w data/supporterbook.json` on macOS or Linux.
+
+   1. Test case: `delete 1`<br>
+      Expected: The error shows the deletion message, then that the data could not be saved, then that the change was made but not saved and should not be repeated. The first supporter is no longer in the list.
+
+   1. Test case: Make the file writable again, e.g. with `chmod u+w data/supporterbook.json`, run `list`, then close and relaunch the app.<br>
+      Expected: `Listed all supporters.` is shown. After relaunching, only the supporter deleted in the previous test is missing.
 
 1. Dealing with an invalid cultivation stage in the data file
    1. Prerequisites: Run the app once and close it, so that the data file has been created.

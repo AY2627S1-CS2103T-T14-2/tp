@@ -626,6 +626,8 @@ Example: after `log 2 nt/Called about the gala`, press <kbd>Up</kbd>, change the
 
 SupporterBook automatically saves data after every command that executes successfully. You do not need to save manually.
 
+If saving fails, e.g. because the data file or its folder is read-only, the error says why. If the command changed the data, the error first shows the command's result, and the change is kept but not saved, so do not repeat the command: repeating `delete 1`, for example, would delete another supporter. Once the problem is fixed, run any command, e.g. `list`, to save all changes, or run `undo` to reverse the change (`redo` if the command that failed to save was `undo`). Changes that are not saved are lost when you close SupporterBook.
+
 ### Loading data at startup
 
 SupporterBook loads `data/supporterbook.json` from the folder the app is launched from. The data file path is shown in the status bar.
@@ -655,6 +657,8 @@ A supporter may also have an `"organisation"`, such as the company a CSR contact
 Each supporter card in the list shows the supporter's organisation, or `(no organisation)` if they have none.
 
 A supporter may also have an `"introducer"`, the name of the supporter who introduced them, e.g. a board member. Leave the key out if no introducer is recorded. If present, it must be the name of another supporter in the same file (capital letters and extra spaces are ignored), and cannot be the supporter's own name. Introductions in the file cannot go in a circle, e.g. Alex introduced by Bernice while Bernice is introduced by Alex.
+
+A supporter's `"tags"` array lists their tags, each of which must be alphanumeric. Tags that differ only in capitalisation count as one tag, as they do in commands: if the file has both `"vip"` and `"VIP"`, only the one that comes first is loaded, and the other is removed the next time SupporterBook saves.
 
 A supporter's `"interactions"` array stores entries in logging order. Each entry has a `"date"` that must be a valid calendar date in `yyyy-MM-dd` format, from `1900-01-01` through tomorrow (inclusive) when loading. Today and tomorrow are determined by the computer's local clock when the file is loaded. This one-day allowance lets a previously saved interaction load when a time-zone change makes its date appear to be tomorrow. The stored date is kept unchanged. Dates entered through `log` and `editlog` must still be on or before today, as these commands record completed interactions. Each entry also has a non-blank `"note"` of at most 500 Unicode code points after trimming. For example:
 
