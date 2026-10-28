@@ -1,7 +1,7 @@
 package seedu.address.storage;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -139,14 +139,21 @@ class JsonAdaptedPerson {
         return modelInteractions;
     }
 
+    /**
+     * Converts the stored tags. Tags differing only in case count as one, as they do in commands, so a
+     * hand-edited file with e.g. {@code vip} and {@code VIP} loads the spelling that comes first.
+     */
     private Set<Tag> toModelTags() throws IllegalValueException {
-        final Set<Tag> modelTags = new HashSet<>();
+        final Set<Tag> modelTags = new LinkedHashSet<>();
         for (JsonAdaptedTag tag : tags) {
             if (tag == null) {
                 throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT,
                         Tag.class.getSimpleName()));
             }
-            modelTags.add(tag.toModelType());
+            Tag modelTag = tag.toModelType();
+            if (modelTags.stream().noneMatch(modelTag::isSameTag)) {
+                modelTags.add(modelTag);
+            }
         }
         return modelTags;
     }

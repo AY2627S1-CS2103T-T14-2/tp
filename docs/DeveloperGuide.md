@@ -723,7 +723,7 @@ The walk takes at most as many steps as there are supporters. A chain without lo
 
 `tag` adds tags to a supporter and `untag` removes them, keeping the supporter's other tags. Before these commands, the only way to change tags was `edit INDEX t/...`, which replaces all of a supporter's tags.
 
-`TagCommandParser` and `UntagCommandParser` parse the index and tags. `ParserUtil#parseTags(Collection<String>)` keeps only the first spelling of tags that differ only in case, so `t/vip t/VIP` gives one tag. The two commands share their behaviour through the abstract class `TagChangeCommand`, as shown below.
+`TagCommandParser` and `UntagCommandParser` parse the index and tags. `ParserUtil#parseTags(Collection<String>)` keeps only the first spelling of tags that differ only in case, so `t/vip t/VIP` gives one tag. `JsonAdaptedPerson` applies the same rule when loading the data file, keeping the spelling that comes first. The two commands share their behaviour through the abstract class `TagChangeCommand`, as shown below.
 
 <puml src="diagrams/TagChangeClassDiagram.puml" alt="Class diagram of TagChangeCommand and its subclasses TagCommand and UntagCommand" />
 
@@ -1554,6 +1554,15 @@ testers are expected to do more _exploratory_ testing.
 
    1. Continuing from the previous test case: `list`<br>
       Expected: `TagFilterProbe` is present in the full list with the tag removed.
+
+1. Loading tags that differ only in case
+   1. Prerequisites: Use an isolated test folder. Run `list`, then close the app. In the data file, change Alex Yeoh's `"tags"` to `[ "monthlyDonor", "MONTHLYDONOR" ]`.
+
+   1. Test case: Relaunch the app and run `view 1`.<br>
+      Expected: No load-failure warning is shown, and Alex Yeoh has the single tag `monthlyDonor`.
+
+   1. Continuing from the previous test case: `untag 1 t/monthlydonor`<br>
+      Expected: The message is `Removed tags from Alex Yeoh: [monthlyDonor]`.
 
 ### Counting supporters by stage
 
