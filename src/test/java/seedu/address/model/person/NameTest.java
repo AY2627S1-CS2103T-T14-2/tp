@@ -9,6 +9,11 @@ import org.junit.jupiter.api.Test;
 
 public class NameTest {
 
+    private static final String[] namesWithNonBreakingSpaces = {
+        "Tan\u00a0Wei Ming", "\u00a0Tan Wei Ming", "Tan Wei Ming\u00a0",
+        "Tan\u00a0\u00a0Wei Ming", " \u00a0Tan \t\u00a0Wei\u00a0 Ming\u00a0 "
+    };
+
     @Test
     public void constructor_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new Name(null));
@@ -106,6 +111,7 @@ public class NameTest {
     @Test
     public void constructor_decomposedName_normalizesUnicodeAndSpaces() {
         assertEquals("José Tan", new Name("  Jose\u0301\t Tan  ").fullName);
+        assertEquals("José Tan", new Name("\u00a0Jose\u0301\u00a0\u00a0Tan\u00a0").fullName);
         assertEquals("José Tan", new Name("Jose\u0301 Tan").toString());
         assertEquals("கவி", new Name("கவி").fullName);
     }
@@ -180,6 +186,27 @@ public class NameTest {
     public void isValidName_unicodeSymbols_returnsFalse() {
         assertFalse(Name.isValidName("Tan☀"));
         assertFalse(Name.isValidName("☀Tan"));
+    }
+
+    @Test
+    public void isValidName_nonBreakingSpaces_returnsTrue() {
+        for (String name : namesWithNonBreakingSpaces) {
+            assertTrue(Name.isValidName(name));
+        }
+
+        assertTrue(Name.isValidName("Ravi\u00a0s/o\u00a0Kumar"));
+    }
+
+    @Test
+    public void isValidName_onlyNonBreakingSpaces_returnsFalse() {
+        assertFalse(Name.isValidName("\u00a0"));
+        assertFalse(Name.isValidName(" \t\u00a0\u00a0 "));
+    }
+
+    @Test
+    public void constructor_onlyNonBreakingSpaces_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> new Name("\u00a0"));
+        assertThrows(IllegalArgumentException.class, () -> new Name(" \t\u00a0\u00a0 "));
     }
 
     @Test
@@ -270,6 +297,25 @@ public class NameTest {
     public void constructor_extraSpaces_spacesNormalised() {
         assertEquals("Tan Wei Ming", new Name("  Tan   Wei Ming ").fullName);
         assertEquals(new Name("Tan Wei Ming"), new Name("Tan  Wei  Ming"));
+    }
+
+    @Test
+    public void constructor_nonBreakingSpaces_spacesNormalised() {
+        Name expectedName = new Name("Tan Wei Ming");
+
+        for (String name : namesWithNonBreakingSpaces) {
+            Name normalizedName = new Name(name);
+
+            assertEquals("Tan Wei Ming", normalizedName.fullName);
+            assertEquals(expectedName, normalizedName);
+        }
+    }
+
+    @Test
+    public void isSameName_nonBreakingSpaces_returnsTrue() {
+        Name name = new Name("Tan Wei Ming");
+
+        assertTrue(name.isSameName(new Name("\u00a0tan\u00a0\u00a0WEI ming\u00a0")));
     }
 
     @Test

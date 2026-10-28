@@ -252,6 +252,19 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_unicodeWhitespaceInOrganisation_normalizesStoredName() throws Exception {
+        Person expectedPerson = new PersonBuilder(BENSON).withOrganisation("Keppel Land").build();
+        for (String whitespace : List.of("\u00a0", "\u202f", "\u2007", "\u2003",
+                "\u0085", "\u2028", "\u2029", "\u3000")) {
+            String storedOrganisation = whitespace + "Keppel" + whitespace.repeat(2) + "Land" + whitespace;
+            JsonAdaptedPerson storedPerson = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
+                    storedOrganisation, null, VALID_STAGE, List.of(), VALID_TAGS);
+
+            assertEquals(expectedPerson, storedPerson.toModelType(), storedOrganisation);
+        }
+    }
+
+    @Test
     public void toModelType_invalidOrganisation_throwsIllegalValueException() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS,
                 INVALID_ORGANISATION, null, VALID_STAGE, VALID_INTERACTIONS, VALID_TAGS);

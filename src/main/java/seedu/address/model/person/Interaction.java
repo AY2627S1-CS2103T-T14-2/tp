@@ -6,6 +6,7 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import seedu.address.commons.util.StringUtil;
 import seedu.address.commons.util.ToStringBuilder;
@@ -28,6 +29,8 @@ public class Interaction {
             "Interaction notes should not be blank and should be at most " + MAX_NOTE_LENGTH
                     + " characters long, excluding spaces at the beginning and end.";
 
+    private static final Pattern DATE_FORMAT_PATTERN = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
+
     private final LocalDate date;
     private final String note;
 
@@ -48,6 +51,15 @@ public class Interaction {
         requireNonNull(test);
         String trimmed = StringUtil.trimUnicodeWhitespace(test);
         return !trimmed.isEmpty() && trimmed.codePointCount(0, trimmed.length()) <= MAX_NOTE_LENGTH;
+    }
+
+    /**
+     * Returns true if {@code date} matches the ASCII yyyy-MM-dd format.
+     * This checks only the format, not calendar validity or the allowed date range.
+     */
+    public static boolean isValidDateFormat(String date) {
+        requireNonNull(date);
+        return DATE_FORMAT_PATTERN.matcher(date).matches();
     }
 
     /**

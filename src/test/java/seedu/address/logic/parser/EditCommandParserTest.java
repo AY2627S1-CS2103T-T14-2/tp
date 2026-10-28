@@ -141,6 +141,20 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_nameWithNonBreakingSpaces_success() {
+        String[] names = {"Tan\u00a0Wei Ming", "\u00a0Tan Wei Ming", "Tan Wei Ming\u00a0",
+            "Tan\u00a0\u00a0Wei Ming", " \u00a0Tan \t\u00a0Wei\u00a0 Ming\u00a0 "};
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Tan Wei Ming")
+                .withPhone(VALID_PHONE_AMY).build();
+        EditCommand expectedCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+
+        for (String name : names) {
+            assertParseSuccess(parser, "1 " + PREFIX_NAME + name + PHONE_DESC_AMY, expectedCommand);
+            assertParseSuccess(parser, "1" + PHONE_DESC_AMY + " " + PREFIX_NAME + name, expectedCommand);
+        }
+    }
+
+    @Test
     public void parse_invalidNameForms_failure() {
         String[] names = {"'Tan", "-Tan", ".Tan", "Tan/Lim", "Ravi s/ Kumar", "Ravis/o Kumar", "Priya d/oKumar"};
 

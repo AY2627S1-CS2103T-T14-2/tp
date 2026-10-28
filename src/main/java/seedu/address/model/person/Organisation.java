@@ -44,7 +44,7 @@ public class Organisation {
     }
 
     private static String normalise(String organisation) {
-        return StringUtil.trimUnicodeWhitespace(organisation).replaceAll("\\s+", " ");
+        return StringUtil.trimUnicodeWhitespace(organisation).replaceAll("(?U)\\s+", " ");
     }
 
     @Override

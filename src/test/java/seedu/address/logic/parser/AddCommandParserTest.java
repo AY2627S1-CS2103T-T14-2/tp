@@ -137,6 +137,21 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_nameWithNonBreakingSpaces_success() {
+        String[] names = {"Tan\u00a0Wei Ming", "\u00a0Tan Wei Ming", "Tan Wei Ming\u00a0",
+            "Tan\u00a0\u00a0Wei Ming", " \u00a0Tan \t\u00a0Wei\u00a0 Ming\u00a0 "};
+        Person expectedPerson = new PersonBuilder().withName("Tan Wei Ming").withPhone("91234567")
+                .withoutEmail().withoutAddress().build();
+        AddCommand expectedCommand = new AddCommand(expectedPerson);
+        String phoneArgument = " " + PREFIX_PHONE + "91234567";
+
+        for (String name : names) {
+            assertParseSuccess(parser, " " + PREFIX_NAME + name + phoneArgument, expectedCommand);
+            assertParseSuccess(parser, phoneArgument + " " + PREFIX_NAME + name, expectedCommand);
+        }
+    }
+
+    @Test
     public void parse_invalidNameForms_failure() {
         String[] names = {"'Tan", "-Tan", ".Tan", "Tan/Lim", "Ravi s/ Kumar", "Ravis/o Kumar", "Priya d/oKumar"};
 

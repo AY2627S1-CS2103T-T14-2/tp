@@ -227,8 +227,12 @@ Validation order is unchanged. Missing required arguments can fail a command's f
 
 `FindCommandParser` reads name keywords from the preamble and uses `ArgumentTokenizer` to read
 repeatable `o/`, `t/`, `st/`, `p/` and `e/` filters. Name keywords must precede the first prefix;
-each prefix value extends up to the next recognized prefix. Whitespace is normalized before
-tokenization, allowing multiword organisation values and whitespace between prefixes.
+each prefix value extends up to the next recognized prefix. Before tokenization, the parser uses
+`replaceAll("(?U)\\s+", " ").trim()` to collapse runs of characters in Unicode's `White_Space`
+property, including non-breaking spaces (NBSPs, U+00A0), into single ordinary spaces and trim the result.
+This allows pasted NBSPs between name keywords, inside organisation phrases and around prefixes
+to behave like ordinary spaces. NBSP-only search criteria and filter values become empty,
+so existing validation rejects them.
 
 The parser rejects missing criteria and empty prefix values. Stage values use
 `ParserUtil#parseStage(String)` so invalid or partial stage names produce the existing stage error.
@@ -931,10 +935,6 @@ Step 4. The user presses Down twice. The first press shows `delete 1`. The secon
   - Pros: Commands from earlier sessions can be recalled.
   - Cons: Another file to read, write and keep safe, for a small convenience.
 
-### \[Proposed\] Data archiving
-
-_{Explain here how the data archiving feature will be implemented}_
-
 ---
 
 ## **Documentation, logging, testing, dev-ops**
@@ -953,6 +953,7 @@ _{Explain here how the data archiving feature will be implemented}_
 **Target user profile**:
 
 - Donor and corporate-partnership executives at small (Tier 1) charities, who single-handedly manage every supporter relationship without access to a CRM.
+- Can type fast, prefer typing to using the mouse, and are reasonably comfortable using CLI apps.
 
 **Value proposition**: SupporterBook helps the sole fundraising and outreach staff at a small charity stay on top of every donor and corporate relationship, keeping each supporter’s history and the introductions behind it in one place, so follow-ups happen on time and relationships outlast whoever holds the role. It also allows fast CLI-based retrieval.
 
@@ -1493,12 +1494,15 @@ This is a variation of UC12, with the same precondition and invalid-index handli
   - **Lapsed**: Gave before, but is no longer giving.
   - **Declined**: Said no.
 - **Epic**: A large user need that is broken down into several smaller user stories. The user stories above are grouped by epic.
-- **Find filter**: The search criteria from a `find` command that limit the displayed list to matching supporters.
+- **Find filter**: The filtered list of supporters shown after a `find` or `quiet` command. It stays in place until another `find` or `quiet` replaces it, or `list`, `add`, `edit`, `undo` or `redo` shows the full list again.
 - **Index**: The number shown beside a supporter in the currently displayed list, used by commands to refer to that supporter. The same supporter can have a different index after a `find`.
 - **Interaction**: A dated record of one conversation or other contact with a supporter, with a short note of what happened. A supporter's interactions together form their _interaction history_.
+- **Introducer**: The supporter who introduced another supporter to the charity, recorded with `intro`. A supporter has at most one introducer, who must be another supporter in SupporterBook.
 - **Introduction chain**: A sequence of introductions linking supporters, e.g. a board member introduces a CSR contact, who then introduces a colleague.
 - **IPC (Institution of a Public Character)**: A Singapore charity that is approved to issue tax-deductible receipts to its donors.
+- **Last contact**: The latest date among a supporter's interactions, whatever order they were logged in. A supporter with no interactions has no last contact.
 - **Mainstream OS**: Windows, Linux, Unix, or macOS
+- **Quiet supporter**: A supporter who may need a follow-up because they have no interactions, or their last contact was more than a given number of days ago (60 unless stated otherwise). Supporters at the `Declined` stage are never quiet. `quiet` lists them.
 - **Supporter**: Anyone whose relationship with the charity SupporterBook keeps track of, e.g. an individual donor, a prospective donor, a contact at a partner company, a board member, or a volunteer who makes introductions.
 - **Tier 1 charity**: Under the Code of Governance for Charities and IPCs (2023), a small or medium charity that is not an IPC, with gross annual receipts or total expenditure from $50,000 to under $10 million. Tier 2 covers all IPCs and large non-IPC charities.
 
@@ -1519,13 +1523,13 @@ testers are expected to do more _exploratory_ testing.
 1. Initial launch
    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
+   1. Open a terminal in that folder and run `java -jar "supporterbook.jar"`.<br>
       Expected: The GUI opens with a set of sample supporters, some of whom already have logged interactions. The window size may not be optimal.
 
 1. Saving window preferences
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with the same command.<br>
       Expected: The most recent window size and location are retained.
 
 1. Launching with invalid window preferences

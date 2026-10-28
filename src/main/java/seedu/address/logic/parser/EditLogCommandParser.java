@@ -22,6 +22,7 @@ public class EditLogCommandParser implements Parser<EditLogCommand> {
      *
      * @throws ParseException if the user input does not conform to the expected format
      */
+    @Override
     public EditLogCommand parse(String args) throws ParseException {
         requireNonNull(args);
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NOTE, PREFIX_DATE);
