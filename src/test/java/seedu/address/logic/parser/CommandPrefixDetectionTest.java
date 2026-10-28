@@ -67,7 +67,7 @@ public class CommandPrefixDetectionTest {
     @Test
     public void findUnrecognisedPrefixes_upperCaseCommandWord_usesThatCommandsPrefixes() {
         // command words ignore case here too, matching parseCommand
-        assertEquals(List.of("st/"), parser.findUnrecognisedPrefixes("STAGE 1 st/giving"));
+        assertEquals(List.of("st/"), parser.findUnrecognisedPrefixes("DELETE 1 st/giving"));
         assertEquals(List.of("t/"), parser.findUnrecognisedPrefixes("Log 1 nt/Called t/vip"));
         assertEquals(List.of(), parser.findUnrecognisedPrefixes("UNDO n/Tan x/foo"));
     }
