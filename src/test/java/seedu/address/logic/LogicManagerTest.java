@@ -294,15 +294,6 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_stageWithStagePrefix_changesStageWithoutNote() throws Exception {
-        model.addPerson(ALICE);
-        CommandResult result = logic.execute("stage 1 st/declined");
-
-        assertEquals(String.format(StageCommand.MESSAGE_STAGE_CHANGED, ALICE.getName(), ALICE.getStage(),
-                Stage.DECLINED), result.getFeedbackToUser());
-    }
-
-    @Test
     public void execute_changeWithUnrecognisedPrefix_addsNote() throws Exception {
         model.addPerson(ALICE);
         CommandResult result = logic.execute("log 1 nt/Called about the gala dte/2024-01-01");
@@ -325,6 +316,15 @@ public class LogicManagerTest {
         CommandResult result = logic.execute("log 1 nt/Called about the gala, and/or the dinner");
 
         assertEquals(1, result.getFeedbackToUser().lines().count());
+    }
+
+    @Test
+    public void execute_stageWithStagePrefix_changesStageWithoutNote() throws Exception {
+        model.addPerson(ALICE);
+        CommandResult result = logic.execute("stage 1 st/declined");
+
+        assertEquals(String.format(StageCommand.MESSAGE_STAGE_CHANGED, ALICE.getName(), ALICE.getStage(),
+                Stage.DECLINED), result.getFeedbackToUser());
     }
 
     @Test
