@@ -10,7 +10,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.DisplayDateFormatter;
 import seedu.address.commons.util.ToStringBuilder;
@@ -36,6 +38,8 @@ public class EditLogCommand extends Command {
             + PREFIX_DATE + "2026-10-01";
     public static final String MESSAGE_SUCCESS = "Edited interaction #%1$d with %2$s (%3$s): %4$s.";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
+
+    private static final Logger logger = LogsCenter.getLogger(EditLogCommand.class);
 
     private final Index targetIndex;
     private final Index interactionIndex;
@@ -74,12 +78,17 @@ public class EditLogCommand extends Command {
         assert updatedPerson.getInteractionCount() == personToUpdate.getInteractionCount()
                 : "editing must preserve the number of interactions";
 
-        if (!updatedPerson.equals(personToUpdate)) {
+        boolean hasChanges = !updatedPerson.equals(personToUpdate);
+        if (hasChanges) {
             model.setPerson(personToUpdate, updatedPerson);
         }
         model.setViewedPerson(updatedPerson);
 
         int displayedEntryNumber = updatedPerson.getInteractionEntryNumber(storedIndex);
+        logger.fine("Processed editlog for displayed supporter " + targetIndex.getOneBased()
+                + ": interaction #" + interactionIndex.getOneBased() + " -> #" + displayedEntryNumber
+                + ", changed: " + hasChanges + ", interaction count: " + updatedPerson.getInteractionCount());
+
         return new CommandResult(String.format(MESSAGE_SUCCESS, displayedEntryNumber,
                 personToUpdate.getName(), DisplayDateFormatter.format(updatedInteraction.getDate()),
                 updatedInteraction.getNote()));

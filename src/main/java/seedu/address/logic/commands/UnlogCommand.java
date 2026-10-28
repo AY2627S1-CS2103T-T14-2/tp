@@ -5,7 +5,9 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.DisplayDateFormatter;
 import seedu.address.commons.util.ToStringBuilder;
@@ -27,6 +29,8 @@ public class UnlogCommand extends Command {
             + "ENTRY is the interaction number shown in the detail panel.\n"
             + "Example: " + COMMAND_WORD + " 2 1";
     public static final String MESSAGE_SUCCESS = "Deleted interaction #%1$d with %2$s (%3$s): %4$s.";
+
+    private static final Logger logger = LogsCenter.getLogger(UnlogCommand.class);
 
     private final Index targetIndex;
     private final Index interactionIndex;
@@ -58,6 +62,9 @@ public class UnlogCommand extends Command {
 
         model.setPerson(personToUpdate, updatedPerson);
         model.setViewedPerson(updatedPerson);
+
+        logger.fine("Removed interaction #" + interactionIndex.getOneBased() + " from displayed supporter "
+                + targetIndex.getOneBased() + " (interaction count: " + updatedPerson.getInteractionCount() + ")");
 
         return new CommandResult(String.format(MESSAGE_SUCCESS, interactionIndex.getOneBased(),
                 personToUpdate.getName(), DisplayDateFormatter.format(removedInteraction.getDate()),

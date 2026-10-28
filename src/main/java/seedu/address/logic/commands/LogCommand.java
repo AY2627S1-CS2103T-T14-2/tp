@@ -11,7 +11,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.DisplayDateFormatter;
 import seedu.address.commons.util.ToStringBuilder;
@@ -36,6 +38,8 @@ public class LogCommand extends Command {
             + PREFIX_DATE + "2026-10-01";
 
     public static final String MESSAGE_SUCCESS = "Logged interaction #%1$d with %2$s (%3$s): %4$s.";
+
+    private static final Logger logger = LogsCenter.getLogger(LogCommand.class);
 
     private final Index targetIndex;
     private final String note;
@@ -94,6 +98,9 @@ public class LogCommand extends Command {
         model.setViewedPerson(updatedPerson);
 
         int displayedEntryNumber = updatedPerson.getInteractionEntryNumber(updatedInteractions.size() - 1);
+        logger.fine("Added interaction #" + displayedEntryNumber + " to displayed supporter "
+                + targetIndex.getOneBased() + " (interaction count: " + updatedPerson.getInteractionCount() + ")");
+
         return new CommandResult(String.format(MESSAGE_SUCCESS, displayedEntryNumber, personToUpdate.getName(),
                 DisplayDateFormatter.format(interaction.getDate()), interaction.getNote()));
     }
