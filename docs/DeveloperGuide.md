@@ -78,7 +78,7 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 
 `SupporterDetailPanel` displays the viewed supporter's details and interaction history using values prepared by `SupporterDetailData`. Both `PersonCard` and `SupporterDetailData` use `LastContactFormatter` to format the last-contact line consistently.
 
-`PersonListCard.fxml` lets long names and organisations wrap within the available card width, so supporters with similar long names remain distinguishable. The index and stage badge retain their preferred widths and align with the name's first baseline; cards grow vertically as text wraps. `PersonCardTest` covers full text rendering, alignment, non-overlapping content, resizing, and single-line short values.
+`PersonListCard.fxml` lets long names and organisations wrap within the available card width, so supporters with similar long names remain distinguishable. The index and stage badge retain their preferred widths and align with the name's first baseline; cards grow vertically as text wraps. `PersonCardTest` covers full text rendering, alignment, non-overlapping content, resizing, and single-line short values. The card's column has no fixed preferred width, because newer JavaFX versions work out an `HBox` child's height at that child's preferred width, which would size every card for a narrow column and leave blank space below its text. Instead, the card's own preferred width is 0, so long text cannot make the list scroll sideways, and the list cell still stretches the card to the list's width. `PersonListCardHeightTest` checks that each card in a `PersonListPanel` is as tall as its content.
 
 `CommandBox` also keeps a `CommandHistory` of the commands entered this session, which it uses to bring back earlier commands when the user presses Up or Down. `CommandHistory` is plain Java with no JavaFX code, so its behavior is tested without starting the UI. It stays in the `UI` component because it only recalls typed text; it does not affect how commands are parsed or executed.
 
@@ -1464,7 +1464,7 @@ testers are expected to do more _exploratory_ testing.
    Expected: Both full names and organisations are readable, wrapping onto additional lines as needed without ellipses. The different name endings remain visible. The index and stage badge stay beside the name, aligned with its first line, and the organisation and last-contact line do not overlap the name or badge.
 
 1. Narrow and widen the window or move the divider to change the supporter list's width.<br>
-   Expected: Text reflows and card heights adjust to the available width. Short names and organisations remain on one line when they fit.
+   Expected: Text reflows and card heights adjust to the available width, with no blank space below each card's last line. The list does not scroll sideways. Short names and organisations remain on one line when they fit.
 
 1. Scroll away from the new cards and back again.<br>
    Expected: The full names and organisations remain readable, with no clipped text or overlapping cards.
