@@ -558,10 +558,12 @@ Identical interactions are appended normally because two calls or messages with 
 1. Validate the supporter index against `Model#getFilteredPersonList()`, then the entry number against that supporter's history size. These failures have distinct messages and leave data and selection unchanged.
 2. Call `Person#getInteractionStoredIndex(int)` on the original supporter to convert the one-based chronological entry number to its zero-based stored index.
 3. Create a replacement `Interaction`, taking omitted fields from the original. Replace the entry at its stored index in a copied list. This distinguishes identical entries and preserves logging position for equal-date ordering.
-4. Create a replacement `Person` preserving all other fields, including the introducer. Call `Model#setPerson(Person, Person)` and `Model#setViewedPerson(Person)` without changing the list filter.
-5. Call `Person#getInteractionEntryNumber(int)` on the updated supporter to convert the edited entry's zero-based stored index to its current one-based chronological number for the success message. `SupporterDetailData` uses the same ordering to refresh the panel.
+4. Create a replacement `Person` preserving all other fields, including the introducer. Call `Model#setPerson(Person, Person)` only if the replacement differs from the original. Use `Model#setViewedPerson(Person)` to select the replacement when changed, or the original otherwise, without changing the list filter.
+5. Call `Person#getInteractionEntryNumber(int)` to convert the edited entry's zero-based stored index to its current one-based chronological number. If anything changed, return this number, the date and the note in the success message. `SupporterDetailData` uses the same ordering to refresh the panel.
 
-Supplying unchanged values succeeds normally. Date edits can renumber other entries, but do not reorder the stored list. Last contact remains derived from the latest interaction date.
+An edit that leaves the note and date unchanged returns `MESSAGE_NOT_CHANGED` and creates no undo point. A following `undo` therefore reverts an earlier change, if one is available. See [Undo/redo feature](#undo-redo-feature) for how changes are recorded.
+
+Date edits can renumber other entries, but do not reorder the stored list. Last contact remains derived from the latest interaction date.
 
 `EditLogCommandTest` checks command behavior, while parser tests cover input validation. `EditLogCommandIntegrationTest` verifies renumbering and display order from command input through detail-panel data, without starting JavaFX.
 
@@ -1423,6 +1425,44 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case ends.
 
+**Use case: UC12 - Edit a logged interaction**
+
+**Preconditions: A list of supporters is shown, with an index beside each supporter**
+
+**MSS**
+
+1.  User requests to edit a logged interaction, giving the supporter index, the interaction number and a new note, date or both.
+2.  SupporterBook updates only the specified details of that interaction, keeping the supporter's other details and interactions unchanged.
+3.  SupporterBook confirms the edit and shows the supporter's updated interaction history with its current entry numbers.
+
+    Use case ends.
+
+**Extensions**
+
+- 1a. The supporter index or interaction number is invalid.
+  - 1a1. SupporterBook shows an error message explaining the index problem and makes no changes.
+
+    Use case resumes from step 1.
+
+- 1b. User does not give a note or date to edit.
+  - 1b1. SupporterBook shows an error message stating that at least one field is required.
+
+    Use case resumes from step 1.
+
+- 1c. A supplied note or date is invalid, or a field is supplied more than once.
+  - 1c1. SupporterBook shows an error message explaining the invalid value or repeated field and makes no changes.
+
+    Use case resumes from step 1.
+
+- 1d. The supplied details are the same as the interaction's existing details.
+  - 1d1. SupporterBook shows the supporter's interaction history and informs the user that nothing was changed.
+
+    Use case ends.
+
+**Use case: UC13 - Delete a logged interaction**
+
+This is a variation of UC12, with the same precondition and invalid-index handling (extension 1a). The user gives the supporter index and interaction number, requesting deletion instead of supplying replacement details. SupporterBook removes only the identified interaction, keeps the supporter and their other interactions, and confirms the deletion. It shows the remaining interaction history with consecutive entry numbers, or indicates that no interactions remain if the last entry was deleted.
+
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
@@ -1443,14 +1483,14 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 - **CRM (Customer Relationship Management system)**: Software that an organisation uses to keep track of its relationships with customers or supporters. Small charities often cannot afford one.
 - **CSR (Corporate Social Responsibility)**: A company's programme for supporting causes such as charities, e.g. through donations, partnerships or employee volunteering. A _CSR contact_ is the person at a company who manages it.
 - **Cultivation stage**: How far a supporter's relationship with the charity has progressed. Every supporter is at exactly one of these six stages:
-  - **Prospect**: Identified as a possible supporter, not yet approached. This is the stage of a newly added supporter.
+  - **Prospect**: Identified as a possible supporter, not yet approached. This is the default stage when `st/` is omitted from `add`.
   - **Contacted**: First approach made, with no real conversation yet.
   - **Cultivating**: In an active relationship or discussion, not yet giving.
   - **Giving**: Currently donating (an individual) or partnering (a company).
   - **Lapsed**: Gave before, but is no longer giving.
   - **Declined**: Said no.
 - **Epic**: A large user need that is broken down into several smaller user stories. The user stories above are grouped by epic.
-- **Find filter**: The shorter list of supporters shown after a `find` command. It stays in place until `list`, `add` or `edit` is run.
+- **Find filter**: The search criteria from a `find` command that limit the displayed list to matching supporters.
 - **Index**: The number shown beside a supporter in the currently displayed list, used by commands to refer to that supporter. The same supporter can have a different index after a `find`.
 - **Interaction**: A dated record of one conversation or other contact with a supporter, with a short note of what happened. A supporter's interactions together form their _interaction history_.
 - **Introduction chain**: A sequence of introductions linking supporters, e.g. a board member introduces a CSR contact, who then introduces a colleague.
