@@ -43,6 +43,7 @@ public class UnlogCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
+
         Person personToUpdate = InteractionCommandSupport.getDisplayedPerson(
                 model.getFilteredPersonList(), targetIndex);
         int storedIndex = InteractionCommandSupport.getStoredInteractionIndex(personToUpdate, interactionIndex);
@@ -50,7 +51,11 @@ public class UnlogCommand extends Command {
         List<Interaction> updatedInteractions = new ArrayList<>(personToUpdate.getInteractions());
         // remove by position so identical interactions remain distinguishable
         Interaction removedInteraction = updatedInteractions.remove(storedIndex);
+
         Person updatedPerson = personToUpdate.withInteractions(updatedInteractions);
+        assert updatedPerson.getInteractionCount() == personToUpdate.getInteractionCount() - 1
+                : "removing must delete exactly one interaction";
+
         model.setPerson(personToUpdate, updatedPerson);
         model.setViewedPerson(updatedPerson);
 

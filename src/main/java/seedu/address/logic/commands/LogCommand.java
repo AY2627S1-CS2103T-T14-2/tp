@@ -78,6 +78,7 @@ public class LogCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
+
         Person personToUpdate = InteractionCommandSupport.getDisplayedPerson(
                 model.getFilteredPersonList(), targetIndex);
 
@@ -86,6 +87,9 @@ public class LogCommand extends Command {
         updatedInteractions.add(interaction);
 
         Person updatedPerson = personToUpdate.withInteractions(updatedInteractions);
+        assert updatedPerson.getInteractionCount() == personToUpdate.getInteractionCount() + 1
+                : "logging must add exactly one interaction";
+
         model.setPerson(personToUpdate, updatedPerson);
         model.setViewedPerson(updatedPerson);
 

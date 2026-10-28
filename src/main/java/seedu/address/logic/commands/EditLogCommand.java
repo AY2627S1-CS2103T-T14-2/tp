@@ -58,6 +58,7 @@ public class EditLogCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
+
         Person personToUpdate = InteractionCommandSupport.getDisplayedPerson(
                 model.getFilteredPersonList(), targetIndex);
         int storedIndex = InteractionCommandSupport.getStoredInteractionIndex(personToUpdate, interactionIndex);
@@ -68,7 +69,11 @@ public class EditLogCommand extends Command {
                 note.orElse(originalInteraction.getNote()));
         // retain the logging position for equal-date ordering and distinguish identical interactions
         updatedInteractions.set(storedIndex, updatedInteraction);
+
         Person updatedPerson = personToUpdate.withInteractions(updatedInteractions);
+        assert updatedPerson.getInteractionCount() == personToUpdate.getInteractionCount()
+                : "editing must preserve the number of interactions";
+
         if (!updatedPerson.equals(personToUpdate)) {
             model.setPerson(personToUpdate, updatedPerson);
         }
