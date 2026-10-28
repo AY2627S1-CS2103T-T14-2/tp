@@ -650,7 +650,7 @@ Each supporter card in the list shows the supporter's organisation, or `(no orga
 
 A supporter may also have an `"introducer"`, the name of the supporter who introduced them, e.g. a board member. Leave the key out if no introducer is recorded. If present, it must be the name of another supporter in the same file (capital letters and extra spaces are ignored), and cannot be the supporter's own name. Introductions in the file cannot go in a circle, e.g. Alex introduced by Bernice while Bernice is introduced by Alex.
 
-A supporter's `"interactions"` array stores entries in logging order. Each entry has a `"date"` that must be a valid calendar date in `yyyy-MM-dd` format, from `1900-01-01` through today (inclusive). Today is determined by the computer's local clock when the file is loaded, following the same date rule as `log` and `editlog`. Each entry also has a non-blank `"note"` of at most 500 Unicode code points after trimming. For example:
+A supporter's `"interactions"` array stores entries in logging order. Each entry has a `"date"` that must be a valid calendar date in `yyyy-MM-dd` format, from `1900-01-01` through tomorrow (inclusive) when loading. Today and tomorrow are determined by the computer's local clock when the file is loaded. This one-day allowance lets a previously saved interaction load when a time-zone change makes its date appear to be tomorrow. The stored date is kept unchanged. Dates entered through `log` and `editlog` must still be on or before today, as these commands record completed interactions. Each entry also has a non-blank `"note"` of at most 500 Unicode code points after trimming. For example:
 
 ```json
 "interactions" : [ {
@@ -664,7 +664,7 @@ The array may be empty or left out when the supporter has no interactions. A mis
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid (e.g., a supporter's `"stage"` is missing or is not one of the six stages, or an interaction date is before `1900-01-01` or after today), SupporterBook starts with an empty list and shows the startup warning described above. Back up the file before editing it, and preserve the invalid file before running another command if you need to repair it.<br>
+If your changes make the data file invalid (e.g., a supporter's `"stage"` is missing or is not one of the six stages, or an interaction date is before `1900-01-01` or more than one day after today), SupporterBook starts with an empty list and shows the startup warning described above. Back up the file before editing it, and preserve the invalid file before running another command if you need to repair it.<br>
 Edit the data file only if you are confident that you can follow the validation rules.
 </box>
 

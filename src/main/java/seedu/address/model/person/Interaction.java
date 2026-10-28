@@ -51,12 +51,12 @@ public class Interaction {
     }
 
     /**
-     * Returns true if {@code date} is from {@link #MIN_DATE} through {@code today}, inclusive.
-     * The caller supplies today's local date so validation can use a controlled clock in tests.
+     * Returns true if {@code date} is from {@link #MIN_DATE} through {@code latestAllowedDate}, inclusive.
+     * The caller supplies the upper bound: today for commands, or a later date when loading permits an allowance.
      */
-    public static boolean isValidDate(LocalDate date, LocalDate today) {
-        requireAllNonNull(date, today);
-        return !date.isBefore(MIN_DATE) && !date.isAfter(today);
+    public static boolean isValidDate(LocalDate date, LocalDate latestAllowedDate) {
+        requireAllNonNull(date, latestAllowedDate);
+        return !date.isBefore(MIN_DATE) && !date.isAfter(latestAllowedDate);
     }
 
     public LocalDate getDate() {

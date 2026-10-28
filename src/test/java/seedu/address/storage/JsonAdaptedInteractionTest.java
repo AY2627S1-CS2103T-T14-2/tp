@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static seedu.address.storage.JsonAdaptedInteraction.MESSAGE_DATE_TOO_FAR_IN_FUTURE;
 import static seedu.address.storage.JsonAdaptedInteraction.MISSING_FIELD_MESSAGE_FORMAT;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalInteractionNotes.ASCII_AND_EMOJI_AT_NOTE_LIMIT;
@@ -81,7 +82,8 @@ public class JsonAdaptedInteractionTest {
 
     @Test
     public void toModelType_dateRangeBoundaries_returnsInteraction() throws Exception {
-        for (String date : List.of("1900-01-01", "2026-10-20")) {
+        // loading accepts today and the one-day allowance, as well as the lower boundary
+        for (String date : List.of("1900-01-01", "2026-10-20", "2026-10-21")) {
             Interaction restored = new JsonAdaptedInteraction(date, VALID_NOTE).toModelType(DATE_CLOCK);
             assertEquals(LocalDate.parse(date), restored.getDate());
             assertEquals(VALID_NOTE, restored.getNote());
@@ -89,12 +91,23 @@ public class JsonAdaptedInteractionTest {
     }
 
     @Test
+    public void toModelType_timeZoneMovesDateBackOneDay_preservesInteraction() throws Exception {
+        Interaction original = new Interaction(LocalDate.now(DATE_CLOCK), VALID_NOTE);
+        JsonAdaptedInteraction saved = new JsonAdaptedInteraction(original);
+        Clock loadingClock = DATE_CLOCK.withZone(ZoneId.of("America/Los_Angeles"));
+
+        // the saved date is tomorrow in the loading zone, but must be preserved without adjustment
+        assertEquals(LocalDate.now(loadingClock).plusDays(1), original.getDate());
+        assertEquals(original, saved.toModelType(loadingClock));
+    }
+
+    @Test
     public void toModelType_outOfRangeDates_throwsSpecificIllegalValueException() {
         // each invalid date is paired with a valid note so only the date causes rejection
         assertThrows(IllegalValueException.class, Interaction.MESSAGE_EARLY_DATE, () ->
                 new JsonAdaptedInteraction("1899-12-31", VALID_NOTE).toModelType(DATE_CLOCK));
-        assertThrows(IllegalValueException.class, Interaction.MESSAGE_FUTURE_DATE, () ->
-                new JsonAdaptedInteraction("2026-10-21", VALID_NOTE).toModelType(DATE_CLOCK));
+        assertThrows(IllegalValueException.class, MESSAGE_DATE_TOO_FAR_IN_FUTURE, () ->
+                new JsonAdaptedInteraction("2026-10-22", VALID_NOTE).toModelType(DATE_CLOCK));
     }
 
     @Test

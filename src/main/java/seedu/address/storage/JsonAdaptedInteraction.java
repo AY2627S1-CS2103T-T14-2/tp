@@ -18,6 +18,10 @@ import seedu.address.model.person.Interaction;
 class JsonAdaptedInteraction {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Interaction's %s field is missing!";
+    public static final String MESSAGE_DATE_TOO_FAR_IN_FUTURE =
+            "Stored interaction dates cannot be more than one day after today.";
+
+    private static final int FUTURE_DATE_ALLOWANCE_DAYS = 1;
 
     private final String date;
     private final String note;
@@ -50,6 +54,7 @@ class JsonAdaptedInteraction {
 
     /**
      * Converts this interaction using {@code clock} to determine today's local date.
+     * Allows dates up to one day after today to accommodate a one-day local date difference between saving and loading.
      *
      * @throws IllegalValueException if any stored interaction constraint is violated.
      */
@@ -66,9 +71,10 @@ class JsonAdaptedInteraction {
             throw new IllegalValueException(Interaction.MESSAGE_INVALID_DATE_FORMAT, exception);
         }
 
-        if (!Interaction.isValidDate(modelDate, LocalDate.now(clock))) {
+        LocalDate latestAllowedDate = LocalDate.now(clock).plusDays(FUTURE_DATE_ALLOWANCE_DAYS);
+        if (!Interaction.isValidDate(modelDate, latestAllowedDate)) {
             throw new IllegalValueException(modelDate.isBefore(Interaction.MIN_DATE)
-                    ? Interaction.MESSAGE_EARLY_DATE : Interaction.MESSAGE_FUTURE_DATE);
+                    ? Interaction.MESSAGE_EARLY_DATE : MESSAGE_DATE_TOO_FAR_IN_FUTURE);
         }
 
         if (note == null) {
