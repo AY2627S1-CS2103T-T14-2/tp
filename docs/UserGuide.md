@@ -57,9 +57,7 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 
 - Command words ignore case. For example, `list`, `LIST` and `List` all list every supporter.
 
-- Supporter indices (including introducer indices) and interaction-entry indices must be positive integers written with the digits `0` to `9`. Other digit characters, such as the full-width `１` typed by some Chinese or Japanese input methods, are rejected. Leading zeros are allowed: `01` means index `1`.
-  For example, `delete 0`, `delete abc`, `view 0`, `view １` and `edit 0 n/x` report `Index must be a positive integer (1, 2, 3, ...).` followed by the command's usage.<br>
-  For `editlog` and `unlog`, missing, extra or invalid indices report `Provide exactly two positive integer indices: INDEX ENTRY.` followed by usage. A positive index that does not identify a displayed supporter or interaction is rejected separately during execution. For commands requiring a single supporter index, a missing index or extra words in the index argument produce `Invalid command format!` followed by usage. Missing required fields can also produce this format error.
+- Supporter and interaction numbers must be positive whole numbers written with the digits `0` to `9`. Use the supporter number in the currently displayed list and the interaction number shown beside the entry. Leading zeros are allowed (`01` means `1`), but other digit characters, such as full-width `１`, are rejected.
 
 - Items in square brackets are optional.<br>
   For example, `n/NAME [t/TAG]` can be used as `n/John Doe t/friend` or as `n/John Doe`.
@@ -106,7 +104,9 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 - `a/ADDRESS` can be left out, e.g. when you do not know a corporate contact's postal address.
 - To leave out a field the supporter does not have, leave out its prefix too. A prefix with nothing after it, e.g. `e/` on its own, is rejected with a message saying which field is blank. (In `edit`, an empty prefix clears the field instead.)
 - `ORGANISATION` is the company or group the supporter belongs to, e.g. the company a CSR contact speaks for. Leave out `o/ORGANISATION` for individual donors.
-- `ORGANISATION` can contain any characters (e.g. `Procter & Gamble`), with the exception of a space followed by a recognised command prefix such as `a/` or `t/` (e.g. `Bang & Olufsen a/s`, where `a/s` is interpreted as another field). It must not be blank, and can be at most 100 characters long after leading and trailing spaces are removed and repeated internal spaces are reduced to one. For this limit, simple emoji such as 😀 count as one character, while combined emoji or a letter with a combining accent can count as more than one.
+- `ORGANISATION` can include text, punctuation and emoji (e.g. `Procter & Gamble`). A space followed by a recognised command prefix such as `a/` or `t/` starts another field. For example, in `Bang & Olufsen a/s`, `a/` is interpreted as the address prefix.
+- `ORGANISATION` must not be blank and can be at most 100 characters long after leading and trailing spaces are removed and repeated internal spaces are reduced to one. For this limit, simple emoji such as 😀 count as one character, while combined emoji or a letter with a combining accent can count as more than one.
+- Each supporter card in the list shows the supporter's organisation, or `(no organisation)` if they have none.
 - `EMAIL` must be of the form `local-part@domain`. The local part can contain letters, digits and the special characters `+`, `_`, `-` and `.`, e.g. `wei_ming+donations@dbs.com`. A period cannot start or end the local part, or appear twice in a row. The domain is made up of labels separated by periods, e.g. `u.nus.edu`.
 - `STAGE` is the supporter's cultivation stage, and must be one of `prospect`, `contacted`, `cultivating`, `giving`, `lapsed` or `declined`. Upper and lower case are both accepted.
 - If `st/STAGE` is left out, the new supporter starts at stage `Prospect`.
@@ -381,7 +381,7 @@ Records an interaction with a supporter, dated today or on a specified past date
 Format: `log INDEX nt/NOTE [dt/DATE]`
 
 - Logs the interaction against the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list and must be a positive integer.
-- `NOTE` records what happened. It can contain any characters, must not be blank, and can be at most 500 characters long. Leading and trailing spaces are removed. For this limit, simple emoji such as 😀 count as one character, while combined emoji or a letter with a combining accent can count as more than one.
+- `NOTE` records what happened and can include text, punctuation and emoji. It must not be blank and can be at most 500 characters long. Leading and trailing spaces are removed. For this limit, simple emoji such as 😀 count as one character, while combined emoji or a letter with a combining accent can count as more than one.
 - Without `dt/`, the date defaults to today when the command runs, using the computer's clock.
 - `DATE` must be a valid date in `yyyy-MM-dd` format, e.g. `2024-02-29`, from `1900-01-01` through today (inclusive). Empty or out-of-range dates are rejected. Today is determined by the computer's clock.
 - `nt/` and `dt/` can appear in either order. Each prefix may only be supplied once.
@@ -391,6 +391,11 @@ Format: `log INDEX nt/NOTE [dt/DATE]`
 - The success message shows the supporter, date, note and entry number matching the panel.
 - The panel switches to this supporter and displays entries newest first.
 - Logging an interaction does not change the supporter's cultivation stage or clear the active list filter. A `find` result remains in place; a `quiet` result updates to reflect the new last-contact date, so the supporter may move or disappear from the result.
+
+<box type="warning" seamless>
+
+A space followed by `nt/` or `dt/` inside a note is interpreted as a parameter prefix, not note text. This may split the note or cause a validation error. Rephrase the note to avoid these sequences.
+</box>
 
 Examples:
 
@@ -408,11 +413,6 @@ Logging 10 March, then 20 February, then 29 February 2024 gives:
 
 The last command reports `#2`. Adding that entry renumbers the 10 March entry from `#2` to `#3`.
 
-<box type="warning" seamless>
-
-A space followed by `nt/` or `dt/` inside a note is interpreted as a parameter prefix, not note text. This may split the note or cause a validation error. Rephrase the note to avoid these sequences.
-</box>
-
 ### Editing an interaction: `editlog`
 
 Corrects a logged interaction's note, date or both.
@@ -421,8 +421,8 @@ Format: `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`
 
 - `INDEX` is the supporter index in the displayed list; after `find`, use the search-result index. Both indices must be positive integers.
 - `ENTRY` is the number beside the interaction in the detail panel, not its row position. Use `view INDEX` to check it first.
-- Supply at least one field. Omitted fields remain unchanged; supplying the existing value is allowed. If nothing would change, the result says `Nothing was changed.`, and no undo point is saved, so a following `undo` reverts an earlier change instead.
-- To revert an interaction edited by mistake, run `undo` immediately afterward. Undo history is available only during the current session.
+- Supply at least one field. Omitted fields remain unchanged; supplying the existing value is allowed.
+- If neither the note nor date changes, the command reports `Nothing was changed.` and leaves undo/redo history unchanged, so a following `undo` reverses an earlier change, if one is available.
 - `NOTE` must not be blank and may contain at most 500 characters after trimming leading and trailing spaces. Characters are counted as described under [logging an interaction](#logging-an-interaction-log).
 - `DATE` must be a valid `yyyy-MM-dd` date from `1900-01-01` through today (inclusive), using the computer's clock. Empty, invalid and out-of-range dates are rejected.
 - `nt/` and `dt/` may appear in either order, but each may appear only once. As with `log`, a space followed by either prefix inside a note is interpreted as a parameter prefix.
@@ -430,6 +430,7 @@ Format: `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`
 - The success message reports the edited entry's updated number, date and note. Use the refreshed numbers for subsequent commands.
 - Only the selected entry changes, even when entries have identical dates and notes. Other supporter details and the current list filter are preserved.
 - The panel switches to the updated supporter, and last contact reflects the latest interaction date. Invalid commands leave data and selection unchanged.
+- To revert an interaction edited by mistake, run `undo` immediately afterward. Undo history is available only during the current session.
 
 Examples:
 
@@ -464,11 +465,11 @@ Format: `unlog INDEX ENTRY`
 - Supply exactly two positive integers. `INDEX` is the supporter index in the displayed list; after `find`, use the search-result index.
 - `ENTRY` is the number beside the interaction in the detail panel, not its row position. Use `view INDEX` to check it first.
 - Only the selected entry is removed, even if other entries have identical dates and notes.
-- To restore an interaction deleted by mistake, run `undo` immediately afterward. Undo history is available only during the current session.
 - Remaining entries are renumbered without gaps: oldest is `#1`, newest has the largest number. They remain displayed newest first; equal dates keep later-logged entries first.
 - The success message identifies the removed entry by its number before deletion, date and note. Check the refreshed numbers before another deletion.
 - The panel switches to the updated supporter. Deleting their last interaction shows the empty-history message; last contact updates to the latest remaining date, or `No interactions yet`.
 - Other supporter details and the current list filter are preserved. Invalid commands leave data and selection unchanged.
+- To restore an interaction deleted by mistake, run `undo` immediately afterward. Undo history is available only during the current session.
 
 Example: after `view 1`, suppose the panel shows:
 
@@ -667,15 +668,19 @@ Each supporter in the data file has a `"stage"`, which records how far the relat
 
 A supporter's `"phone"`, `"email"` and `"address"` keys can each be left out if the supporter does not have one, but every supporter must have at least one of `"phone"` and `"email"`.
 
-A supporter may also have an `"organisation"`, such as the company a CSR contact works for. Leave the key out if the supporter has no organisation. If present, it must not be blank and must contain at most 100 Unicode code points after leading and trailing spaces are removed and repeated internal spaces are reduced to one.
-
-Each supporter card in the list shows the supporter's organisation, or `(no organisation)` if they have none.
+A supporter may also have an `"organisation"`, such as the company a CSR contact works for. Leave the key out if the supporter has no organisation. If present, it must not be blank and must contain at most 100 characters after leading and trailing spaces are removed and repeated internal spaces are reduced to one (see [how organisation characters are counted](#adding-a-supporter-add)).
 
 A supporter may also have an `"introducer"`, the name of the supporter who introduced them, e.g. a board member. Leave the key out if no introducer is recorded. If present, it must be the name of another supporter in the same file (capital letters and extra spaces are ignored), and cannot be the supporter's own name. Introductions in the file cannot go in a circle, e.g. Alex introduced by Bernice while Bernice is introduced by Alex.
 
 A supporter's `"tags"` array lists their tags, each of which must be alphanumeric. Tags that differ only in capitalisation count as one tag, as they do in commands: if the file has both `"vip"` and `"VIP"`, only the one that comes first is loaded, and the other is removed the next time SupporterBook saves.
 
-A supporter's `"interactions"` array stores entries in logging order. Each entry has a `"date"` that must be a valid calendar date in `yyyy-MM-dd` format, from `1900-01-01` through tomorrow (inclusive) when loading. Today and tomorrow are determined by the computer's local clock when the file is loaded. This one-day allowance lets a previously saved interaction load when a time-zone change makes its date appear to be tomorrow. The stored date is kept unchanged. Dates entered through `log` and `editlog` must still be on or before today, as these commands record completed interactions. Each entry also has a non-blank `"note"` of at most 500 Unicode code points after trimming. For example:
+A supporter's `"interactions"` array stores entries in logging order.
+
+Each entry has a `"date"` that must be a valid calendar date in `yyyy-MM-dd` format, from `1900-01-01` through tomorrow (inclusive) when loading. Today and tomorrow are determined by the computer's local clock when the file is loaded. This one-day allowance lets a previously saved interaction load when a time-zone change makes its date appear to be tomorrow. The stored date is kept unchanged. Dates entered through `log` and `editlog` must still be on or before today, as these commands record completed interactions.
+
+Each entry also has a `"note"` that must not be blank and must contain at most 500 characters after leading and trailing spaces are removed (see [how note characters are counted](#logging-an-interaction-log)).
+
+For example:
 
 ```json
 "interactions" : [ {
