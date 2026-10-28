@@ -15,6 +15,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_STAGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -71,7 +72,7 @@ public class AddressBookParser {
         if (!matcher.matches()) {
             return ArgumentTokenizer.findUnrecognisedPrefixes(userInput);
         }
-        String commandWord = matcher.group("commandWord");
+        String commandWord = getCommandWord(matcher);
         if (COMMANDS_IGNORING_ARGUMENTS.contains(commandWord)) {
             return List.of();
         }
@@ -105,7 +106,7 @@ public class AddressBookParser {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
         }
 
-        final String commandWord = matcher.group("commandWord");
+        final String commandWord = getCommandWord(matcher);
         final String arguments = matcher.group("arguments");
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
@@ -139,6 +140,13 @@ public class AddressBookParser {
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
             }
         };
+    }
+
+    /**
+     * Returns the command word matched by {@code matcher} in lower case, so that command words ignore case.
+     */
+    private static String getCommandWord(Matcher matcher) {
+        return matcher.group("commandWord").toLowerCase(Locale.ROOT);
     }
 
 }
