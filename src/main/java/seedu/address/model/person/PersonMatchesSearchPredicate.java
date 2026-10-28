@@ -2,6 +2,7 @@ package seedu.address.model.person;
 
 import static java.util.Objects.requireNonNull;
 
+import java.text.Normalizer;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -11,7 +12,8 @@ import seedu.address.commons.util.ToStringBuilder;
 
 /**
  * Matches any criterion within a field and all specified fields of a supporter.
- * Text matching ignores case and uses substrings, while stages match exactly.
+ * Text matching uses NFC, ignores case and apostrophe style, and matches substrings.
+ * Stages match exactly. Stored text is unchanged.
  * Phone matching ignores formatting, type labels and extension markers, but retains extension digits.
  */
 public class PersonMatchesSearchPredicate implements Predicate<Person> {
@@ -73,11 +75,15 @@ public class PersonMatchesSearchPredicate implements Predicate<Person> {
     }
 
     private static List<String> normalizeText(List<String> keywords) {
-        return keywords.stream().map(keyword -> keyword.toLowerCase(Locale.ROOT)).toList();
+        return keywords.stream().map(PersonMatchesSearchPredicate::normalizeText).toList();
+    }
+
+    private static String normalizeText(String text) {
+        return Normalizer.normalize(text, Normalizer.Form.NFC).replace('’', '\'').toLowerCase(Locale.ROOT);
     }
 
     private static boolean matchesText(String value, List<String> keywords) {
-        String normalizedValue = value.toLowerCase(Locale.ROOT);
+        String normalizedValue = normalizeText(value);
         return keywords.isEmpty() || keywords.stream().anyMatch(normalizedValue::contains);
     }
 

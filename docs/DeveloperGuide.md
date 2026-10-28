@@ -78,9 +78,13 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 
 `SupporterDetailPanel` displays the viewed supporter's details and interaction history using values prepared by `SupporterDetailData`. Both `PersonCard` and `SupporterDetailData` use `LastContactFormatter` to format the last-contact line consistently.
 
-`CommandBox` also keeps a `CommandHistory` of the commands entered this session, which it uses to bring back earlier commands when the user presses Up or Down. `CommandHistory` is plain Java with no JavaFX code, so its behavior is tested without starting the UI. It stays in the `UI` component because it only recalls typed text; it does not affect how commands are parsed or executed.
+`PersonListCard.fxml` lets long names and organisations wrap within the available card width, so supporters with similar long names remain distinguishable. The index and stage badge retain their preferred widths and align with the name's first baseline; cards grow vertically as text wraps. `PersonCardTest` covers full text rendering, alignment, non-overlapping content, resizing, and single-line short values. The card's column has no fixed preferred width, because newer JavaFX versions work out an `HBox` child's height at that child's preferred width, which would size every card for a narrow column and leave blank space below its text. Instead, the card's own preferred width is 0, so long text cannot make the list scroll sideways, and the list cell still stretches the card to the list's width. `PersonListCardHeightTest` checks that each card in a `PersonListPanel` is as tall as its content.
+
+`CommandBox` also keeps a `CommandHistory` of the commands entered this session, which it uses to bring back earlier commands when the user presses Up or Down. When the user first presses Up, `CommandHistory` also keeps the text already in the box as a draft, and returns it when the user presses Down past the newest command. `CommandHistory` is plain Java with no JavaFX code, so its behavior is tested without starting the UI. It stays in the `UI` component because it only recalls typed text; it does not affect how commands are parsed or executed.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T14-2/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T14-2/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
+
+`PersonListPanel` shows each supporter as a `PersonCard` that cannot be selected. Each cell consumes mouse presses, and the list is not focus traversable, so the keyboard cannot select a card either. Only commands such as `view` change the detail panel, so a highlighted card could otherwise differ from the supporter the panel shows.
 
 The `UI` component,
 
@@ -128,7 +132,7 @@ How the parsing works:
 
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103T-T14-2/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 
-<puml src="diagrams/ModelClassDiagram.puml" width="450" />
+<puml src="diagrams/ModelClassDiagram.puml" width="700" />
 
 The `Model` component,
 
@@ -186,7 +190,7 @@ Later command results and errors replace the warning through the existing comman
 
 `ArgumentTokenizer` splits a command's arguments only at the prefixes its parser asks for. Any other word ending in `/`, such as `em/` mistyped for `e/`, stays part of the value before it. On its own, this would save a mistyped prefix silently inside an address or a note, or make the parser blame a field the user typed correctly: `add n/Tan p/91234567 x/foo` reads the phone number as `91234567 x/foo` and reports an invalid phone number.
 
-`AddressBookParser#findUnrecognisedPrefixes(String)` selects the prefixes supported by the command's own format, then delegates scanning to `ArgumentTokenizer`. The scan returns prefix-like words outside that set in their first-occurrence order, including prefixes used by other commands. Positional-only commands accept no prefixes. Commands that take no arguments produce no prefix notes, whether they ignore extra text (e.g. `list`) or reject it (`undo` and `redo`), and unknown command words retain the global `CliSyntax.ALL_PREFIXES` check. The advisory prefix sets must stay aligned with the corresponding command parsers when formats change.
+`AddressBookParser#findUnrecognisedPrefixes(String)` selects the prefixes supported by the command's own format, then delegates scanning to `ArgumentTokenizer`. The scan returns prefix-like words outside that set in their first-occurrence order, including prefixes used by other commands. Positional-only commands accept no prefixes, except that `stage` accepts `st/` before the stage, as `add` and `find` do. Commands that take no arguments produce no prefix notes, whether they ignore extra text (e.g. `list`) or reject it (`undo` and `redo`), and unknown command words retain the global `CliSyntax.ALL_PREFIXES` check. The advisory prefix sets must stay aligned with the corresponding command parsers when formats change.
 
 For `find`, the advisory scan uses `CliSyntax.ALL_PREFIXES` instead. `FindCommandParser` explicitly rejects known unsupported filters (`n/`, `a/`, `dt/`, `nt/` and `by/`), so their errors must not also claim that those prefixes were read as ordinary text. Unknown words such as `x/` remain eligible for an advisory note when parsing fails; a successful search changes no supporter data and receives no undo suggestion.
 
@@ -222,9 +226,12 @@ Phone queries use `Phone#isValidPhoneSearch(String)` to check the same formattin
 extension and label syntax as stored numbers. They are search fragments rather than complete
 `Phone` values, so the main-number length constraints do not apply to queries.
 
-`PersonMatchesSearchPredicate` defensively copies its criteria and normalizes text with
-`Locale.ROOT`. Names, organisations, tags and emails use literal, case-insensitive substring
-matching; stages match exactly. `normalizePhone(String)` delegates to `Phone#normalizeForSearch(String)`
+`PersonMatchesSearchPredicate` defensively copies its criteria and normalizes both text criteria
+and field values to NFC, replaces curly apostrophes (`’`) with straight apostrophes (`'`), and
+lowercases with `Locale.ROOT`. Names, organisations, tags and emails use substring matching on
+that normalized text; accents remain significant, and stored text is unchanged.
+`NameContainsKeywordsPredicate` delegates to the same matcher for name-only filtering.
+Stages match exactly. `normalizePhone(String)` delegates to `Phone#normalizeForSearch(String)`
 to remove separators, parentheses, trailing type labels and extension markers from both phone
 criteria and stored numbers. Extension digits remain in the searchable sequence. Missing optional
 fields do not satisfy criteria on those fields.
@@ -295,10 +302,10 @@ The command retains the existing filter. `ModelManager#deletePerson(Person)` cle
 
 ### Duplicate supporters
 
-Two supporters count as the same supporter if their names match, ignoring case and extra spaces. No other field is compared.
+Two supporters count as the same supporter if their names match, ignoring case, extra spaces and differences between straight (`'`) and curly (`’`) apostrophes. No other field is compared.
 
 - The `Name` constructor removes leading and trailing spaces and reduces each run of spaces inside the name to one, so every `Name` is stored in a normalised form.
-- `Name#isSameName(Name)` compares two names ignoring case. Because both names are already normalised, extra spaces need no special handling.
+- `Name#isSameName(Name)` replaces curly apostrophes (`’`) with straight apostrophes (`'`) in both names for comparison, then compares them ignoring case. Because both names are already normalised, extra spaces and canonically equivalent Unicode spellings need no special handling. Apostrophe replacement does not change `fullName`, so the original apostrophe style is preserved when saved and displayed. `Name#equals(Object)` and `Name#hashCode()` continue to use the stored spelling.
 - `Person#isSamePerson(Person)` uses `Name#isSameName(Name)`. `UniquePersonList`, `AddCommand`, `EditCommand` and the loading of the data file all rely on `Person#isSamePerson(Person)`, so they all apply the same rule.
 - When `AddCommand` or `EditCommand` finds a duplicate, `Messages#getErrorMessageForDuplicatePerson(List, Person)` names the supporter already in the list, and suggests adding a distinguishing word to the new name.
 
@@ -306,7 +313,7 @@ Two supporters count as the same supporter if their names match, ignoring case a
 
 **Aspect: Which fields decide whether two supporters are the same**
 
-- **Alternative 1 (current choice):** The name only, ignoring case and extra spaces.
+- **Alternative 1 (current choice):** The name only, ignoring case, extra spaces and differences between straight and curly apostrophes.
   - Pros: Re-adding someone already in the list is caught even if their phone or email has changed, which would otherwise split one relationship's history across two records.
   - Cons: Two different people with the same name cannot both be stored under that exact name; the user must add a distinguishing word to one of them.
 
@@ -688,7 +695,7 @@ A supporter can have an introducer, the supporter who introduced them, e.g. the 
 1. If the introducer would not change (the same introducer again, or removing a record that does not exist), it shows the supporter with `Model#setViewedPerson(Person)` and reports that nothing was changed. No `Person` is replaced, so no undo state is saved.
 1. Otherwise, it creates a copy of the supporter with `Person#withIntroducer(Optional<Name>)`, and calls `Model#setPerson(Person, Person)` and `Model#setViewedPerson(Person)`. The displayed list is not changed, so a `find` result is kept.
 
-**Preventing loops:** `AddressBook#isIntroducedThrough(Person person, Name name)`, which `Model` exposes, returns true if the supporter called `name` introduced `person`, directly or through other supporters. It starts at `person`'s introducer and keeps moving to that supporter's own introducer, comparing names with `Name#isSameName(Name)`, which ignores case and extra spaces. `IntroCommand` checks whether the proposed introducer was introduced through the target supporter. If so, the new introduction would close a loop.
+**Preventing loops:** `AddressBook#isIntroducedThrough(Person person, Name name)`, which `Model` exposes, returns true if the supporter called `name` introduced `person`, directly or through other supporters. It starts at `person`'s introducer and keeps moving to that supporter's own introducer, comparing names with `Name#isSameName(Name)`, which ignores case, extra spaces and differences between straight and curly apostrophes. `IntroCommand` checks whether the proposed introducer was introduced through the target supporter. If so, the new introduction would close a loop.
 
 For example, suppose Alex introduced Bernice, and Bernice introduced David. When the user tries to record David as Alex's introducer, `isIntroducedThrough(david, alexName)` moves from David to Bernice, then to Alex, and returns true, so the command is rejected.
 
@@ -726,7 +733,7 @@ The walk takes at most as many steps as there are supporters. A chain without lo
 
 `tag` adds tags to a supporter and `untag` removes them, keeping the supporter's other tags. Before these commands, the only way to change tags was `edit INDEX t/...`, which replaces all of a supporter's tags.
 
-`TagCommandParser` and `UntagCommandParser` parse the index and tags. `ParserUtil#parseTags(Collection<String>)` keeps only the first spelling of tags that differ only in case, so `t/vip t/VIP` gives one tag. `JsonAdaptedPerson` applies the same rule when loading the data file, keeping the spelling that comes first. The two commands share their behaviour through the abstract class `TagChangeCommand`, as shown below.
+`TagCommandParser` and `UntagCommandParser` parse the index and tags. `ParserUtil#parseTags(Collection<String>)` keeps only the first spelling of tags that differ only in case, so `t/vip t/VIP` gives one tag. `JsonAdaptedPerson` applies the same rule when loading the data file, keeping the spelling that comes first. Command results (`Messages`), `PersonCard` and `SupporterDetailData` all list tags in `Tag.ALPHABETICAL_ORDER`, which ignores case, so tags appear in the same order everywhere. The two commands share their behaviour through the abstract class `TagChangeCommand`, as shown below.
 
 <puml src="diagrams/TagChangeClassDiagram.puml" alt="Class diagram of TagChangeCommand and its subclasses TagCommand and UntagCommand" />
 
@@ -767,7 +774,7 @@ Undo and redo are facilitated by `VersionedAddressBook`, which extends `AddressB
 - `VersionedAddressBook#canUndo()` and `VersionedAddressBook#canRedo()` -- Check whether there is a state to move to.
 - `VersionedAddressBook#hasChangesSinceLastCommit()` -- Checks whether the current data differs from the state at the `currentStatePointer`.
 
-These operations are exposed in the `Model` interface as `Model#commitAddressBookIfChanged()`, `Model#undoAddressBook()`, `Model#redoAddressBook()`, `Model#canUndoAddressBook()` and `Model#canRedoAddressBook()`. Only `ModelManager` knows that its address book is versioned; the rest of the app, including storage, still sees a `ReadOnlyAddressBook`.
+These operations are exposed in the `Model` interface as `Model#commitAddressBookIfChanged(String)`, `Model#undoAddressBook()`, `Model#redoAddressBook()`, `Model#canUndoAddressBook()` and `Model#canRedoAddressBook()`. Only `ModelManager` knows that its address book is versioned; the rest of the app, including storage, still sees a `ReadOnlyAddressBook`.
 
 Each saved state is a separate `AddressBook` created with the copy constructor, so later changes to the current data never alter it. The copies share `Person` objects, which is safe because `Person` is immutable: `edit`, `log`, `stage`, `intro`, `tag` and `untag` replace a supporter with a new `Person` rather than changing the old one. A deleted supporter's interactions are stored inside their `Person`, so undoing `delete` restores the interaction history too. Deleting a supporter also removes them as the introducer of other supporters. Since a state is the whole supporter data, one undo brings back the deleted supporter and those introductions together.
 
@@ -777,7 +784,7 @@ Step 1. The user launches the application. The `VersionedAddressBook` is initial
 
 <puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
 
-Step 2. The user executes `delete 2` to delete the 2nd supporter in the displayed list. After the command succeeds, `LogicManager` calls `Model#commitAddressBookIfChanged()`, which saves the data as it is after the deletion into the `addressBookStateList` and shifts the `currentStatePointer` to the new state.
+Step 2. The user executes `delete 2` to delete the 2nd supporter in the displayed list. After the command succeeds, `LogicManager` calls `Model#commitAddressBookIfChanged(String)` with the command text, which saves the data as it is after the deletion into the `addressBookStateList` and shifts the `currentStatePointer` to the new state.
 
 <puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
 
@@ -787,7 +794,7 @@ Step 3. The user executes `log 1 nt/Called` to log an interaction with the 1st s
 
 <box type="info" seamless>
 
-**Note:** Commands do not commit themselves. `ModelManager` marks the data as changed whenever `addPerson`, `setPerson`, `deletePerson` or `setAddressBook` is called, and `Model#commitAddressBookIfChanged()` saves a state only if that mark is set and `VersionedAddressBook#hasChangesSinceLastCommit()` confirms the data really differs, then clears the mark. So every command that changes supporter data saves exactly one state, even one that changes several supporters (such as deleting an introducer). A command that fails saves none. Neither does one that changes nothing, such as `stage` with the current stage, `tag` with a tag the supporter already has, `edit` with the values the supporter already has, or `clear` on an empty list. Such a command therefore also keeps any undone states available for `redo`.
+**Note:** Commands do not commit themselves. `ModelManager` marks the data as changed whenever `addPerson`, `setPerson`, `deletePerson` or `setAddressBook` is called, and `Model#commitAddressBookIfChanged()` saves a state only if that mark is set and `VersionedAddressBook#hasChangesSinceLastCommit()` confirms the data really differs, then clears the mark. So every command that changes supporter data saves exactly one state, even one that changes several supporters (such as deleting an introducer). A command that fails saves none. Neither does one that changes nothing, such as `stage` with the current stage, `tag` with a tag the supporter already has, `edit` with the values the supporter already has, `editlog` with the note and date the entry already has, or `clear` on an empty list. Such a command therefore also keeps any undone states available for `redo`.
 </box>
 
 Step 4. The user decides that logging the interaction was a mistake, and executes `undo`. `UndoCommand` calls `Model#undoAddressBook()`, which shifts the `currentStatePointer` once to the left and copies that state back into the current data with `AddressBook#resetData()`.
@@ -817,6 +824,8 @@ Similarly, how an undo operation goes through the `Model` component is shown bel
 The supporter shown in the detail panel is not part of the saved states. After restoring a state, `ModelManager` replaces the viewed supporter with the supporter of the same name in the restored data, or clears the detail panel if there is none.
 
 The `redo` command does the opposite: it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the data to that state.
+
+`undo` and `redo` take no arguments. `AddressBookParser` rejects any text after them, e.g. `undo 3`, rather than ignoring it as it does for `list`, since a user typing a count expects several changes to be undone, while only one would be.
 
 <box type="info" seamless>
 
@@ -851,7 +860,7 @@ The history is kept in memory only, so it starts again from the loaded data each
 
 **Aspect: Where states are committed:**
 
-- **Alternative 1 (current choice):** `ModelManager` marks the data as changed in `addPerson`, `setPerson`, `deletePerson` and `setAddressBook`, and `LogicManager` calls `Model#commitAddressBookIfChanged()` after every successful command.
+- **Alternative 1 (current choice):** `ModelManager` marks the data as changed in `addPerson`, `setPerson`, `deletePerson` and `setAddressBook`, and `LogicManager` calls `Model#commitAddressBookIfChanged(String)` after every successful command.
   - Pros: Commands that change data, such as `intro`, `tag` and `untag`, and later ones such as `editlog` and `unlog`, are undoable without any extra code, since every data change goes through those four methods. Commands that change nothing, such as `list` or a `stage` command that leaves the stage unchanged, create no undo step.
   - Cons: A new `Model` method that changes data must also mark the data as changed. `UndoableCommandsTest` checks each data-changing command through `LogicManager`.
 
@@ -862,6 +871,60 @@ The history is kept in memory only, so it starts again from the loaded data each
 - **Alternative 3:** `LogicManager` commits after every successful command, without checking for changes.
   - Pros: Simplest; no flag is needed.
   - Cons: Read-only commands would create empty undo steps, so `undo` would sometimes appear to do nothing.
+
+### Command history feature
+
+#### Implementation
+
+Pressing Up or Down in the command box brings back earlier commands. This is handled entirely in the `UI` component by `CommandHistory`, a plain Java class with no JavaFX code that `CommandBox` creates when it starts. `CommandHistory` keeps:
+
+- `commands` -- the commands entered this session, oldest first.
+- `cursor` -- the index of the command being shown, or `commands.size()` when the user is not browsing the history.
+- `draft` -- the text that was in the command box when the user started browsing.
+
+It offers three operations:
+
+- `CommandHistory#add(String)` -- Records a command as the newest one and stops browsing. A blank command, or one identical to the newest command, is not stored again.
+- `CommandHistory#previous(String)` -- Moves back one command and returns it. If the user was not browsing yet, the given text is kept as the draft first. It stays on the oldest command once it is reached, and returns an empty `Optional` if no commands have been entered.
+- `CommandHistory#next()` -- Moves forward one command and returns it. Moving past the newest command returns the draft. If the user is already past the newest command, it returns an empty `Optional`, so text typed without browsing is kept.
+
+`CommandBox` calls `add` when the user presses Enter, before the command is executed, so commands that fail are recorded too and can be corrected. It listens for key presses with an event filter on its text field. The sequence diagram below shows what happens when the user presses Up:
+
+<puml src="diagrams/CommandHistorySequenceDiagram.puml" alt="CommandHistorySequenceDiagram" />
+
+After showing the command, `CommandBox` consumes the key event, so the text field does not also move the caret to the start of the line. Down works the same way through `next()`, without the draft step.
+
+Given below is an example of how the history changes:
+
+Step 1. The user enters `list`, then `delete 1`. `commands` is `[list, delete 1]` and `cursor` is 2, past the newest command.
+
+Step 2. The user types `find Al` but does not press Enter, then presses Up. As the user was not browsing yet, `previous("find Al")` keeps `find Al` as the draft, moves `cursor` to 1 and returns `delete 1`.
+
+Step 3. The user presses Up again. `cursor` moves to 0 and `list` is shown. Pressing Up once more keeps `list`, as it is the oldest command.
+
+Step 4. The user presses Down twice. The first press shows `delete 1`. The second moves `cursor` past the newest command, so `next()` returns the draft and `find Al` is back in the command box.
+
+#### Design considerations:
+
+**Aspect: Where the history is kept:**
+
+- **Alternative 1 (current choice):** In `CommandHistory`, owned by `CommandBox` in the `UI` component.
+  - Pros: Recalling a command only changes the text in the command box, so `Logic` and `Model` are not involved. As plain Java, it is unit tested without starting JavaFX.
+  - Cons: Another part of the app, e.g. a future `history` command, could not list the commands without going through the UI.
+
+- **Alternative 2:** In `Logic`, recording each command `LogicManager` receives.
+  - Pros: The history would be available to commands.
+  - Cons: `Logic` would hold state that only matters for typing, and a command that fails to parse would need extra handling to be recorded.
+
+**Aspect: Whether the history is saved:**
+
+- **Alternative 1 (current choice):** Kept in memory and cleared when the app closes.
+  - Pros: Simple, and commands, which can contain supporters' personal details in notes, are not written to another file.
+  - Cons: The user cannot recall commands from an earlier session.
+
+- **Alternative 2:** Saved to a file and loaded at startup.
+  - Pros: Commands from earlier sessions can be recalled.
+  - Cons: Another file to read, write and keep safe, for a small convenience.
 
 ### \[Proposed\] Data archiving
 
@@ -976,6 +1039,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | -------- | ------------------------------------------------ | ---------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | `* * *`  | fundraiser                                       | have every change saved automatically                                  | I never lose work by forgetting to save                                |
 | `* *`    | careless user                                    | undo my last command                                                   | a mistaken delete does not cost me a record I cannot rebuild           |
+| `*`      | careless user                                    | redo a change I undid by mistake                                       | pressing undo once too often does not cost me work I meant to keep     |
 | `*`      | cautious user                                    | be asked to confirm before a command that wipes all my data            | one stray keystroke cannot empty the list                              |
 | `*`      | fundraiser handling other people's personal data | keep everything in a file on my own machine with nothing sent anywhere | supporters' details never leave the charity's laptop                   |
 | `*`      | fundraiser                                       | open and repair my data file in a text editor                          | a corrupted file does not mean starting again from nothing             |
@@ -1031,7 +1095,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case resumes from step 1.
 
-- 1d. A supporter with the same name already exists, ignoring capitalisation and extra spaces.
+- 1d. A supporter with the same name already exists, ignoring capitalisation, extra spaces and differences between straight and curly apostrophes.
   - 1d1. SupporterBook shows an error message suggesting a way to tell the two supporters apart.
 
     Use case resumes from step 1.
@@ -1112,7 +1176,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case resumes from step 1.
 
-- 1e. The new name is the same as another supporter's name, ignoring capitalisation and extra spaces.
+- 1e. The new name is the same as another supporter's name, ignoring capitalisation, extra spaces and differences between straight and curly apostrophes.
   - 1e1. SupporterBook shows an error message, suggesting a way to tell the two supporters apart.
 
     Use case resumes from step 1.
@@ -1324,6 +1388,41 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case ends.
 
+**Use case: UC11 - Undo a mistaken change**
+
+**Preconditions: The user has changed supporter data since opening SupporterBook**
+
+**MSS**
+
+1.  User makes a change by mistake, e.g. deletes the wrong supporter.
+2.  User requests to undo the last change.
+3.  SupporterBook restores the data to how it was before that change, lists all supporters, and names the command that was undone.
+
+    Use case ends.
+
+**Extensions**
+
+- 2a. The user gives something after the command word, e.g. a number of changes to undo.
+  - 2a1. SupporterBook shows an error message saying that undo takes no parameters and undoes one change at a time, and changes nothing.
+
+    Use case resumes from step 2.
+
+- 2b. There is no change to undo, e.g. the app was just opened.
+  - 2b1. SupporterBook informs the user that there is nothing to undo.
+
+    Use case ends.
+
+- 3a. The mistaken change was made before other changes, so it has not been undone yet.
+  - 3a1. User requests to undo again.
+
+    Use case resumes from step 3.
+
+- 3b. The user realizes the undone change was correct after all.
+  - 3b1. User requests to redo the change.
+  - 3b2. SupporterBook re-applies the change and names the command that was redone.
+
+    Use case ends.
+
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
@@ -1450,6 +1549,22 @@ testers are expected to do more _exploratory_ testing.
 1. Test case: `find` without keywords<br>
    Expected: An invalid-command-format message is shown and the displayed list is unchanged.
 
+### Long names and organisations in supporter cards
+
+1. Prerequisites: Launch the app with fresh sample data in an isolated test folder.
+
+1. Run `add n/Muhammad Abdul Rahman bin Mohamed Iskandar Shah e/rahman@example.com o/Singapore Society for the Prevention of Cruelty to Animals`.
+   Then run `add n/Muhammad Abdul Rahman bin Mohamed Iskandar Shafiq e/shafiq@example.com o/Singapore Society for the Prevention of Cruelty to Animals`.
+
+1. Scroll to the two new cards.<br>
+   Expected: Both full names and organisations are readable, wrapping onto additional lines as needed without ellipses. The different name endings remain visible. The index and stage badge stay beside the name, aligned with its first line, and the organisation and last-contact line do not overlap the name or badge.
+
+1. Narrow and widen the window or move the divider to change the supporter list's width.<br>
+   Expected: Text reflows and card heights adjust to the available width, with no blank space below each card's last line. The list does not scroll sideways. Short names and organisations remain on one line when they fit.
+
+1. Scroll away from the new cards and back again.<br>
+   Expected: The full names and organisations remain readable, with no clipped text or overlapping cards.
+
 ### Deleting a supporter
 
 1. Deleting a supporter without interactions
@@ -1508,6 +1623,12 @@ testers are expected to do more _exploratory_ testing.
    1. Test case: `edit 1 a/`<br>
       Expected: Alex Yeoh's address is removed, and his card no longer shows one.
 
+1. Showing long contact details on a card
+   1. Prerequisites: Start from the sample data at the default window size.
+
+   1. Test case: `add n/Long Contact e/fundraising.partnerships.and.corporate.giving@internationalcharityfoundation.org.sg a/Blk 123 Ang Mo Kio Avenue 6, #12-345, Singapore Society Building, Singapore 560123`<br>
+      Expected: On the new card at the bottom of the list, the full address and email wrap onto extra lines instead of ending in `...`.
+
 ### Recording introducers
 
 1. Prerequisites: Start from the sample data and run `list`. The sample data records that Bernice Yu (2nd) introduced David Li (4th).
@@ -1539,6 +1660,9 @@ testers are expected to do more _exploratory_ testing.
 
 1. Test case: `tag 1 t/vip t/VIP t/monthlydonor`<br>
    Expected: The message is `Added tags to Alex Yeoh: [vip]`, then `Skipped tags they already have: [monthlydonor]` on a second line. `t/VIP` counts as the same tag as `t/vip`, and Alex keeps `monthlyDonor` as it was spelt.
+
+1. Continuing from the previous test case: `tag 1 t/Zakat`, then `view 1`<br>
+   Expected: The card and the detail panel both list Alex's tags as `monthlyDonor`, `vip`, `Zakat`, alphabetically ignoring capitalisation.
 
 1. Continuing from the previous test case: `untag 1 t/VIP t/gala2025`<br>
    Expected: The message is `Removed tags from Alex Yeoh: [vip]`, then `Skipped tags they do not have: [gala2025]`.
@@ -1594,6 +1718,9 @@ testers are expected to do more _exploratory_ testing.
    1. Test case: `stage 1 GIVING`, then `stage 1 lapsed`<br>
       Expected: Upper case is accepted; the 1st supporter moves to `Lapsed`.
 
+   1. Test case: `stage 1 st/cultivating`<br>
+      Expected: The `st/` prefix used by `add` and `find` is accepted; the 1st supporter moves to `Cultivating`, with no note about prefixes.
+
    1. Test case: `stage 1 gave`<br>
       Expected: No stage is changed. The status message lists the six valid stages.
 
@@ -1621,6 +1748,71 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: the same command without `st/contacted`, and with a different name<br>
       Expected: The new supporter is added with the `Prospect` badge.
+
+### Undoing and redoing changes
+
+1. Undoing and redoing a change
+   1. Prerequisites: Launch the app with at least two supporters, and run `list`.
+
+   1. Test case: `delete 1`, then `undo`<br>
+      Expected: The deleted supporter is back in the list, with their interactions. The status message is `Undid the last change: delete 1`.
+
+   1. Test case: `redo`<br>
+      Expected: The same supporter is deleted again. The status message is `Redid the last undone change: delete 1`.
+
+   1. Test case: `undo`, then `log 1 nt/Called`, then `redo`<br>
+      Expected: The interaction is logged, but the delete cannot be redone, as a new change discards undone ones. The status message is `There is no undone change to redo.`
+
+1. Commands that are not recorded
+   1. Prerequisites: The 1st supporter in the list is at stage `Giving`.
+
+   1. Test case: `log 2 nt/First call`, then `list`, `view 1` and `stage 1 giving`, then `undo`<br>
+      Expected: The interaction is removed from the 2nd supporter. `list` and `view` change no data, and `stage` changes nothing as the stage is the same, so none of them were recorded.
+
+1. Nothing to undo or redo
+   1. Prerequisites: Restart the app, so that no change has been made.
+
+   1. Test case: `undo`<br>
+      Expected: No data changes. The status message is `There is no change to undo.`
+
+   1. Test case: `redo`<br>
+      Expected: No data changes. The status message is `There is no undone change to redo.`
+
+1. Undo and redo with extra parameters
+   1. Prerequisites: Make at least two changes, e.g. `log 1 nt/One` and `log 1 nt/Two`.
+
+   1. Test case: `undo 2`<br>
+      Expected: Nothing is undone. The status message says that undo takes no arguments and undoes one change at a time.
+
+   1. Other commands to try: `undo all`, `redo 3`<br>
+      Expected: Nothing is undone or redone, and the status message says the command takes no arguments.
+
+### Recalling previous commands
+
+1. Browsing earlier commands
+   1. Prerequisites: Launch the app, then enter `list` and `view 1`.
+
+   1. Test case: Press Up twice<br>
+      Expected: The command box shows `view 1`, then `list`, with the caret at the end. Pressing Up again keeps `list`.
+
+   1. Test case: Press Down twice<br>
+      Expected: The command box shows `view 1`, then becomes empty.
+
+1. Keeping an unfinished command
+   1. Prerequisites: Enter `list`.
+
+   1. Test case: Type `find Al` without pressing Enter, press Up, then press Down<br>
+      Expected: Up shows `list`. Down brings back `find Al`.
+
+1. Recording failed and repeated commands
+   1. Test case: Enter `view 0`, which fails. Delete the text left in the command box, then press Up<br>
+      Expected: The command box shows `view 0` again, so it can be corrected.
+
+   1. Test case: Enter `list` three times, then press Up twice<br>
+      Expected: The command box shows `list`, then `view 0`, as repeated commands are stored once.
+
+   1. Test case: Close and relaunch the app, then press Up<br>
+      Expected: Nothing happens, as the history is not saved.
 
 ### Mistyped prefixes
 
@@ -1811,6 +2003,9 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: `log 2 nt/Panel switch test`<br>
       Expected: The panel switches to supporter 2 and shows their updated history.
+
+   1. Test case: Click supporter 1's card.<br>
+      Expected: The card is not highlighted, and the panel still shows supporter 2.
 
    1. Test case: Run `view 1`, then `stage 2 giving`. Run `view 1` again, then repeat `stage 2 giving`.<br>
       Expected: Both stage commands switch the panel to supporter 2 with stage `Giving`, including the second command that reports no record change.

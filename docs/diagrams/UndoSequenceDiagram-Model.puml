@@ -14,12 +14,12 @@ Model -> VersionedAddressBook : undo()
 activate VersionedAddressBook
 
 VersionedAddressBook -> VersionedAddressBook : resetData(previous state)
-VersionedAddressBook --> Model
+VersionedAddressBook --> Model : change
 deactivate VersionedAddressBook
 
 Model -> Model : refresh viewed supporter
 
-[<-- Model
+[<-- Model : change
 deactivate Model
 
 @enduml
