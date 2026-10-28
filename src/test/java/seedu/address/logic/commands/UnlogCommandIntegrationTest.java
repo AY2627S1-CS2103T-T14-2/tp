@@ -3,6 +3,7 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.InteractionHistoryTestUtil.assertHistory;
+import static seedu.address.testutil.TypicalInteractionNotes.NOTES_WITH_DIFFERENT_ENDINGS;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -22,6 +23,23 @@ import seedu.address.ui.SupporterDetailData;
  * Tests interaction deletion from command parsing through the model to detail-panel data, without starting JavaFX.
  */
 public class UnlogCommandIntegrationTest {
+
+    @Test
+    public void execute_noteWithDifferentEndings_preservesNoteInFeedback() throws Exception {
+        LocalDate date = LocalDate.of(2024, 2, 29);
+        for (String note : NOTES_WITH_DIFFERENT_ENDINGS) {
+            Person target = new PersonBuilder().withInteractions(new Interaction(date, note)).build();
+            Model model = new ModelManager();
+            model.addPerson(target);
+
+            CommandResult result = new AddressBookParser().parseCommand("unlog 1 1").execute(model);
+
+            assertEquals("Deleted interaction #1 with " + target.getName() + " (29 Feb 2024): " + note,
+                    result.getFeedbackToUser());
+            Person expected = new PersonBuilder(target).withInteractions().build();
+            assertEquals(List.of(expected), model.getFilteredPersonList());
+        }
+    }
 
     @Test
     public void execute_chronologicalEntry_selectsTargetAndRenumbersFilteredHistory() throws Exception {
@@ -46,7 +64,7 @@ public class UnlogCommandIntegrationTest {
         assertEquals(Optional.of(expected), model.getViewedPerson());
         assertEquals(List.of(expected), model.getFilteredPersonList());
         assertEquals(List.of(other, expected), model.getAddressBook().getPersonList());
-        assertEquals("Deleted interaction #2 with " + target.getName() + " (29 Feb 2024): Middle meeting.",
+        assertEquals("Deleted interaction #2 with " + target.getName() + " (29 Feb 2024): Middle meeting",
                 middleDeletionResult.getFeedbackToUser());
 
         SupporterDetailData displayAfterMiddleDeletion = new SupporterDetailData(model.getViewedPerson());
@@ -59,7 +77,7 @@ public class UnlogCommandIntegrationTest {
         // the next command uses the refreshed number: #2 now identifies the newest remaining interaction
         CommandResult newestDeletionResult = parser.parseCommand("unlog 1 2").execute(model);
         SupporterDetailData displayAfterNewestDeletion = new SupporterDetailData(model.getViewedPerson());
-        assertEquals("Deleted interaction #2 with " + target.getName() + " (10 Mar 2024): Recent call.",
+        assertEquals("Deleted interaction #2 with " + target.getName() + " (10 Mar 2024): Recent call",
                 newestDeletionResult.getFeedbackToUser());
         assertHistory(displayAfterNewestDeletion, List.of(1), List.of("20 Feb 2024"), List.of("Earlier call"));
         assertEquals(Optional.of(oldest.getDate()), model.getViewedPerson().orElseThrow().getLastInteractionDate());

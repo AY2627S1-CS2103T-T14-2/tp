@@ -36,7 +36,7 @@ public class LogCommand extends Command {
             + "Example: " + COMMAND_WORD + " 2 " + PREFIX_NOTE + "Coffee at Raffles Place "
             + PREFIX_DATE + "2026-10-01";
 
-    public static final String MESSAGE_SUCCESS = "Logged interaction #%1$d with %2$s (%3$s): %4$s.";
+    public static final String MESSAGE_SUCCESS = "Logged interaction #%1$d with %2$s (%3$s): %4$s";
 
     private final Index targetIndex;
     private final String note;
