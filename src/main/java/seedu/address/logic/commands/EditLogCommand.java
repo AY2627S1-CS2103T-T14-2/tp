@@ -93,7 +93,7 @@ public class EditLogCommand extends Command {
                 + ": interaction #" + interactionIndex.getOneBased() + " -> #" + displayedEntryNumber
                 + ", changed: " + hasChanges + ", interaction count: " + updatedPerson.getInteractionCount());
 
-        if (hasChanges) {
+        if (!hasChanges) {
             // say so, as no undo point is saved and a following undo reverts an earlier change
             model.setViewedPerson(personToUpdate);
             return new CommandResult(String.format(MESSAGE_NOT_CHANGED, interactionIndex.getOneBased(),
