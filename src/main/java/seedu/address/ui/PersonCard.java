@@ -17,7 +17,7 @@ public class PersonCard extends UiPart<Region> {
 
     private static final String FXML = "PersonListCard.fxml";
     private static final String NO_ORGANISATION = "(no organisation)";
-    /** Prefix of the style class that colours the stage label, e.g. {@code stage_giving}. */
+    /** Prefix of the style class that colors the stage label, e.g. {@code stage_giving}. */
     private static final String STAGE_STYLE_CLASS_PREFIX = "stage_";
 
     /**
