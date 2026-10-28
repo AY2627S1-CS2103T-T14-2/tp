@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_STAGE;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.StageCommand;
@@ -13,7 +14,7 @@ import seedu.address.model.person.Stage;
  */
 public class StageCommandParser implements Parser<StageCommand> {
 
-    /** The command takes exactly an INDEX and a STAGE, with no prefixes. */
+    /** The command takes exactly an INDEX and a STAGE, which may have an optional {@code st/} prefix. */
     private static final int EXPECTED_ARGUMENT_COUNT = 2;
 
     /**
@@ -29,8 +30,17 @@ public class StageCommandParser implements Parser<StageCommand> {
         }
 
         Index index = ParserUtil.parseIndex(arguments[0], StageCommand.MESSAGE_USAGE);
-        Stage stage = ParserUtil.parseStage(arguments[1]);
+        Stage stage = ParserUtil.parseStage(removeStagePrefix(arguments[1]));
         return new StageCommand(index, stage);
+    }
+
+    /**
+     * Returns {@code stageArgument} without a leading {@code st/}, which {@code add} and {@code find} use,
+     * so that {@code stage 1 st/giving} works the same as {@code stage 1 giving}.
+     */
+    private static String removeStagePrefix(String stageArgument) {
+        String prefix = PREFIX_STAGE.getPrefix();
+        return stageArgument.startsWith(prefix) ? stageArgument.substring(prefix.length()) : stageArgument;
     }
 
 }

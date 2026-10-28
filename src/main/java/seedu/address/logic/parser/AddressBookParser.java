@@ -85,8 +85,9 @@ public class AddressBookParser {
             case LogCommand.COMMAND_WORD, EditLogCommand.COMMAND_WORD -> List.of(PREFIX_NOTE, PREFIX_DATE);
             case IntroCommand.COMMAND_WORD -> List.of(PREFIX_INTRODUCER);
             case TagCommand.COMMAND_WORD, UntagCommand.COMMAND_WORD -> List.of(PREFIX_TAG);
-            case DeleteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD, StageCommand.COMMAND_WORD,
-                    UnlogCommand.COMMAND_WORD, QuietCommand.COMMAND_WORD -> List.of();
+            case StageCommand.COMMAND_WORD -> List.of(PREFIX_STAGE);
+            case DeleteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD, UnlogCommand.COMMAND_WORD,
+                    QuietCommand.COMMAND_WORD -> List.of();
             default -> CliSyntax.ALL_PREFIXES;
         };
         return ArgumentTokenizer.findUnrecognisedPrefixes(userInput, recognisedPrefixes);
