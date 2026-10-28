@@ -200,6 +200,13 @@ public class Person {
     }
 
     /**
+     * Returns the number of interactions logged for this supporter.
+     */
+    public int getInteractionCount() {
+        return interactions.size();
+    }
+
+    /**
      * Returns the latest interaction date, or an empty {@code Optional} if there are no interactions.
      * The result is independent of logging order and does not change the stored history.
      */

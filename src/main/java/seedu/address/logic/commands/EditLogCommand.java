@@ -14,7 +14,6 @@ import java.util.Optional;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.DisplayDateFormatter;
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Interaction;
@@ -59,18 +58,11 @@ public class EditLogCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        List<Person> lastShownList = model.getFilteredPersonList();
-        if (targetIndex.getZeroBased() >= lastShownList.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        }
+        Person personToUpdate = InteractionCommandSupport.getDisplayedPerson(
+                model.getFilteredPersonList(), targetIndex);
+        int storedIndex = InteractionCommandSupport.getStoredInteractionIndex(personToUpdate, interactionIndex);
 
-        Person personToUpdate = lastShownList.get(targetIndex.getZeroBased());
         List<Interaction> updatedInteractions = new ArrayList<>(personToUpdate.getInteractions());
-        if (interactionIndex.getZeroBased() >= updatedInteractions.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_INTERACTION_INDEX);
-        }
-
-        int storedIndex = personToUpdate.getInteractionStoredIndex(interactionIndex.getOneBased());
         Interaction originalInteraction = updatedInteractions.get(storedIndex);
         Interaction updatedInteraction = new Interaction(date.orElse(originalInteraction.getDate()),
                 note.orElse(originalInteraction.getNote()));
