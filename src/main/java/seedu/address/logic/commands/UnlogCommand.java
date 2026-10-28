@@ -28,7 +28,7 @@ public class UnlogCommand extends Command {
             + "Parameters: INDEX ENTRY (both must be positive integers)\n"
             + "ENTRY is the interaction number shown in the detail panel.\n"
             + "Example: " + COMMAND_WORD + " 2 1";
-    public static final String MESSAGE_SUCCESS = "Deleted interaction #%1$d with %2$s (%3$s): %4$s.";
+    public static final String MESSAGE_SUCCESS = "Deleted interaction #%1$d with %2$s (%3$s): %4$s";
 
     private static final Logger logger = LogsCenter.getLogger(UnlogCommand.class);
 

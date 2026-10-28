@@ -170,6 +170,27 @@ public class EditLogCommandTest {
     }
 
     @Test
+    public void execute_unchangedValues_reportsNothingChangedAndSavesNoUndoPoint() throws Exception {
+        Person original = model.getFilteredPersonList().get(0);
+        Person person = setInteractions(OLDEST, MIDDLE);
+        model.commitAddressBookIfChanged();
+        String expectedMessage = String.format(EditLogCommand.MESSAGE_NOT_CHANGED, 2, person.getName());
+
+        // the same note only, the same date only, and both
+        assertEquals(expectedMessage, new EditLogCommand(INDEX_FIRST_PERSON, ENTRY, Optional.of(MIDDLE.getNote()),
+                Optional.empty()).execute(model).getFeedbackToUser());
+        assertEquals(expectedMessage, new EditLogCommand(INDEX_FIRST_PERSON, ENTRY, Optional.empty(),
+                Optional.of(MIDDLE.getDate())).execute(model).getFeedbackToUser());
+        assertEquals(expectedMessage, new EditLogCommand(INDEX_FIRST_PERSON, ENTRY, Optional.of(MIDDLE.getNote()),
+                Optional.of(MIDDLE.getDate())).execute(model).getFeedbackToUser());
+
+        model.commitAddressBookIfChanged();
+        model.undoAddressBook();
+        // the undo reverts setInteractions, as none of the unchanged edits saved an undo point
+        assertEquals(original, model.getFilteredPersonList().get(0));
+    }
+
+    @Test
     public void execute_validFilteredIndex_preservesFilter() throws Exception {
         // the second supporter now has displayed index 1
         showPersonAtIndex(model, INDEX_SECOND_PERSON);

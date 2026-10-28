@@ -9,10 +9,12 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<HBox id="cardPane" fx:id="cardPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<!-- prefWidth="0" stops long text from widening the list; the list cell still stretches the card -->
+<HBox id="cardPane" fx:id="cardPane" prefWidth="0" xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1">
   <GridPane HBox.hgrow="ALWAYS">
     <columnConstraints>
-      <ColumnConstraints hgrow="SOMETIMES" minWidth="10" prefWidth="150" />
+      <ColumnConstraints hgrow="SOMETIMES" minWidth="10" />
     </columnConstraints>
     <VBox alignment="CENTER_LEFT" minHeight="105" GridPane.columnIndex="0">
       <padding>
@@ -41,8 +43,8 @@
       <Label fx:id="lastContact" styleClass="cell_small_label" text="No interactions yet" />
       <FlowPane fx:id="tags" />
       <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
-      <Label fx:id="address" styleClass="cell_small_label" text="\$address" />
-      <Label fx:id="email" styleClass="cell_small_label" text="\$email" />
+      <Label fx:id="address" styleClass="cell_small_label" text="\$address" minWidth="0" wrapText="true" />
+      <Label fx:id="email" styleClass="cell_small_label" text="\$email" minWidth="0" wrapText="true" />
     </VBox>
   </GridPane>
 </HBox>

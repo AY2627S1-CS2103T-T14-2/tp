@@ -46,7 +46,7 @@ public class EditLogCommandIntegrationTest {
         assertEquals(Optional.of(expected), model.getViewedPerson());
         assertEquals(List.of(expected), model.getFilteredPersonList());
         assertEquals(List.of(other, expected), model.getAddressBook().getPersonList());
-        assertEquals("Edited interaction #3 with " + target.getName() + " (15 Mar 2024): Middle meeting.",
+        assertEquals("Edited interaction #3 with " + target.getName() + " (15 Mar 2024): Middle meeting",
                 result.getFeedbackToUser());
         SupporterDetailData displayAfterDateEdit = new SupporterDetailData(model.getViewedPerson());
         assertHistory(displayAfterDateEdit, List.of(3, 2, 1),
@@ -57,18 +57,18 @@ public class EditLogCommandIntegrationTest {
         assertEquals(Optional.of(edited.getDate()), model.getViewedPerson().orElseThrow().getLastInteractionDate());
 
         // use the refreshed number to edit the same interaction's note while retaining its new date
-        CommandResult nextResult = parser.parseCommand("editlog 1 3 nt/Corrected meeting").execute(model);
+        CommandResult nextResult = parser.parseCommand("editlog 1 3 nt/Corrected meeting?").execute(model);
         Person nextExpected = new PersonBuilder(target)
-                .withInteractions(new Interaction(edited.getDate(), "Corrected meeting"), oldest, newest).build();
+                .withInteractions(new Interaction(edited.getDate(), "Corrected meeting?"), oldest, newest).build();
         assertEquals(Optional.of(nextExpected), model.getViewedPerson());
         assertEquals(List.of(nextExpected), model.getFilteredPersonList());
         assertEquals(List.of(other, nextExpected), model.getAddressBook().getPersonList());
-        assertEquals("Edited interaction #3 with " + target.getName() + " (15 Mar 2024): Corrected meeting.",
+        assertEquals("Edited interaction #3 with " + target.getName() + " (15 Mar 2024): Corrected meeting?",
                 nextResult.getFeedbackToUser());
         SupporterDetailData displayAfterNoteEdit = new SupporterDetailData(model.getViewedPerson());
         assertHistory(displayAfterNoteEdit, List.of(3, 2, 1),
                 List.of("15 Mar 2024", "10 Mar 2024", "20 Feb 2024"),
-                List.of("Corrected meeting", "Recent call", "Earlier call"));
+                List.of("Corrected meeting?", "Recent call", "Earlier call"));
     }
 
     @Test
@@ -86,7 +86,7 @@ public class EditLogCommandIntegrationTest {
         Person expected = new PersonBuilder(target)
                 .withInteractions(new Interaction(earlier.getDate(), "Corrected meeting"), earlier).build();
         assertEquals(Optional.of(expected), model.getViewedPerson());
-        assertEquals("Edited interaction #1 with " + target.getName() + " (29 Feb 2024): Corrected meeting.",
+        assertEquals("Edited interaction #1 with " + target.getName() + " (29 Feb 2024): Corrected meeting",
                 result.getFeedbackToUser());
         SupporterDetailData display = new SupporterDetailData(model.getViewedPerson());
         assertHistory(display, List.of(2, 1), List.of("29 Feb 2024", "29 Feb 2024"),

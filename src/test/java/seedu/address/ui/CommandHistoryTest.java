@@ -13,7 +13,7 @@ public class CommandHistoryTest {
 
     @Test
     public void previous_noCommands_returnsEmpty() {
-        assertEquals(Optional.empty(), history.previous());
+        assertEquals(Optional.empty(), history.previous(""));
     }
 
     @Test
@@ -33,26 +33,26 @@ public class CommandHistoryTest {
         history.add("list");
         history.add("delete 1");
 
-        assertEquals(Optional.of("delete 1"), history.previous());
-        assertEquals(Optional.of("list"), history.previous());
+        assertEquals(Optional.of("delete 1"), history.previous(""));
+        assertEquals(Optional.of("list"), history.previous(""));
     }
 
     @Test
     public void previous_atOldestCommand_staysOnOldest() {
         history.add("list");
         history.add("delete 1");
-        history.previous();
-        history.previous();
+        history.previous("");
+        history.previous("");
 
-        assertEquals(Optional.of("list"), history.previous());
+        assertEquals(Optional.of("list"), history.previous(""));
     }
 
     @Test
     public void next_afterPrevious_movesForward() {
         history.add("list");
         history.add("delete 1");
-        history.previous();
-        history.previous();
+        history.previous("");
+        history.previous("");
 
         assertEquals(Optional.of("delete 1"), history.next());
     }
@@ -60,15 +60,52 @@ public class CommandHistoryTest {
     @Test
     public void next_fromNewestCommand_returnsEmptyString() {
         history.add("list");
-        history.previous();
+        history.previous("");
 
         assertEquals(Optional.of(""), history.next());
     }
 
     @Test
+    public void next_fromNewestCommand_returnsDraft() {
+        history.add("list");
+        history.previous("find Alex");
+
+        assertEquals(Optional.of("find Alex"), history.next());
+    }
+
+    @Test
+    public void next_afterBrowsingSeveralCommands_returnsDraftFromWhenBrowsingStarted() {
+        history.add("list");
+        history.add("delete 1");
+        history.previous("find Alex");
+        // the box now shows the recalled command, which must not replace the draft
+        history.previous("delete 1");
+        history.next();
+
+        assertEquals(Optional.of("find Alex"), history.next());
+    }
+
+    @Test
+    public void next_newBrowseAfterAdd_returnsNewDraft() {
+        history.add("list");
+        history.previous("find Alex");
+        history.add("find Alex");
+        history.previous("view 2");
+
+        assertEquals(Optional.of("view 2"), history.next());
+    }
+
+    @Test
+    public void previous_null_throwsNullPointerException() {
+        history.add("list");
+
+        assertThrows(NullPointerException.class, () -> history.previous(null));
+    }
+
+    @Test
     public void next_alreadyPastNewestCommand_returnsEmpty() {
         history.add("list");
-        history.previous();
+        history.previous("");
         history.next();
 
         assertEquals(Optional.empty(), history.next());
@@ -78,10 +115,10 @@ public class CommandHistoryTest {
     public void previous_afterNextPastNewest_returnsNewest() {
         history.add("list");
         history.add("delete 1");
-        history.previous();
+        history.previous("");
         history.next();
 
-        assertEquals(Optional.of("delete 1"), history.previous());
+        assertEquals(Optional.of("delete 1"), history.previous(""));
     }
 
     @Test
@@ -89,8 +126,8 @@ public class CommandHistoryTest {
         history.add("list");
         history.add("list");
 
-        assertEquals(Optional.of("list"), history.previous());
-        assertEquals(Optional.of("list"), history.previous());
+        assertEquals(Optional.of("list"), history.previous(""));
+        assertEquals(Optional.of("list"), history.previous(""));
         assertEquals(Optional.of(""), history.next());
     }
 
@@ -100,21 +137,21 @@ public class CommandHistoryTest {
         history.add("delete 1");
         history.add("list");
 
-        assertEquals(Optional.of("list"), history.previous());
-        assertEquals(Optional.of("delete 1"), history.previous());
-        assertEquals(Optional.of("list"), history.previous());
+        assertEquals(Optional.of("list"), history.previous(""));
+        assertEquals(Optional.of("delete 1"), history.previous(""));
+        assertEquals(Optional.of("list"), history.previous(""));
     }
 
     @Test
     public void add_whileBrowsing_resetsToNewest() {
         history.add("list");
         history.add("delete 1");
-        history.previous();
-        history.previous();
+        history.previous("");
+        history.previous("");
 
         history.add("view 2");
 
-        assertEquals(Optional.of("view 2"), history.previous());
+        assertEquals(Optional.of("view 2"), history.previous(""));
     }
 
     @Test
@@ -122,8 +159,8 @@ public class CommandHistoryTest {
         history.add("list");
         history.add("   ");
 
-        assertEquals(Optional.of("list"), history.previous());
-        assertEquals(Optional.of("list"), history.previous());
+        assertEquals(Optional.of("list"), history.previous(""));
+        assertEquals(Optional.of("list"), history.previous(""));
     }
 
     @Test

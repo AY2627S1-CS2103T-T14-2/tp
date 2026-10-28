@@ -38,8 +38,10 @@ public class EditLogCommand extends Command {
             + " through today.\n"
             + "Example: " + COMMAND_WORD + " 2 1 " + PREFIX_NOTE + "Updated meeting notes "
             + PREFIX_DATE + "2026-10-01";
-    public static final String MESSAGE_SUCCESS = "Edited interaction #%1$d with %2$s (%3$s): %4$s.";
+    public static final String MESSAGE_SUCCESS = "Edited interaction #%1$d with %2$s (%3$s): %4$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
+    public static final String MESSAGE_NOT_CHANGED =
+            "Interaction #%1$d with %2$s already has those details. Nothing was changed.";
 
     private static final Logger logger = LogsCenter.getLogger(EditLogCommand.class);
 
@@ -84,12 +86,19 @@ public class EditLogCommand extends Command {
         if (hasChanges) {
             model.setPerson(personToUpdate, updatedPerson);
         }
-        model.setViewedPerson(updatedPerson);
+        model.setViewedPerson(hasChanges ? updatedPerson : personToUpdate);
 
         int displayedEntryNumber = updatedPerson.getInteractionEntryNumber(storedIndex);
         logger.fine("Processed editlog for displayed supporter " + targetIndex.getOneBased()
                 + ": interaction #" + interactionIndex.getOneBased() + " -> #" + displayedEntryNumber
                 + ", changed: " + hasChanges + ", interaction count: " + updatedPerson.getInteractionCount());
+
+        if (hasChanges) {
+            // say so, as no undo point is saved and a following undo reverts an earlier change
+            model.setViewedPerson(personToUpdate);
+            return new CommandResult(String.format(MESSAGE_NOT_CHANGED, interactionIndex.getOneBased(),
+                    personToUpdate.getName()));
+        }
 
         return new CommandResult(String.format(MESSAGE_SUCCESS, displayedEntryNumber,
                 personToUpdate.getName(), DisplayDateFormatter.format(updatedInteraction.getDate()),

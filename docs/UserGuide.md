@@ -417,7 +417,7 @@ Format: `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`
 
 - `INDEX` is the supporter index in the displayed list; after `find`, use the search-result index. Both indices must be positive integers.
 - `ENTRY` is the number beside the interaction in the detail panel, not its row position. Use `view INDEX` to check it first.
-- Supply at least one field. Omitted fields remain unchanged; supplying the existing value is allowed.
+- Supply at least one field. Omitted fields remain unchanged; supplying the existing value is allowed. If nothing would change, the result says `Nothing was changed.`, and no undo point is saved, so a following `undo` reverts an earlier change instead.
 - To revert an interaction edited by mistake, run `undo` immediately afterward. Undo history is available only during the current session.
 - `NOTE` must not be blank and may contain at most 500 characters after trimming leading and trailing spaces. Characters are counted as described under [logging an interaction](#logging-an-interaction-log).
 - `DATE` must be a valid `yyyy-MM-dd` date from `1900-01-01` through today (inclusive), using the computer's clock. Empty, invalid and out-of-range dates are rejected.
@@ -490,7 +490,7 @@ Format: `view INDEX`
 * `INDEX` is required and must be a positive integer from the currently displayed supporter list. After a `find`, use the index shown in the search results.
 * Supply exactly one index, with no additional arguments.
 * Viewing a supporter preserves the displayed list, its filter and all supporter data.
-* The panel shows the name, stage, organisation, phone, email, address, tags, introducer and the supporters they introduced. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically.
+* The panel shows the name, stage, organisation, phone, email, address, tags, introducer and the supporters they introduced. Unset fields, including an empty tag list, appear as `-`. Tags are shown alphabetically, ignoring capitalisation, in the same order as on the supporter card and in command results.
 * Above the interaction history, the panel shows the same last-contact line as the supporter card, for example `Last contact: 03 Oct 2026`, or `No interactions yet` if there are no logged interactions. The line updates when the displayed supporter's interaction history changes.
 * Interactions appear newest first, e.g. `#4  16 Sep 2026  Sent partnership deck by email`. Numbers descend to `#1`, the oldest entry. On equal dates, later-logged entries appear first.
 * If the window is too short to show everything, the panel gets a scroll bar, so you can scroll down to the interaction history.
@@ -500,6 +500,7 @@ Format: `view INDEX`
 * Deleting the displayed supporter or running `clear` clears the details and history. Deleting another supporter keeps the panel unchanged.
 * After `undo` or `redo`, the panel shows the displayed supporter's restored record, or is cleared if that supporter no longer exists.
 * Selection is not remembered after restarting the app.
+* Clicking a supporter card does not select it or change the panel. Use `view INDEX` to show a supporter.
 
 Examples:
 
@@ -581,7 +582,7 @@ Format: `undo`
 - These commands can be undone: `add`, `edit`, `delete`, `clear`, `log`, `editlog`, `unlog`, `stage`, `intro`, `tag` and `untag`.
 - Commands that do not change data, such as `list`, `find`, `view`, `stats` and `help`, are skipped. For example, `delete 2`, `find Tan`, `undo` restores the deleted supporter.
 - Running `undo` again reverts the change before that, back to when the app was opened.
-- A command that changes nothing, such as `stage` with the supporter's current stage, `tag` with a tag they already have or `edit` with the details they already have, is not recorded. Neither is a command that fails. There is nothing to undo for them.
+- A command that changes nothing, such as `stage` with the supporter's current stage, `tag` with a tag they already have, `edit` with the details they already have or `editlog` with the note and date the entry already has, is not recorded. Neither is a command that fails. There is nothing to undo for them.
 - After undoing, all supporters are listed. The detail panel shows the displayed supporter's restored record, or is cleared if that supporter no longer exists.
 - The result display names the command that made the change, as you typed it, e.g. `Undid the last change: tag 1 t/vip`.
 - `undo` takes no parameters and undoes one change at a time. For example, `undo 3` is rejected and nothing is undone; enter `undo` three times instead.
@@ -625,7 +626,7 @@ Press <kbd>Up</kbd> in the command box to bring back the commands you have enter
 
 - Every command you entered is remembered, including commands that failed, so you can fix a typo and try again.
 - Pressing <kbd>Up</kbd> at the oldest command keeps it in the box.
-- Pressing <kbd>Down</kbd> past the newest command leaves the box empty.
+- Pressing <kbd>Down</kbd> past the newest command brings back what you were typing before you first pressed <kbd>Up</kbd>, so an unfinished command is not lost. If the box was empty, it is left empty.
 - Pressing <kbd>Down</kbd> while typing a new command, without having pressed <kbd>Up</kbd>, keeps what you typed.
 - Entering the same command several times in a row stores it only once.
 - The command history is cleared when you close the app. It is not saved to the data file.

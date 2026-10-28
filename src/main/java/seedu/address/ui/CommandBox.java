@@ -40,7 +40,7 @@ public class CommandBox extends UiPart<Region> {
      */
     private void handleKeyPressed(KeyEvent event) {
         if (event.getCode() == KeyCode.UP) {
-            commandHistory.previous().ifPresent(this::showCommand);
+            commandHistory.previous(commandTextField.getText()).ifPresent(this::showCommand);
             event.consume();
         } else if (event.getCode() == KeyCode.DOWN) {
             commandHistory.next().ifPresent(this::showCommand);
