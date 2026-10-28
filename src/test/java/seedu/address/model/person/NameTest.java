@@ -9,6 +9,11 @@ import org.junit.jupiter.api.Test;
 
 public class NameTest {
 
+    private static final String[] namesWithNonBreakingSpaces = {
+        "Tan\u00a0Wei Ming", "\u00a0Tan Wei Ming", "Tan Wei Ming\u00a0",
+        "Tan\u00a0\u00a0Wei Ming", " \u00a0Tan \t\u00a0Wei\u00a0 Ming\u00a0 "
+    };
+
     @Test
     public void constructor_null_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new Name(null));
@@ -185,12 +190,11 @@ public class NameTest {
 
     @Test
     public void isValidName_nonBreakingSpaces_returnsTrue() {
-        String[] names = {"Tan\u00a0Wei Ming", "\u00a0Tan Wei Ming", "Tan Wei Ming\u00a0",
-            "Tan\u00a0\u00a0Wei Ming", " \u00a0Tan \t\u00a0Wei\u00a0 Ming\u00a0 ", "Ravi\u00a0s/o\u00a0Kumar"};
-
-        for (String name : names) {
+        for (String name : namesWithNonBreakingSpaces) {
             assertTrue(Name.isValidName(name));
         }
+
+        assertTrue(Name.isValidName("Ravi\u00a0s/o\u00a0Kumar"));
     }
 
     @Test
@@ -297,11 +301,9 @@ public class NameTest {
 
     @Test
     public void constructor_nonBreakingSpaces_spacesNormalised() {
-        String[] names = {"Tan\u00a0Wei Ming", "\u00a0Tan Wei Ming", "Tan Wei Ming\u00a0",
-            "Tan\u00a0\u00a0Wei Ming", " \u00a0Tan \t\u00a0Wei\u00a0 Ming\u00a0 "};
         Name expectedName = new Name("Tan Wei Ming");
 
-        for (String name : names) {
+        for (String name : namesWithNonBreakingSpaces) {
             Name normalizedName = new Name(name);
 
             assertEquals("Tan Wei Ming", normalizedName.fullName);
