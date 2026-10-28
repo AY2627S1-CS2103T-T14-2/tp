@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.DisplayDateFormatter;
+import seedu.address.commons.util.StringUtil;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
@@ -75,7 +76,7 @@ public class LogCommand extends Command {
         requireAllNonNull(targetIndex, note, date, clock);
         checkArgument(Interaction.isValidNote(note), Interaction.MESSAGE_CONSTRAINTS);
         this.targetIndex = targetIndex;
-        this.note = note.trim();
+        this.note = StringUtil.trimUnicodeWhitespace(note);
         this.date = date;
         this.clock = clock;
     }

@@ -64,6 +64,16 @@ public class EditLogCommandTest {
     }
 
     @Test
+    public void constructor_paddedNote_equalsTrimmedCommand() {
+        EditLogCommand expected = new EditLogCommand(INDEX_FIRST_PERSON, ENTRY, NOTE, DATE);
+        for (String padding : List.of(" \t", "\u00a0", "\u2003", "\u0085")) {
+            EditLogCommand actual = new EditLogCommand(INDEX_FIRST_PERSON, ENTRY,
+                    Optional.of(padding + NOTE.get() + padding), DATE);
+            assertEquals(expected, actual);
+        }
+    }
+
+    @Test
     public void execute_nullModel_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () ->
                 new EditLogCommand(INDEX_FIRST_PERSON, ENTRY, NOTE, DATE).execute(null));
@@ -97,6 +107,22 @@ public class EditLogCommandTest {
                 .execute(model);
         assertEquals(List.of(new Interaction(MIDDLE.getDate(), NOTE.get()), OLDEST, NEWEST),
                 model.getFilteredPersonList().get(0).getInteractions());
+    }
+
+    @Test
+    public void execute_unicodePaddedNote_preservesInternalWhitespace() throws Exception {
+        setInteractions(MIDDLE, OLDEST, NEWEST);
+        String expectedNote = "Corrected\u00a0meeting\u2003note";
+        EditLogCommand command = new EditLogCommand(INDEX_FIRST_PERSON, ENTRY,
+                Optional.of("\u00a0" + expectedNote + "\u2003"), Optional.empty());
+
+        CommandResult result = command.execute(model);
+
+        Person updatedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        assertEquals(List.of(new Interaction(MIDDLE.getDate(), expectedNote), OLDEST, NEWEST),
+                updatedPerson.getInteractions());
+        assertEquals(String.format(EditLogCommand.MESSAGE_SUCCESS, 2, updatedPerson.getName(),
+                "16 Sep 2026", expectedNote), result.getFeedbackToUser());
     }
 
     @Test

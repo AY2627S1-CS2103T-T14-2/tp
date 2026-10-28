@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.DisplayDateFormatter;
+import seedu.address.commons.util.StringUtil;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
@@ -56,7 +57,7 @@ public class EditLogCommand extends Command {
         note.ifPresent(value -> checkArgument(Interaction.isValidNote(value), Interaction.MESSAGE_CONSTRAINTS));
         this.targetIndex = targetIndex;
         this.interactionIndex = interactionIndex;
-        this.note = note.map(String::trim);
+        this.note = note.map(StringUtil::trimUnicodeWhitespace);
         this.date = date;
     }
 
