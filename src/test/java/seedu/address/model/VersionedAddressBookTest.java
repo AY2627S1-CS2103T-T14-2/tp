@@ -158,6 +158,44 @@ public class VersionedAddressBookTest {
     }
 
     @Test
+    public void undoAndRedo_describedChanges_returnDescriptionsOfThoseChanges() {
+        versionedAddressBook.addPerson(BENSON);
+        versionedAddressBook.commit("add Benson");
+        versionedAddressBook.addPerson(CARL);
+        versionedAddressBook.commit("add Carl");
+
+        assertEquals("add Carl", versionedAddressBook.undo());
+        assertEquals("add Benson", versionedAddressBook.undo());
+        assertEquals("add Benson", versionedAddressBook.redo());
+        assertEquals("add Carl", versionedAddressBook.redo());
+    }
+
+    @Test
+    public void undo_changeWithoutDescription_returnsEmptyString() {
+        versionedAddressBook.addPerson(BENSON);
+        versionedAddressBook.commit();
+
+        assertEquals("", versionedAddressBook.undo());
+    }
+
+    @Test
+    public void commit_afterUndo_discardsUndoneDescriptions() {
+        versionedAddressBook.addPerson(BENSON);
+        versionedAddressBook.commit("add Benson");
+        versionedAddressBook.undo();
+        versionedAddressBook.addPerson(CARL);
+        versionedAddressBook.commit("add Carl");
+
+        assertEquals("add Carl", versionedAddressBook.undo());
+        assertEquals("add Carl", versionedAddressBook.redo());
+    }
+
+    @Test
+    public void commit_nullDescription_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> versionedAddressBook.commit(null));
+    }
+
+    @Test
     public void commit_liveDataModifiedAfterwards_savedStateUnchanged() {
         versionedAddressBook.addPerson(BENSON);
         versionedAddressBook.commit();

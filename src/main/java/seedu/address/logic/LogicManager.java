@@ -56,7 +56,7 @@ public class LogicManager implements Logic {
         Command command = parseCommand(commandText);
         List<Person> personsBeforeCommand = List.copyOf(model.getAddressBook().getPersonList());
         CommandResult commandResult = command.execute(model);
-        model.commitAddressBookIfChanged();
+        model.commitAddressBookIfChanged(commandText.trim());
         boolean hasChangedData = !personsBeforeCommand.equals(model.getAddressBook().getPersonList());
         if (hasChangedData) {
             commandResult = addUnrecognisedPrefixNote(commandResult, commandText);

@@ -15,6 +15,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_STAGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -54,14 +55,15 @@ public class AddressBookParser {
      */
     private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
-    private static final Set<String> COMMANDS_IGNORING_ARGUMENTS = Set.of(ClearCommand.COMMAND_WORD,
+    private static final Set<String> COMMANDS_WITHOUT_ARGUMENTS = Set.of(ClearCommand.COMMAND_WORD,
             ListCommand.COMMAND_WORD, StatsCommand.COMMAND_WORD, ExitCommand.COMMAND_WORD, HelpCommand.COMMAND_WORD,
             UndoCommand.COMMAND_WORD, RedoCommand.COMMAND_WORD);
 
     /**
      * Returns prefix-like words not supported by the command's own format, without changing parsing.
      * Find's parser rejects unsupported known filters itself, so its advisory scan checks only unknown words.
-     * Commands that ignore arguments produce no notes. Unknown command words retain the global prefix check.
+     * Commands that take no arguments produce no notes, as they ignore or reject any.
+     * Unknown command words retain the global prefix check.
      *
      * @throws NullPointerException if {@code userInput} is null.
      */
@@ -71,8 +73,8 @@ public class AddressBookParser {
         if (!matcher.matches()) {
             return ArgumentTokenizer.findUnrecognisedPrefixes(userInput);
         }
-        String commandWord = matcher.group("commandWord");
-        if (COMMANDS_IGNORING_ARGUMENTS.contains(commandWord)) {
+        String commandWord = getCommandWord(matcher);
+        if (COMMANDS_WITHOUT_ARGUMENTS.contains(commandWord)) {
             return List.of();
         }
         List<Prefix> recognisedPrefixes = switch (commandWord) {
@@ -85,8 +87,9 @@ public class AddressBookParser {
             case LogCommand.COMMAND_WORD, EditLogCommand.COMMAND_WORD -> List.of(PREFIX_NOTE, PREFIX_DATE);
             case IntroCommand.COMMAND_WORD -> List.of(PREFIX_INTRODUCER);
             case TagCommand.COMMAND_WORD, UntagCommand.COMMAND_WORD -> List.of(PREFIX_TAG);
-            case DeleteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD, StageCommand.COMMAND_WORD,
-                    UnlogCommand.COMMAND_WORD, QuietCommand.COMMAND_WORD -> List.of();
+            case StageCommand.COMMAND_WORD -> List.of(PREFIX_STAGE);
+            case DeleteCommand.COMMAND_WORD, ViewCommand.COMMAND_WORD, UnlogCommand.COMMAND_WORD,
+                    QuietCommand.COMMAND_WORD -> List.of();
             default -> CliSyntax.ALL_PREFIXES;
         };
         return ArgumentTokenizer.findUnrecognisedPrefixes(userInput, recognisedPrefixes);
@@ -105,7 +108,7 @@ public class AddressBookParser {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
         }
 
-        final String commandWord = matcher.group("commandWord");
+        final String commandWord = getCommandWord(matcher);
         final String arguments = matcher.group("arguments");
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
@@ -132,13 +135,36 @@ public class AddressBookParser {
             case StatsCommand.COMMAND_WORD -> new StatsCommand();
             case ExitCommand.COMMAND_WORD -> new ExitCommand();
             case HelpCommand.COMMAND_WORD -> new HelpCommand();
-            case UndoCommand.COMMAND_WORD -> new UndoCommand();
-            case RedoCommand.COMMAND_WORD -> new RedoCommand();
+            case UndoCommand.COMMAND_WORD -> {
+                requireNoArguments(arguments, UndoCommand.MESSAGE_NO_ARGUMENTS);
+                yield new UndoCommand();
+            }
+            case RedoCommand.COMMAND_WORD -> {
+                requireNoArguments(arguments, RedoCommand.MESSAGE_NO_ARGUMENTS);
+                yield new RedoCommand();
+            }
             default -> {
                 logger.finer("This user input caused a ParseException: " + userInput);
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);
             }
         };
+    }
+
+    /**
+     * Throws a {@code ParseException} with {@code message} if {@code arguments} contains anything but spaces.
+     * Used by commands where extra text, e.g. a count in {@code undo 3}, suggests the user expects something else.
+     */
+    private static void requireNoArguments(String arguments, String message) throws ParseException {
+        if (!arguments.isBlank()) {
+            throw new ParseException(message);
+        }
+    }
+
+    /**
+     * Returns the command word matched by {@code matcher} in lower case, so that command words ignore case.
+     */
+    private static String getCommandWord(Matcher matcher) {
+        return matcher.group("commandWord").toLowerCase(Locale.ROOT);
     }
 
 }

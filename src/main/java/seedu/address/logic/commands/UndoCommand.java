@@ -17,7 +17,10 @@ public class UndoCommand extends Command {
     public static final String COMMAND_WORD = "undo";
 
     public static final String MESSAGE_SUCCESS = "Undid the last change.";
+    public static final String MESSAGE_UNDID_CHANGE = "Undid the last change: %1$s";
     public static final String MESSAGE_NOTHING_TO_UNDO = "There is no change to undo.";
+    public static final String MESSAGE_NO_ARGUMENTS = "undo takes no arguments and undoes one change at a time. "
+            + "To undo more changes, enter undo again for each one.";
 
     private static final Logger logger = LogsCenter.getLogger(UndoCommand.class);
 
@@ -29,10 +32,12 @@ public class UndoCommand extends Command {
             throw new CommandException(MESSAGE_NOTHING_TO_UNDO);
         }
 
-        model.undoAddressBook();
+        String undoneChange = model.undoAddressBook();
         assert model.canRedoAddressBook() : "an undone change can always be redone";
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
         logger.fine("Undid the last change and showed all supporters");
-        return new CommandResult(MESSAGE_SUCCESS);
+        return new CommandResult(undoneChange.isEmpty()
+                ? MESSAGE_SUCCESS
+                : String.format(MESSAGE_UNDID_CHANGE, undoneChange));
     }
 }

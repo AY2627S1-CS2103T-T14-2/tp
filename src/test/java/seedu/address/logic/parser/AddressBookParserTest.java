@@ -80,13 +80,25 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_undo() throws Exception {
         assertTrue(parser.parseCommand(UndoCommand.COMMAND_WORD) instanceof UndoCommand);
-        assertTrue(parser.parseCommand(UndoCommand.COMMAND_WORD + " 3") instanceof UndoCommand);
+        assertTrue(parser.parseCommand("  undo  ") instanceof UndoCommand);
+    }
+
+    @Test
+    public void parseCommand_undoWithArguments_throwsParseException() {
+        // a count would otherwise undo only one change while looking like it undid several
+        assertThrows(ParseException.class, UndoCommand.MESSAGE_NO_ARGUMENTS, () -> parser.parseCommand("undo 3"));
+        assertThrows(ParseException.class, UndoCommand.MESSAGE_NO_ARGUMENTS, () -> parser.parseCommand("undo all"));
     }
 
     @Test
     public void parseCommand_redo() throws Exception {
         assertTrue(parser.parseCommand(RedoCommand.COMMAND_WORD) instanceof RedoCommand);
-        assertTrue(parser.parseCommand(RedoCommand.COMMAND_WORD + " 3") instanceof RedoCommand);
+        assertTrue(parser.parseCommand("  redo  ") instanceof RedoCommand);
+    }
+
+    @Test
+    public void parseCommand_redoWithArguments_throwsParseException() {
+        assertThrows(ParseException.class, RedoCommand.MESSAGE_NO_ARGUMENTS, () -> parser.parseCommand("redo 3"));
     }
 
     @Test
@@ -114,9 +126,11 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_editlogWrongCase_throwsParseException() {
-        // command words are case-sensitive
-        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("EDITLOG 1 2 nt/Note"));
+    public void parseCommand_editlogUpperCase_returnsEditLogCommand() throws Exception {
+        // command words ignore case
+        EditLogCommand expected = new EditLogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON,
+                Optional.of("Note"), Optional.empty());
+        assertEquals(expected, parser.parseCommand("EDITLOG 1 2 nt/Note"));
     }
 
     @Test
@@ -149,9 +163,9 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_unlogWrongCase_throwsParseException() {
-        // command words are case-sensitive
-        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("UNLOG 1 2"));
+    public void parseCommand_unlogUpperCase_returnsUnlogCommand() throws Exception {
+        // command words ignore case
+        assertEquals(new UnlogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON), parser.parseCommand("UNLOG 1 2"));
     }
 
     @Test
@@ -162,9 +176,11 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_stageWrongCase_throwsParseException() {
-        // command words are case-sensitive
-        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("STAGE 1 giving"));
+    public void parseCommand_stageMixedCase_returnsStageCommand() throws Exception {
+        // command words ignore case
+        StageCommand expected = new StageCommand(INDEX_FIRST_PERSON, Stage.GIVING);
+        assertEquals(expected, parser.parseCommand("STAGE 1 giving"));
+        assertEquals(expected, parser.parseCommand("Stage 1 giving"));
     }
 
     @Test
@@ -184,8 +200,9 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_viewWrongCase_throwsParseException() {
-        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("VIEW 1"));
+    public void parseCommand_viewUpperCase_returnsViewCommand() throws Exception {
+        // command words ignore case
+        assertEquals(new ViewCommand(INDEX_FIRST_PERSON), parser.parseCommand("VIEW 1"));
     }
 
     @Test
@@ -266,6 +283,13 @@ public class AddressBookParserTest {
     public void parseCommand_list() throws Exception {
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD + " 3") instanceof ListCommand);
+    }
+
+    @Test
+    public void parseCommand_listMixedCase_returnsListCommand() throws Exception {
+        // command words ignore case, e.g. when Caps Lock is on
+        assertTrue(parser.parseCommand("LIST") instanceof ListCommand);
+        assertTrue(parser.parseCommand("List") instanceof ListCommand);
     }
 
     @Test

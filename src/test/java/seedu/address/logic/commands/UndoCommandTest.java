@@ -36,6 +36,15 @@ public class UndoCommandTest {
     }
 
     @Test
+    public void execute_describedChange_namesUndoneChange() {
+        model.deletePerson(ALICE);
+        model.commitAddressBookIfChanged("delete 1");
+
+        String expectedMessage = String.format(UndoCommand.MESSAGE_UNDID_CHANGE, "delete 1");
+        assertCommandSuccess(new UndoCommand(), model, expectedMessage, getTypicalModel());
+    }
+
+    @Test
     public void execute_filteredList_showsAllSupporters() {
         deleteAliceAndCommit();
         showPersonAtIndex(model, INDEX_SECOND_PERSON);

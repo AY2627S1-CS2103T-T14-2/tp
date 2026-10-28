@@ -4,7 +4,9 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.List;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
@@ -29,6 +31,8 @@ public class StageCommand extends Command {
 
     public static final String MESSAGE_STAGE_CHANGED = "Changed stage of %1$s: %2$s -> %3$s.";
     public static final String MESSAGE_ALREADY_AT_STAGE = "%1$s is already at stage %2$s. Nothing was changed.";
+
+    private static final Logger logger = LogsCenter.getLogger(StageCommand.class);
 
     private final Index targetIndex;
     private final Stage stage;
@@ -60,12 +64,10 @@ public class StageCommand extends Command {
             return new CommandResult(String.format(MESSAGE_ALREADY_AT_STAGE, personToUpdate.getName(), stage));
         }
 
-        Person updatedPerson = new Person(personToUpdate.getName(), personToUpdate.getPhone(),
-                personToUpdate.getEmail(), personToUpdate.getAddress(), personToUpdate.getOrganisation(),
-                personToUpdate.getIntroducer(), stage, personToUpdate.getInteractions(),
-                personToUpdate.getTags());
+        Person updatedPerson = personToUpdate.withStage(stage);
         model.setPerson(personToUpdate, updatedPerson);
         model.setViewedPerson(updatedPerson);
+        logger.fine("Changed stage of " + personToUpdate.getName() + " from " + oldStage + " to " + stage);
 
         return new CommandResult(String.format(MESSAGE_STAGE_CHANGED, personToUpdate.getName(), oldStage, stage));
     }

@@ -44,9 +44,15 @@ public class CommandPrefixDetectionTest {
 
     @Test
     public void findUnrecognisedPrefixes_positionalCommands_doNotRecognisePrefixes() {
-        for (String command : List.of("delete 1", "view 1", "stage 1", "unlog 1 1", "quiet")) {
+        for (String command : List.of("delete 1", "view 1", "unlog 1 1", "quiet")) {
             assertEquals(List.of("st/"), parser.findUnrecognisedPrefixes(command + " st/giving"), command);
         }
+    }
+
+    @Test
+    public void findUnrecognisedPrefixes_stageWithOptionalStagePrefix_returnsOnlyOtherPrefixes() {
+        assertEquals(List.of(), parser.findUnrecognisedPrefixes("stage 1 st/giving"));
+        assertEquals(List.of("t/"), parser.findUnrecognisedPrefixes("stage 1 t/giving"));
     }
 
     @Test
@@ -62,6 +68,14 @@ public class CommandPrefixDetectionTest {
         for (String command : List.of("clear", "list", "stats", "exit", "help", "undo", "redo")) {
             assertEquals(List.of(), parser.findUnrecognisedPrefixes(command + " n/Tan x/foo"), command);
         }
+    }
+
+    @Test
+    public void findUnrecognisedPrefixes_upperCaseCommandWord_usesThatCommandsPrefixes() {
+        // command words ignore case here too, matching parseCommand
+        assertEquals(List.of("st/"), parser.findUnrecognisedPrefixes("DELETE 1 st/giving"));
+        assertEquals(List.of("t/"), parser.findUnrecognisedPrefixes("Log 1 nt/Called t/vip"));
+        assertEquals(List.of(), parser.findUnrecognisedPrefixes("UNDO n/Tan x/foo"));
     }
 
     @Test

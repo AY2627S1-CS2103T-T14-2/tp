@@ -112,7 +112,7 @@ How the `Logic` component works:
 1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).
 1. The result of the command execution is encapsulated as a `CommandResult` object.
-1. Before returning it from `Logic`, `LogicManager` calls `commitAddressBookIfChanged()` to record changes for undo/redo and saves the data through `Storage`.
+1. Before returning it from `Logic`, `LogicManager` calls `commitAddressBookIfChanged(String)` with the command text to record changes for undo/redo and saves the data through `Storage`.
    If saving fails after the command changed the data, the change stays in the `Model` and `LogicManager` throws a `CommandException` whose message starts with the command's result and ends with `LogicManager.MESSAGE_CHANGE_NOT_SAVED_FORMAT`, so the user does not repeat a command such as `delete 1`, which would change another supporter. The message suggests `undo` to reverse the change, or `redo` after an `undo`, since another `undo` would reverse an earlier change.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
@@ -186,7 +186,7 @@ Later command results and errors replace the warning through the existing comman
 
 `ArgumentTokenizer` splits a command's arguments only at the prefixes its parser asks for. Any other word ending in `/`, such as `em/` mistyped for `e/`, stays part of the value before it. On its own, this would save a mistyped prefix silently inside an address or a note, or make the parser blame a field the user typed correctly: `add n/Tan p/91234567 x/foo` reads the phone number as `91234567 x/foo` and reports an invalid phone number.
 
-`AddressBookParser#findUnrecognisedPrefixes(String)` selects the prefixes supported by the command's own format, then delegates scanning to `ArgumentTokenizer`. The scan returns prefix-like words outside that set in their first-occurrence order, including prefixes used by other commands. Positional-only commands accept no prefixes. Commands that ignore arguments produce no prefix notes, and unknown command words retain the global `CliSyntax.ALL_PREFIXES` check. The advisory prefix sets must stay aligned with the corresponding command parsers when formats change.
+`AddressBookParser#findUnrecognisedPrefixes(String)` selects the prefixes supported by the command's own format, then delegates scanning to `ArgumentTokenizer`. The scan returns prefix-like words outside that set in their first-occurrence order, including prefixes used by other commands. Positional-only commands accept no prefixes. Commands that take no arguments produce no prefix notes, whether they ignore extra text (e.g. `list`) or reject it (`undo` and `redo`), and unknown command words retain the global `CliSyntax.ALL_PREFIXES` check. The advisory prefix sets must stay aligned with the corresponding command parsers when formats change.
 
 For `find`, the advisory scan uses `CliSyntax.ALL_PREFIXES` instead. `FindCommandParser` explicitly rejects known unsupported filters (`n/`, `a/`, `dt/`, `nt/` and `by/`), so their errors must not also claim that those prefixes were read as ordinary text. Unknown words such as `x/` remain eligible for an advisory note when parsing fails; a successful search changes no supporter data and receives no undo suggestion.
 
@@ -759,9 +759,9 @@ The counts are kept in an `EnumMap<Stage, Integer>` that starts with every stage
 
 Undo and redo are facilitated by `VersionedAddressBook`, which extends `AddressBook` with a history of saved states. The history is stored as an `addressBookStateList` of read-only copies, together with a `currentStatePointer` giving the index of the copy that matches the current data. `VersionedAddressBook` adds the following operations:
 
-- `VersionedAddressBook#commit()` -- Saves a copy of the current supporter data in the history, after discarding any undone states.
-- `VersionedAddressBook#undo()` -- Restores the previous state from the history.
-- `VersionedAddressBook#redo()` -- Restores a previously undone state from the history.
+- `VersionedAddressBook#commit(String)` -- Saves a copy of the current supporter data in the history with a description of the change, after discarding any undone states.
+- `VersionedAddressBook#undo()` -- Restores the previous state from the history and returns the description of the undone change.
+- `VersionedAddressBook#redo()` -- Restores a previously undone state from the history and returns the description of the redone change.
 - `VersionedAddressBook#canUndo()` and `VersionedAddressBook#canRedo()` -- Check whether there is a state to move to.
 - `VersionedAddressBook#hasChangesSinceLastCommit()` -- Checks whether the current data differs from the state at the `currentStatePointer`.
 
@@ -806,7 +806,7 @@ The following sequence diagram shows how an undo operation goes through the `Log
 **Note:** The lifeline for `UndoCommand` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
 </box>
 
-After restoring the data, `UndoCommand` shows all supporters, so that a restored supporter is visible even if a `find` filter was active. Restoring a state does not mark the data as changed, so `Model#commitAddressBookIfChanged()` saves no new state for `undo` itself. `LogicManager` then saves the restored data to the data file, as it does after every successful command.
+After restoring the data, `UndoCommand` shows all supporters, so that a restored supporter is visible even if a `find` filter was active. Its result names the undone change using the description saved with it, which `LogicManager` sets to the command as the user typed it, e.g. `Undid the last change: delete 2`. Restoring a state does not mark the data as changed, so `Model#commitAddressBookIfChanged()` saves no new state for `undo` itself. `LogicManager` then saves the restored data to the data file, as it does after every successful command.
 
 Similarly, how an undo operation goes through the `Model` component is shown below:
 

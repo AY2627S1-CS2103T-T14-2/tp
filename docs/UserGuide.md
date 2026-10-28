@@ -55,6 +55,8 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 - Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
 
+- Command words ignore case. For example, `list`, `LIST` and `List` all list every supporter.
+
 - Supporter indices must be positive integers. For example, `delete 0`, `delete abc`, `view 0` and `edit 0 n/x` report `Index must be a positive integer (1, 2, 3, ...).` followed by the command's usage.<br>
   For `editlog` and `unlog`, missing, extra or invalid indices report `Provide exactly two positive integer indices: INDEX ENTRY.` followed by usage. A positive index that does not identify a displayed supporter or interaction is rejected separately during execution. For commands requiring a single supporter index, a missing index or extra words in the index argument produce `Invalid command format!` followed by usage. Missing required fields can also produce this format error.
 
@@ -76,7 +78,7 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 
   Everyday words such as `s/o`, `c/o`, `w/` and `and/or` are not flagged. If a note points out a word you meant to type, such as `Unit/` in an address, you can ignore it.
 
-- Extraneous parameters for commands that take no parameters, such as `help`, `list`, `stats`, `exit`, `clear`, `undo` and `redo`, are ignored.<br>
+- Extraneous parameters for commands that take no parameters, such as `help`, `list`, `stats`, `exit` and `clear`, are ignored. `undo` and `redo` instead reject any parameters, so that `undo 3` cannot look like it undid three changes.<br>
   For example, `help 123` is interpreted as `help`. Prefix-like words in these ignored parameters do not produce a note.
 
 - If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -205,7 +207,7 @@ Changes how far the relationship with a supporter has progressed.
 Format: `stage INDEX STAGE`
 
 - Sets the stage of the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list. The index **must be a positive integer** 1, 2, 3, ...
-- `STAGE` must be one of the six stages below. Upper and lower case are both accepted. No prefix is needed before it.
+- `STAGE` must be one of the six stages below. Upper and lower case are both accepted. No prefix is needed before it, but `st/STAGE`, as used by `add` and `find`, also works: `stage 1 st/giving` is the same as `stage 1 giving`.
 - Any stage can be changed to any other stage, e.g. a lapsed donor can be moved back to `cultivating`.
 - If the supporter is already at that stage, their record is unchanged and a message says so.
 - On success, the detail panel switches to this supporter and shows their current stage, including when they are already at the requested stage.
@@ -575,7 +577,8 @@ Format: `undo`
 - Running `undo` again reverts the change before that, back to when the app was opened.
 - A command that changes nothing, such as `stage` with the supporter's current stage, `tag` with a tag they already have or `edit` with the details they already have, is not recorded. Neither is a command that fails. There is nothing to undo for them.
 - After undoing, all supporters are listed. The detail panel shows the displayed supporter's restored record, or is cleared if that supporter no longer exists.
-- Text after `undo` is ignored.
+- The result display names the command that made the change, as you typed it, e.g. `Undid the last change: tag 1 t/vip`.
+- `undo` takes no parameters and undoes one change at a time. For example, `undo 3` is rejected and nothing is undone; enter `undo` three times instead.
 - Undo history is kept only while the app is open. After you restart the app, earlier changes cannot be undone.
 
 If there is nothing to undo, the result display shows `There is no change to undo.` and nothing is changed.
@@ -594,7 +597,8 @@ Format: `redo`
 - Running `redo` again re-applies the next undone change, in the order they were undone.
 - Making a new change after `undo` discards the undone changes, so they can no longer be redone.
 - After redoing, all supporters are listed, and the detail panel is updated in the same way as for `undo`.
-- Text after `redo` is ignored.
+- The result display names the command being redone, e.g. `Redid the last undone change: tag 1 t/vip`.
+- `redo` takes no parameters and redoes one change at a time, so `redo 3` is rejected and nothing is redone.
 
 If there is nothing to redo, the result display shows `There is no undone change to redo.` and nothing is changed.
 
