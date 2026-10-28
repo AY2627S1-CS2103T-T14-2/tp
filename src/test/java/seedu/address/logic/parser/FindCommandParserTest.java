@@ -67,6 +67,66 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_nonBreakingSpacesBetweenNameKeywords_returnsFindCommand() {
+        FindCommand expectedCommand = new FindCommand(new PersonMatchesSearchPredicate(List.of("Tan", "Wei", "Ming")));
+
+        assertParseSuccess(parser, "Tan Wei Ming", expectedCommand);
+        assertParseSuccess(parser, "Tan\u00a0Wei\u00a0Ming", expectedCommand);
+    }
+
+    @Test
+    public void parse_nonBreakingSpacesInOrganisation_returnsFindCommand() {
+        FindCommand expectedCommand = new FindCommand(new PersonMatchesSearchPredicate(List.of(),
+                List.of("DBS Bank"), List.of(), List.of(), List.of(), List.of()));
+
+        assertParseSuccess(parser, "o/DBS Bank", expectedCommand);
+        assertParseSuccess(parser, "o/DBS\u00a0Bank", expectedCommand);
+    }
+
+    @Test
+    public void parse_nonBreakingSpacesAroundPrefixes_returnsFindCommand() {
+        FindCommand expectedCommand = new FindCommand(new PersonMatchesSearchPredicate(List.of("Tan"),
+                List.of("DBS Bank"), List.of(), List.of(Stage.GIVING), List.of(), List.of()));
+
+        assertParseSuccess(parser, " Tan o/ DBS Bank st/ GIVING ", expectedCommand);
+        assertParseSuccess(parser, "\u00a0Tan\u00a0o/\u00a0DBS Bank\u00a0st/\u00a0GIVING\u00a0", expectedCommand);
+    }
+
+    @Test
+    public void parse_trailingNonBreakingSpaceInName_returnsFindCommand() {
+        FindCommand expectedCommand = new FindCommand(new PersonMatchesSearchPredicate(List.of("Ming")));
+
+        assertParseSuccess(parser, "Ming ", expectedCommand);
+        assertParseSuccess(parser, "Ming\u00a0", expectedCommand);
+    }
+
+    @Test
+    public void parse_trailingNonBreakingSpaceInOrganisation_returnsFindCommand() {
+        FindCommand expectedCommand = new FindCommand(new PersonMatchesSearchPredicate(List.of(),
+                List.of("DBS Bank"), List.of(), List.of(), List.of(), List.of()));
+
+        assertParseSuccess(parser, "o/DBS Bank ", expectedCommand);
+        assertParseSuccess(parser, "o/DBS Bank\u00a0", expectedCommand);
+    }
+
+    @Test
+    public void parse_nonBreakingSpacesOnly_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+
+        assertParseFailure(parser, "\u00a0", expectedMessage);
+        assertParseFailure(parser, " \t\u00a0\u00a0 ", expectedMessage);
+    }
+
+    @Test
+    public void parse_nonBreakingSpacesOnlyPrefixValue_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String prefix : List.of("o/", "t/", "p/", "e/")) {
+            assertParseFailure(parser, prefix + "\u00a0", expectedMessage);
+            assertParseFailure(parser, "Tan " + prefix + " \u00a0\u00a0 ", expectedMessage);
+        }
+    }
+
+    @Test
     public void parse_textAfterPrefix_belongsToPrefixValue() {
         assertParseSuccess(parser, "o/DBS Bank tan", new FindCommand(new PersonMatchesSearchPredicate(List.of(),
                 List.of("DBS Bank tan"), List.of(), List.of(), List.of(), List.of())));
