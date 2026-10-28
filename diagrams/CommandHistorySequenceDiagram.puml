@@ -1,0 +1,30 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box UI UI_COLOR_T1
+participant ":CommandBox" as CommandBox UI_COLOR
+participant ":CommandHistory" as CommandHistory UI_COLOR
+end box
+
+[-> CommandBox : Up key pressed
+activate CommandBox
+
+CommandBox -> CommandHistory : previous(typed text)
+activate CommandHistory
+
+opt not browsing yet
+    CommandHistory -> CommandHistory : keep typed text as draft
+end
+
+CommandHistory -> CommandHistory : move cursor back one
+CommandHistory --> CommandBox : previous command
+deactivate CommandHistory
+
+CommandBox -> CommandBox : show command, caret at end
+CommandBox -> CommandBox : consume key event
+
+[<-- CommandBox
+deactivate CommandBox
+
+@enduml
