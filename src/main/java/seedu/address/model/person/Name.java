@@ -34,6 +34,7 @@ public class Name {
     /**
      * Constructs a {@code Name}, normalizing Unicode to NFC, removing leading and trailing spaces
      * and reducing each run of spaces inside the name to one.
+     * Non-breaking spaces (U+00A0) are treated as ordinary spaces.
      *
      * @param name A valid name.
      */
@@ -51,7 +52,8 @@ public class Name {
     }
 
     private static String normalise(String name) {
-        return Normalizer.normalize(name, Normalizer.Form.NFC).trim().replaceAll("\\s+", " ");
+        return Normalizer.normalize(name, Normalizer.Form.NFC).replace('\u00a0', ' ')
+                .trim().replaceAll("\\s+", " ");
     }
 
     /**
