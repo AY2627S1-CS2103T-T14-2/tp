@@ -2031,7 +2031,9 @@ testers are expected to do more _exploratory_ testing.
 
 ### Invalid-index feedback
 
-1. Prerequisites: Use isolated test data with at least two supporters. Run `list`, then `log 1 nt/Index validation test` and `view 1`, and note the displayed list, selected supporter and interaction history.
+For the non-ASCII test cases below, copy and paste the commands directly from this guide to preserve the digit characters `１`, `２` and `١`.
+
+1. Prerequisites: Use isolated test data with at least two supporters. The second supporter ensures that `stage ２ giving` tests digit validation with an otherwise valid index. Run `list`, then `log 1 nt/Index validation test` and `view 1`, and note the displayed list, selected supporter and interaction history.
 
 1. Test cases: `delete 0`, `delete abc`, `view 0` and `edit 0 n/x`<br>
    Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the respective command's usage. Data, filtering, selection and the saved data file remain unchanged.
