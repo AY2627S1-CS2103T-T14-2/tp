@@ -627,6 +627,8 @@ Undo and redo match immutable record versions by their original object identity 
 
 ### Index parsing and error feedback
 
+All supporter, introducer and interaction-entry indices are parsed by `ParserUtil#parseIndex(String)`. It trims surrounding whitespace, then uses `StringUtil#isNonZeroUnsignedInteger(String)` to require ASCII digits (`[0-9]+`) and a value from `1` to `2147483647`. Leading zeros are allowed. The ASCII check rejects full-width and Arabic-Indic digits that `Integer.parseInt` would otherwise accept.
+
 `ParserUtil#parseIndex(String, String)` first checks that the trimmed argument contains exactly one value. Empty or multi-word arguments produce `Invalid command format!` followed by the supplied command usage. A single value is delegated to the existing single-argument parser; invalid values produce `Index must be a positive integer (1, 2, 3, ...).` followed by usage, preserving the original exception as the cause. This includes values above the supported maximum of `2147483647`, even though they are positive integers. The overload is used by `delete`, `view`, `edit`, `stage`, `log`, `tag`, `untag`, and both target and introducer index parsing in `intro`.
 
 `ParserUtil#parseInteractionIndices(String, String)` provides the corresponding behavior for `editlog` and `unlog`: missing, extra or invalid indices produce `Provide exactly two positive integer indices: INDEX ENTRY.` followed by command usage. These helpers validate syntax and integer range only; commands still validate supporter indices against the displayed list and interaction numbers against the selected history.
@@ -1834,7 +1836,7 @@ testers are expected to do more _exploratory_ testing.
 
 ### Invalid-index feedback
 
-1. Prerequisites: Use isolated test data with at least one supporter. Run `list`, then `view 1`, and note the displayed list and selected supporter.
+1. Prerequisites: Use isolated test data with at least two supporters. Run `list`, then `log 1 nt/Index validation test` and `view 1`, and note the displayed list, selected supporter and interaction history.
 
 1. Test cases: `delete 0`, `delete abc`, `view 0` and `edit 0 n/x`<br>
    Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the respective command's usage. Data, filtering, selection and the saved data file remain unchanged.
@@ -1842,8 +1844,14 @@ testers are expected to do more _exploratory_ testing.
 1. Test cases: `stage 0 giving`, `log 0 nt/Called`, `tag 0 t/vip`, `untag 0 t/vip`, `intro 0 by/1` and `intro 1 by/abc`<br>
    Expected: The same positive-integer explanation followed by the respective command's usage. No data or selection changes.
 
+1. Test cases: Run `view １`, `view ١` and `stage ２ giving` separately.<br>
+   Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the respective command's usage. The indices use full-width or Arabic-Indic digits. Data, filtering, selection and the saved data file remain unchanged.
+
 1. Test cases: `editlog 1 abc nt/Note`, `unlog 0 1`, `unlog 1` and `unlog 1 2 3`<br>
    Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by the respective command's usage. No data or selection changes.
+
+1. Test cases: Run `editlog １ 1 nt/x` and `editlog 1 １ nt/x` separately.<br>
+   Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by editlog usage. Each command contains one full-width index. The interaction history and selection remain unchanged.
 
 1. Test cases: `delete`, `view`, `edit n/Bob`, `stage 1`, `log 1`, `intro 1`, `tag 1` and `untag 1`<br>
    Expected: `Invalid command format!` followed by the respective command's usage because required arguments are missing. No data or selection changes.
