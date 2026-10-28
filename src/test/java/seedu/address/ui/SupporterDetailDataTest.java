@@ -96,6 +96,14 @@ public class SupporterDetailDataTest {
     }
 
     @Test
+    public void getTags_mixedCaseTags_sortsIgnoringCase() {
+        Person person = new PersonBuilder().withTags("VIP", "boardIntro", "monthlyDonor").build();
+        SupporterDetailData data = new SupporterDetailData(Optional.of(person));
+
+        assertEquals("boardIntro, monthlyDonor, VIP", data.getTags());
+    }
+
+    @Test
     public void constructor_optionalFieldsUnset_showsDashes() {
         Person person = new PersonBuilder().withoutPhone().withoutAddress().withTags().build();
         SupporterDetailData data = new SupporterDetailData(Optional.of(person));
