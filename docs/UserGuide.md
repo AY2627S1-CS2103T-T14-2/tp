@@ -626,6 +626,8 @@ Example: after `log 2 nt/Called about the gala`, press <kbd>Up</kbd>, change the
 
 SupporterBook automatically saves data after every command that executes successfully. You do not need to save manually.
 
+If saving fails, e.g. because the data file or its folder is read-only, the error says why. If the command changed the data, the error first shows the command's result, and the change is kept but not saved, so do not repeat the command: repeating `delete 1`, for example, would delete another supporter. Once the problem is fixed, run any command, e.g. `list`, to save all changes, or run `undo` to reverse the change (`redo` if the command that failed to save was `undo`). Changes that are not saved are lost when you close SupporterBook.
+
 ### Loading data at startup
 
 SupporterBook loads `data/supporterbook.json` from the folder the app is launched from. The data file path is shown in the status bar.
