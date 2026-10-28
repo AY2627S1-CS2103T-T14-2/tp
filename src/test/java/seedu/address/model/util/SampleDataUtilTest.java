@@ -35,7 +35,7 @@ public class SampleDataUtilTest {
         assertTrue(supportersWithInteractions < samplePersons.size());
         assertTrue(samplePersons.stream()
                 .filter(person -> !person.getInteractions().isEmpty())
-                .allMatch(person -> person.getInteractions().size() >= 2));
+                .allMatch(person -> person.getInteractionCount() >= 2));
     }
 
     @Test

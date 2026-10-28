@@ -49,7 +49,7 @@ public class DeleteCommand extends Command {
         }
 
         Person personToDelete = lastShownList.get(targetIndex.getZeroBased());
-        int interactionCount = personToDelete.getInteractions().size();
+        int interactionCount = personToDelete.getInteractionCount();
 
         model.deletePerson(personToDelete);
         int clearedIntroductions = model.replaceIntroducer(personToDelete.getName(), Optional.empty());

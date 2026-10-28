@@ -49,7 +49,7 @@ public class ViewCommand extends Command {
         Person personToView = lastShownList.get(targetIndex.getZeroBased());
         model.setViewedPerson(personToView);
 
-        int interactionCount = personToView.getInteractions().size();
+        int interactionCount = personToView.getInteractionCount();
         if (interactionCount == 0) {
             return new CommandResult(String.format(MESSAGE_NO_INTERACTIONS, personToView.getName()));
         }
