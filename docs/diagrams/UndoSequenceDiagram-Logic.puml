@@ -39,7 +39,7 @@ deactivate Model
 UndoCommand -> Model : undoAddressBook()
 activate Model
 
-Model --> UndoCommand
+Model --> UndoCommand : change
 deactivate Model
 
 UndoCommand -> Model : updateFilteredPersonList(all)
@@ -53,7 +53,7 @@ deactivate UndoCommand
 UndoCommand -[hidden]-> LogicManager : result
 destroy UndoCommand
 
-LogicManager -> Model : commitAddressBookIfChanged()
+LogicManager -> Model : commitAddressBookIfChanged(commandText)
 activate Model
 
 Model --> LogicManager

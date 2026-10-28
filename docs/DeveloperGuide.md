@@ -765,7 +765,7 @@ Undo and redo are facilitated by `VersionedAddressBook`, which extends `AddressB
 - `VersionedAddressBook#canUndo()` and `VersionedAddressBook#canRedo()` -- Check whether there is a state to move to.
 - `VersionedAddressBook#hasChangesSinceLastCommit()` -- Checks whether the current data differs from the state at the `currentStatePointer`.
 
-These operations are exposed in the `Model` interface as `Model#commitAddressBookIfChanged()`, `Model#undoAddressBook()`, `Model#redoAddressBook()`, `Model#canUndoAddressBook()` and `Model#canRedoAddressBook()`. Only `ModelManager` knows that its address book is versioned; the rest of the app, including storage, still sees a `ReadOnlyAddressBook`.
+These operations are exposed in the `Model` interface as `Model#commitAddressBookIfChanged(String)`, `Model#undoAddressBook()`, `Model#redoAddressBook()`, `Model#canUndoAddressBook()` and `Model#canRedoAddressBook()`. Only `ModelManager` knows that its address book is versioned; the rest of the app, including storage, still sees a `ReadOnlyAddressBook`.
 
 Each saved state is a separate `AddressBook` created with the copy constructor, so later changes to the current data never alter it. The copies share `Person` objects, which is safe because `Person` is immutable: `edit`, `log`, `stage`, `intro`, `tag` and `untag` replace a supporter with a new `Person` rather than changing the old one. A deleted supporter's interactions are stored inside their `Person`, so undoing `delete` restores the interaction history too. Deleting a supporter also removes them as the introducer of other supporters. Since a state is the whole supporter data, one undo brings back the deleted supporter and those introductions together.
 
@@ -775,7 +775,7 @@ Step 1. The user launches the application. The `VersionedAddressBook` is initial
 
 <puml src="diagrams/UndoRedoState0.puml" alt="UndoRedoState0" />
 
-Step 2. The user executes `delete 2` to delete the 2nd supporter in the displayed list. After the command succeeds, `LogicManager` calls `Model#commitAddressBookIfChanged()`, which saves the data as it is after the deletion into the `addressBookStateList` and shifts the `currentStatePointer` to the new state.
+Step 2. The user executes `delete 2` to delete the 2nd supporter in the displayed list. After the command succeeds, `LogicManager` calls `Model#commitAddressBookIfChanged(String)` with the command text, which saves the data as it is after the deletion into the `addressBookStateList` and shifts the `currentStatePointer` to the new state.
 
 <puml src="diagrams/UndoRedoState1.puml" alt="UndoRedoState1" />
 
@@ -849,7 +849,7 @@ The history is kept in memory only, so it starts again from the loaded data each
 
 **Aspect: Where states are committed:**
 
-- **Alternative 1 (current choice):** `ModelManager` marks the data as changed in `addPerson`, `setPerson`, `deletePerson` and `setAddressBook`, and `LogicManager` calls `Model#commitAddressBookIfChanged()` after every successful command.
+- **Alternative 1 (current choice):** `ModelManager` marks the data as changed in `addPerson`, `setPerson`, `deletePerson` and `setAddressBook`, and `LogicManager` calls `Model#commitAddressBookIfChanged(String)` after every successful command.
   - Pros: Commands that change data, such as `intro`, `tag` and `untag`, and later ones such as `editlog` and `unlog`, are undoable without any extra code, since every data change goes through those four methods. Commands that change nothing, such as `list` or a `stage` command that leaves the stage unchanged, create no undo step.
   - Cons: A new `Model` method that changes data must also mark the data as changed. `UndoableCommandsTest` checks each data-changing command through `LogicManager`.
 
