@@ -2065,6 +2065,17 @@ testers are expected to do more _exploratory_ testing.
 1. Try `edit 1 p/12 ext 123456`, `edit 1 p/9123 ext 1234567` and `find p/(HP)`.<br>
    Expected: Each command is rejected without changing data or the active view.
 
+### Viewing help
+
+1. Copying the user guide link
+   1. Prerequisites: Run `help`, or press `F1`, to open the help window.
+
+   1. Test case: Click **Copy URL**, then paste into a text editor or browser.<br>
+      Expected: The button shows `Copied!` for 2 seconds, then `Copy URL` again. The pasted text is the user guide's link.
+
+   1. Test case: Click **Copy URL** twice, about a second apart.<br>
+      Expected: `Copied!` stays for 2 seconds after the second click.
+
 ### Saving data
 
 1. Reloading a supporter with a long valid name
