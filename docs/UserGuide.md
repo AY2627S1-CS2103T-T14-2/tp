@@ -120,6 +120,7 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 - SupporterBook only checks which characters a name uses, not whether it looks like a real name. For example, `s/o Kumar` or a name with only initials is accepted.
 - Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`.
 - Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. Typing an accented letter directly or adding its accent separately also counts as the same name. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
+- Straight (`'`) and curly (`’`) apostrophes also count as the same character when comparing names, so `Charlotte O'Brien` and `Charlotte O’Brien` count as the same supporter. The apostrophe style you enter is preserved when the name is saved and displayed.
 - `TAG` must be alphanumeric, with no spaces, e.g. `t/boardIntro`. Tags that differ only in capitalisation, e.g. `t/vip t/VIP`, count as one tag, and the spelling typed first is kept.
 - After adding, the list shows all supporters in the order they were added (any `find` or `quiet` filter is cleared), with the new supporter at the bottom.
 
@@ -146,7 +147,7 @@ Examples:
 
 - `add n/Aisha Rahman e/aisha.r@gmail.com` adds an online donor who gave only an email.
 - `add n/李伟 e/li@example.com` adds a supporter whose name uses Chinese characters.
-- `add n/Charlotte O’Brien e/c2@example.com` adds a supporter whose name contains a curly apostrophe.
+- `add n/Eleanor O’Brien e/eleanor@example.com` adds a supporter whose name contains a curly apostrophe.
 - `add n/Marie Laurent p/+33 1 42 68 53 00` adds a supporter with an international phone number.
 - `add n/Phone Label Test p/9123 4567 (HP)` stores a phone number with a type label.
 - `add n/Phone Extension Test p/(65) 9123-4567 ext 12 (Office)` stores a country code, extension and label.
