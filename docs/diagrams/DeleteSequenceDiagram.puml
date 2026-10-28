@@ -1,6 +1,11 @@
 @startuml
 !include style.puml
 skinparam ArrowFontStyle plain
+skinparam DefaultFontSize 22
+skinparam SequenceParticipantFontSize 22
+skinparam SequenceArrowFontSize 22
+skinparam SequenceBoxFontSize 22
+skinparam NoteFontSize 22
 
 box Logic LOGIC_COLOR_T1
 participant ":LogicManager" as LogicManager LOGIC_COLOR
@@ -22,7 +27,7 @@ note over LogicManager, Model
     Error paths and Model internals are omitted.
 end note
 
-LogicManager -> AddressBookParser : parseCommand("delete 1")
+LogicManager -> AddressBookParser : parseCommand(\n"delete 1")
 activate AddressBookParser
 
 create DeleteCommandParser
@@ -67,13 +72,13 @@ activate Model
 Model --> DeleteCommand
 deactivate Model
 
-DeleteCommand -> Model : replaceIntroducer(personToDelete.getName(), Optional.empty())
+DeleteCommand -> Model : replaceIntroducer(\npersonToDelete.getName(),\nOptional.empty())
 activate Model
 Model --> DeleteCommand : clearedIntroductions
 deactivate Model
 
 create CommandResult
-DeleteCommand -> CommandResult : CommandResult(message)
+DeleteCommand -> CommandResult : CommandResult(\nmessage)
 activate CommandResult
 CommandResult --> DeleteCommand
 deactivate CommandResult
