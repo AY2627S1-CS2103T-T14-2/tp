@@ -84,6 +84,8 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T14-2/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T14-2/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
+`PersonListPanel` shows each supporter as a `PersonCard` that cannot be selected. Each cell consumes mouse presses, and the list is not focus traversable, so the keyboard cannot select a card either. Only commands such as `view` change the detail panel, so a highlighted card could otherwise differ from the supporter the panel shows.
+
 The `UI` component,
 
 - executes user commands using the `Logic` component.
@@ -1839,6 +1841,9 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: `log 2 nt/Panel switch test`<br>
       Expected: The panel switches to supporter 2 and shows their updated history.
+
+   1. Test case: Click supporter 1's card.<br>
+      Expected: The card is not highlighted, and the panel still shows supporter 2.
 
    1. Test case: Run `view 1`, then `stage 2 giving`. Run `view 1` again, then repeat `stage 2 giving`.<br>
       Expected: Both stage commands switch the panel to supporter 2 with stage `Giving`, including the second command that reports no record change.

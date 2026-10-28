@@ -500,6 +500,7 @@ Format: `view INDEX`
 * Deleting the displayed supporter or running `clear` clears the details and history. Deleting another supporter keeps the panel unchanged.
 * After `undo` or `redo`, the panel shows the displayed supporter's restored record, or is cleared if that supporter no longer exists.
 * Selection is not remembered after restarting the app.
+* Clicking a supporter card does not select it or change the panel. Use `view INDEX` to show a supporter.
 
 Examples:
 
