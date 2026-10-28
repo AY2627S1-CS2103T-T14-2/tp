@@ -244,11 +244,11 @@ Format: `stats`
 - The displayed list and the detail panel do not change.
 - Anything typed after the command word is ignored; `stats 123` behaves as `stats`.
 
-For example, with four supporters:
+For example, with the sample supporters:
 
 ```text
-Supporters by stage (4 in total):
-Prospect: 1, Contacted: 0, Cultivating: 0, Giving: 2, Lapsed: 1, Declined: 0
+Supporters by stage (6 in total):
+Prospect: 1, Contacted: 1, Cultivating: 1, Giving: 1, Lapsed: 1, Declined: 1
 ```
 
 ### Finding supporters by name or other fields: `find`
@@ -514,7 +514,7 @@ Records which supporter introduced another, e.g. the board member who introduced
 Format: `intro INDEX by/[INTRODUCER_INDEX]`
 
 - `INDEX` is the supporter who was introduced, and `INTRODUCER_INDEX` is the supporter who introduced them. Both refer to the index numbers shown in the displayed supporter list and **must be positive integers** 1, 2, 3, ...
-- Both supporters must be in the displayed list. If one of them is hidden by a `find` filter, use `find` with both names, e.g. `find tan lim`, or run `list` first.
+- Both supporters must be in the displayed list. If one of them is hidden by a `find` filter, use `find` with both names, e.g. `find bernice charlotte`, or run `list` first.
 - Running `intro` again for the same supporter replaces their introducer. Each supporter has at most one introducer.
 - Leave out `INTRODUCER_INDEX` to remove the record, e.g. `intro 3 by/`.
 - A supporter cannot be their own introducer.
@@ -527,8 +527,8 @@ Format: `intro INDEX by/[INTRODUCER_INDEX]`
 Examples:
 
 - `intro 3 by/1` records that the 1st supporter in the displayed list introduced the 3rd.
-- `find tan lim` followed by `intro 2 by/1` records an introduction between the two supporters shown.
-- `intro 3 by/` removes the 3rd supporter's introducer.
+- `find bernice charlotte` followed by `intro 2 by/1` records that the 1st supporter in the search results introduced the 2nd.
+- `intro 4 by/` removes the 4th supporter's introducer.
 
 ### Adding tags to a supporter: `tag`
 
@@ -546,7 +546,7 @@ Format: `tag INDEX t/TAG [t/TAG]...`
 Examples:
 
 - `tag 2 t/vip` adds the tag `vip` to the 2nd supporter in the displayed list.
-- `find Tan` followed by `tag 1 t/boardIntro t/gala2026` adds two tags to the 1st supporter in the search results.
+- `find David` followed by `tag 1 t/boardIntro t/gala2026` adds two tags to the 1st supporter in the search results.
 
 ### Removing tags from a supporter: `untag`
 
@@ -564,8 +564,9 @@ Format: `untag INDEX t/TAG [t/TAG]...`
 
 Examples:
 
-- `untag 2 t/vip` removes the tag `vip` from the 2nd supporter in the displayed list.
-- `untag 3 t/lapsed2025 t/gala2025` removes two tags from the 3rd supporter.
+- `untag 2 t/csr` removes the tag `csr` from the 2nd supporter in the displayed list.
+- `untag 2 t/csr t/boardIntro` removes two tags from the 2nd supporter.
+- `find t/csr` followed by `untag 1 t/csr` removes the tag `csr` from the 1st supporter in the search results, who then no longer appears in them.
 
 ### Clearing all entries: `clear`
 
@@ -667,7 +668,7 @@ A supporter may also have an `"organisation"`, such as the company a CSR contact
 
 Each supporter card in the list shows the supporter's organisation, or `(no organisation)` if they have none.
 
-A supporter may also have an `"introducer"`, the name of the supporter who introduced them, e.g. a board member. Leave the key out if no introducer is recorded. If present, it must be the name of another supporter in the same file (capital letters and extra spaces are ignored), and cannot be the supporter's own name. Introductions in the file cannot go in a circle, e.g. Alex introduced by Bernice while Bernice is introduced by Alex.
+A supporter may also have an `"introducer"`, the name of the supporter who introduced them, e.g. a board member. Leave the key out if no introducer is recorded. If present, it must be the name of another supporter in the same file, compared in the same way as names in `add` (capital letters and extra spaces are ignored, and straight and curly apostrophes count as the same), and cannot be the supporter's own name. Introductions in the file cannot go in a circle, e.g. Alex introduced by Bernice while Bernice is introduced by Alex.
 
 A supporter's `"tags"` array lists their tags, each of which must be alphanumeric. Tags that differ only in capitalisation count as one tag, as they do in commands: if the file has both `"vip"` and `"VIP"`, only the one that comes first is loaded, and the other is removed the next time SupporterBook saves.
 
