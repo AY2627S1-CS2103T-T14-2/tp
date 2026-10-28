@@ -235,7 +235,7 @@ Each supporter's stage is shown as a coloured badge next to their name in the li
 
 Examples:
 
-- `stage 2 cultivating` moves the 2nd supporter in the displayed list to stage `Cultivating`.
+- `stage 2 giving` moves the 2nd supporter in the displayed list to stage `Giving`.
 - `find David` followed by `stage 1 GIVING` moves the 1st supporter in the results of the `find` command to stage `Giving`.
 
 ### Counting supporters by stage: `stats`
