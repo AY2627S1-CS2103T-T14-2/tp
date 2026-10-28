@@ -20,9 +20,10 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 
 1. Download the latest `supporterbook.jar` file from [here](https://github.com/AY2627S1-CS2103T-T14-2/tp/releases).
 
-1. Copy the file to the folder you want to use as the _home folder_ for SupporterBook. Your data is saved in a `data` folder inside it.
+1. Copy the file to an empty folder you want to use as the _home folder_ for SupporterBook. Your data is saved in a `data` folder inside it, so choose a folder where you can create files (not a read-only folder).
 
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar supporterbook.jar`.<br>
+1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar "supporterbook.jar"`.<br>
+   Use this command rather than double-clicking the JAR file. Double-clicking may start the app with a different Java version, and the app saves its data relative to the folder it is started from, so it may not find or save your data in the home folder.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample supporters. A few already have logged interactions, which you can see with `view`.<br>
    ![Ui](images/Ui.png)
 
