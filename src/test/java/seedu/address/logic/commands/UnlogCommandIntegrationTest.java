@@ -3,7 +3,6 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.InteractionHistoryTestUtil.assertHistory;
-import static seedu.address.testutil.TypicalInteractionNotes.NOTES_WITH_DIFFERENT_ENDINGS;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,26 +24,9 @@ import seedu.address.ui.SupporterDetailData;
 public class UnlogCommandIntegrationTest {
 
     @Test
-    public void execute_noteWithDifferentEndings_preservesNoteInFeedback() throws Exception {
-        LocalDate date = LocalDate.of(2024, 2, 29);
-        for (String note : NOTES_WITH_DIFFERENT_ENDINGS) {
-            Person target = new PersonBuilder().withInteractions(new Interaction(date, note)).build();
-            Model model = new ModelManager();
-            model.addPerson(target);
-
-            CommandResult result = new AddressBookParser().parseCommand("unlog 1 1").execute(model);
-
-            assertEquals("Deleted interaction #1 with " + target.getName() + " (29 Feb 2024): " + note,
-                    result.getFeedbackToUser());
-            Person expected = new PersonBuilder(target).withInteractions().build();
-            assertEquals(List.of(expected), model.getFilteredPersonList());
-        }
-    }
-
-    @Test
     public void execute_chronologicalEntry_selectsTargetAndRenumbersFilteredHistory() throws Exception {
         // set up a filtered supporter whose stored history differs from chronological order
-        Interaction middle = new Interaction(LocalDate.of(2024, 2, 29), "Middle meeting");
+        Interaction middle = new Interaction(LocalDate.of(2024, 2, 29), "Middle meeting.");
         Interaction oldest = new Interaction(LocalDate.of(2024, 2, 20), "Earlier call");
         Interaction newest = new Interaction(LocalDate.of(2024, 3, 10), "Recent call");
         Person other = new PersonBuilder().withName("Other Supporter").build();
@@ -64,7 +46,7 @@ public class UnlogCommandIntegrationTest {
         assertEquals(Optional.of(expected), model.getViewedPerson());
         assertEquals(List.of(expected), model.getFilteredPersonList());
         assertEquals(List.of(other, expected), model.getAddressBook().getPersonList());
-        assertEquals("Deleted interaction #2 with " + target.getName() + " (29 Feb 2024): Middle meeting",
+        assertEquals("Deleted interaction #2 with " + target.getName() + " (29 Feb 2024): Middle meeting.",
                 middleDeletionResult.getFeedbackToUser());
 
         SupporterDetailData displayAfterMiddleDeletion = new SupporterDetailData(model.getViewedPerson());

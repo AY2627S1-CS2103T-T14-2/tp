@@ -2,7 +2,6 @@ package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.testutil.InteractionHistoryTestUtil.assertHistory;
-import static seedu.address.testutil.TypicalInteractionNotes.NOTES_WITH_DIFFERENT_ENDINGS;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -22,23 +21,6 @@ import seedu.address.ui.SupporterDetailData;
  * Tests interaction editing from command parsing through the model to detail-panel data, without starting JavaFX.
  */
 public class EditLogCommandIntegrationTest {
-
-    @Test
-    public void execute_noteWithDifferentEndings_preservesNoteInFeedback() throws Exception {
-        LocalDate date = LocalDate.of(2024, 2, 29);
-        for (String note : NOTES_WITH_DIFFERENT_ENDINGS) {
-            Person target = new PersonBuilder().withInteractions(new Interaction(date, "Original note")).build();
-            Model model = new ModelManager();
-            model.addPerson(target);
-
-            CommandResult result = new AddressBookParser().parseCommand("editlog 1 1 nt/" + note).execute(model);
-
-            assertEquals("Edited interaction #1 with " + target.getName() + " (29 Feb 2024): " + note,
-                    result.getFeedbackToUser());
-            Person expected = new PersonBuilder(target).withInteractions(new Interaction(date, note)).build();
-            assertEquals(List.of(expected), model.getFilteredPersonList());
-        }
-    }
 
     @Test
     public void execute_dateThenNoteEdit_usesRefreshedNumbersAndPreservesFilter() throws Exception {
@@ -75,18 +57,18 @@ public class EditLogCommandIntegrationTest {
         assertEquals(Optional.of(edited.getDate()), model.getViewedPerson().orElseThrow().getLastInteractionDate());
 
         // use the refreshed number to edit the same interaction's note while retaining its new date
-        CommandResult nextResult = parser.parseCommand("editlog 1 3 nt/Corrected meeting").execute(model);
+        CommandResult nextResult = parser.parseCommand("editlog 1 3 nt/Corrected meeting?").execute(model);
         Person nextExpected = new PersonBuilder(target)
-                .withInteractions(new Interaction(edited.getDate(), "Corrected meeting"), oldest, newest).build();
+                .withInteractions(new Interaction(edited.getDate(), "Corrected meeting?"), oldest, newest).build();
         assertEquals(Optional.of(nextExpected), model.getViewedPerson());
         assertEquals(List.of(nextExpected), model.getFilteredPersonList());
         assertEquals(List.of(other, nextExpected), model.getAddressBook().getPersonList());
-        assertEquals("Edited interaction #3 with " + target.getName() + " (15 Mar 2024): Corrected meeting",
+        assertEquals("Edited interaction #3 with " + target.getName() + " (15 Mar 2024): Corrected meeting?",
                 nextResult.getFeedbackToUser());
         SupporterDetailData displayAfterNoteEdit = new SupporterDetailData(model.getViewedPerson());
         assertHistory(displayAfterNoteEdit, List.of(3, 2, 1),
                 List.of("15 Mar 2024", "10 Mar 2024", "20 Feb 2024"),
-                List.of("Corrected meeting", "Recent call", "Earlier call"));
+                List.of("Corrected meeting?", "Recent call", "Earlier call"));
     }
 
     @Test
