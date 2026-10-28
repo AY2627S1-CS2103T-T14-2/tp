@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -185,6 +186,19 @@ public class JsonAdaptedPersonTest {
         String expectedMessage = String.format(MISSING_FIELD_MESSAGE_FORMAT, Tag.class.getSimpleName());
 
         assertThrows(IllegalValueException.class, expectedMessage, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_tagsDifferingOnlyInCase_keepsFirstSpelling() throws Exception {
+        for (List<String> tagNames : List.of(List.of("monthlyDonor", "MONTHLYDONOR", "friends"),
+                List.of("MONTHLYDONOR", "friends", "monthlyDonor", "FRIENDS"))) {
+            List<JsonAdaptedTag> tags = tagNames.stream().map(JsonAdaptedTag::new).toList();
+            JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                    VALID_ADDRESS, VALID_ORGANISATION, null, VALID_STAGE, VALID_INTERACTIONS, tags);
+
+            Set<Tag> expectedTags = Set.of(new Tag(tagNames.get(0)), new Tag("friends"));
+            assertEquals(expectedTags, person.toModelType().getTags(), tagNames.toString());
+        }
     }
 
     @Test
