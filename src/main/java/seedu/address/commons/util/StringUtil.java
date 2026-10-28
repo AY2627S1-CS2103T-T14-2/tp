@@ -6,11 +6,14 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 /**
  * Helper functions for handling strings.
  */
 public class StringUtil {
+
+    private static final Pattern ASCII_DIGITS = Pattern.compile("[0-9]+");
 
     /**
      * Removes leading and trailing whitespace and Unicode space separators from a string,
@@ -97,7 +100,7 @@ public class StringUtil {
      */
     public static boolean isNonZeroUnsignedInteger(String s) {
         requireNonNull(s);
-        if (!s.matches("[0-9]+")) {
+        if (!ASCII_DIGITS.matcher(s).matches()) {
             return false;
         }
 
