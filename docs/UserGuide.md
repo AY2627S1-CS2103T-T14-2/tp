@@ -236,7 +236,7 @@ Each supporter's stage is shown as a coloured badge next to their name in the li
 Examples:
 
 - `stage 2 cultivating` moves the 2nd supporter in the displayed list to stage `Cultivating`.
-- `find Tan` followed by `stage 1 GIVING` moves the 1st supporter in the results of the `find` command to stage `Giving`.
+- `find David` followed by `stage 1 GIVING` moves the 1st supporter in the results of the `find` command to stage `Giving`.
 
 ### Counting supporters by stage: `stats`
 
@@ -364,7 +364,7 @@ Format: `delete INDEX`
 Examples:
 
 - `list` followed by `delete 2` deletes the 2nd supporter in the full list.
-- `find Tan` followed by `delete 1` deletes the 1st supporter in the search results and keeps the filter.
+- `find Irfan` followed by `delete 1` deletes the 1st supporter in the search results and keeps the filter.
 
 For a supporter with two interactions, the success message has two lines:
 
@@ -397,7 +397,7 @@ Examples:
 
 - `log 2 nt/Coffee at Raffles Place, keen on a Q4 volunteering day`
 - `log 2 nt/Meeting entered later dt/2024-02-29` records a meeting on 29 February 2024.
-- `find Tan` followed by `log 1 nt/Left voicemail about the year-end appeal` logs the interaction against the 1st supporter in the search results.
+- `find Bernice` followed by `log 1 nt/Left voicemail about the year-end appeal` logs the interaction against the 1st supporter in the search results.
 
 Logging 10 March, then 20 February, then 29 February 2024 gives:
 
@@ -510,7 +510,7 @@ Format: `view INDEX`
 Examples:
 
 * `view 2` selects the 2nd supporter in the displayed list.
-* `find Priya` followed by `view 1` selects the 1st supporter in the search results.
+* `find David` followed by `view 1` selects the 1st supporter in the search results.
 
 ### Recording who introduced a supporter: `intro`
 
