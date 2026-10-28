@@ -1,14 +1,13 @@
 package seedu.address.model.person;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Predicate;
 
 import seedu.address.commons.util.ToStringBuilder;
 
 /**
- * Tests that a {@code Person}'s {@code Name} contains any keyword, ignoring case.
- * A keyword can match part of a word.
+ * Tests that a {@code Person}'s {@code Name} contains any keyword, ignoring case and apostrophe style.
+ * Canonically equivalent Unicode spellings match, and a keyword can match part of a word.
  */
 public class NameContainsKeywordsPredicate implements Predicate<Person> {
     private final List<String> keywords;
@@ -22,10 +21,7 @@ public class NameContainsKeywordsPredicate implements Predicate<Person> {
 
     @Override
     public boolean test(Person person) {
-        String name = person.getName().fullName.toLowerCase(Locale.ROOT);
-
-        return keywords.stream()
-                .anyMatch(keyword -> name.contains(keyword.toLowerCase(Locale.ROOT)));
+        return new PersonMatchesSearchPredicate(keywords).test(person);
     }
 
     @Override

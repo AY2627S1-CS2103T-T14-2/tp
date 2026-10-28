@@ -78,6 +78,8 @@ The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDi
 
 `SupporterDetailPanel` displays the viewed supporter's details and interaction history using values prepared by `SupporterDetailData`. Both `PersonCard` and `SupporterDetailData` use `LastContactFormatter` to format the last-contact line consistently.
 
+`PersonListCard.fxml` lets long names and organisations wrap within the available card width, so supporters with similar long names remain distinguishable. The index and stage badge retain their preferred widths and align with the name's first baseline; cards grow vertically as text wraps. `PersonCardTest` covers full text rendering, alignment, non-overlapping content, resizing, and single-line short values.
+
 `CommandBox` also keeps a `CommandHistory` of the commands entered this session, which it uses to bring back earlier commands when the user presses Up or Down. `CommandHistory` is plain Java with no JavaFX code, so its behavior is tested without starting the UI. It stays in the `UI` component because it only recalls typed text; it does not affect how commands are parsed or executed.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103T-T14-2/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103T-T14-2/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
@@ -222,9 +224,12 @@ Phone queries use `Phone#isValidPhoneSearch(String)` to check the same formattin
 extension and label syntax as stored numbers. They are search fragments rather than complete
 `Phone` values, so the main-number length constraints do not apply to queries.
 
-`PersonMatchesSearchPredicate` defensively copies its criteria and normalizes text with
-`Locale.ROOT`. Names, organisations, tags and emails use literal, case-insensitive substring
-matching; stages match exactly. `normalizePhone(String)` delegates to `Phone#normalizeForSearch(String)`
+`PersonMatchesSearchPredicate` defensively copies its criteria and normalizes both text criteria
+and field values to NFC, replaces curly apostrophes (`’`) with straight apostrophes (`'`), and
+lowercases with `Locale.ROOT`. Names, organisations, tags and emails use substring matching on
+that normalized text; accents remain significant, and stored text is unchanged.
+`NameContainsKeywordsPredicate` delegates to the same matcher for name-only filtering.
+Stages match exactly. `normalizePhone(String)` delegates to `Phone#normalizeForSearch(String)`
 to remove separators, parentheses, trailing type labels and extension markers from both phone
 criteria and stored numbers. Extension digits remain in the searchable sequence. Missing optional
 fields do not satisfy criteria on those fields.
@@ -295,10 +300,10 @@ The command retains the existing filter. `ModelManager#deletePerson(Person)` cle
 
 ### Duplicate supporters
 
-Two supporters count as the same supporter if their names match, ignoring case and extra spaces. No other field is compared.
+Two supporters count as the same supporter if their names match, ignoring case, extra spaces and differences between straight (`'`) and curly (`’`) apostrophes. No other field is compared.
 
 - The `Name` constructor removes leading and trailing spaces and reduces each run of spaces inside the name to one, so every `Name` is stored in a normalised form.
-- `Name#isSameName(Name)` compares two names ignoring case. Because both names are already normalised, extra spaces need no special handling.
+- `Name#isSameName(Name)` replaces curly apostrophes (`’`) with straight apostrophes (`'`) in both names for comparison, then compares them ignoring case. Because both names are already normalised, extra spaces and canonically equivalent Unicode spellings need no special handling. Apostrophe replacement does not change `fullName`, so the original apostrophe style is preserved when saved and displayed. `Name#equals(Object)` and `Name#hashCode()` continue to use the stored spelling.
 - `Person#isSamePerson(Person)` uses `Name#isSameName(Name)`. `UniquePersonList`, `AddCommand`, `EditCommand` and the loading of the data file all rely on `Person#isSamePerson(Person)`, so they all apply the same rule.
 - When `AddCommand` or `EditCommand` finds a duplicate, `Messages#getErrorMessageForDuplicatePerson(List, Person)` names the supporter already in the list, and suggests adding a distinguishing word to the new name.
 
@@ -306,7 +311,7 @@ Two supporters count as the same supporter if their names match, ignoring case a
 
 **Aspect: Which fields decide whether two supporters are the same**
 
-- **Alternative 1 (current choice):** The name only, ignoring case and extra spaces.
+- **Alternative 1 (current choice):** The name only, ignoring case, extra spaces and differences between straight and curly apostrophes.
   - Pros: Re-adding someone already in the list is caught even if their phone or email has changed, which would otherwise split one relationship's history across two records.
   - Cons: Two different people with the same name cannot both be stored under that exact name; the user must add a distinguishing word to one of them.
 
@@ -686,7 +691,7 @@ A supporter can have an introducer, the supporter who introduced them, e.g. the 
 1. If the introducer would not change (the same introducer again, or removing a record that does not exist), it shows the supporter with `Model#setViewedPerson(Person)` and reports that nothing was changed. No `Person` is replaced, so no undo state is saved.
 1. Otherwise, it creates a copy of the supporter with `Person#withIntroducer(Optional<Name>)`, and calls `Model#setPerson(Person, Person)` and `Model#setViewedPerson(Person)`. The displayed list is not changed, so a `find` result is kept.
 
-**Preventing loops:** `AddressBook#isIntroducedThrough(Person person, Name name)`, which `Model` exposes, returns true if the supporter called `name` introduced `person`, directly or through other supporters. It starts at `person`'s introducer and keeps moving to that supporter's own introducer, comparing names with `Name#isSameName(Name)`, which ignores case and extra spaces. `IntroCommand` checks whether the proposed introducer was introduced through the target supporter. If so, the new introduction would close a loop.
+**Preventing loops:** `AddressBook#isIntroducedThrough(Person person, Name name)`, which `Model` exposes, returns true if the supporter called `name` introduced `person`, directly or through other supporters. It starts at `person`'s introducer and keeps moving to that supporter's own introducer, comparing names with `Name#isSameName(Name)`, which ignores case, extra spaces and differences between straight and curly apostrophes. `IntroCommand` checks whether the proposed introducer was introduced through the target supporter. If so, the new introduction would close a loop.
 
 For example, suppose Alex introduced Bernice, and Bernice introduced David. When the user tries to record David as Alex's introducer, `isIntroducedThrough(david, alexName)` moves from David to Bernice, then to Alex, and returns true, so the command is rejected.
 
@@ -1029,7 +1034,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case resumes from step 1.
 
-- 1d. A supporter with the same name already exists, ignoring capitalisation and extra spaces.
+- 1d. A supporter with the same name already exists, ignoring capitalisation, extra spaces and differences between straight and curly apostrophes.
   - 1d1. SupporterBook shows an error message suggesting a way to tell the two supporters apart.
 
     Use case resumes from step 1.
@@ -1110,7 +1115,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case resumes from step 1.
 
-- 1e. The new name is the same as another supporter's name, ignoring capitalisation and extra spaces.
+- 1e. The new name is the same as another supporter's name, ignoring capitalisation, extra spaces and differences between straight and curly apostrophes.
   - 1e1. SupporterBook shows an error message, suggesting a way to tell the two supporters apart.
 
     Use case resumes from step 1.
@@ -1447,6 +1452,22 @@ testers are expected to do more _exploratory_ testing.
 
 1. Test case: `find` without keywords<br>
    Expected: An invalid-command-format message is shown and the displayed list is unchanged.
+
+### Long names and organisations in supporter cards
+
+1. Prerequisites: Launch the app with fresh sample data in an isolated test folder.
+
+1. Run `add n/Muhammad Abdul Rahman bin Mohamed Iskandar Shah e/rahman@example.com o/Singapore Society for the Prevention of Cruelty to Animals`.
+   Then run `add n/Muhammad Abdul Rahman bin Mohamed Iskandar Shafiq e/shafiq@example.com o/Singapore Society for the Prevention of Cruelty to Animals`.
+
+1. Scroll to the two new cards.<br>
+   Expected: Both full names and organisations are readable, wrapping onto additional lines as needed without ellipses. The different name endings remain visible. The index and stage badge stay beside the name, aligned with its first line, and the organisation and last-contact line do not overlap the name or badge.
+
+1. Narrow and widen the window or move the divider to change the supporter list's width.<br>
+   Expected: Text reflows and card heights adjust to the available width. Short names and organisations remain on one line when they fit.
+
+1. Scroll away from the new cards and back again.<br>
+   Expected: The full names and organisations remain readable, with no clipped text or overlapping cards.
 
 ### Deleting a supporter
 
