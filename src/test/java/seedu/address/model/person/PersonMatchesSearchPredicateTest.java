@@ -26,6 +26,32 @@ public class PersonMatchesSearchPredicateTest {
     }
 
     @Test
+    public void test_nameKeywords_ignoresApostropheStyle() {
+        Person straightPerson = new PersonBuilder(supporter).withName("Charlotte O'Brien").build();
+        Person curlyPerson = new PersonBuilder(supporter).withName("Eleanor O’Brien").build();
+
+        for (String keyword : List.of("O'Brien", "O’Brien", "O’BRIEN")) {
+            PersonMatchesSearchPredicate predicate = new PersonMatchesSearchPredicate(List.of(keyword));
+
+            assertTrue(predicate.test(straightPerson));
+            assertTrue(predicate.test(curlyPerson));
+        }
+        assertFalse(new PersonMatchesSearchPredicate(List.of("OBrien")).test(straightPerson));
+        assertEquals("Charlotte O'Brien", straightPerson.getName().fullName);
+        assertEquals("Eleanor O’Brien", curlyPerson.getName().fullName);
+    }
+
+    @Test
+    public void test_nameKeywords_matchesCanonicalUnicodeSpellings() {
+        Person person = new PersonBuilder(supporter).withName("José Tan").build();
+
+        for (String keyword : List.of("José", "Jose\u0301", "JOSE\u0301")) {
+            assertTrue(new PersonMatchesSearchPredicate(List.of(keyword)).test(person));
+        }
+        assertFalse(new PersonMatchesSearchPredicate(List.of("Jose")).test(person));
+    }
+
+    @Test
     public void test_organisationKeywords_matchesAnyCaseInsensitiveSubstring() {
         PersonMatchesSearchPredicate predicate = new PersonMatchesSearchPredicate(List.of(),
                 List.of("OCBC", "dbs bank"), List.of(), List.of(), List.of(), List.of());
@@ -33,6 +59,38 @@ public class PersonMatchesSearchPredicateTest {
         assertTrue(predicate.test(supporter));
         assertFalse(predicate.test(new PersonBuilder(supporter).withOrganisation("Other Bank").build()));
         assertFalse(predicate.test(new PersonBuilder(supporter).withoutOrganisation().build()));
+    }
+
+    @Test
+    public void test_organisationKeywords_ignoresApostropheStyle() {
+        Person straightPerson = new PersonBuilder(supporter).withOrganisation("O'Brien Foundation").build();
+        Person curlyPerson = new PersonBuilder(supporter).withOrganisation("O’Brien Foundation").build();
+
+        for (String keyword : List.of("O'Brien", "O’Brien", "O’BRIEN")) {
+            PersonMatchesSearchPredicate predicate = new PersonMatchesSearchPredicate(List.of(), List.of(keyword),
+                    List.of(), List.of(), List.of(), List.of());
+
+            assertTrue(predicate.test(straightPerson));
+            assertTrue(predicate.test(curlyPerson));
+            assertFalse(predicate.test(supporter));
+        }
+        assertEquals("O'Brien Foundation", straightPerson.getOrganisation().orElseThrow().value);
+        assertEquals("O’Brien Foundation", curlyPerson.getOrganisation().orElseThrow().value);
+    }
+
+    @Test
+    public void test_organisationKeywords_matchesCanonicalUnicodeSpellings() {
+        Person composedPerson = new PersonBuilder(supporter).withOrganisation("José Foundation").build();
+        Person decomposedPerson = new PersonBuilder(supporter).withOrganisation("Jose\u0301 Foundation").build();
+
+        for (String keyword : List.of("José", "Jose\u0301", "JOSE\u0301")) {
+            PersonMatchesSearchPredicate predicate = new PersonMatchesSearchPredicate(List.of(), List.of(keyword),
+                    List.of(), List.of(), List.of(), List.of());
+
+            assertTrue(predicate.test(composedPerson));
+            assertTrue(predicate.test(decomposedPerson));
+        }
+        assertEquals("Jose\u0301 Foundation", decomposedPerson.getOrganisation().orElseThrow().value);
     }
 
     @Test

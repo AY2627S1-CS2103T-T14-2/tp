@@ -21,7 +21,8 @@ public class FindCommand extends Command {
             + "Use OR within a field and AND between fields.\n"
             + "Parameters: [KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...\n"
             + "Supply at least one nonempty criterion. Place name keywords before all prefixes. "
-            + "Text searches ignore case and match substrings; stages match full names. "
+            + "Text searches ignore case, treat ' and ’ as equivalent and match substrings; "
+            + "stages match full names. "
             + "Phone searches ignore plus signs, spaces and hyphens.\n"
             + "Example: " + COMMAND_WORD + " tan wei o/DBS st/giving st/lapsed";
 

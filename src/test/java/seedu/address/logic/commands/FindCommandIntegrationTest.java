@@ -60,6 +60,37 @@ public class FindCommandIntegrationTest {
     }
 
     @Test
+    public void execute_differentApostropheStyles_matchesNamesAndOrganisationsWithoutChangingData() throws Exception {
+        logic.execute("add n/Charlotte O'Brien e/charlotte@example.com o/O'Brien Foundation");
+        logic.execute("add n/Eleanor O’Brien e/eleanor@example.com o/O’Brien Foundation");
+        AddressBook original = new AddressBook(model.getAddressBook());
+
+        for (String query : List.of("find O'Brien", "find O’Brien", "find o/O'Brien", "find o/O’Brien",
+                "find O’BRIEN o/O'Brien Foundation")) {
+            CommandResult result = logic.execute(query);
+
+            assertEquals(List.of("Charlotte O'Brien", "Eleanor O’Brien"), model.getFilteredPersonList().stream()
+                    .map(person -> person.getName().fullName).toList());
+            assertEquals("2 supporter(s) listed!", result.getFeedbackToUser());
+        }
+        assertEquals(original, model.getAddressBook());
+        assertEquals(original, addressBookStorage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_canonicallyEquivalentUnicodeSearch_matchesNamesAndOrganisations() throws Exception {
+        logic.execute("add n/José Tan e/jose@example.com o/Jose\u0301 Foundation");
+
+        for (String query : List.of("find Jose\u0301", "find o/José", "find JOSE\u0301 o/JOSÉ")) {
+            CommandResult result = logic.execute(query);
+
+            assertEquals(List.of("José Tan"), model.getFilteredPersonList().stream()
+                    .map(person -> person.getName().fullName).toList());
+            assertEquals("1 supporter(s) listed!", result.getFeedbackToUser());
+        }
+    }
+
+    @Test
     public void execute_repeatedStages_retainsOriginalOrder() throws Exception {
         logic.execute("find st/lapsed st/giving");
 
