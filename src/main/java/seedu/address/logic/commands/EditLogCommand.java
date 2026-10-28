@@ -35,7 +35,7 @@ public class EditLogCommand extends Command {
             + "DATE must be a valid date in yyyy-MM-dd format, from 1900-01-01 through today.\n"
             + "Example: " + COMMAND_WORD + " 2 1 " + PREFIX_NOTE + "Updated meeting notes "
             + PREFIX_DATE + "2026-10-01";
-    public static final String MESSAGE_SUCCESS = "Edited interaction #%1$d with %2$s (%3$s): %4$s.";
+    public static final String MESSAGE_SUCCESS = "Edited interaction #%1$d with %2$s (%3$s): %4$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
 
     private final Index targetIndex;
