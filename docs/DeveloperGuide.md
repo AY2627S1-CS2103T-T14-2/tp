@@ -190,7 +190,7 @@ Later command results and errors replace the warning through the existing comman
 
 `ArgumentTokenizer` splits a command's arguments only at the prefixes its parser asks for. Any other word ending in `/`, such as `em/` mistyped for `e/`, stays part of the value before it. On its own, this would save a mistyped prefix silently inside an address or a note, or make the parser blame a field the user typed correctly: `add n/Tan p/91234567 x/foo` reads the phone number as `91234567 x/foo` and reports an invalid phone number.
 
-`AddressBookParser#findUnrecognisedPrefixes(String)` selects the prefixes supported by the command's own format, then delegates scanning to `ArgumentTokenizer`. The scan returns prefix-like words outside that set in their first-occurrence order, including prefixes used by other commands. Positional-only commands accept no prefixes. Commands that take no arguments produce no prefix notes, whether they ignore extra text (e.g. `list`) or reject it (`undo` and `redo`), and unknown command words retain the global `CliSyntax.ALL_PREFIXES` check. The advisory prefix sets must stay aligned with the corresponding command parsers when formats change.
+`AddressBookParser#findUnrecognisedPrefixes(String)` selects the prefixes supported by the command's own format, then delegates scanning to `ArgumentTokenizer`. The scan returns prefix-like words outside that set in their first-occurrence order, including prefixes used by other commands. Positional-only commands accept no prefixes, except that `stage` accepts `st/` before the stage, as `add` and `find` do. Commands that take no arguments produce no prefix notes, whether they ignore extra text (e.g. `list`) or reject it (`undo` and `redo`), and unknown command words retain the global `CliSyntax.ALL_PREFIXES` check. The advisory prefix sets must stay aligned with the corresponding command parsers when formats change.
 
 For `find`, the advisory scan uses `CliSyntax.ALL_PREFIXES` instead. `FindCommandParser` explicitly rejects known unsupported filters (`n/`, `a/`, `dt/`, `nt/` and `by/`), so their errors must not also claim that those prefixes were read as ordinary text. Unknown words such as `x/` remain eligible for an advisory note when parsing fails; a successful search changes no supporter data and receives no undo suggestion.
 
@@ -792,7 +792,7 @@ Step 3. The user executes `log 1 nt/Called` to log an interaction with the 1st s
 
 <box type="info" seamless>
 
-**Note:** Commands do not commit themselves. `ModelManager` marks the data as changed whenever `addPerson`, `setPerson`, `deletePerson` or `setAddressBook` is called, and `Model#commitAddressBookIfChanged()` saves a state only if that mark is set and `VersionedAddressBook#hasChangesSinceLastCommit()` confirms the data really differs, then clears the mark. So every command that changes supporter data saves exactly one state, even one that changes several supporters (such as deleting an introducer). A command that fails saves none. Neither does one that changes nothing, such as `stage` with the current stage, `tag` with a tag the supporter already has, `edit` with the values the supporter already has, or `clear` on an empty list. Such a command therefore also keeps any undone states available for `redo`.
+**Note:** Commands do not commit themselves. `ModelManager` marks the data as changed whenever `addPerson`, `setPerson`, `deletePerson` or `setAddressBook` is called, and `Model#commitAddressBookIfChanged()` saves a state only if that mark is set and `VersionedAddressBook#hasChangesSinceLastCommit()` confirms the data really differs, then clears the mark. So every command that changes supporter data saves exactly one state, even one that changes several supporters (such as deleting an introducer). A command that fails saves none. Neither does one that changes nothing, such as `stage` with the current stage, `tag` with a tag the supporter already has, `edit` with the values the supporter already has, `editlog` with the note and date the entry already has, or `clear` on an empty list. Such a command therefore also keeps any undone states available for `redo`.
 </box>
 
 Step 4. The user decides that logging the interaction was a mistake, and executes `undo`. `UndoCommand` calls `Model#undoAddressBook()`, which shifts the `currentStatePointer` once to the left and copies that state back into the current data with `AddressBook#resetData()`.
@@ -822,6 +822,8 @@ Similarly, how an undo operation goes through the `Model` component is shown bel
 The supporter shown in the detail panel is not part of the saved states. After restoring a state, `ModelManager` replaces the viewed supporter with the supporter of the same name in the restored data, or clears the detail panel if there is none.
 
 The `redo` command does the opposite: it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the data to that state.
+
+`undo` and `redo` take no arguments. `AddressBookParser` rejects any text after them, e.g. `undo 3`, rather than ignoring it as it does for `list`, since a user typing a count expects several changes to be undone, while only one would be.
 
 <box type="info" seamless>
 
@@ -867,6 +869,60 @@ The history is kept in memory only, so it starts again from the loaded data each
 - **Alternative 3:** `LogicManager` commits after every successful command, without checking for changes.
   - Pros: Simplest; no flag is needed.
   - Cons: Read-only commands would create empty undo steps, so `undo` would sometimes appear to do nothing.
+
+### Command history feature
+
+#### Implementation
+
+Pressing Up or Down in the command box brings back earlier commands. This is handled entirely in the `UI` component by `CommandHistory`, a plain Java class with no JavaFX code that `CommandBox` creates when it starts. `CommandHistory` keeps:
+
+- `commands` -- the commands entered this session, oldest first.
+- `cursor` -- the index of the command being shown, or `commands.size()` when the user is not browsing the history.
+- `draft` -- the text that was in the command box when the user started browsing.
+
+It offers three operations:
+
+- `CommandHistory#add(String)` -- Records a command as the newest one and stops browsing. A blank command, or one identical to the newest command, is not stored again.
+- `CommandHistory#previous(String)` -- Moves back one command and returns it. If the user was not browsing yet, the given text is kept as the draft first. It stays on the oldest command once it is reached, and returns an empty `Optional` if no commands have been entered.
+- `CommandHistory#next()` -- Moves forward one command and returns it. Moving past the newest command returns the draft. If the user is already past the newest command, it returns an empty `Optional`, so text typed without browsing is kept.
+
+`CommandBox` calls `add` when the user presses Enter, before the command is executed, so commands that fail are recorded too and can be corrected. It listens for key presses with an event filter on its text field. The sequence diagram below shows what happens when the user presses Up:
+
+<puml src="diagrams/CommandHistorySequenceDiagram.puml" alt="CommandHistorySequenceDiagram" />
+
+After showing the command, `CommandBox` consumes the key event, so the text field does not also move the caret to the start of the line. Down works the same way through `next()`, without the draft step.
+
+Given below is an example of how the history changes:
+
+Step 1. The user enters `list`, then `delete 1`. `commands` is `[list, delete 1]` and `cursor` is 2, past the newest command.
+
+Step 2. The user types `find Al` but does not press Enter, then presses Up. As the user was not browsing yet, `previous("find Al")` keeps `find Al` as the draft, moves `cursor` to 1 and returns `delete 1`.
+
+Step 3. The user presses Up again. `cursor` moves to 0 and `list` is shown. Pressing Up once more keeps `list`, as it is the oldest command.
+
+Step 4. The user presses Down twice. The first press shows `delete 1`. The second moves `cursor` past the newest command, so `next()` returns the draft and `find Al` is back in the command box.
+
+#### Design considerations:
+
+**Aspect: Where the history is kept:**
+
+- **Alternative 1 (current choice):** In `CommandHistory`, owned by `CommandBox` in the `UI` component.
+  - Pros: Recalling a command only changes the text in the command box, so `Logic` and `Model` are not involved. As plain Java, it is unit tested without starting JavaFX.
+  - Cons: Another part of the app, e.g. a future `history` command, could not list the commands without going through the UI.
+
+- **Alternative 2:** In `Logic`, recording each command `LogicManager` receives.
+  - Pros: The history would be available to commands.
+  - Cons: `Logic` would hold state that only matters for typing, and a command that fails to parse would need extra handling to be recorded.
+
+**Aspect: Whether the history is saved:**
+
+- **Alternative 1 (current choice):** Kept in memory and cleared when the app closes.
+  - Pros: Simple, and commands, which can contain supporters' personal details in notes, are not written to another file.
+  - Cons: The user cannot recall commands from an earlier session.
+
+- **Alternative 2:** Saved to a file and loaded at startup.
+  - Pros: Commands from earlier sessions can be recalled.
+  - Cons: Another file to read, write and keep safe, for a small convenience.
 
 ### \[Proposed\] Data archiving
 
@@ -981,6 +1037,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | -------- | ------------------------------------------------ | ---------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | `* * *`  | fundraiser                                       | have every change saved automatically                                  | I never lose work by forgetting to save                                |
 | `* *`    | careless user                                    | undo my last command                                                   | a mistaken delete does not cost me a record I cannot rebuild           |
+| `*`      | careless user                                    | redo a change I undid by mistake                                       | pressing undo once too often does not cost me work I meant to keep     |
 | `*`      | cautious user                                    | be asked to confirm before a command that wipes all my data            | one stray keystroke cannot empty the list                              |
 | `*`      | fundraiser handling other people's personal data | keep everything in a file on my own machine with nothing sent anywhere | supporters' details never leave the charity's laptop                   |
 | `*`      | fundraiser                                       | open and repair my data file in a text editor                          | a corrupted file does not mean starting again from nothing             |
@@ -1329,6 +1386,41 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case ends.
 
+**Use case: UC11 - Undo a mistaken change**
+
+**Preconditions: The user has changed supporter data since opening SupporterBook**
+
+**MSS**
+
+1.  User makes a change by mistake, e.g. deletes the wrong supporter.
+2.  User requests to undo the last change.
+3.  SupporterBook restores the data to how it was before that change, lists all supporters, and names the command that was undone.
+
+    Use case ends.
+
+**Extensions**
+
+- 2a. The user gives something after the command word, e.g. a number of changes to undo.
+  - 2a1. SupporterBook shows an error message saying that undo takes no parameters and undoes one change at a time, and changes nothing.
+
+    Use case resumes from step 2.
+
+- 2b. There is no change to undo, e.g. the app was just opened.
+  - 2b1. SupporterBook informs the user that there is nothing to undo.
+
+    Use case ends.
+
+- 3a. The mistaken change was made before other changes, so it has not been undone yet.
+  - 3a1. User requests to undo again.
+
+    Use case resumes from step 3.
+
+- 3b. The user realizes the undone change was correct after all.
+  - 3b1. User requests to redo the change.
+  - 3b2. SupporterBook re-applies the change and names the command that was redone.
+
+    Use case ends.
+
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
@@ -1624,6 +1716,9 @@ testers are expected to do more _exploratory_ testing.
    1. Test case: `stage 1 GIVING`, then `stage 1 lapsed`<br>
       Expected: Upper case is accepted; the 1st supporter moves to `Lapsed`.
 
+   1. Test case: `stage 1 st/cultivating`<br>
+      Expected: The `st/` prefix used by `add` and `find` is accepted; the 1st supporter moves to `Cultivating`, with no note about prefixes.
+
    1. Test case: `stage 1 gave`<br>
       Expected: No stage is changed. The status message lists the six valid stages.
 
@@ -1651,6 +1746,71 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: the same command without `st/contacted`, and with a different name<br>
       Expected: The new supporter is added with the `Prospect` badge.
+
+### Undoing and redoing changes
+
+1. Undoing and redoing a change
+   1. Prerequisites: Launch the app with at least two supporters, and run `list`.
+
+   1. Test case: `delete 1`, then `undo`<br>
+      Expected: The deleted supporter is back in the list, with their interactions. The status message is `Undid the last change: delete 1`.
+
+   1. Test case: `redo`<br>
+      Expected: The same supporter is deleted again. The status message is `Redid the last undone change: delete 1`.
+
+   1. Test case: `undo`, then `log 1 nt/Called`, then `redo`<br>
+      Expected: The interaction is logged, but the delete cannot be redone, as a new change discards undone ones. The status message is `There is no undone change to redo.`
+
+1. Commands that are not recorded
+   1. Prerequisites: The 1st supporter in the list is at stage `Giving`.
+
+   1. Test case: `log 2 nt/First call`, then `list`, `view 1` and `stage 1 giving`, then `undo`<br>
+      Expected: The interaction is removed from the 2nd supporter. `list` and `view` change no data, and `stage` changes nothing as the stage is the same, so none of them were recorded.
+
+1. Nothing to undo or redo
+   1. Prerequisites: Restart the app, so that no change has been made.
+
+   1. Test case: `undo`<br>
+      Expected: No data changes. The status message is `There is no change to undo.`
+
+   1. Test case: `redo`<br>
+      Expected: No data changes. The status message is `There is no undone change to redo.`
+
+1. Undo and redo with extra parameters
+   1. Prerequisites: Make at least two changes, e.g. `log 1 nt/One` and `log 1 nt/Two`.
+
+   1. Test case: `undo 2`<br>
+      Expected: Nothing is undone. The status message says that undo takes no arguments and undoes one change at a time.
+
+   1. Other commands to try: `undo all`, `redo 3`<br>
+      Expected: Nothing is undone or redone, and the status message says the command takes no arguments.
+
+### Recalling previous commands
+
+1. Browsing earlier commands
+   1. Prerequisites: Launch the app, then enter `list` and `view 1`.
+
+   1. Test case: Press Up twice<br>
+      Expected: The command box shows `view 1`, then `list`, with the caret at the end. Pressing Up again keeps `list`.
+
+   1. Test case: Press Down twice<br>
+      Expected: The command box shows `view 1`, then becomes empty.
+
+1. Keeping an unfinished command
+   1. Prerequisites: Enter `list`.
+
+   1. Test case: Type `find Al` without pressing Enter, press Up, then press Down<br>
+      Expected: Up shows `list`. Down brings back `find Al`.
+
+1. Recording failed and repeated commands
+   1. Test case: Enter `view 0`, which fails. Delete the text left in the command box, then press Up<br>
+      Expected: The command box shows `view 0` again, so it can be corrected.
+
+   1. Test case: Enter `list` three times, then press Up twice<br>
+      Expected: The command box shows `list`, then `view 0`, as repeated commands are stored once.
+
+   1. Test case: Close and relaunch the app, then press Up<br>
+      Expected: Nothing happens, as the history is not saved.
 
 ### Mistyped prefixes
 
