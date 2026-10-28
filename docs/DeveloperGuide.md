@@ -221,9 +221,12 @@ Phone queries use `Phone#isValidPhoneSearch(String)` to check the same formattin
 extension and label syntax as stored numbers. They are search fragments rather than complete
 `Phone` values, so the main-number length constraints do not apply to queries.
 
-`PersonMatchesSearchPredicate` defensively copies its criteria and normalizes text with
-`Locale.ROOT`. Names, organisations, tags and emails use literal, case-insensitive substring
-matching; stages match exactly. `normalizePhone(String)` delegates to `Phone#normalizeForSearch(String)`
+`PersonMatchesSearchPredicate` defensively copies its criteria and normalizes both text criteria
+and field values to NFC, replaces curly apostrophes (`’`) with straight apostrophes (`'`), and
+lowercases with `Locale.ROOT`. Names, organisations, tags and emails use substring matching on
+that normalized text; accents remain significant, and stored text is unchanged.
+`NameContainsKeywordsPredicate` delegates to the same matcher for name-only filtering.
+Stages match exactly. `normalizePhone(String)` delegates to `Phone#normalizeForSearch(String)`
 to remove separators, parentheses, trailing type labels and extension markers from both phone
 criteria and stored numbers. Extension digits remain in the searchable sequence. Missing optional
 fields do not satisfy criteria on those fields.

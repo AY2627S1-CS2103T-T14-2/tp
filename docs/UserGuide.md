@@ -266,6 +266,8 @@ Supply at least one name keyword or nonempty prefix value. Name keywords are opt
 | Phone | `p/PHONE` | Digit substring after ignoring formatting, a trailing type label and the `ext` marker; extension digits remain searchable |
 | Email | `e/EMAIL` | Case-insensitive substring; `e/@gmail` matches an address containing `@gmail` |
 
+- Text searches ignore case and treat straight (`'`) and curly (`’`) apostrophes as the same character. For example, both `find O'Brien` and `find O’Brien` match `Charlotte O'Brien` and `Eleanor O’Brien`. The same rule applies to organisation searches.
+- Typing an accented letter directly or adding its accent separately produces the same search results for names and organisations. Accents remain significant, so `Jose` does not match `José`. Searching preserves the spelling saved in each supporter record.
 - **OR within a field:** any name keyword can match, and repeated values of a prefix are alternatives. For example, `find st/giving st/lapsed` finds supporters at either stage.
 - **AND between fields:** every specified field must match. For example, `find tan o/DBS st/giving` finds supporters whose names contain `tan`, whose organisation contains `DBS`, and whose stage is `Giving`.
 - Repeating an identical value does not duplicate supporters or change the matches.
