@@ -17,6 +17,7 @@ public class UnlogCommandParser implements Parser<UnlogCommand> {
      *
      * @throws ParseException if the user input does not conform to the expected format
      */
+    @Override
     public UnlogCommand parse(String args) throws ParseException {
         requireNonNull(args);
         InteractionIndices indices = ParserUtil.parseInteractionIndices(args, UnlogCommand.MESSAGE_USAGE);
