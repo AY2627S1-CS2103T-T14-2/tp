@@ -59,6 +59,28 @@ public class LogCommandTest {
     }
 
     @Test
+    public void constructor_paddedNote_equalsTrimmedCommand() {
+        LogCommand expected = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, FIXED_CLOCK);
+        for (String padding : List.of(" \t", "\u00a0", "\u2003", "\u0085")) {
+            LogCommand actual = new LogCommand(INDEX_FIRST_PERSON, padding + VALID_NOTE + padding, FIXED_CLOCK);
+            assertEquals(expected, actual);
+        }
+    }
+
+    @Test
+    public void execute_unicodePaddedNote_preservesInternalWhitespace() throws Exception {
+        String expectedNote = "Called\u00a0supporter\u2003about appeal";
+        LogCommand command = new LogCommand(INDEX_FIRST_PERSON, "\u00a0" + expectedNote + "\u2003", FIXED_CLOCK);
+
+        CommandResult result = command.execute(model);
+
+        Person updatedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        assertEquals(List.of(new Interaction(FIXED_DATE, expectedNote)), updatedPerson.getInteractions());
+        assertEquals(String.format(LogCommand.MESSAGE_SUCCESS, 1, updatedPerson.getName(),
+                "16 Sep 2026", expectedNote), result.getFeedbackToUser());
+    }
+
+    @Test
     public void execute_validIndexUnfilteredList_success() {
         Person personToUpdate = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Interaction interaction = new Interaction(FIXED_DATE, VALID_NOTE);

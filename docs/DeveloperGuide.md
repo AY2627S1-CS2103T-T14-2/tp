@@ -294,7 +294,7 @@ verifies tied ordering after tag changes and after an interaction update creates
 
 ### Deleting a supporter and their history
 
-`DeleteCommand#execute(Model)` validates its index against `Model#getFilteredPersonList()`, so deletion after `find` targets the displayed supporter rather than the same index in the full list. It reads `Person#getInteractions().size()` before calling `Model#deletePerson(Person)` and reports that count on the second line of its success message. Every history entry is counted, including identical interactions.
+`DeleteCommand#execute(Model)` validates its index against `Model#getFilteredPersonList()`, so deletion after `find` targets the displayed supporter rather than the same index in the full list. It reads `Person#getInteractionCount()` before calling `Model#deletePerson(Person)` and reports that count on the second line of its success message. Every history entry is counted, including identical interactions.
 
 Interactions are stored within each immutable `Person`. Removing that supporter from the `AddressBook` removes their history from stored data without a separate interaction-deletion loop. `Messages#format(Person)` supplies the deleted supporter's details, preserving the shared formatting of stages and optional fields.
 
@@ -638,6 +638,8 @@ Undo and redo match immutable record versions by their original object identity 
 
 ### Index parsing and error feedback
 
+All supporter, introducer and interaction-entry indices are parsed by `ParserUtil#parseIndex(String)`. It trims surrounding whitespace, then uses `StringUtil#isNonZeroUnsignedInteger(String)` to require ASCII digits (`[0-9]+`) and a value from `1` to `2147483647`. Leading zeros are allowed. The ASCII check rejects full-width and Arabic-Indic digits that `Integer.parseInt` would otherwise accept.
+
 `ParserUtil#parseIndex(String, String)` first checks that the trimmed argument contains exactly one value. Empty or multi-word arguments produce `Invalid command format!` followed by the supplied command usage. A single value is delegated to the existing single-argument parser; invalid values produce `Index must be a positive integer (1, 2, 3, ...).` followed by usage, preserving the original exception as the cause. This includes values above the supported maximum of `2147483647`, even though they are positive integers. The overload is used by `delete`, `view`, `edit`, `stage`, `log`, `tag`, `untag`, and both target and introducer index parsing in `intro`.
 
 `ParserUtil#parseInteractionIndices(String, String)` provides the corresponding behavior for `editlog` and `unlog`: missing, extra or invalid indices produce `Provide exactly two positive integer indices: INDEX ENTRY.` followed by command usage. These helpers validate syntax and integer range only; commands still validate supporter indices against the displayed list and interaction numbers against the selected history.
@@ -928,10 +930,6 @@ Step 4. The user presses Down twice. The first press shows `delete 1`. The secon
   - Pros: Commands from earlier sessions can be recalled.
   - Cons: Another file to read, write and keep safe, for a small convenience.
 
-### \[Proposed\] Data archiving
-
-_{Explain here how the data archiving feature will be implemented}_
-
 ---
 
 ## **Documentation, logging, testing, dev-ops**
@@ -950,6 +948,7 @@ _{Explain here how the data archiving feature will be implemented}_
 **Target user profile**:
 
 - Donor and corporate-partnership executives at small (Tier 1) charities, who single-handedly manage every supporter relationship without access to a CRM.
+- Can type fast, prefer typing to using the mouse, and are reasonably comfortable using CLI apps.
 
 **Value proposition**: SupporterBook helps the sole fundraising and outreach staff at a small charity stay on top of every donor and corporate relationship, keeping each supporter’s history and the introductions behind it in one place, so follow-ups happen on time and relationships outlast whoever holds the role. It also allows fast CLI-based retrieval.
 
@@ -1452,12 +1451,15 @@ Stories are grouped by epic, with the highest-priority stories listed first with
   - **Lapsed**: Gave before, but is no longer giving.
   - **Declined**: Said no.
 - **Epic**: A large user need that is broken down into several smaller user stories. The user stories above are grouped by epic.
-- **Find filter**: The shorter list of supporters shown after a `find` command. It stays in place until `list`, `add` or `edit` is run.
+- **Find filter**: The shorter list of supporters shown after a `find` or `quiet` command. It stays in place until another `find` or `quiet` replaces it, or `list`, `add`, `edit`, `undo` or `redo` shows the full list again.
 - **Index**: The number shown beside a supporter in the currently displayed list, used by commands to refer to that supporter. The same supporter can have a different index after a `find`.
 - **Interaction**: A dated record of one conversation or other contact with a supporter, with a short note of what happened. A supporter's interactions together form their _interaction history_.
+- **Introducer**: The supporter who introduced another supporter to the charity, recorded with `intro`. A supporter has at most one introducer, who must be another supporter in SupporterBook.
 - **Introduction chain**: A sequence of introductions linking supporters, e.g. a board member introduces a CSR contact, who then introduces a colleague.
 - **IPC (Institution of a Public Character)**: A Singapore charity that is approved to issue tax-deductible receipts to its donors.
+- **Last contact**: The latest date among a supporter's interactions, whatever order they were logged in. A supporter with no interactions has no last contact.
 - **Mainstream OS**: Windows, Linux, Unix, or macOS
+- **Quiet supporter**: A supporter who may need a follow-up because they have no interactions, or their last contact was more than a given number of days ago (60 unless stated otherwise). Supporters at the `Declined` stage are never quiet. `quiet` lists them.
 - **Supporter**: Anyone whose relationship with the charity SupporterBook keeps track of, e.g. an individual donor, a prospective donor, a contact at a partner company, a board member, or a volunteer who makes introductions.
 - **Tier 1 charity**: Under the Code of Governance for Charities and IPCs (2023), a small or medium charity that is not an IPC, with gross annual receipts or total expenditure from $50,000 to under $10 million. Tier 2 covers all IPCs and large non-IPC charities.
 
@@ -1478,13 +1480,13 @@ testers are expected to do more _exploratory_ testing.
 1. Initial launch
    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
+   1. Open a terminal in that folder and run `java -jar "supporterbook.jar"`.<br>
       Expected: The GUI opens with a set of sample supporters, some of whom already have logged interactions. The window size may not be optimal.
 
 1. Saving window preferences
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with the same command.<br>
       Expected: The most recent window size and location are retained.
 
 1. Launching with invalid window preferences
@@ -2033,7 +2035,9 @@ testers are expected to do more _exploratory_ testing.
 
 ### Invalid-index feedback
 
-1. Prerequisites: Use isolated test data with at least one supporter. Run `list`, then `view 1`, and note the displayed list and selected supporter.
+For the non-ASCII test cases below, copy and paste the commands directly from this guide to preserve the digit characters `１`, `２` and `١`.
+
+1. Prerequisites: Use isolated test data with at least two supporters. The second supporter ensures that `stage ２ giving` tests digit validation with an otherwise valid index. Run `list`, then `log 1 nt/Index validation test` and `view 1`, and note the displayed list, selected supporter and interaction history.
 
 1. Test cases: `delete 0`, `delete abc`, `view 0` and `edit 0 n/x`<br>
    Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the respective command's usage. Data, filtering, selection and the saved data file remain unchanged.
@@ -2041,8 +2045,14 @@ testers are expected to do more _exploratory_ testing.
 1. Test cases: `stage 0 giving`, `log 0 nt/Called`, `tag 0 t/vip`, `untag 0 t/vip`, `intro 0 by/1` and `intro 1 by/abc`<br>
    Expected: The same positive-integer explanation followed by the respective command's usage. No data or selection changes.
 
+1. Test cases: Run `view １`, `view ١` and `stage ２ giving` separately.<br>
+   Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the respective command's usage. The indices use full-width or Arabic-Indic digits. Data, filtering, selection and the saved data file remain unchanged.
+
 1. Test cases: `editlog 1 abc nt/Note`, `unlog 0 1`, `unlog 1` and `unlog 1 2 3`<br>
    Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by the respective command's usage. No data or selection changes.
+
+1. Test cases: Run `editlog １ 1 nt/x` and `editlog 1 １ nt/x` separately.<br>
+   Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by editlog usage. Each command contains one full-width index. The interaction history and selection remain unchanged.
 
 1. Test cases: `delete`, `view`, `edit n/Bob`, `stage 1`, `log 1`, `intro 1`, `tag 1` and `untag 1`<br>
    Expected: `Invalid command format!` followed by the respective command's usage because required arguments are missing. No data or selection changes.
@@ -2068,6 +2078,17 @@ testers are expected to do more _exploratory_ testing.
    Expected: The complete formatted number, extension and label remain unchanged.
 1. Try `edit 1 p/12 ext 123456`, `edit 1 p/9123 ext 1234567` and `find p/(HP)`.<br>
    Expected: Each command is rejected without changing data or the active view.
+
+### Viewing help
+
+1. Copying the user guide link
+   1. Prerequisites: Run `help`, or press `F1`, to open the help window.
+
+   1. Test case: Click **Copy URL**, then paste into a text editor or browser.<br>
+      Expected: The button shows `Copied!` for 2 seconds, then `Copy URL` again. The pasted text is the user guide's link.
+
+   1. Test case: Click **Copy URL** twice, about a second apart.<br>
+      Expected: `Copied!` stays for 2 seconds after the second click.
 
 ### Saving data
 

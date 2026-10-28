@@ -116,7 +116,7 @@ public class MainWindowTest {
                 assertEquals("Interactions (1) - newest first", label(window, "historyHeading").getText());
                 TextArea feedback = (TextArea) window.getPrimaryStage().getScene().lookup("#resultDisplay");
                 assertTrue(feedback.getText().contains("Test save failure"));
-                assertEquals(1, model.getViewedPerson().orElseThrow().getInteractions().size());
+                assertEquals(1, model.getViewedPerson().orElseThrow().getInteractionCount());
             } finally {
                 window.getPrimaryStage().close();
             }

@@ -23,6 +23,7 @@ public class LogCommandParser implements Parser<LogCommand> {
      *
      * @throws ParseException if the user input does not conform to the expected format
      */
+    @Override
     public LogCommand parse(String args) throws ParseException {
         requireNonNull(args);
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_NOTE, PREFIX_DATE);

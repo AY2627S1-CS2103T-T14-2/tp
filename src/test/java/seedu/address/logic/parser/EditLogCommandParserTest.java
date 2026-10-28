@@ -104,7 +104,7 @@ public class EditLogCommandParserTest {
 
     @Test
     public void parse_invalidIndexInEitherPosition_failure() {
-        for (String invalidIndex : List.of("0", "-1", "+1", "abc", "1.5", "2147483648")) {
+        for (String invalidIndex : List.of("0", "-1", "+1", "abc", "1.5", "2147483648", "１")) {
             assertParseFailure(parser, invalidIndex + " 2 nt/Note", MESSAGE_INVALID_INDICES);
             assertParseFailure(parser, "1 " + invalidIndex + " nt/Note", MESSAGE_INVALID_INDICES);
         }

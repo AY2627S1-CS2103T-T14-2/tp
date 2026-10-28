@@ -208,6 +208,13 @@ public class Person {
     }
 
     /**
+     * Returns the number of interactions logged for this supporter.
+     */
+    public int getInteractionCount() {
+        return interactions.size();
+    }
+
+    /**
      * Returns the latest interaction date, or an empty {@code Optional} if there are no interactions.
      * The result is independent of logging order and does not change the stored history.
      */
@@ -237,7 +244,10 @@ public class Person {
      */
     public int getInteractionStoredIndex(int entryNumber) {
         Objects.checkIndex(entryNumber - 1, interactions.size());
-        return getInteractionIndicesInDisplayOrder().get(interactions.size() - entryNumber);
+        int storedIndex = getInteractionIndicesInDisplayOrder().get(interactions.size() - entryNumber);
+        assert storedIndex >= 0 && storedIndex < interactions.size()
+                : "chronological entry must map to an existing stored interaction";
+        return storedIndex;
     }
 
     /**
@@ -248,7 +258,10 @@ public class Person {
      */
     public int getInteractionEntryNumber(int storedIndex) {
         Objects.checkIndex(storedIndex, interactions.size());
-        return interactions.size() - getInteractionIndicesInDisplayOrder().indexOf(storedIndex);
+        int entryNumber = interactions.size() - getInteractionIndicesInDisplayOrder().indexOf(storedIndex);
+        assert entryNumber >= 1 && entryNumber <= interactions.size()
+                : "stored interaction must map to an existing chronological entry";
+        return entryNumber;
     }
 
     /**

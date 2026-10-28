@@ -20,9 +20,10 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 
 1. Download the latest `supporterbook.jar` file from [here](https://github.com/AY2627S1-CS2103T-T14-2/tp/releases).
 
-1. Copy the file to the folder you want to use as the _home folder_ for SupporterBook. Your data is saved in a `data` folder inside it.
+1. Copy the file to an empty folder you want to use as the _home folder_ for SupporterBook. Your data is saved in a `data` folder inside it, so choose a folder where you can create files (not a read-only folder).
 
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar supporterbook.jar`.<br>
+1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar "supporterbook.jar"`.<br>
+   Use this command rather than double-clicking the JAR file. Double-clicking may start the app with a different Java version, and the app saves its data relative to the folder it is started from, so it may not find or save your data in the home folder.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample supporters. A few already have logged interactions, which you can see with `view`.<br>
    ![Ui](images/Ui.png)
 
@@ -57,7 +58,8 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 
 - Command words ignore case. For example, `list`, `LIST` and `List` all list every supporter.
 
-- Supporter indices must be positive integers. For example, `delete 0`, `delete abc`, `view 0` and `edit 0 n/x` report `Index must be a positive integer (1, 2, 3, ...).` followed by the command's usage.<br>
+- Supporter indices (including introducer indices) and interaction-entry indices must be positive integers written with the digits `0` to `9`. Other digit characters, such as the full-width `１` typed by some Chinese or Japanese input methods, are rejected. Leading zeros are allowed: `01` means index `1`.
+  For example, `delete 0`, `delete abc`, `view 0`, `view １` and `edit 0 n/x` report `Index must be a positive integer (1, 2, 3, ...).` followed by the command's usage.<br>
   For `editlog` and `unlog`, missing, extra or invalid indices report `Provide exactly two positive integer indices: INDEX ENTRY.` followed by usage. A positive index that does not identify a displayed supporter or interaction is rejected separately during execution. For commands requiring a single supporter index, a missing index or extra words in the index argument produce `Invalid command format!` followed by usage. Missing required fields can also produce this format error.
 
 - Items in square brackets are optional.<br>
@@ -91,6 +93,9 @@ Shows a message explaining how to access the help page.
 ![help message](images/helpMessage.png)
 
 Format: `help`
+
+- You can also open the help window with the `Help` menu or by pressing `F1`.
+- Click **Copy URL** to copy the user guide's link. The button shows `Copied!` for 2 seconds to confirm the link was copied.
 
 ### Adding a supporter: `add`
 
@@ -230,8 +235,8 @@ Each supporter's stage is shown as a coloured badge next to their name in the li
 
 Examples:
 
-- `stage 2 cultivating` moves the 2nd supporter in the displayed list to stage `Cultivating`.
-- `find Tan` followed by `stage 1 GIVING` moves the 1st supporter in the results of the `find` command to stage `Giving`.
+- `stage 2 giving` moves the 2nd supporter in the displayed list to stage `Giving`.
+- `find David` followed by `stage 1 GIVING` moves the 1st supporter in the results of the `find` command to stage `Giving`.
 
 ### Counting supporters by stage: `stats`
 
@@ -244,11 +249,11 @@ Format: `stats`
 - The displayed list and the detail panel do not change.
 - Anything typed after the command word is ignored; `stats 123` behaves as `stats`.
 
-For example, with four supporters:
+For example, with the sample supporters:
 
 ```text
-Supporters by stage (4 in total):
-Prospect: 1, Contacted: 0, Cultivating: 0, Giving: 2, Lapsed: 1, Declined: 0
+Supporters by stage (6 in total):
+Prospect: 1, Contacted: 1, Cultivating: 1, Giving: 1, Lapsed: 1, Declined: 1
 ```
 
 ### Finding supporters by name or other fields: `find`
@@ -360,7 +365,7 @@ Format: `delete INDEX`
 Examples:
 
 - `list` followed by `delete 2` deletes the 2nd supporter in the full list.
-- `find Tan` followed by `delete 1` deletes the 1st supporter in the search results and keeps the filter.
+- `find Irfan` followed by `delete 1` deletes the 1st supporter in the search results and keeps the filter.
 
 For a supporter with two interactions, the success message has two lines:
 
@@ -393,7 +398,7 @@ Examples:
 
 - `log 2 nt/Coffee at Raffles Place, keen on a Q4 volunteering day`
 - `log 2 nt/Meeting entered later dt/2024-02-29` records a meeting on 29 February 2024.
-- `find Tan` followed by `log 1 nt/Left voicemail about the year-end appeal` logs the interaction against the 1st supporter in the search results.
+- `find Bernice` followed by `log 1 nt/Left voicemail about the year-end appeal` logs the interaction against the 1st supporter in the search results.
 
 Logging 10 March, then 20 February, then 29 February 2024 gives:
 
@@ -506,7 +511,7 @@ Format: `view INDEX`
 Examples:
 
 * `view 2` selects the 2nd supporter in the displayed list.
-* `find Priya` followed by `view 1` selects the 1st supporter in the search results.
+* `find David` followed by `view 1` selects the 1st supporter in the search results.
 
 ### Recording who introduced a supporter: `intro`
 
@@ -515,7 +520,7 @@ Records which supporter introduced another, e.g. the board member who introduced
 Format: `intro INDEX by/[INTRODUCER_INDEX]`
 
 - `INDEX` is the supporter who was introduced, and `INTRODUCER_INDEX` is the supporter who introduced them. Both refer to the index numbers shown in the displayed supporter list and **must be positive integers** 1, 2, 3, ...
-- Both supporters must be in the displayed list. If one of them is hidden by a `find` filter, use `find` with both names, e.g. `find tan lim`, or run `list` first.
+- Both supporters must be in the displayed list. If one of them is hidden by a `find` filter, use `find` with both names, e.g. `find bernice charlotte`, or run `list` first.
 - Running `intro` again for the same supporter replaces their introducer. Each supporter has at most one introducer.
 - Leave out `INTRODUCER_INDEX` to remove the record, e.g. `intro 3 by/`.
 - A supporter cannot be their own introducer.
@@ -528,8 +533,8 @@ Format: `intro INDEX by/[INTRODUCER_INDEX]`
 Examples:
 
 - `intro 3 by/1` records that the 1st supporter in the displayed list introduced the 3rd.
-- `find tan lim` followed by `intro 2 by/1` records an introduction between the two supporters shown.
-- `intro 3 by/` removes the 3rd supporter's introducer.
+- `find bernice charlotte` followed by `intro 2 by/1` records that the 1st supporter in the search results introduced the 2nd.
+- `intro 4 by/` removes the 4th supporter's introducer.
 
 ### Adding tags to a supporter: `tag`
 
@@ -547,7 +552,7 @@ Format: `tag INDEX t/TAG [t/TAG]...`
 Examples:
 
 - `tag 2 t/vip` adds the tag `vip` to the 2nd supporter in the displayed list.
-- `find Tan` followed by `tag 1 t/boardIntro t/gala2026` adds two tags to the 1st supporter in the search results.
+- `find David` followed by `tag 1 t/boardIntro t/gala2026` adds two tags to the 1st supporter in the search results.
 
 ### Removing tags from a supporter: `untag`
 
@@ -565,8 +570,9 @@ Format: `untag INDEX t/TAG [t/TAG]...`
 
 Examples:
 
-- `untag 2 t/vip` removes the tag `vip` from the 2nd supporter in the displayed list.
-- `untag 3 t/lapsed2025 t/gala2025` removes two tags from the 3rd supporter.
+- `untag 2 t/csr` removes the tag `csr` from the 2nd supporter in the displayed list.
+- `untag 2 t/csr t/boardIntro` removes two tags from the 2nd supporter.
+- `find t/csr` followed by `untag 1 t/csr` removes the tag `csr` from the 1st supporter in the search results, who then no longer appears in them.
 
 ### Clearing all entries: `clear`
 
@@ -668,7 +674,7 @@ A supporter may also have an `"organisation"`, such as the company a CSR contact
 
 Each supporter card in the list shows the supporter's organisation, or `(no organisation)` if they have none.
 
-A supporter may also have an `"introducer"`, the name of the supporter who introduced them, e.g. a board member. Leave the key out if no introducer is recorded. If present, it must be the name of another supporter in the same file (capital letters and extra spaces are ignored), and cannot be the supporter's own name. Introductions in the file cannot go in a circle, e.g. Alex introduced by Bernice while Bernice is introduced by Alex.
+A supporter may also have an `"introducer"`, the name of the supporter who introduced them, e.g. a board member. Leave the key out if no introducer is recorded. If present, it must be the name of another supporter in the same file, compared in the same way as names in `add` (capital letters and extra spaces are ignored, and straight and curly apostrophes count as the same), and cannot be the supporter's own name. Introductions in the file cannot go in a circle, e.g. Alex introduced by Bernice while Bernice is introduced by Alex.
 
 A supporter's `"tags"` array lists their tags, each of which must be alphanumeric. Tags that differ only in capitalisation count as one tag, as they do in commands: if the file has both `"vip"` and `"VIP"`, only the one that comes first is loaded, and the other is removed the next time SupporterBook saves.
 
@@ -715,18 +721,18 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t/TAG]... `<br> e.g., `edit 2 p/91234567 a/1 HarbourFront Avenue`
 **Editlog** | `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`<br> e.g., `editlog 1 2 nt/Corrected meeting dt/2024-03-15`
+**Exit**   | `exit`
+**Find**   | `find [KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...`<br> e.g., `find yu o/DBS st/cultivating`
+**Help**   | `help`
 **Intro**  | `intro INDEX by/[INTRODUCER_INDEX]`<br> e.g., `intro 3 by/1`
-**Tag**    | `tag INDEX t/TAG [t/TAG]...`<br> e.g., `tag 2 t/vip t/boardIntro`
-**Untag**  | `untag INDEX t/TAG [t/TAG]...`<br> e.g., `untag 2 t/vip`
-**Quiet**  | `quiet [DAYS]`<br> e.g., `quiet 60`
-**Find**   | `find [KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...`<br> e.g., `find tan o/DBS st/giving`
 **List**   | `list`
 **Log**    | `log INDEX nt/NOTE [dt/DATE]`<br> e.g., `log 2 nt/Called about the year-end appeal dt/2026-10-01`
-**Unlog**  | `unlog INDEX ENTRY`<br> e.g., `unlog 2 1`
+**Quiet**  | `quiet [DAYS]`<br> e.g., `quiet 60`
 **Redo**   | `redo`
-**Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 cultivating`
+**Stage**  | `stage INDEX STAGE`<br> e.g., `stage 2 giving`
 **Stats**  | `stats`
+**Tag**    | `tag INDEX t/TAG [t/TAG]...`<br> e.g., `tag 2 t/vip t/gala2026`
 **Undo**   | `undo`
+**Unlog**  | `unlog INDEX ENTRY`<br> e.g., `unlog 2 1`
+**Untag**  | `untag INDEX t/TAG [t/TAG]...`<br> e.g., `untag 2 t/csr`
 **View**   | `view INDEX`<br> e.g., `view 2`
-**Help**   | `help`
-**Exit**   | `exit`

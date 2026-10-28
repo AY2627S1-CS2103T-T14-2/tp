@@ -33,7 +33,7 @@ public class Organisation {
     }
 
     /**
-     * Returns true if a given string is a valid organisation name once its spaces are normalized.
+     * Returns true if a given string is a valid organization name once its spaces are normalized.
      * The normalized name must not be blank and must contain at most {@link #MAX_LENGTH} Unicode code points.
      * Any characters are allowed, as company names often contain symbols such as {@code &} and {@code '}.
      */

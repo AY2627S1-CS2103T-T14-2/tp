@@ -2,12 +2,14 @@ package seedu.address.ui;
 
 import java.util.logging.Logger;
 
+import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import seedu.address.commons.core.LogsCenter;
 
 /**
@@ -17,15 +19,21 @@ public class HelpWindow extends UiPart<Stage> {
 
     public static final String USERGUIDE_URL = "https://ay2627s1-cs2103t-t14-2.github.io/tp/UserGuide.html";
     public static final String HELP_MESSAGE = "Refer to the user guide: " + USERGUIDE_URL;
+    public static final String COPY_BUTTON_TEXT = "Copy URL";
+    public static final String COPIED_BUTTON_TEXT = "Copied!";
 
     private static final Logger logger = LogsCenter.getLogger(HelpWindow.class);
     private static final String FXML = "HelpWindow.fxml";
+    /** How long the copy button shows {@link #COPIED_BUTTON_TEXT} after a click. */
+    private static final Duration COPIED_TEXT_DURATION = Duration.seconds(2);
 
     @FXML
     private Button copyButton;
 
     @FXML
     private Label helpMessage;
+
+    private final PauseTransition copiedTextTimer = new PauseTransition(COPIED_TEXT_DURATION);
 
     /**
      * Creates a new HelpWindow.
@@ -35,6 +43,8 @@ public class HelpWindow extends UiPart<Stage> {
     public HelpWindow(Stage root) {
         super(FXML, root);
         helpMessage.setText(HELP_MESSAGE);
+        copyButton.setText(COPY_BUTTON_TEXT);
+        copiedTextTimer.setOnFinished(event -> copyButton.setText(COPY_BUTTON_TEXT));
     }
 
     /**
@@ -90,7 +100,9 @@ public class HelpWindow extends UiPart<Stage> {
     }
 
     /**
-     * Copies the URL to the user guide to the clipboard.
+     * Copies the URL to the user guide to the clipboard, and shows {@link #COPIED_BUTTON_TEXT} on the button
+     * for {@link #COPIED_TEXT_DURATION} so the user can see that it worked.
+     * Clicking again restarts that period.
      */
     @FXML
     private void copyUrl() {
@@ -98,5 +110,10 @@ public class HelpWindow extends UiPart<Stage> {
         final ClipboardContent url = new ClipboardContent();
         url.putString(USERGUIDE_URL);
         clipboard.setContent(url);
+        // keep the button's width, so the shorter text does not shift the help message
+        copyButton.setMinWidth(copyButton.getWidth());
+        copyButton.setText(COPIED_BUTTON_TEXT);
+        copiedTextTimer.playFromStart();
+        logger.fine("Copied the user guide URL to the clipboard.");
     }
 }
