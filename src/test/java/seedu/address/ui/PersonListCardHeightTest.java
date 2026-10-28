@@ -50,7 +50,9 @@ public class PersonListCardHeightTest {
             ObservableList<Person> supporters =
                     FXCollections.observableArrayList(LONG_SUPPORTER, SHORT_SUPPORTER);
             Region root = new PersonListPanel(supporters).getRoot();
-            new Scene(root, width, 1000);
+            Scene scene = new Scene(root, width, 1000);
+            scene.getStylesheets().add(
+                    PersonListCardHeightTest.class.getResource("/view/DarkTheme.css").toExternalForm());
             root.applyCss();
             root.layout();
 
