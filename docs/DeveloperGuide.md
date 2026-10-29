@@ -295,10 +295,11 @@ Parsing and the later commit check and save performed by `LogicManager` are outs
 <puml src="diagrams/QuietSequenceDiagram.puml" alt="Filtering and sorting the displayed supporters when quiet executes" />
 
 `updateFilteredPersonList(Predicate)` clears the comparator as well as updating the predicate.
-Existing `list`, `find`, `add`, `edit`, `undo` and `redo` paths therefore restore normal ordering
-without command-specific reset logic. Index-based commands already use `getFilteredPersonList()`
-and consequently operate on the displayed quiet indices. Replacing an immutable `Person` after a
-log, unlog or stage change updates both filtering and sorting automatically.
+Existing `list`, `find`, `add`, `undo` and `redo` paths, and an `edit` that changes something,
+therefore restore normal ordering without command-specific reset logic. Index-based commands
+already use `getFilteredPersonList()` and consequently operate on the displayed quiet indices.
+Replacing an immutable `Person` after a log, unlog or stage change updates both filtering and
+sorting automatically.
 
 `QuietCommandTest` covers boundaries, exclusions, missing interactions, ties and backdated history.
 `QuietCommandIntegrationTest` checks indexed commands, stored order, selection and undo/redo. It also
