@@ -3,7 +3,9 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 
 import java.util.function.Predicate;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.model.Model;
@@ -26,6 +28,8 @@ public class FindCommand extends Command {
             + "Phone searches ignore plus signs, spaces and hyphens.\n"
             + "Example: " + COMMAND_WORD + " tan wei o/DBS st/giving st/lapsed";
 
+    private static final Logger logger = LogsCenter.getLogger(FindCommand.class);
+
     private final Predicate<Person> predicate;
 
     /**
@@ -39,8 +43,13 @@ public class FindCommand extends Command {
     public CommandResult execute(Model model) {
         requireNonNull(model);
         model.updateFilteredPersonList(predicate);
+        assert model.getFilteredPersonList().stream().allMatch(predicate)
+                : "Every find result must match the search predicate";
+        int matchCount = model.getFilteredPersonList().size();
+        logger.fine(() -> "Applied find filter: matches=" + matchCount
+                + ", total=" + model.getAddressBook().getPersonList().size());
         return new CommandResult(
-                String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, model.getFilteredPersonList().size()));
+                String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, matchCount));
     }
 
     @Override

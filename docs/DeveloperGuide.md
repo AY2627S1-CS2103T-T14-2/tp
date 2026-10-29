@@ -1127,24 +1127,35 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case ends.
 
-**Use case: UC03 - Find supporters by part of a name**
+**Use case: UC03 - Find supporters by name or other fields**
 
 **MSS**
 
-1.  User requests to find supporters whose name contains certain keywords, giving the keyword(s).
-2.  SupporterBook shows every supporter whose name contains any keyword given, ignoring case and matching even part of a word. Results keep their original list order and replace any previous find filter.
+1.  User requests to find supporters, giving name keywords, filters for organisation, tag, cultivation stage, phone number or email, or a combination of these.
+2.  SupporterBook searches all supporters. Alternatives within the same field use OR; different fields use AND. Text matching ignores case and allows substrings, stages match complete stage names, and phone matching ignores formatting, labels and extension markers while retaining extension digits.
+3.  SupporterBook shows the matches in their original full-list order, numbered from 1, and reports the number of matches. This replaces any previous find or quiet filter and sorting, without changing the viewed supporter or saved supporter data.
 
     Use case ends.
 
 **Extensions**
 
-- 1a. User did not provide any keywords.
-  - 1a1. SupporterBook shows an error message with the correct command format.
+- 1a. User did not provide any name keywords or field filters.
+  - 1a1. SupporterBook shows an error message with the correct command format, leaving the displayed list and viewed supporter unchanged.
 
     Use case resumes from step 1.
 
-- 2a. No supporter's name contains any of the keywords given.
-  - 2a1. SupporterBook shows an empty list.
+- 1b. A field filter is empty, a cultivation stage is invalid, or a phone search value does not follow the accepted format.
+  - 1b1. SupporterBook shows the relevant error message, leaving the displayed list and viewed supporter unchanged.
+
+    Use case resumes from step 1.
+
+- 1c. User supplies a filter reserved for another command, such as an address filter.
+  - 1c1. SupporterBook identifies the unsupported filter and shows the supported filters and correct command format, leaving the displayed list and viewed supporter unchanged.
+
+    Use case resumes from step 1.
+
+- 3a. No supporter matches the combined criteria.
+  - 3a1. SupporterBook shows an empty list and reports zero matches, leaving the viewed supporter unchanged.
 
     Use case ends.
 
@@ -1467,6 +1478,29 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 This is a variation of UC12, with the same precondition and invalid-index handling (extension 1a). The user gives the supporter index and interaction number, requesting deletion instead of supplying replacement details. SupporterBook removes only the identified interaction, keeps the supporter and their other interactions, and confirms the deletion. It shows the remaining interaction history with consecutive entry numbers, or indicates that no interactions remain if the last entry was deleted.
 
+**Use case: UC14 - Find supporters who have gone quiet**
+
+**MSS**
+
+1.  User requests to find supporters needing follow-up, optionally specifying a number of days since last contact.
+2.  SupporterBook searches all supporters using today's local date and the supplied threshold, or 60 days if none was supplied. It excludes supporters at the Declined stage and includes the others only if they have no interactions or their latest interaction was more than the threshold number of calendar days ago.
+3.  SupporterBook shows never-contacted supporters first, then supporters with interactions ordered by their latest interaction date, oldest first. Ties retain full-list order. The results replace any previous find or quiet filter and sorting, and are numbered from 1.
+4.  SupporterBook reports the number of matches and the threshold used, without changing the viewed supporter, saved supporter data or undo/redo history.
+
+    Use case ends.
+
+**Extensions**
+
+- 1a. The supplied threshold is not a positive whole number from 1 to 2147483647, or the user supplies additional arguments.
+  - 1a1. SupporterBook shows an error message with the accepted range and correct command format, leaving the displayed list, its ordering and the viewed supporter unchanged.
+
+    Use case resumes from step 1.
+
+- 3a. No supporter meets the quiet criteria.
+  - 3a1. SupporterBook shows an empty list.
+
+    Use case resumes from step 4.
+
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
@@ -1595,6 +1629,97 @@ testers are expected to do more _exploratory_ testing.
 
 1. Test case: `find` without keywords<br>
    Expected: An invalid-command-format message is shown and the displayed list is unchanged.
+
+### Finding quiet supporters
+
+1. Preparing disposable test data
+   1. Prerequisites: Launch the app in a separate, disposable test folder with no real supporter data.
+      Run `clear` to remove the sample supporters. Do not run this setup against your normal data.
+
+   1. Calculate three dates relative to the computer's current local date: `OLD_DATE` is 61 calendar days ago,
+      `BOUNDARY_DATE` is 60 days ago, and `RECENT_DATE` is 30 days ago. Replace these placeholders below with
+      dates in `yyyy-MM-dd` format. Complete the tests on the same local calendar day.
+
+   1. Run these commands in the order shown:
+
+      ```text
+      add n/QuietRecent e/recent@example.com
+      add n/QuietOldOne e/oldone@example.com
+      add n/QuietNeverOne e/neverone@example.com
+      add n/QuietOldTwo e/oldtwo@example.com
+      add n/QuietNeverTwo e/nevertwo@example.com
+      add n/QuietBoundary e/boundary@example.com
+      add n/QuietDeclined e/declined@example.com st/declined
+      log 1 nt/Recent contact dt/RECENT_DATE
+      log 2 nt/Older contact dt/OLD_DATE
+      log 4 nt/Older contact dt/OLD_DATE
+      log 6 nt/Boundary contact dt/BOUNDARY_DATE
+      ```
+
+      Expected: Seven supporters are stored in the order added. The two never-contacted supporters and
+      `QuietDeclined` have no interactions; each other supporter has one interaction.
+
+1. Default threshold, exclusions, ordering and preserved selection
+   1. Run `view 6`, then `quiet`.<br>
+      Expected: The list contains `QuietNeverOne`, `QuietNeverTwo`, `QuietOldOne` and `QuietOldTwo`,
+      numbered 1 to 4 in that order. `QuietBoundary` is excluded because exactly 60 days is not more than
+      60 days. `QuietRecent` and `QuietDeclined` are also excluded. Feedback reports four matches and
+      a 60-day threshold. The detail panel keeps showing `QuietBoundary` despite it being absent from the list.
+
+1. Custom and maximum thresholds
+   1. Run `quiet 30`.<br>
+      Expected: The same four supporters appear, followed by `QuietBoundary`. The count is five and the
+      threshold is 30. `QuietRecent`, contacted exactly 30 days ago, is still excluded.
+
+   1. Run `quiet 2147483647`.<br>
+      Expected: Only `QuietNeverOne` and `QuietNeverTwo` appear, in that order. There is no date-overflow error.
+
+1. Replacing a find filter and retaining ties after updates
+   1. Run `find QuietRecent`, then `quiet 60`.<br>
+      Expected: The four default quiet supporters appear again, proving that quiet searches the full list
+      rather than narrowing the previous search.
+
+   1. Run `tag 1 t/followup`, then `tag 3 t/followup`.<br>
+      Expected: The tags are added to `QuietNeverOne` and `QuietOldOne`. The quiet filter stays active,
+      and all four supporters retain their positions, including within the tied groups.
+
+1. Invalid thresholds preserve the current view
+   1. Run `view 1`, then try `quiet 0`, `quiet -1`, `quiet abc`, `quiet 1.5`, `quiet 2147483648`
+      and `quiet 60 30`, one at a time.<br>
+      Expected: Each command is rejected with quiet usage and the accepted range. The four quiet results,
+      their ordering, `QuietNeverOne` in the detail panel and stored supporter data remain unchanged.
+
+1. Displayed indices, live updates, undo and redo
+   1. Run `log 1 nt/Followed up today`.<br>
+      Expected: The interaction is logged against `QuietNeverOne`, not the first supporter in the full list.
+      They disappear from the quiet results because they were contacted today. The remaining results are
+      `QuietNeverTwo`, `QuietOldOne` and `QuietOldTwo`; the detail panel shows the updated `QuietNeverOne`.
+
+   1. Run `undo`, then `quiet 60`.<br>
+      Expected: The new interaction is removed, and the original four quiet supporters return in their
+      original quiet order. Running quiet does not consume the available redo history.
+
+   1. Run `redo`, then `quiet 60`.<br>
+      Expected: The interaction is restored and the results again contain only `QuietNeverTwo`,
+      `QuietOldOne` and `QuietOldTwo`.
+
+   1. Run `stage 1 declined`.<br>
+      Expected: `QuietNeverTwo` changes stage and disappears. The results contain only `QuietOldOne`
+      and `QuietOldTwo`, in that order. The detail panel shows the now-declined `QuietNeverTwo`.
+
+1. Backdated interactions and empty results
+   1. Run `find QuietNeverOne`, then `log 1 nt/Historical contact dt/OLD_DATE`, then `quiet 60`.<br>
+      Expected: Only `QuietOldOne` and `QuietOldTwo` appear. `QuietNeverOne` is still excluded because
+      their latest contact is today, even though the older interaction was logged afterwards.
+
+   1. Run `quiet 2147483647`.<br>
+      Expected: The list is empty and feedback reports zero matches with the supplied threshold.
+      All remaining non-Declined supporters have interactions, and the viewed supporter stays unchanged.
+
+1. Restoring the full list and preserving saved order
+   1. Run `list`, then close and relaunch the app from the same folder.<br>
+      Expected: Both before and after relaunch, all seven supporters appear in the original setup order,
+      not quiet-result order. The logged interaction, tags and changed stage remain saved.
 
 ### Long names and organisations in supporter cards
 

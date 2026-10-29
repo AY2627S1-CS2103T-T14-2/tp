@@ -7,7 +7,12 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
@@ -30,6 +35,7 @@ public class QuietCommand extends Command {
     public static final String MESSAGE_SUCCESS =
             "%1$d supporter(s) listed: no interactions or last contacted more than %2$d days ago.";
 
+    private static final Logger logger = LogsCenter.getLogger(QuietCommand.class);
     private static final Comparator<Person> LAST_CONTACT_ORDER =
             Comparator.comparing(person -> person.getLastInteractionDate().orElse(LocalDate.MIN));
 
@@ -66,10 +72,18 @@ public class QuietCommand extends Command {
         // Read current full-list positions so replacing a supporter cannot move them within a tied group.
         Comparator<Person> quietOrder = LAST_CONTACT_ORDER
                 .thenComparingInt(model.getAddressBook().getPersonList()::indexOf);
-        model.updateSortedPersonList(person -> person.getStage() != Stage.DECLINED
+        Predicate<Person> quietPredicate = person -> person.getStage() != Stage.DECLINED
                 && person.getLastInteractionDate()
-                        .map(date -> ChronoUnit.DAYS.between(date, today) > days).orElse(true), quietOrder);
-        return new CommandResult(String.format(MESSAGE_SUCCESS, model.getFilteredPersonList().size(), days));
+                        .map(date -> ChronoUnit.DAYS.between(date, today) > days).orElse(true);
+        model.updateSortedPersonList(quietPredicate, quietOrder);
+        List<Person> quietSupporters = model.getFilteredPersonList();
+        assert quietSupporters.stream().allMatch(quietPredicate) : "Every quiet result must meet the threshold";
+        assert IntStream.range(1, quietSupporters.size())
+                .allMatch(index -> quietOrder.compare(quietSupporters.get(index - 1), quietSupporters.get(index)) <= 0)
+                : "Quiet results must retain last-contact and full-list tie ordering";
+        logger.fine(() -> "Applied quiet filter: days=" + days + ", date=" + today
+                + ", matches=" + quietSupporters.size());
+        return new CommandResult(String.format(MESSAGE_SUCCESS, quietSupporters.size(), days));
     }
 
     @Override
