@@ -4,6 +4,7 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_INTRODUCER;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 
@@ -25,10 +26,9 @@ public class IntroCommandParserTest {
 
     @Test
     public void parse_invalidIndexValues_reportsIndexErrorAndUsage() {
-        String expectedMessage = ParserUtil.MESSAGE_INVALID_INDEX + "\n" + IntroCommand.MESSAGE_USAGE;
-        for (String index : new String[]{"0", "-1", "+1", "abc", "1.5", "2147483648"}) {
-            assertParseFailure(parser, index + " by/1", expectedMessage);
-            assertParseFailure(parser, "1 by/" + index, expectedMessage);
+        for (String invalidIndex : getInvalidIndexInputs("abc")) {
+            assertParseFailure(parser, invalidIndex + " by/1", MESSAGE_INVALID_INDEX);
+            assertParseFailure(parser, "1 by/" + invalidIndex, MESSAGE_INVALID_INDEX);
         }
     }
 

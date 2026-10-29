@@ -7,6 +7,7 @@ import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalInteractionNotes.VALID_NOTE;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -135,10 +136,9 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_log() throws Exception {
-        String note = "Called to discuss the year-end appeal";
         LogCommand command = (LogCommand) parser.parseCommand(LogCommand.COMMAND_WORD + " "
-                + INDEX_FIRST_PERSON.getOneBased() + " nt/" + note);
-        assertEquals(new LogCommand(INDEX_FIRST_PERSON, note), command);
+                + INDEX_FIRST_PERSON.getOneBased() + " nt/" + VALID_NOTE);
+        assertEquals(new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE), command);
     }
 
     @Test

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.storage.JsonAdaptedPerson.MISSING_FIELD_MESSAGE_FORMAT;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalOrganisationNames.ASCII_AND_EMOJI_AT_ORGANISATION_LIMIT;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
@@ -51,7 +52,7 @@ public class JsonAdaptedPersonTest {
 
     @Test
     public void toModelType_organisationUnicodeLengthBoundary_checksCodePoints() throws Exception {
-        String organisationAtLimit = "a".repeat(99) + "😀";
+        String organisationAtLimit = ASCII_AND_EMOJI_AT_ORGANISATION_LIMIT;
         Person expected = new PersonBuilder(BENSON).withOrganisation(organisationAtLimit).build();
         assertEquals(expected, new JsonAdaptedPerson(expected).toModelType());
 

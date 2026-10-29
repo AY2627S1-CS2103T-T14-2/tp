@@ -3,17 +3,21 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.InteractionCommandTestUtil.assertFailurePreservesSelection;
+import static seedu.address.testutil.InteractionCommandTestUtil.setInteractions;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalInteractionNotes.NOTE_PADDING_SEQUENCES;
+import static seedu.address.testutil.TypicalInteractionNotes.VALID_NOTE;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +39,6 @@ import seedu.address.testutil.PersonBuilder;
  */
 public class LogCommandTest {
 
-    private static final String VALID_NOTE = "Called to discuss the year-end appeal";
     private static final LocalDate FIXED_DATE = LocalDate.of(2026, 9, 16);
     private static final Clock FIXED_CLOCK = Clock.fixed(
             Instant.parse("2026-09-16T12:00:00Z"), ZoneOffset.UTC);
@@ -61,7 +64,7 @@ public class LogCommandTest {
     @Test
     public void constructor_paddedNote_equalsTrimmedCommand() {
         LogCommand expected = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, FIXED_CLOCK);
-        for (String padding : List.of(" \t", "\u00a0", "\u2003", "\u0085")) {
+        for (String padding : NOTE_PADDING_SEQUENCES) {
             LogCommand actual = new LogCommand(INDEX_FIRST_PERSON, padding + VALID_NOTE + padding, FIXED_CLOCK);
             assertEquals(expected, actual);
         }
@@ -98,10 +101,8 @@ public class LogCommandTest {
 
     @Test
     public void execute_explicitPastDate_appendsAndPreservesSupporter() {
-        Person originalPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Interaction existingInteraction = new Interaction(FIXED_DATE, "Existing meeting");
-        Person personToUpdate = new PersonBuilder(originalPerson).withInteractions(existingInteraction).build();
-        model.setPerson(originalPerson, personToUpdate);
+        Person personToUpdate = setInteractions(model, INDEX_FIRST_PERSON, existingInteraction);
         LocalDate pastDate = FIXED_DATE.minusDays(10);
         Person updatedPerson = new PersonBuilder(personToUpdate)
                 .withInteractions(existingInteraction, new Interaction(pastDate, VALID_NOTE)).build();
@@ -127,27 +128,28 @@ public class LogCommandTest {
     @Test
     public void execute_emptyDate_usesClockAtExecution() throws Exception {
         // the clock must only be consulted when execute is called, not when the command is constructed
-        boolean[] executing = {false};
+        boolean[] isExecuting = {false};
         Clock executionClock = new Clock() {
 
             @Override
-            public java.time.ZoneId getZone() {
+            public ZoneId getZone() {
                 return ZoneOffset.UTC;
             }
 
             @Override
-            public Clock withZone(java.time.ZoneId zone) {
+            public Clock withZone(ZoneId zone) {
                 return FIXED_CLOCK.withZone(zone);
             }
 
             @Override
             public Instant instant() {
-                assertTrue(executing[0]);
+                assertTrue(isExecuting[0]);
                 return FIXED_CLOCK.instant();
             }
         };
         LogCommand command = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, Optional.empty(), executionClock);
-        executing[0] = true;
+
+        isExecuting[0] = true;
         command.execute(model);
 
         assertEquals(List.of(new Interaction(FIXED_DATE, VALID_NOTE)),
@@ -181,12 +183,8 @@ public class LogCommandTest {
 
     @Test
     public void execute_existingIdenticalInteraction_appendsDuplicate() throws Exception {
-        Person originalPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Interaction existingInteraction = new Interaction(FIXED_DATE, VALID_NOTE);
-        Person personWithInteraction = new PersonBuilder(originalPerson)
-                .withInteractions(existingInteraction)
-                .build();
-        model.setPerson(originalPerson, personWithInteraction);
+        Person personWithInteraction = setInteractions(model, INDEX_FIRST_PERSON, existingInteraction);
 
         // identical interactions are valid because the same interaction can happen more than once
         CommandResult result = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, FIXED_CLOCK).execute(model);
@@ -235,8 +233,7 @@ public class LogCommandTest {
         Person previouslyViewedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         model.setViewedPerson(previouslyViewedPerson);
 
-        assertCommandFailure(logCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        assertEquals(Optional.of(previouslyViewedPerson), model.getViewedPerson());
+        assertFailurePreservesSelection(logCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
@@ -270,8 +267,7 @@ public class LogCommandTest {
         assertTrue(outOfBoundIndex.getZeroBased() < model.getAddressBook().getPersonList().size());
         LogCommand logCommand = new LogCommand(outOfBoundIndex, VALID_NOTE, FIXED_CLOCK);
 
-        assertCommandFailure(logCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        assertEquals(Optional.of(previouslyViewedPerson), model.getViewedPerson());
+        assertFailurePreservesSelection(logCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
@@ -313,8 +309,9 @@ public class LogCommandTest {
                 + ", note=" + VALID_NOTE + ", date=Optional.empty}";
         assertEquals(expected, logCommand.toString());
     }
+
     @Test
-    public void toStringMethod_explicitDate() {
+    public void toStringMethod_explicitDate_includesDate() {
         LogCommand command = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, Optional.of(FIXED_DATE));
         String expected = LogCommand.class.getCanonicalName() + "{targetIndex=" + INDEX_FIRST_PERSON
                 + ", note=" + VALID_NOTE + ", date=Optional[2026-09-16]}";

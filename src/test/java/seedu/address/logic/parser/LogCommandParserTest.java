@@ -5,13 +5,16 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_DATE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalInteractionDates.INVALID_DATE_INPUTS;
+import static seedu.address.testutil.TypicalInteractionNotes.ASCII_AND_EMOJI_AT_NOTE_LIMIT;
 import static seedu.address.testutil.TypicalInteractionNotes.CHARACTER_PRESERVATION_NOTES;
-import static seedu.address.testutil.TypicalInteractionNotes.SUPPLEMENTARY_NOTES_AT_LIMIT;
+import static seedu.address.testutil.TypicalInteractionNotes.UNICODE_BLANK_NOTES;
+import static seedu.address.testutil.TypicalInteractionNotes.VALID_NOTE;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -20,20 +23,22 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.LogCommand;
 import seedu.address.model.person.Interaction;
 
+/**
+ * Tests log arguments, note preservation and validation error precedence.
+ */
 public class LogCommandParserTest {
 
-    private static final String VALID_NOTE = "Called to discuss the year-end appeal";
     private static final String MESSAGE_INVALID_FORMAT =
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, LogCommand.MESSAGE_USAGE);
 
     private static final String MESSAGE_INVALID_INDEX =
             ParserUtil.MESSAGE_INVALID_INDEX + "\n" + LogCommand.MESSAGE_USAGE;
 
-    private LogCommandParser parser = new LogCommandParser();
+    private final LogCommandParser parser = new LogCommandParser();
 
     @Test
     public void parse_unicodeBlankNote_failure() {
-        for (String note : List.of("\u0085", "\u2003", "\u00a0", " \t\u0085\u2003\u00a0\u202f\u3000 ")) {
+        for (String note : UNICODE_BLANK_NOTES) {
             assertParseFailure(parser, " 1 nt/" + note, Interaction.MESSAGE_CONSTRAINTS);
         }
     }
@@ -55,15 +60,12 @@ public class LogCommandParserTest {
 
     @Test
     public void parse_supplementaryCharactersAtLengthBoundary_checksCodePoints() {
-        // both notes contain 500 code points, but exceed 500 UTF-16 code units
-        for (String note : SUPPLEMENTARY_NOTES_AT_LIMIT) {
-            // surrounding spaces are trimmed before checking the limit
-            assertParseSuccess(parser, " 1 nt/ " + note + " ",
-                    new LogCommand(INDEX_FIRST_PERSON, note));
-            // one additional ASCII character takes the note to 501 code points
-            assertParseFailure(parser, " 1 nt/ " + note + "a ",
-                    Interaction.MESSAGE_CONSTRAINTS);
-        }
+        String note = ASCII_AND_EMOJI_AT_NOTE_LIMIT;
+
+        // surrounding spaces are trimmed before checking the code-point limit
+        assertParseSuccess(parser, " 1 nt/ " + note + " ", new LogCommand(INDEX_FIRST_PERSON, note));
+
+        assertParseFailure(parser, " 1 nt/ " + note + "a ", Interaction.MESSAGE_CONSTRAINTS);
     }
 
     @Test
@@ -93,23 +95,9 @@ public class LogCommandParserTest {
 
     @Test
     public void parse_invalidIndex_failure() {
-        // not a number
-        assertParseFailure(parser, " x nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
-
-        // zero
-        assertParseFailure(parser, " 0 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
-
-        // negative
-        assertParseFailure(parser, " -1 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
-
-        // signed
-        assertParseFailure(parser, " +1 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
-
-        // decimal
-        assertParseFailure(parser, " 1.5 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
-
-        // larger than the maximum int
-        assertParseFailure(parser, " 2147483648 nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
+        for (String invalidIndex : getInvalidIndexInputs("x")) {
+            assertParseFailure(parser, " " + invalidIndex + " nt/" + VALID_NOTE, MESSAGE_INVALID_INDEX);
+        }
     }
 
     @Test
@@ -130,6 +118,7 @@ public class LogCommandParserTest {
         String userInput = " 1 nt/Called nt/Emailed";
         assertParseFailure(parser, userInput, Messages.getErrorMessageForDuplicatePrefixes(PREFIX_NOTE));
     }
+
     @Test
     public void parse_explicitDate_returnsDatedLogCommand() {
         LogCommand expected = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE,
@@ -148,7 +137,7 @@ public class LogCommandParserTest {
 
     @Test
     public void parse_invalidDate_failure() {
-        for (String date : List.of("", "   ", "2024-2-29", "2024/02/29", "2024-02-30", "2023-02-29")) {
+        for (String date : INVALID_DATE_INPUTS) {
             assertParseFailure(parser, " 1 nt/" + VALID_NOTE + " dt/" + date,
                     Interaction.MESSAGE_INVALID_DATE_FORMAT);
         }
@@ -170,12 +159,14 @@ public class LogCommandParserTest {
 
     @Test
     public void parse_multipleErrors_reportsInValidationOrder() {
-        // Index errors take precedence over duplicate prefixes and invalid parameter values.
+        // index errors take precedence over duplicate prefixes and invalid parameter values
         assertParseFailure(parser, " x nt/ dt/invalid dt/invalid", MESSAGE_INVALID_INDEX);
-        // Duplicate prefixes take precedence over note/date validation.
+
+        // duplicate prefixes take precedence over note/date validation
         assertParseFailure(parser, " 1 nt/ dt/invalid dt/invalid",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_DATE));
-        // Note validation precedes date validation regardless of the order typed.
+
+        // note validation precedes date validation regardless of the order typed
         assertParseFailure(parser, " 1 nt/ dt/invalid", Interaction.MESSAGE_CONSTRAINTS);
         assertParseFailure(parser, " 1 dt/invalid nt/", Interaction.MESSAGE_CONSTRAINTS);
     }

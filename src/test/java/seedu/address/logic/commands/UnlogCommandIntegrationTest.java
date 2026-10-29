@@ -2,6 +2,8 @@ package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.InteractionCommandTestUtil.assertSelectedFilteredSupporter;
+import static seedu.address.testutil.InteractionCommandTestUtil.createModelWithPersons;
 import static seedu.address.testutil.InteractionHistoryTestUtil.assertHistory;
 
 import java.time.LocalDate;
@@ -12,7 +14,6 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.Model;
-import seedu.address.model.ModelManager;
 import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
@@ -32,9 +33,7 @@ public class UnlogCommandIntegrationTest {
         Person other = new PersonBuilder().withName("Other Supporter").build();
         Person target = new PersonBuilder().withIntroducer(other.getName().fullName)
                 .withInteractions(middle, oldest, newest).build();
-        Model model = new ModelManager();
-        model.addPerson(other);
-        model.addPerson(target);
+        Model model = createModelWithPersons(other, target);
         model.setViewedPerson(other);
         AddressBookParser parser = new AddressBookParser();
         parser.parseCommand("find " + target.getName().fullName).execute(model);
@@ -43,25 +42,15 @@ public class UnlogCommandIntegrationTest {
         // filtered supporter #1 is second in storage, and interaction #2 is first in its stored history
         CommandResult middleDeletionResult = parser.parseCommand("unlog 1 2").execute(model);
         Person expected = new PersonBuilder(target).withInteractions(oldest, newest).build();
-        assertEquals(Optional.of(expected), model.getViewedPerson());
-        assertEquals(List.of(expected), model.getFilteredPersonList());
-        assertEquals(List.of(other, expected), model.getAddressBook().getPersonList());
-        assertEquals("Deleted interaction #2 with " + target.getName() + " (29 Feb 2024): Middle meeting.",
-                middleDeletionResult.getFeedbackToUser());
-
-        SupporterDetailData displayAfterMiddleDeletion = new SupporterDetailData(model.getViewedPerson());
-        assertHistory(displayAfterMiddleDeletion, List.of(2, 1),
-                List.of("10 Mar 2024", "20 Feb 2024"), List.of("Recent call", "Earlier call"));
-        assertEquals("Interactions (2) - newest first", displayAfterMiddleDeletion.getHistoryHeading());
-        assertEquals("", displayAfterMiddleDeletion.getPlaceholderMessage());
-        assertEquals(other.getName().fullName, displayAfterMiddleDeletion.getIntroducer());
+        assertMiddleDeletionRenumbersHistory(model, middleDeletionResult, expected, other);
 
         // the next command uses the refreshed number: #2 now identifies the newest remaining interaction
         CommandResult newestDeletionResult = parser.parseCommand("unlog 1 2").execute(model);
-        SupporterDetailData displayAfterNewestDeletion = new SupporterDetailData(model.getViewedPerson());
+
+        SupporterDetailData display = new SupporterDetailData(model.getViewedPerson());
         assertEquals("Deleted interaction #2 with " + target.getName() + " (10 Mar 2024): Recent call",
                 newestDeletionResult.getFeedbackToUser());
-        assertHistory(displayAfterNewestDeletion, List.of(1), List.of("20 Feb 2024"), List.of("Earlier call"));
+        assertHistory(display, List.of(1), List.of("20 Feb 2024"), List.of("Earlier call"));
         assertEquals(Optional.of(oldest.getDate()), model.getViewedPerson().orElseThrow().getLastInteractionDate());
     }
 
@@ -72,8 +61,7 @@ public class UnlogCommandIntegrationTest {
         Interaction between = new Interaction(date, "Follow-up");
         Person target = new PersonBuilder().withInteractions(duplicate, between,
                 new Interaction(date, "Meeting")).build();
-        Model model = new ModelManager();
-        model.addPerson(target);
+        Model model = createModelWithPersons(target);
 
         // #3 is the later duplicate; removing the first equal value would reverse the expected remaining order
         new AddressBookParser().parseCommand("unlog 1 3").execute(model);
@@ -88,8 +76,7 @@ public class UnlogCommandIntegrationTest {
     public void execute_lastEntry_showsEmptyHistoryForSelectedSupporter() throws Exception {
         Interaction interaction = new Interaction(LocalDate.of(2024, 2, 29), "Meeting");
         Person target = new PersonBuilder().withInteractions(interaction).build();
-        Model model = new ModelManager();
-        model.addPerson(target);
+        Model model = createModelWithPersons(target);
 
         new AddressBookParser().parseCommand("unlog 1 1").execute(model);
 
@@ -102,6 +89,21 @@ public class UnlogCommandIntegrationTest {
         assertEquals(List.of(), display.getInteractionEntries());
         assertEquals("Interactions (0) - newest first", display.getHistoryHeading());
         assertEquals(SupporterDetailData.MESSAGE_EMPTY_HISTORY, display.getPlaceholderMessage());
-        assertEquals(Optional.empty(), expected.getLastInteractionDate());
+        assertEquals(Optional.empty(), model.getViewedPerson().orElseThrow().getLastInteractionDate());
     }
+
+    private void assertMiddleDeletionRenumbersHistory(Model model, CommandResult result,
+            Person expected, Person other) {
+        assertSelectedFilteredSupporter(model, expected, List.of(other, expected));
+        assertEquals("Deleted interaction #2 with " + expected.getName() + " (29 Feb 2024): Middle meeting.",
+                result.getFeedbackToUser());
+
+        SupporterDetailData display = new SupporterDetailData(model.getViewedPerson());
+        assertHistory(display, List.of(2, 1),
+                List.of("10 Mar 2024", "20 Feb 2024"), List.of("Recent call", "Earlier call"));
+        assertEquals("Interactions (2) - newest first", display.getHistoryHeading());
+        assertEquals("", display.getPlaceholderMessage());
+        assertEquals(other.getName().fullName, display.getIntroducer());
+    }
+
 }

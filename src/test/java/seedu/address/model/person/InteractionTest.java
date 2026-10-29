@@ -5,21 +5,25 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalInteractionNotes.ASCII_AND_EMOJI_AT_NOTE_LIMIT;
-import static seedu.address.testutil.TypicalInteractionNotes.EMOJI_ONLY_AT_NOTE_LIMIT;
 import static seedu.address.testutil.TypicalInteractionNotes.JOINED_EMOJI;
+import static seedu.address.testutil.TypicalInteractionNotes.NOTE_CODE_POINT_LIMIT;
+import static seedu.address.testutil.TypicalInteractionNotes.UNICODE_BLANK_NOTES;
 
 import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+/**
+ * Tests interaction validation, note preservation and value equality.
+ */
 public class InteractionTest {
 
     private static final LocalDate DATE = LocalDate.of(2026, 9, 16);
 
     @Test
     public void constructor_unicodeBlankNote_throwsIllegalArgumentException() {
-        for (String note : List.of("\u0085", "\u2003", "\u00a0", " \t\u0085\u2003\u00a0\u202f\u3000 ")) {
+        for (String note : UNICODE_BLANK_NOTES) {
             assertFalse(Interaction.isValidNote(note));
             assertThrows(IllegalArgumentException.class, Interaction.MESSAGE_CONSTRAINTS, () ->
                     new Interaction(DATE, note));
@@ -41,8 +45,10 @@ public class InteractionTest {
 
     @Test
     public void constructor_joinedEmojiAtLengthBoundary_countsJoiner() {
-        // woman + zero-width joiner + laptop occupy three code points, not one
-        String note = "a".repeat(497) + JOINED_EMOJI;
+        // woman + zero-width joiner + laptop occupy three code points in one joined emoji
+        int joinedEmojiCodePointCount = 3;
+        String note = "a".repeat(NOTE_CODE_POINT_LIMIT - joinedEmojiCodePointCount) + JOINED_EMOJI;
+
         assertTrue(Interaction.isValidNote(note));
         assertEquals(note, new Interaction(DATE, note).getNote());
         assertFalse(Interaction.isValidNote("a" + note));
@@ -52,9 +58,12 @@ public class InteractionTest {
 
     @Test
     public void constructor_codePointLengthBoundary_acceptsLimitAndRejectsOverflow() {
-        // each input has 500 code points; e + combining acute accent uses two code points per repetition
-        for (String note : List.of(ASCII_AND_EMOJI_AT_NOTE_LIMIT, EMOJI_ONLY_AT_NOTE_LIMIT,
-                "e\u0301".repeat(250))) {
+        String emojiOnlyNote = "\ud83d\ude00".repeat(NOTE_CODE_POINT_LIMIT);
+        // e + combining acute accent occupy two code points per repetition
+        int combiningAccentCodePointCount = 2;
+        String combiningAccentNote = "e\u0301".repeat(NOTE_CODE_POINT_LIMIT / combiningAccentCodePointCount);
+
+        for (String note : List.of(ASCII_AND_EMOJI_AT_NOTE_LIMIT, emojiOnlyNote, combiningAccentNote)) {
             assertTrue(Interaction.isValidNote(note));
             assertEquals(note, new Interaction(DATE, " " + note + " ").getNote());
             assertFalse(Interaction.isValidNote(note + "a"));

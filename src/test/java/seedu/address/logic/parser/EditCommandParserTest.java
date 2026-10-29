@@ -34,9 +34,11 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
+import static seedu.address.testutil.TypicalOrganisationNames.ASCII_AND_EMOJI_AT_ORGANISATION_LIMIT;
 
 import org.junit.jupiter.api.Test;
 
@@ -65,7 +67,7 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_organisationUnicodeLengthBoundary_checksCodePoints() {
-        String organisationAtLimit = "a".repeat(99) + "😀";
+        String organisationAtLimit = ASCII_AND_EMOJI_AT_ORGANISATION_LIMIT;
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
                 .withOrganisation(organisationAtLimit).build();
         String input = INDEX_FIRST_PERSON.getOneBased() + " " + PREFIX_ORGANISATION + organisationAtLimit;
@@ -76,9 +78,8 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_invalidIndexValues_reportsIndexErrorAndUsage() {
-        String expectedMessage = ParserUtil.MESSAGE_INVALID_INDEX + "\n" + EditCommand.MESSAGE_USAGE;
-        for (String index : new String[]{"0", "-1", "+1", "abc", "1.5", "2147483648"}) {
-            assertParseFailure(parser, index + " n/Amy", expectedMessage);
+        for (String invalidIndex : getInvalidIndexInputs("abc")) {
+            assertParseFailure(parser, invalidIndex + " n/Amy", MESSAGE_INVALID_INDEX);
         }
     }
 

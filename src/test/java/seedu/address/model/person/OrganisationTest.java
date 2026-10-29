@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalOrganisationNames.ASCII_AND_EMOJI_AT_ORGANISATION_LIMIT;
+import static seedu.address.testutil.TypicalOrganisationNames.ORGANISATION_CODE_POINT_LIMIT;
 
 import java.util.List;
 
@@ -16,10 +18,12 @@ public class OrganisationTest {
 
     @Test
     public void constructor_unicodeLengthBoundaries_checksCodePoints() {
-        String organisationAtLimit = "a".repeat(99) + "😀";
-        // the joined emoji contains three code points, despite appearing as one symbol
-        for (String name : List.of(organisationAtLimit, "😀".repeat(100),
-                "a".repeat(97) + "👩‍💻")) {
+        String emojiOnlyName = "😀".repeat(ORGANISATION_CODE_POINT_LIMIT);
+        // woman + zero-width joiner + laptop occupy three code points in one joined emoji
+        int joinedEmojiCodePointCount = 3;
+        String joinedEmojiName = "a".repeat(ORGANISATION_CODE_POINT_LIMIT - joinedEmojiCodePointCount) + "👩‍💻";
+
+        for (String name : List.of(ASCII_AND_EMOJI_AT_ORGANISATION_LIMIT, emojiOnlyName, joinedEmojiName)) {
             assertTrue(Organisation.isValidOrganisation(name));
             assertEquals(name, new Organisation(name).value);
             assertFalse(Organisation.isValidOrganisation(name + "a"));
@@ -31,12 +35,14 @@ public class OrganisationTest {
     @Test
     public void constructor_unicodeBoundaryWithExtraSpaces_countsNormalisedName() {
         // the single internal space counts towards the limit; extra spaces do not
-        String normalised = "a".repeat(98) + " 😀";
-        String padded = "  " + "a".repeat(98) + "   😀  ";
+        int spaceAndEmojiCodePointCount = 2;
+        String asciiPrefix = "a".repeat(ORGANISATION_CODE_POINT_LIMIT - spaceAndEmojiCodePointCount);
+        String normalizedName = asciiPrefix + " 😀";
+        String paddedName = "  " + asciiPrefix + "   😀  ";
 
-        assertEquals(normalised, new Organisation(padded).value);
+        assertEquals(normalizedName, new Organisation(paddedName).value);
         assertThrows(IllegalArgumentException.class,
-                Organisation.MESSAGE_CONSTRAINTS, () -> new Organisation("  " + normalised + "a  "));
+                Organisation.MESSAGE_CONSTRAINTS, () -> new Organisation("  " + normalizedName + "a  "));
     }
 
     @Test

@@ -3,12 +3,17 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.InteractionCommandTestUtil.assertFailurePreservesSelection;
+import static seedu.address.testutil.InteractionCommandTestUtil.setInteractions;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalInteractionNotes.NOTE_PADDING_SEQUENCES;
+import static seedu.address.testutil.TypicalInteractions.MIDDLE;
+import static seedu.address.testutil.TypicalInteractions.NEWEST;
+import static seedu.address.testutil.TypicalInteractions.OLDEST;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.time.LocalDate;
@@ -32,9 +37,6 @@ import seedu.address.testutil.PersonBuilder;
  */
 public class EditLogCommandTest {
 
-    private static final Interaction OLDEST = new Interaction(LocalDate.of(2026, 9, 6), "Earlier call");
-    private static final Interaction MIDDLE = new Interaction(LocalDate.of(2026, 9, 16), "Meeting");
-    private static final Interaction NEWEST = new Interaction(LocalDate.of(2026, 9, 20), "Follow-up");
     private static final Optional<String> NOTE = Optional.of("Corrected note");
     private static final Optional<LocalDate> DATE = Optional.of(LocalDate.of(2026, 9, 1));
     private static final Index ENTRY = Index.fromOneBased(2);
@@ -66,7 +68,7 @@ public class EditLogCommandTest {
     @Test
     public void constructor_paddedNote_equalsTrimmedCommand() {
         EditLogCommand expected = new EditLogCommand(INDEX_FIRST_PERSON, ENTRY, NOTE, DATE);
-        for (String padding : List.of(" \t", "\u00a0", "\u2003", "\u0085")) {
+        for (String padding : NOTE_PADDING_SEQUENCES) {
             EditLogCommand actual = new EditLogCommand(INDEX_FIRST_PERSON, ENTRY,
                     Optional.of(padding + NOTE.get() + padding), DATE);
             assertEquals(expected, actual);
@@ -83,6 +85,7 @@ public class EditLogCommandTest {
     public void execute_bothFields_preservesSupporterAndSelectsTarget() {
         Person original = model.getFilteredPersonList().get(0);
         Person introducer = model.getFilteredPersonList().get(1);
+
         // entry #2 is stored first, so the command must map the chronological number
         Person person = new PersonBuilder(original).withIntroducer(introducer.getName().fullName)
                 .withInteractions(MIDDLE, OLDEST, NEWEST).build();
@@ -102,16 +105,18 @@ public class EditLogCommandTest {
 
     @Test
     public void execute_noteOnly_preservesDateAndTrimsNote() throws Exception {
-        setInteractions(MIDDLE, OLDEST, NEWEST);
+        setInteractions(model, INDEX_FIRST_PERSON, MIDDLE, OLDEST, NEWEST);
+
         new EditLogCommand(INDEX_FIRST_PERSON, ENTRY, Optional.of("  Corrected note  "), Optional.empty())
                 .execute(model);
+
         assertEquals(List.of(new Interaction(MIDDLE.getDate(), NOTE.get()), OLDEST, NEWEST),
                 model.getFilteredPersonList().get(0).getInteractions());
     }
 
     @Test
     public void execute_unicodePaddedNote_preservesInternalWhitespace() throws Exception {
-        setInteractions(MIDDLE, OLDEST, NEWEST);
+        setInteractions(model, INDEX_FIRST_PERSON, MIDDLE, OLDEST, NEWEST);
         String expectedNote = "Corrected\u00a0meeting\u2003note";
         EditLogCommand command = new EditLogCommand(INDEX_FIRST_PERSON, ENTRY,
                 Optional.of("\u00a0" + expectedNote + "\u2003"), Optional.empty());
@@ -127,10 +132,12 @@ public class EditLogCommandTest {
 
     @Test
     public void execute_dateOnly_preservesNoteAndReportsNewNumber() throws Exception {
-        Person person = setInteractions(MIDDLE, OLDEST, NEWEST);
+        Person person = setInteractions(model, INDEX_FIRST_PERSON, MIDDLE, OLDEST, NEWEST);
         LocalDate newDate = LocalDate.of(2026, 9, 25);
+
         CommandResult result = new EditLogCommand(INDEX_FIRST_PERSON, ENTRY,
                 Optional.empty(), Optional.of(newDate)).execute(model);
+
         Person updated = model.getFilteredPersonList().get(0);
         assertEquals(List.of(new Interaction(newDate, MIDDLE.getNote()), OLDEST, NEWEST), updated.getInteractions());
         assertEquals(List.of(0, 2, 1), updated.getInteractionIndicesInDisplayOrder());
@@ -140,10 +147,12 @@ public class EditLogCommandTest {
 
     @Test
     public void execute_dateBecomesEqual_preservesLoggingPosition() throws Exception {
-        setInteractions(OLDEST, MIDDLE, NEWEST);
+        setInteractions(model, INDEX_FIRST_PERSON, OLDEST, MIDDLE, NEWEST);
+
         // the first logged entry must stay behind the second logged entry when their dates become equal
         new EditLogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(1), Optional.empty(),
                 Optional.of(MIDDLE.getDate())).execute(model);
+
         Person updated = model.getFilteredPersonList().get(0);
         assertEquals(List.of(new Interaction(MIDDLE.getDate(), OLDEST.getNote()), MIDDLE, NEWEST),
                 updated.getInteractions());
@@ -152,19 +161,24 @@ public class EditLogCommandTest {
 
     @Test
     public void execute_identicalEntries_editsSelectedStoredPosition() throws Exception {
-        Interaction sameDate = new Interaction(MIDDLE.getDate(), "Different note");
-        setInteractions(MIDDLE, sameDate, new Interaction(MIDDLE.getDate(), MIDDLE.getNote()));
+        Interaction sameDateInteraction = new Interaction(MIDDLE.getDate(), "Different note");
+        setInteractions(model, INDEX_FIRST_PERSON, MIDDLE, sameDateInteraction,
+                new Interaction(MIDDLE.getDate(), MIDDLE.getNote()));
+
         // edit displayed entry #3 at stored index 2, leaving the identical entry at index 0 unchanged
         new EditLogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(3), NOTE, Optional.empty()).execute(model);
-        assertEquals(List.of(MIDDLE, sameDate, new Interaction(MIDDLE.getDate(), NOTE.get())),
+
+        assertEquals(List.of(MIDDLE, sameDateInteraction, new Interaction(MIDDLE.getDate(), NOTE.get())),
                 model.getFilteredPersonList().get(0).getInteractions());
     }
 
     @Test
     public void execute_unchangedValues_succeeds() throws Exception {
-        Person person = setInteractions(OLDEST);
+        Person person = setInteractions(model, INDEX_FIRST_PERSON, OLDEST);
+
         new EditLogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(1), Optional.of(OLDEST.getNote()),
                 Optional.of(OLDEST.getDate())).execute(model);
+
         assertEquals(person, model.getFilteredPersonList().get(0));
         assertEquals(Optional.of(person), model.getViewedPerson());
     }
@@ -172,7 +186,7 @@ public class EditLogCommandTest {
     @Test
     public void execute_unchangedValues_reportsNothingChangedAndSavesNoUndoPoint() throws Exception {
         Person original = model.getFilteredPersonList().get(0);
-        Person person = setInteractions(OLDEST, MIDDLE);
+        Person person = setInteractions(model, INDEX_FIRST_PERSON, OLDEST, MIDDLE);
         model.commitAddressBookIfChanged();
         String expectedMessage = String.format(EditLogCommand.MESSAGE_NOT_CHANGED, 2, person.getName());
 
@@ -186,6 +200,7 @@ public class EditLogCommandTest {
 
         model.commitAddressBookIfChanged();
         model.undoAddressBook();
+
         // the undo reverts setInteractions, as none of the unchanged edits saved an undo point
         assertEquals(original, model.getFilteredPersonList().get(0));
     }
@@ -194,10 +209,12 @@ public class EditLogCommandTest {
     public void execute_validFilteredIndex_preservesFilter() throws Exception {
         // the second supporter now has displayed index 1
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
-        Person person = setInteractions(MIDDLE, OLDEST);
+        Person person = setInteractions(model, INDEX_FIRST_PERSON, MIDDLE, OLDEST);
         Person updated = new PersonBuilder(person)
                 .withInteractions(new Interaction(MIDDLE.getDate(), NOTE.get()), OLDEST).build();
+
         new EditLogCommand(INDEX_FIRST_PERSON, ENTRY, NOTE, Optional.empty()).execute(model);
+
         assertEquals(List.of(updated), model.getFilteredPersonList());
         assertEquals(Optional.of(updated), model.getViewedPerson());
     }
@@ -206,7 +223,8 @@ public class EditLogCommandTest {
     public void execute_invalidSupporterIndex_preservesDataAndSelection() {
         model.setViewedPerson(model.getFilteredPersonList().get(0));
         Index invalidIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
-        assertFailurePreservesSelection(new EditLogCommand(invalidIndex, ENTRY, NOTE, DATE),
+
+        assertFailurePreservesSelection(new EditLogCommand(invalidIndex, ENTRY, NOTE, DATE), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
@@ -214,30 +232,35 @@ public class EditLogCommandTest {
     public void execute_invalidFilteredIndex_preservesDataAndSelection() {
         model.setViewedPerson(model.getFilteredPersonList().get(1));
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
+
         // supporter exists in the full list but is not displayed
-        assertFailurePreservesSelection(new EditLogCommand(INDEX_SECOND_PERSON, ENTRY, NOTE, DATE),
+        assertFailurePreservesSelection(new EditLogCommand(INDEX_SECOND_PERSON, ENTRY, NOTE, DATE), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
     public void execute_invalidInteractionIndex_preservesDataAndSelection() {
-        setInteractions(OLDEST);
+        setInteractions(model, INDEX_FIRST_PERSON, OLDEST);
         model.setViewedPerson(model.getFilteredPersonList().get(1));
-        assertFailurePreservesSelection(new EditLogCommand(INDEX_FIRST_PERSON, ENTRY, NOTE, DATE),
+
+        assertFailurePreservesSelection(new EditLogCommand(INDEX_FIRST_PERSON, ENTRY, NOTE, DATE), model,
                 Messages.MESSAGE_INVALID_INTERACTION_INDEX);
     }
 
     @Test
     public void execute_emptyHistory_preservesDataAndSelection() {
-        setInteractions();
+        setInteractions(model, INDEX_FIRST_PERSON);
         model.setViewedPerson(model.getFilteredPersonList().get(1));
-        assertFailurePreservesSelection(new EditLogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(1), NOTE, DATE),
+
+        assertFailurePreservesSelection(
+                new EditLogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(1), NOTE, DATE), model,
                 Messages.MESSAGE_INVALID_INTERACTION_INDEX);
     }
 
     @Test
     public void equals() {
         EditLogCommand command = new EditLogCommand(INDEX_FIRST_PERSON, ENTRY, NOTE, DATE);
+
         // same object and same values -> returns true
         assertTrue(command.equals(command));
         assertTrue(command.equals(new EditLogCommand(INDEX_FIRST_PERSON, ENTRY, NOTE, DATE)));
@@ -263,22 +286,4 @@ public class EditLogCommandTest {
                 + ", interactionIndex=" + ENTRY + ", note=" + NOTE + ", date=" + DATE + "}", command.toString());
     }
 
-    /**
-     * Replaces the first displayed supporter's history and returns the updated supporter.
-     */
-    private Person setInteractions(Interaction... interactions) {
-        Person original = model.getFilteredPersonList().get(0);
-        Person updated = new PersonBuilder(original).withInteractions(interactions).build();
-        model.setPerson(original, updated);
-        return updated;
-    }
-
-    /**
-     * Verifies that failure leaves both model data and the viewed supporter unchanged.
-     */
-    private void assertFailurePreservesSelection(EditLogCommand command, String message) {
-        Optional<Person> previouslyViewed = model.getViewedPerson();
-        assertCommandFailure(command, model, message);
-        assertEquals(previouslyViewed, model.getViewedPerson());
-    }
 }

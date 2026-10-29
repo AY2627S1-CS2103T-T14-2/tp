@@ -44,7 +44,8 @@ public class StringUtilTest {
 
     @Test
     public void trimUnicodeWhitespace_asciiControlPadding_preservesTrimBehavior() {
-        String padding = String.valueOf((char) 0) + (char) 31;
+        // null and unit separator exercise the control-character range handled by String.trim
+        String padding = "\u0000\u001f";
         assertEquals("Called", StringUtil.trimUnicodeWhitespace(padding + "Called" + padding));
     }
 

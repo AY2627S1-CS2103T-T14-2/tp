@@ -3,17 +3,23 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
+import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.UnlogCommand;
 
 /**
  * Tests argument parsing and command-specific error messages for {@code UnlogCommandParser}.
  */
 public class UnlogCommandParserTest {
+
+    private static final String MESSAGE_INVALID_INDICES =
+            ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES + "\n" + UnlogCommand.MESSAGE_USAGE;
 
     private final UnlogCommandParser parser = new UnlogCommandParser();
 
@@ -25,29 +31,27 @@ public class UnlogCommandParserTest {
     @Test
     public void parse_validArgs_returnsUnlogCommand() {
         // use different indices to catch accidentally swapping the supporter and interaction indices
-        assertParseSuccess(parser, "1 2", new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2)));
+        assertParseSuccess(parser, "1 2", new UnlogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON));
     }
 
     @Test
     public void parse_extraWhitespace_returnsUnlogCommand() {
-        assertParseSuccess(parser, "  1 \t 2  ", new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2)));
+        assertParseSuccess(parser, "  1 \t 2  ", new UnlogCommand(INDEX_FIRST_PERSON, INDEX_SECOND_PERSON));
     }
 
     @Test
     public void parse_missingOrExtraArguments_throwsParseException() {
-        String expectedMessage = ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES + "\n" + UnlogCommand.MESSAGE_USAGE;
-        for (String args : new String[]{"", "  ", "1", "1 2 3", "1 2 nt/Note"}) {
-            assertParseFailure(parser, args, expectedMessage);
+        for (String args : List.of("", "  ", "1", "1 2 3", "1 2 nt/Note")) {
+            assertParseFailure(parser, args, MESSAGE_INVALID_INDICES);
         }
     }
 
     @Test
     public void parse_invalidIndexInEitherPosition_throwsParseException() {
-        String expectedMessage = ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES + "\n" + UnlogCommand.MESSAGE_USAGE;
-        // the shared helper validates the numbers; this parser must report unlog's usage for either failure
-        for (String invalidIndex : new String[]{"0", "-1", "+1", "abc", "1.5", "2147483648"}) {
-            assertParseFailure(parser, invalidIndex + " 2", expectedMessage);
-            assertParseFailure(parser, "1 " + invalidIndex, expectedMessage);
+        // the shared index parser validates the numbers; this parser must report unlog's usage for either failure
+        for (String invalidIndex : getInvalidIndexInputs("abc")) {
+            assertParseFailure(parser, invalidIndex + " 2", MESSAGE_INVALID_INDICES);
+            assertParseFailure(parser, "1 " + invalidIndex, MESSAGE_INVALID_INDICES);
         }
     }
 }

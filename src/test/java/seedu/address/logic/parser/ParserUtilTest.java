@@ -5,12 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
+import static seedu.address.testutil.TypicalInteractionDates.INTERACTION_CLOCK;
+import static seedu.address.testutil.TypicalInteractionNotes.VALID_NOTE;
 
-import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 
@@ -29,9 +29,6 @@ import seedu.address.model.person.Stage;
 import seedu.address.model.tag.Tag;
 
 public class ParserUtilTest {
-    private static final Clock INTERACTION_CLOCK = Clock.fixed(
-            Instant.parse("2026-10-19T16:30:00Z"), ZoneId.of("Asia/Singapore"));
-
     private static final String INVALID_NAME = "R&chel";
     private static final String INVALID_PHONE = "+65 123--4";
     private static final String INVALID_ADDRESS = " ";
@@ -42,7 +39,6 @@ public class ParserUtilTest {
     private static final String VALID_PHONE = "123456";
     private static final String VALID_ADDRESS = "123 Main Street #0505";
     private static final String VALID_EMAIL = "rachel@example.com";
-    private static final String VALID_INTERACTION_NOTE = "Called to discuss the year-end appeal";
     private static final String VALID_TAG_1 = "friend";
     private static final String VALID_TAG_2 = "neighbour";
 
@@ -72,15 +68,15 @@ public class ParserUtilTest {
     public void parseIndex_withUsageValidInput_returnsIndex() throws Exception {
         assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseIndex(WHITESPACE + "01" + WHITESPACE, "delete INDEX"));
         assertEquals(Index.fromOneBased(Integer.MAX_VALUE),
-                ParserUtil.parseIndex("2147483647", "delete INDEX"));
+                ParserUtil.parseIndex(Integer.toString(Integer.MAX_VALUE), "delete INDEX"));
     }
 
     @Test
     public void parseIndex_withUsageInvalidInput_reportsReasonAndUsage() {
         String usage = "delete INDEX\nDeletes a supporter.";
         String expectedMessage = "Index must be a positive integer (1, 2, 3, ...).\n" + usage;
-        for (String input : List.of("0", "-1", "+1", "1.5", "abc", "2147483648")) {
-            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseIndex(input, usage));
+        for (String invalidIndex : getInvalidIndexInputs("abc")) {
+            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseIndex(invalidIndex, usage));
         }
     }
 
@@ -110,10 +106,19 @@ public class ParserUtilTest {
     public void parseInteractionIndices_withUsageInvalidInput_reportsReasonAndUsage() {
         String usage = "unlog INDEX ENTRY\nDeletes an interaction.";
         String expectedMessage = "Provide exactly two positive integer indices: INDEX ENTRY.\n" + usage;
-        for (String input : List.of("", WHITESPACE, "1", "1 2 3", "0 1", "1 0", "abc 1", "1 abc",
-                "-1 1", "1 -1", "+1 1", "1 +1", "1.5 1", "1 1.5", "2147483648 1", "1 2147483648")) {
+
+        // wrong number of indices
+        for (String input : List.of("", WHITESPACE, "1", "1 2 3")) {
             assertThrows(ParseException.class, expectedMessage, () ->
                     ParserUtil.parseInteractionIndices(input, usage));
+        }
+
+        // invalid value in either index position
+        for (String invalidIndex : getInvalidIndexInputs("abc")) {
+            assertThrows(ParseException.class, expectedMessage, () ->
+                    ParserUtil.parseInteractionIndices(invalidIndex + " 1", usage));
+            assertThrows(ParseException.class, expectedMessage, () ->
+                    ParserUtil.parseInteractionIndices("1 " + invalidIndex, usage));
         }
     }
 
@@ -145,9 +150,10 @@ public class ParserUtilTest {
 
     @Test
     public void parseInteractionIndices_maximumIndices_success() throws Exception {
+        String maximumIndex = Integer.toString(Integer.MAX_VALUE);
         InteractionIndices expected = new InteractionIndices(Index.fromOneBased(Integer.MAX_VALUE),
                 Index.fromOneBased(Integer.MAX_VALUE));
-        assertEquals(expected, ParserUtil.parseInteractionIndices("2147483647 2147483647"));
+        assertEquals(expected, ParserUtil.parseInteractionIndices(maximumIndex + " " + maximumIndex));
     }
 
     @Test
@@ -160,12 +166,19 @@ public class ParserUtilTest {
 
     @Test
     public void parseInteractionIndices_invalidIndexInEitherPosition_throwsParseException() {
-        for (String invalid : List.of("0", "-1", "+1", "1.5", "abc", "2147483648", "99999999999999999999")) {
+        for (String invalidIndex : getInvalidIndexInputs("abc")) {
             assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES, () ->
-                    ParserUtil.parseInteractionIndices(invalid + " 1"));
+                    ParserUtil.parseInteractionIndices(invalidIndex + " 1"));
             assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES, () ->
-                    ParserUtil.parseInteractionIndices("1 " + invalid));
+                    ParserUtil.parseInteractionIndices("1 " + invalidIndex));
         }
+
+        // also reject values far beyond the integer range
+        String indexBeyondLongRange = "99999999999999999999";
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES, () ->
+                ParserUtil.parseInteractionIndices(indexBeyondLongRange + " 1"));
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES, () ->
+                ParserUtil.parseInteractionIndices("1 " + indexBeyondLongRange));
     }
 
     @Test
@@ -300,13 +313,13 @@ public class ParserUtilTest {
 
     @Test
     public void parseInteractionNote_validValueWithoutWhitespace_returnsNote() throws Exception {
-        assertEquals(VALID_INTERACTION_NOTE, ParserUtil.parseInteractionNote(VALID_INTERACTION_NOTE));
+        assertEquals(VALID_NOTE, ParserUtil.parseInteractionNote(VALID_NOTE));
     }
 
     @Test
     public void parseInteractionNote_validValueWithWhitespace_returnsTrimmedNote() throws Exception {
-        String noteWithWhitespace = WHITESPACE + VALID_INTERACTION_NOTE + WHITESPACE;
-        assertEquals(VALID_INTERACTION_NOTE, ParserUtil.parseInteractionNote(noteWithWhitespace));
+        String noteWithWhitespace = WHITESPACE + VALID_NOTE + WHITESPACE;
+        assertEquals(VALID_NOTE, ParserUtil.parseInteractionNote(noteWithWhitespace));
     }
 
     @Test
@@ -367,7 +380,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseInteractionDate_todayInClockZone_returnsDate() throws Exception {
-        // It is already 20 October in Singapore, although the UTC date is still 19 October.
+        // it is already 20 October in Singapore, although the UTC date is still 19 October
         assertEquals(LocalDate.of(2026, 10, 20),
                 ParserUtil.parseInteractionDate("2026-10-20", INTERACTION_CLOCK));
     }

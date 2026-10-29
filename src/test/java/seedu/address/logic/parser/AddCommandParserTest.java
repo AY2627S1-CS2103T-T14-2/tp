@@ -40,6 +40,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_STAGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.TypicalOrganisationNames.ASCII_AND_EMOJI_AT_ORGANISATION_LIMIT;
 import static seedu.address.testutil.TypicalPersons.AMY;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
@@ -76,7 +77,7 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_organisationUnicodeLengthBoundary_checksCodePoints() {
-        String organisationAtLimit = "a".repeat(99) + "😀";
+        String organisationAtLimit = ASCII_AND_EMOJI_AT_ORGANISATION_LIMIT;
         Person expectedPerson = new PersonBuilder(BOB).withOrganisation(organisationAtLimit).build();
         String input = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
                 + STAGE_DESC_BOB + TAG_DESC_HUSBAND + TAG_DESC_FRIEND
