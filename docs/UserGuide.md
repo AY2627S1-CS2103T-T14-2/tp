@@ -297,7 +297,7 @@ Supply at least one name keyword or nonempty prefix value. Name keywords are opt
   are rejected. Labels cannot be searched by themselves using `p/`.
 - A supporter without an organisation, phone number, email or tags does not match a search on that missing field.
 - Results stay in their original list order and are numbered from 1. Other commands use these displayed indices.
-- A new `find` searches all supporters and replaces the previous filter. `list`, `add`, `edit`, `undo` and `redo` show the full list again.
+- A new `find` searches all supporters and replaces the previous filter. `list`, `add`, `undo`, `redo` and an `edit` that changes something show the full list again.
 - Searching preserves the viewed supporter, even when they are absent from the results. It does not change saved supporter data or add an undo point, and it preserves redo history.
 - `find` without criteria and empty filters such as `o/` are rejected. Invalid stage names produce the stage error message. Invalid searches leave the previous results unchanged.
 
@@ -334,7 +334,7 @@ Format: `quiet [DAYS]`
 - Each `quiet` searches all supporters and replaces the previous filter and ordering. It does not narrow a previous `find` result.
 - Other commands use the numbers in this displayed list. For example, `quiet` followed by `view 1` opens the first quiet supporter, and `delete 1` deletes that supporter.
 - Changes to interactions or stages refresh the quiet list. Logging recent contact can remove a supporter; deleting their last interaction can move them to the top. Check the displayed indices again after a change.
-- `list` restores the full list in its normal order. `find` restores normal ordering for its matching results. Successful `add`, `edit`, `undo` and `redo` also restore the full list in normal order.
+- `list` restores the full list in its normal order. `find` restores normal ordering for its matching results. Successful `add`, `undo` and `redo`, and an `edit` that changes something, also restore the full list in normal order.
 - Running `quiet` preserves the viewed supporter, supporter data and saved order. It adds no undo point and preserves redo history.
 - Supply at most one day count, from `1` to `2147483647`. Zero, negatives, decimals, non-numbers, larger values and additional arguments are rejected without changing the current list or selection.
 
