@@ -8,11 +8,13 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSucces
 import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalInteractionDates.INVALID_DATE_INPUTS;
 import static seedu.address.testutil.TypicalInteractionNotes.CHARACTER_PRESERVATION_NOTES;
 import static seedu.address.testutil.TypicalInteractionNotes.SUPPLEMENTARY_NOTES_AT_LIMIT;
+import static seedu.address.testutil.TypicalInteractionNotes.UNICODE_BLANK_NOTES;
+import static seedu.address.testutil.TypicalInteractionNotes.VALID_NOTE;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -23,7 +25,6 @@ import seedu.address.model.person.Interaction;
 
 public class LogCommandParserTest {
 
-    private static final String VALID_NOTE = "Called to discuss the year-end appeal";
     private static final String MESSAGE_INVALID_FORMAT =
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, LogCommand.MESSAGE_USAGE);
 
@@ -34,7 +35,7 @@ public class LogCommandParserTest {
 
     @Test
     public void parse_unicodeBlankNote_failure() {
-        for (String note : List.of("\u0085", "\u2003", "\u00a0", " \t\u0085\u2003\u00a0\u202f\u3000 ")) {
+        for (String note : UNICODE_BLANK_NOTES) {
             assertParseFailure(parser, " 1 nt/" + note, Interaction.MESSAGE_CONSTRAINTS);
         }
     }
@@ -136,7 +137,7 @@ public class LogCommandParserTest {
 
     @Test
     public void parse_invalidDate_failure() {
-        for (String date : List.of("", "   ", "2024-2-29", "2024/02/29", "2024-02-30", "2023-02-29")) {
+        for (String date : INVALID_DATE_INPUTS) {
             assertParseFailure(parser, " 1 nt/" + VALID_NOTE + " dt/" + date,
                     Interaction.MESSAGE_INVALID_DATE_FORMAT);
         }

@@ -9,6 +9,7 @@ import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalInteractionNotes.NOTE_PADDING_SEQUENCES;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.time.LocalDate;
@@ -66,7 +67,7 @@ public class EditLogCommandTest {
     @Test
     public void constructor_paddedNote_equalsTrimmedCommand() {
         EditLogCommand expected = new EditLogCommand(INDEX_FIRST_PERSON, ENTRY, NOTE, DATE);
-        for (String padding : List.of(" \t", "\u00a0", "\u2003", "\u0085")) {
+        for (String padding : NOTE_PADDING_SEQUENCES) {
             EditLogCommand actual = new EditLogCommand(INDEX_FIRST_PERSON, ENTRY,
                     Optional.of(padding + NOTE.get() + padding), DATE);
             assertEquals(expected, actual);

@@ -7,11 +7,10 @@ import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
+import static seedu.address.testutil.TypicalInteractionDates.INTERACTION_CLOCK;
+import static seedu.address.testutil.TypicalInteractionNotes.VALID_NOTE;
 
-import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 
@@ -30,9 +29,6 @@ import seedu.address.model.person.Stage;
 import seedu.address.model.tag.Tag;
 
 public class ParserUtilTest {
-    private static final Clock INTERACTION_CLOCK = Clock.fixed(
-            Instant.parse("2026-10-19T16:30:00Z"), ZoneId.of("Asia/Singapore"));
-
     private static final String INVALID_NAME = "R&chel";
     private static final String INVALID_PHONE = "+65 123--4";
     private static final String INVALID_ADDRESS = " ";
@@ -43,7 +39,6 @@ public class ParserUtilTest {
     private static final String VALID_PHONE = "123456";
     private static final String VALID_ADDRESS = "123 Main Street #0505";
     private static final String VALID_EMAIL = "rachel@example.com";
-    private static final String VALID_INTERACTION_NOTE = "Called to discuss the year-end appeal";
     private static final String VALID_TAG_1 = "friend";
     private static final String VALID_TAG_2 = "neighbour";
 
@@ -317,13 +312,13 @@ public class ParserUtilTest {
 
     @Test
     public void parseInteractionNote_validValueWithoutWhitespace_returnsNote() throws Exception {
-        assertEquals(VALID_INTERACTION_NOTE, ParserUtil.parseInteractionNote(VALID_INTERACTION_NOTE));
+        assertEquals(VALID_NOTE, ParserUtil.parseInteractionNote(VALID_NOTE));
     }
 
     @Test
     public void parseInteractionNote_validValueWithWhitespace_returnsTrimmedNote() throws Exception {
-        String noteWithWhitespace = WHITESPACE + VALID_INTERACTION_NOTE + WHITESPACE;
-        assertEquals(VALID_INTERACTION_NOTE, ParserUtil.parseInteractionNote(noteWithWhitespace));
+        String noteWithWhitespace = WHITESPACE + VALID_NOTE + WHITESPACE;
+        assertEquals(VALID_NOTE, ParserUtil.parseInteractionNote(noteWithWhitespace));
     }
 
     @Test

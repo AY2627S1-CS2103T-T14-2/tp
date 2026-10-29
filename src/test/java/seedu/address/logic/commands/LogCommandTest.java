@@ -9,6 +9,8 @@ import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalInteractionNotes.NOTE_PADDING_SEQUENCES;
+import static seedu.address.testutil.TypicalInteractionNotes.VALID_NOTE;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.time.Clock;
@@ -35,7 +37,6 @@ import seedu.address.testutil.PersonBuilder;
  */
 public class LogCommandTest {
 
-    private static final String VALID_NOTE = "Called to discuss the year-end appeal";
     private static final LocalDate FIXED_DATE = LocalDate.of(2026, 9, 16);
     private static final Clock FIXED_CLOCK = Clock.fixed(
             Instant.parse("2026-09-16T12:00:00Z"), ZoneOffset.UTC);
@@ -61,7 +62,7 @@ public class LogCommandTest {
     @Test
     public void constructor_paddedNote_equalsTrimmedCommand() {
         LogCommand expected = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, FIXED_CLOCK);
-        for (String padding : List.of(" \t", "\u00a0", "\u2003", "\u0085")) {
+        for (String padding : NOTE_PADDING_SEQUENCES) {
             LogCommand actual = new LogCommand(INDEX_FIRST_PERSON, padding + VALID_NOTE + padding, FIXED_CLOCK);
             assertEquals(expected, actual);
         }

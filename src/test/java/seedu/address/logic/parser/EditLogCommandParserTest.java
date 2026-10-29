@@ -8,8 +8,10 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalInteractionDates.INVALID_DATE_INPUTS;
 import static seedu.address.testutil.TypicalInteractionNotes.CHARACTER_PRESERVATION_NOTES;
 import static seedu.address.testutil.TypicalInteractionNotes.SUPPLEMENTARY_NOTES_AT_LIMIT;
+import static seedu.address.testutil.TypicalInteractionNotes.UNICODE_BLANK_NOTES;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,7 +34,7 @@ public class EditLogCommandParserTest {
 
     @Test
     public void parse_unicodeBlankNote_failure() {
-        for (String note : List.of("\u0085", "\u2003", "\u00a0", " \t\u0085\u2003\u00a0\u202f\u3000 ")) {
+        for (String note : UNICODE_BLANK_NOTES) {
             assertParseFailure(parser, " 1 2 nt/" + note, Interaction.MESSAGE_CONSTRAINTS);
         }
     }
@@ -130,7 +132,7 @@ public class EditLogCommandParserTest {
 
     @Test
     public void parse_invalidDate_failure() {
-        for (String date : List.of("", "   ", "2024-2-29", "2024/02/29", "2024-02-30", "2023-02-29")) {
+        for (String date : INVALID_DATE_INPUTS) {
             assertParseFailure(parser, " 1 2 dt/" + date, Interaction.MESSAGE_INVALID_DATE_FORMAT);
         }
         assertParseFailure(parser, " 1 2 dt/1899-12-31", Interaction.MESSAGE_EARLY_DATE);
