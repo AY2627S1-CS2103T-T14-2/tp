@@ -98,6 +98,20 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void readAddressBook_trailingContent_throwsWithoutReturningPartialData() throws Exception {
+        Path dataFile = testFolder.resolve("trailing.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        for (String suffix : List.of("not json", "{\"persons\":[{\"name\":\"Lost\",\"phone\":\"123\","
+                + "\"stage\":\"Giving\"}]}")) {
+            String json = "{\"persons\":[]}" + suffix;
+            Files.writeString(dataFile, json);
+
+            assertThrows(DataLoadingException.class, storage::readAddressBook);
+            assertEquals(json, Files.readString(dataFile));
+        }
+    }
+
+    @Test
     public void readAddressBook_veryLongPhone_throwsDataLoadingExceptionWithoutChangingFile() throws Exception {
         Path dataFile = testFolder.resolve("longPhone.json");
         String json = "{\"persons\":[{\"name\":\"Phone Test\",\"stage\":\"Giving\",\"phone\":\""

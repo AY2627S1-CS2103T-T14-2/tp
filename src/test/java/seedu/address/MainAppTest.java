@@ -95,6 +95,15 @@ public class MainAppTest {
     }
 
     @Test
+    public void initModelManager_trailingJson_startsEmptyWithWarningWithoutChangingFile() throws Exception {
+        Path fixture = testFolder.resolve("trailing.json");
+        Files.writeString(fixture, "{\"persons\":[]}{\"persons\":[{\"name\":\"Lost\",\"phone\":\"123\","
+                + "\"stage\":\"Giving\"}]}");
+
+        assertInvalidFileStartsEmpty(fixture);
+    }
+
+    @Test
     public void initModelManager_invalidSupporter_startsEmptyWithWarning() throws Exception {
         assertInvalidFileStartsEmpty(TEST_DATA_FOLDER.resolve("JsonAddressBookStorageTest")
                 .resolve("invalidPersonAddressBook.json"));
