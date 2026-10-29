@@ -8,9 +8,11 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
@@ -47,6 +49,24 @@ public class MainAppTest {
         assertEquals(expectedData, model.getAddressBook());
         assertEquals("", mainApp.getStartupWarning());
         assertArrayEquals(originalContents, Files.readAllBytes(dataFile));
+    }
+
+    @Test
+    @ResourceLock("java.util.Locale.default")
+    public void initModelManager_turkishDefaultLocale_loadsValidDataWithoutWarning() throws Exception {
+        AddressBook expectedData = getTypicalAddressBook();
+        Storage storage = createStorage(testFolder.resolve("locale.json"));
+        storage.saveAddressBook(expectedData);
+        Locale originalLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            Model model = mainApp.initModelManager(storage, new UserPrefs());
+
+            assertEquals(expectedData, model.getAddressBook());
+            assertEquals("", mainApp.getStartupWarning());
+        } finally {
+            Locale.setDefault(originalLocale);
+        }
     }
 
     @Test

@@ -18,9 +18,11 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
@@ -177,6 +179,27 @@ public class JsonAddressBookStorageTest {
         readBack = jsonAddressBookStorage.readAddressBook().get(); // file path not specified
         assertEquals(original, new AddressBook(readBack));
 
+    }
+
+    @Test
+    @ResourceLock("java.util.Locale.default")
+    public void readAndSaveAddressBook_turkishDefaultLocale_preservesStages() throws Exception {
+        AddressBook book = getTypicalAddressBook();
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("locale.json"));
+        storage.saveAddressBook(book);
+        String originalContents = Files.readString(storage.getAddressBookFilePath());
+        Locale originalLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            ReadOnlyAddressBook restored = storage.readAddressBook().orElseThrow();
+            assertEquals(book, restored);
+
+            storage.saveAddressBook(restored);
+            assertEquals(originalContents, Files.readString(storage.getAddressBookFilePath()));
+            assertEquals(book, storage.readAddressBook().orElseThrow());
+        } finally {
+            Locale.setDefault(originalLocale);
+        }
     }
 
     @Test
