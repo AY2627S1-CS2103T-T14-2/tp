@@ -3,17 +3,15 @@ package seedu.address.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.FxTestUtil.runOnFxThread;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
-import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -36,17 +34,6 @@ public class SupporterDetailPanelTest {
     @Test
     public void setSupporter_panelTooShort_detailsScrollAndKeepHistoryVisible() throws Exception {
         runOnFxThread(SupporterDetailPanelTest::verifyShortPanel);
-    }
-
-    private static void runOnFxThread(Runnable verification) throws Exception {
-        FutureTask<Void> task = new FutureTask<>(verification, null);
-        try {
-            Platform.startup(task);
-        } catch (IllegalStateException e) {
-            // Reuse the toolkit if another UI test has already started it.
-            Platform.runLater(task);
-        }
-        task.get(15, TimeUnit.SECONDS);
     }
 
     private static SupporterDetailPanel createPanel(double height) {

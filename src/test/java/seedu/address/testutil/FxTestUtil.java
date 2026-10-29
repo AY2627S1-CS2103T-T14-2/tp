@@ -10,7 +10,7 @@ import javafx.application.Platform;
  */
 public final class FxTestUtil {
 
-    private static final int TIMEOUT_SECONDS = 15;
+    private static final int DEFAULT_TIMEOUT_SECONDS = 15;
 
     private FxTestUtil() {
     }
@@ -23,6 +23,17 @@ public final class FxTestUtil {
      * @throws Exception If the wait is interrupted, the action fails, or the timeout expires.
      */
     public static void runOnFxThread(Runnable action) throws Exception {
+        runOnFxThread(action, DEFAULT_TIMEOUT_SECONDS);
+    }
+
+    /**
+     * Runs the action on the JavaFX application thread, starting the toolkit if necessary.
+     * Waits up to {@code timeoutSeconds} seconds and propagates task failures to the calling test.
+     * Must be called from outside the JavaFX application thread.
+     *
+     * @throws Exception If the wait is interrupted, the action fails, or the timeout expires.
+     */
+    public static void runOnFxThread(Runnable action, long timeoutSeconds) throws Exception {
         FutureTask<Void> verification = new FutureTask<>(action, null);
         try {
             Platform.startup(verification);
@@ -30,6 +41,6 @@ public final class FxTestUtil {
             // Reuse the toolkit if another UI test has already started it.
             Platform.runLater(verification);
         }
-        verification.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        verification.get(timeoutSeconds, TimeUnit.SECONDS);
     }
 }

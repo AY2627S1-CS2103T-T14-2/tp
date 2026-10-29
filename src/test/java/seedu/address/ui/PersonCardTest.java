@@ -2,14 +2,12 @@ package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.FxTestUtil.runOnFxThread;
 
 import java.time.LocalDate;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
-import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -171,14 +169,4 @@ public class PersonCardTest {
         });
     }
 
-    private static void runOnFxThread(Runnable assertions) throws Exception {
-        FutureTask<Void> verification = new FutureTask<>(assertions, null);
-        try {
-            Platform.startup(verification);
-        } catch (IllegalStateException e) {
-            // Reuse the toolkit if another UI test has already started it.
-            Platform.runLater(verification);
-        }
-        verification.get(15, TimeUnit.SECONDS);
-    }
 }

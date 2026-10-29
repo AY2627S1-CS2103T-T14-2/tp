@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.FxTestUtil.runOnFxThread;
 
 import java.awt.Point;
 import java.io.IOException;
@@ -11,13 +12,10 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
@@ -46,12 +44,14 @@ import seedu.address.testutil.PersonBuilder;
  */
 public class MainWindowTest {
 
+    private static final int FX_TIMEOUT_SECONDS = 20;
+
     @TempDir
     private Path temporaryFolder;
 
     @Test
     public void executeCommand_selectionLifecycle_updatesDetailPanel() throws Exception {
-        runOnFxThread(() -> verifySelectionLifecycle());
+        runOnFxThread(this::verifySelectionLifecycle, FX_TIMEOUT_SECONDS);
     }
 
     @Test
@@ -67,7 +67,7 @@ public class MainWindowTest {
             } finally {
                 stage.close();
             }
-        });
+        }, FX_TIMEOUT_SECONDS);
     }
 
     @Test
@@ -83,7 +83,7 @@ public class MainWindowTest {
             } finally {
                 stage.close();
             }
-        });
+        }, FX_TIMEOUT_SECONDS);
     }
 
     @Test
@@ -94,7 +94,7 @@ public class MainWindowTest {
                     (int) (screenBounds.getMinY() + screenBounds.getHeight() / 2));
             assertTrue(MainWindow.isOnAnyScreen(centre));
             assertFalse(MainWindow.isOnAnyScreen(new Point(-100_000, -100_000)));
-        });
+        }, FX_TIMEOUT_SECONDS);
     }
 
     @Test
@@ -112,15 +112,15 @@ public class MainWindowTest {
             try {
                 submit(window, "log 1 nt/Called despite save failure");
 
-                assertEquals("Amy Bee", label(window, "supporterName").getText());
-                assertEquals("Interactions (1) - newest first", label(window, "historyHeading").getText());
+                assertEquals("Amy Bee", getLabel(window, "supporterName").getText());
+                assertEquals("Interactions (1) - newest first", getLabel(window, "historyHeading").getText());
                 TextArea feedback = (TextArea) window.getPrimaryStage().getScene().lookup("#resultDisplay");
                 assertTrue(feedback.getText().contains("Test save failure"));
                 assertEquals(1, model.getViewedPerson().orElseThrow().getInteractionCount());
             } finally {
                 window.getPrimaryStage().close();
             }
-        });
+        }, FX_TIMEOUT_SECONDS);
     }
 
     private void verifySelectionLifecycle() {
@@ -136,51 +136,51 @@ public class MainWindowTest {
         model.addPerson(bob);
         MainWindow window = createWindow(model, new JsonAddressBookStorage(temporaryFolder.resolve("book.json")));
         try {
-            assertTrue(label(window, "startupMessage").isVisible());
-            assertEquals(SupporterDetailData.MESSAGE_STARTUP, label(window, "startupMessage").getText());
+            assertTrue(getLabel(window, "startupMessage").isVisible());
+            assertEquals(SupporterDetailData.MESSAGE_STARTUP, getLabel(window, "startupMessage").getText());
 
             submit(window, "view 1");
-            assertEquals("Amy Bee", label(window, "supporterName").getText());
+            assertEquals("Amy Bee", getLabel(window, "supporterName").getText());
             verifyHistoryLayout(window);
 
             ScrollPane history = (ScrollPane) window.getPrimaryStage().getScene().lookup("#historyScrollPane");
             history.setVvalue(0.8);
             submit(window, "find Bob");
             assertEquals(List.of(bob), model.getFilteredPersonList());
-            assertEquals("Amy Bee", label(window, "supporterName").getText());
+            assertEquals("Amy Bee", getLabel(window, "supporterName").getText());
             assertEquals(0.8, history.getVvalue());
 
             submit(window, "view 1");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
+            assertEquals("Bob Lee", getLabel(window, "supporterName").getText());
             assertEquals(List.of(bob), model.getFilteredPersonList());
-            assertEquals(SupporterDetailData.MESSAGE_EMPTY_HISTORY, historyPlaceholder(history).getText());
+            assertEquals(SupporterDetailData.MESSAGE_EMPTY_HISTORY, getHistoryPlaceholder(history).getText());
 
             submit(window, "view 2");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
+            assertEquals("Bob Lee", getLabel(window, "supporterName").getText());
             submit(window, "view abc");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
+            assertEquals("Bob Lee", getLabel(window, "supporterName").getText());
             submit(window, "list");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
+            assertEquals("Bob Lee", getLabel(window, "supporterName").getText());
             submit(window, "add n/Cara Tan p/91234567");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
+            assertEquals("Bob Lee", getLabel(window, "supporterName").getText());
 
             submit(window, "log 1 nt/Follow-up call");
-            assertEquals("Amy Bee", label(window, "supporterName").getText());
-            assertEquals("Interactions (41) - newest first", label(window, "historyHeading").getText());
+            assertEquals("Amy Bee", getLabel(window, "supporterName").getText());
+            assertEquals("Interactions (41) - newest first", getLabel(window, "historyHeading").getText());
             assertEquals(0.0, history.getVvalue());
             submit(window, "stage 2 giving");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
-            assertEquals("Giving", label(window, "supporterStage").getText());
+            assertEquals("Bob Lee", getLabel(window, "supporterName").getText());
+            assertEquals("Giving", getLabel(window, "supporterStage").getText());
             submit(window, "view 1");
             submit(window, "stage 2 giving");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
+            assertEquals("Bob Lee", getLabel(window, "supporterName").getText());
 
             submit(window, "delete 1");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
+            assertEquals("Bob Lee", getLabel(window, "supporterName").getText());
             submit(window, "delete 1");
             assertCleared(window);
             submit(window, "view 1");
-            assertEquals("Cara Tan", label(window, "supporterName").getText());
+            assertEquals("Cara Tan", getLabel(window, "supporterName").getText());
             submit(window, "clear");
             assertCleared(window);
         } finally {
@@ -230,34 +230,21 @@ public class MainWindowTest {
         commandField.fireEvent(new ActionEvent());
     }
 
-    private static Label label(MainWindow window, String id) {
+    private static Label getLabel(MainWindow window, String id) {
         return (Label) window.getPrimaryStage().getScene().lookup("#" + id);
     }
 
-    private static Label historyPlaceholder(ScrollPane history) {
+    private static Label getHistoryPlaceholder(ScrollPane history) {
         return (Label) history.getContent().lookup("#historyPlaceholder");
     }
 
     private static void assertCleared(MainWindow window) {
-        assertTrue(label(window, "startupMessage").isVisible());
-        assertEquals(SupporterDetailData.MESSAGE_STARTUP, label(window, "startupMessage").getText());
+        assertTrue(getLabel(window, "startupMessage").isVisible());
+        assertEquals(SupporterDetailData.MESSAGE_STARTUP, getLabel(window, "startupMessage").getText());
         VBox details = (VBox) window.getPrimaryStage().getScene().lookup("#detailsContainer");
         assertFalse(details.isVisible());
         assertFalse(details.isManaged());
-        assertEquals("-", label(window, "supporterName").getText());
+        assertEquals("-", getLabel(window, "supporterName").getText());
     }
 
-    private static void runOnFxThread(Runnable action) throws Exception {
-        FutureTask<Void> verification = new FutureTask<>(() -> {
-            action.run();
-            return null;
-        });
-        try {
-            Platform.startup(verification);
-        } catch (IllegalStateException e) {
-            // Reuse the toolkit if another UI test has already started it.
-            Platform.runLater(verification);
-        }
-        verification.get(20, TimeUnit.SECONDS);
-    }
 }
