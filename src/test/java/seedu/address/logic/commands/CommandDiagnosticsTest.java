@@ -4,23 +4,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.LogTestUtil.captureLogs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
 
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -171,40 +166,4 @@ public class CommandDiagnosticsTest {
         assertEquals(List.of(expected), messages);
     }
 
-    /**
-     * Captures messages from one initialized class logger and restores its configuration afterwards.
-     */
-    private List<String> captureLogs(Class<?> source, Executable action) throws Throwable {
-        Class.forName(source.getName());
-        Logger logger = Logger.getLogger("supporterbook." + source.getSimpleName());
-        Level originalLevel = logger.getLevel();
-        boolean hadParentHandlers = logger.getUseParentHandlers();
-        List<String> messages = new ArrayList<>();
-        Handler handler = new Handler() {
-            @Override
-            public void publish(LogRecord record) {
-                assertEquals(Level.FINE, record.getLevel());
-                messages.add(record.getMessage());
-            }
-
-            @Override
-            public void flush() {
-            }
-
-            @Override
-            public void close() {
-            }
-        };
-        logger.addHandler(handler);
-        logger.setLevel(Level.FINE);
-        logger.setUseParentHandlers(false);
-        try {
-            action.execute();
-            return messages;
-        } finally {
-            logger.removeHandler(handler);
-            logger.setLevel(originalLevel);
-            logger.setUseParentHandlers(hadParentHandlers);
-        }
-    }
 }

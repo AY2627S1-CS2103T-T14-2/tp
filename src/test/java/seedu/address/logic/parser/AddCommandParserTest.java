@@ -62,27 +62,17 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_accentedNameWithEmailOnly_success() {
-        Person expectedPerson = new PersonBuilder().withName("José Tan").withEmail("jose@example.com")
-                .withoutPhone().withoutAddress().build();
-
-        assertParseSuccess(parser, " n/José Tan e/jose@example.com", new AddCommand(expectedPerson));
+        assertNameWithEmailOnlyParses("José Tan", "jose@example.com");
     }
 
     @Test
     public void parse_nonLatinNameWithEmailOnly_success() {
-        Person expectedPerson = new PersonBuilder().withName("李伟").withEmail("li@example.com")
-                .withoutPhone().withoutAddress().build();
-
-        assertParseSuccess(parser, " n/李伟 e/li@example.com", new AddCommand(expectedPerson));
+        assertNameWithEmailOnlyParses("李伟", "li@example.com");
     }
 
     @Test
     public void parse_curlyApostropheNameWithEmailOnly_success() {
-        Person expectedPerson = new PersonBuilder().withName("Charlotte O’Brien").withEmail("c2@example.com")
-                .withoutPhone().withoutAddress().build();
-
-        assertParseSuccess(parser, " n/Charlotte O’Brien e/c2@example.com", new AddCommand(expectedPerson));
-
+        assertNameWithEmailOnlyParses("Charlotte O’Brien", "c2@example.com");
     }
 
     @Test
@@ -115,17 +105,9 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_namesWithCommasBracketsOrAtSignsAndEmailOnly_success() {
-        Person expectedAlias = new PersonBuilder().withName("Ahmad bin Ali @ Ah Mat")
-                .withEmail("a1@example.com").withoutPhone().withoutAddress().build();
-        Person expectedDialectName = new PersonBuilder().withName("Tan Ah Kow (Chen Ah Kow)")
-                .withEmail("a2@example.com").withoutPhone().withoutAddress().build();
-        Person expectedCommaName = new PersonBuilder().withName("Tan, Ah Kow")
-                .withEmail("a3@example.com").withoutPhone().withoutAddress().build();
-
-        assertParseSuccess(parser, " n/Ahmad bin Ali @ Ah Mat e/a1@example.com", new AddCommand(expectedAlias));
-        assertParseSuccess(parser, " n/Tan Ah Kow (Chen Ah Kow) e/a2@example.com",
-                new AddCommand(expectedDialectName));
-        assertParseSuccess(parser, " n/Tan, Ah Kow e/a3@example.com", new AddCommand(expectedCommaName));
+        assertNameWithEmailOnlyParses("Ahmad bin Ali @ Ah Mat", "a1@example.com");
+        assertNameWithEmailOnlyParses("Tan Ah Kow (Chen Ah Kow)", "a2@example.com");
+        assertNameWithEmailOnlyParses("Tan, Ah Kow", "a3@example.com");
     }
 
     @Test
@@ -170,7 +152,6 @@ public class AddCommandParserTest {
         assertParseSuccess(parser, PREAMBLE_WHITESPACE + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + ADDRESS_DESC_BOB + ORGANISATION_DESC_BOB + STAGE_DESC_BOB + TAG_DESC_FRIEND,
                 new AddCommand(expectedPerson));
-
 
         // multiple tags - all accepted
         Person expectedPersonMultipleTags = new PersonBuilder(BOB).withTags(VALID_TAG_FRIEND, VALID_TAG_HUSBAND)
@@ -476,5 +457,13 @@ public class AddCommandParserTest {
         assertParseFailure(parser, PREAMBLE_NON_EMPTY + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + ADDRESS_DESC_BOB + TAG_DESC_HUSBAND + TAG_DESC_FRIEND,
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+    }
+
+    private void assertNameWithEmailOnlyParses(String name, String email) {
+        Person expectedPerson = new PersonBuilder().withName(name).withEmail(email)
+                .withoutPhone().withoutAddress().build();
+
+        assertParseSuccess(parser, " " + PREFIX_NAME + name + " " + PREFIX_EMAIL + email,
+                new AddCommand(expectedPerson));
     }
 }

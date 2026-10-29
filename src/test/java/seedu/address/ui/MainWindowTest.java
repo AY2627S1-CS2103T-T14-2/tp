@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.FxTestUtil.runOnFxThread;
 
 import java.awt.Point;
 import java.io.IOException;
@@ -11,13 +12,10 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
@@ -46,12 +44,14 @@ import seedu.address.testutil.PersonBuilder;
  */
 public class MainWindowTest {
 
+    private static final int FX_TIMEOUT_SECONDS = 20;
+
     @TempDir
     private Path temporaryFolder;
 
     @Test
     public void executeCommand_selectionLifecycle_updatesDetailPanel() throws Exception {
-        runOnFxThread(() -> verifySelectionLifecycle());
+        runOnFxThread(this::verifySelectionLifecycle, FX_TIMEOUT_SECONDS);
     }
 
     @Test
@@ -67,7 +67,7 @@ public class MainWindowTest {
             } finally {
                 stage.close();
             }
-        });
+        }, FX_TIMEOUT_SECONDS);
     }
 
     @Test
@@ -83,7 +83,7 @@ public class MainWindowTest {
             } finally {
                 stage.close();
             }
-        });
+        }, FX_TIMEOUT_SECONDS);
     }
 
     @Test
@@ -94,7 +94,7 @@ public class MainWindowTest {
                     (int) (screenBounds.getMinY() + screenBounds.getHeight() / 2));
             assertTrue(MainWindow.isOnAnyScreen(centre));
             assertFalse(MainWindow.isOnAnyScreen(new Point(-100_000, -100_000)));
-        });
+        }, FX_TIMEOUT_SECONDS);
     }
 
     @Test
@@ -112,80 +112,98 @@ public class MainWindowTest {
             try {
                 submit(window, "log 1 nt/Called despite save failure");
 
-                assertEquals("Amy Bee", label(window, "supporterName").getText());
-                assertEquals("Interactions (1) - newest first", label(window, "historyHeading").getText());
-                TextArea feedback = (TextArea) window.getPrimaryStage().getScene().lookup("#resultDisplay");
+                assertEquals("Amy Bee", getLabel(window, "supporterName").getText());
+                assertEquals("Interactions (1) - newest first", getLabel(window, "historyHeading").getText());
+                TextArea feedback = getResultDisplay(window);
                 assertTrue(feedback.getText().contains("Test save failure"));
                 assertEquals(1, model.getViewedPerson().orElseThrow().getInteractionCount());
             } finally {
                 window.getPrimaryStage().close();
             }
-        });
+        }, FX_TIMEOUT_SECONDS);
     }
 
     private void verifySelectionLifecycle() {
         Model model = new ModelManager();
+        Person bob = new PersonBuilder().withName("Bob Lee").build();
+        model.addPerson(createPersonWithHistory());
+        model.addPerson(bob);
+        MainWindow window = createWindow(model, new JsonAddressBookStorage(temporaryFolder.resolve("book.json")));
+        try {
+            assertStartupState(window);
+            verifyViewingSupporterWithHistory(window);
+            verifyFilteringPreservesSelection(window, model, bob);
+            verifyViewingFilteredSupporter(window, model, bob);
+            verifyInvalidViewsPreserveSelection(window);
+            verifyListAndAddPreserveSelection(window);
+            verifyLoggingSelectsSupporter(window);
+            verifyStageChangesSelectSupporter(window);
+            verifyDeletionAndClearing(window);
+        } finally {
+            window.getPrimaryStage().close();
+        }
+    }
+
+    private static Person createPersonWithHistory() {
         List<Interaction> interactions = new ArrayList<>();
         String note = "Discussion ".repeat(40).trim();
         for (int i = 0; i < 40; i++) {
             interactions.add(new Interaction(LocalDate.of(2026, 9, 16), note));
         }
-        Person amy = new PersonBuilder().withInteractions(interactions.toArray(Interaction[]::new)).build();
-        Person bob = new PersonBuilder().withName("Bob Lee").build();
-        model.addPerson(amy);
-        model.addPerson(bob);
-        MainWindow window = createWindow(model, new JsonAddressBookStorage(temporaryFolder.resolve("book.json")));
-        try {
-            assertTrue(label(window, "startupMessage").isVisible());
-            assertEquals(SupporterDetailData.MESSAGE_STARTUP, label(window, "startupMessage").getText());
+        return new PersonBuilder().withInteractions(interactions.toArray(Interaction[]::new)).build();
+    }
 
-            submit(window, "view 1");
-            assertEquals("Amy Bee", label(window, "supporterName").getText());
-            verifyHistoryLayout(window);
+    private static void verifyViewingSupporterWithHistory(MainWindow window) {
+        submitAndAssertSupporter(window, "view 1", "Amy Bee");
+        verifyHistoryLayout(window);
+    }
 
-            ScrollPane history = (ScrollPane) window.getPrimaryStage().getScene().lookup("#historyScrollPane");
-            history.setVvalue(0.8);
-            submit(window, "find Bob");
-            assertEquals(List.of(bob), model.getFilteredPersonList());
-            assertEquals("Amy Bee", label(window, "supporterName").getText());
-            assertEquals(0.8, history.getVvalue());
+    private static void verifyFilteringPreservesSelection(MainWindow window, Model model, Person bob) {
+        ScrollPane history = getHistoryScrollPane(window);
+        history.setVvalue(0.8);
+        submit(window, "find Bob");
+        assertEquals(List.of(bob), model.getFilteredPersonList());
+        assertEquals("Amy Bee", getLabel(window, "supporterName").getText());
+        assertEquals(0.8, history.getVvalue());
+    }
 
-            submit(window, "view 1");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
-            assertEquals(List.of(bob), model.getFilteredPersonList());
-            assertEquals(SupporterDetailData.MESSAGE_EMPTY_HISTORY, historyPlaceholder(history).getText());
+    private static void verifyViewingFilteredSupporter(MainWindow window, Model model, Person bob) {
+        submitAndAssertSupporter(window, "view 1", "Bob Lee");
+        assertEquals(List.of(bob), model.getFilteredPersonList());
+        assertEquals(SupporterDetailData.MESSAGE_EMPTY_HISTORY,
+                getHistoryPlaceholder(getHistoryScrollPane(window)).getText());
+    }
 
-            submit(window, "view 2");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
-            submit(window, "view abc");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
-            submit(window, "list");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
-            submit(window, "add n/Cara Tan p/91234567");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
+    private static void verifyInvalidViewsPreserveSelection(MainWindow window) {
+        submitAndAssertSupporter(window, "view 2", "Bob Lee");
+        submitAndAssertSupporter(window, "view abc", "Bob Lee");
+    }
 
-            submit(window, "log 1 nt/Follow-up call");
-            assertEquals("Amy Bee", label(window, "supporterName").getText());
-            assertEquals("Interactions (41) - newest first", label(window, "historyHeading").getText());
-            assertEquals(0.0, history.getVvalue());
-            submit(window, "stage 2 giving");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
-            assertEquals("Giving", label(window, "supporterStage").getText());
-            submit(window, "view 1");
-            submit(window, "stage 2 giving");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
+    private static void verifyListAndAddPreserveSelection(MainWindow window) {
+        submitAndAssertSupporter(window, "list", "Bob Lee");
+        submitAndAssertSupporter(window, "add n/Cara Tan p/91234567", "Bob Lee");
+    }
 
-            submit(window, "delete 1");
-            assertEquals("Bob Lee", label(window, "supporterName").getText());
-            submit(window, "delete 1");
-            assertCleared(window);
-            submit(window, "view 1");
-            assertEquals("Cara Tan", label(window, "supporterName").getText());
-            submit(window, "clear");
-            assertCleared(window);
-        } finally {
-            window.getPrimaryStage().close();
-        }
+    private static void verifyLoggingSelectsSupporter(MainWindow window) {
+        submitAndAssertSupporter(window, "log 1 nt/Follow-up call", "Amy Bee");
+        assertEquals("Interactions (41) - newest first", getLabel(window, "historyHeading").getText());
+        assertEquals(0.0, getHistoryScrollPane(window).getVvalue());
+    }
+
+    private static void verifyStageChangesSelectSupporter(MainWindow window) {
+        submitAndAssertSupporter(window, "stage 2 giving", "Bob Lee");
+        assertEquals("Giving", getLabel(window, "supporterStage").getText());
+        submit(window, "view 1");
+        submitAndAssertSupporter(window, "stage 2 giving", "Bob Lee");
+    }
+
+    private static void verifyDeletionAndClearing(MainWindow window) {
+        submitAndAssertSupporter(window, "delete 1", "Bob Lee");
+        submit(window, "delete 1");
+        assertCleared(window);
+        submitAndAssertSupporter(window, "view 1", "Cara Tan");
+        submit(window, "clear");
+        assertCleared(window);
     }
 
     private Stage createStage(GuiSettings savedGuiSettings) {
@@ -201,7 +219,7 @@ public class MainWindowTest {
         MainWindow window = new MainWindow(new Stage(), new LogicManager(model, storage),
                 storage.getAddressBookFilePath());
         window.fillInnerParts();
-        Region root = (Region) window.getPrimaryStage().getScene().getRoot();
+        Region root = getRoot(window);
         root.resize(1000, 560);
         root.applyCss();
         root.layout();
@@ -209,9 +227,9 @@ public class MainWindowTest {
     }
 
     private static void verifyHistoryLayout(MainWindow window) {
-        Region root = (Region) window.getPrimaryStage().getScene().getRoot();
-        ScrollPane history = (ScrollPane) root.lookup("#historyScrollPane");
-        VBox entries = (VBox) history.getContent().lookup("#interactionEntries");
+        Region root = getRoot(window);
+        ScrollPane history = getHistoryScrollPane(window);
+        VBox entries = getInteractionEntries(history);
         for (double width : new double[] {740, 1000}) {
             root.resize(width, 560);
             root.applyCss();
@@ -225,39 +243,59 @@ public class MainWindowTest {
     }
 
     private static void submit(MainWindow window, String command) {
-        TextField commandField = (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
+        TextField commandField = getCommandField(window);
         commandField.setText(command);
         commandField.fireEvent(new ActionEvent());
     }
 
-    private static Label label(MainWindow window, String id) {
+    private static void submitAndAssertSupporter(MainWindow window, String command, String expectedName) {
+        submit(window, command);
+        assertEquals(expectedName, getLabel(window, "supporterName").getText(),
+                "Selected supporter after command: " + command);
+    }
+
+    private static Region getRoot(MainWindow window) {
+        return (Region) window.getPrimaryStage().getScene().getRoot();
+    }
+
+    private static Label getLabel(MainWindow window, String id) {
         return (Label) window.getPrimaryStage().getScene().lookup("#" + id);
     }
 
-    private static Label historyPlaceholder(ScrollPane history) {
+    private static Label getHistoryPlaceholder(ScrollPane history) {
         return (Label) history.getContent().lookup("#historyPlaceholder");
     }
 
-    private static void assertCleared(MainWindow window) {
-        assertTrue(label(window, "startupMessage").isVisible());
-        assertEquals(SupporterDetailData.MESSAGE_STARTUP, label(window, "startupMessage").getText());
-        VBox details = (VBox) window.getPrimaryStage().getScene().lookup("#detailsContainer");
-        assertFalse(details.isVisible());
-        assertFalse(details.isManaged());
-        assertEquals("-", label(window, "supporterName").getText());
+    private static ScrollPane getHistoryScrollPane(MainWindow window) {
+        return (ScrollPane) window.getPrimaryStage().getScene().lookup("#historyScrollPane");
     }
 
-    private static void runOnFxThread(Runnable action) throws Exception {
-        FutureTask<Void> verification = new FutureTask<>(() -> {
-            action.run();
-            return null;
-        });
-        try {
-            Platform.startup(verification);
-        } catch (IllegalStateException e) {
-            // Reuse the toolkit if another UI test has already started it.
-            Platform.runLater(verification);
-        }
-        verification.get(20, TimeUnit.SECONDS);
+    private static VBox getInteractionEntries(ScrollPane history) {
+        return (VBox) history.getContent().lookup("#interactionEntries");
+    }
+
+    private static TextField getCommandField(MainWindow window) {
+        return (TextField) window.getPrimaryStage().getScene().lookup("#commandTextField");
+    }
+
+    private static TextArea getResultDisplay(MainWindow window) {
+        return (TextArea) window.getPrimaryStage().getScene().lookup("#resultDisplay");
+    }
+
+    private static VBox getDetailsContainer(MainWindow window) {
+        return (VBox) window.getPrimaryStage().getScene().lookup("#detailsContainer");
+    }
+
+    private static void assertStartupState(MainWindow window) {
+        assertTrue(getLabel(window, "startupMessage").isVisible());
+        assertEquals(SupporterDetailData.MESSAGE_STARTUP, getLabel(window, "startupMessage").getText());
+    }
+
+    private static void assertCleared(MainWindow window) {
+        assertStartupState(window);
+        VBox details = getDetailsContainer(window);
+        assertFalse(details.isVisible());
+        assertFalse(details.isManaged());
+        assertEquals("-", getLabel(window, "supporterName").getText());
     }
 }

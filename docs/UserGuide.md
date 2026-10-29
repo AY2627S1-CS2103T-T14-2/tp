@@ -127,11 +127,11 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
   and `(Office Fax)`. Extension digits do not count towards the main number's 3-to-15-digit limit.
   Your formatting, including the extension and label, is preserved when displayed and saved.
 - `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'` or `’`), hyphens (`-`), periods (`.`), commas (`,`), round brackets (`(` and `)`) and at signs (`@`), e.g. `O'Brien`, `Lee-Tan`, `J. Tan`, `Tan, Ah Kow`, `Tan Ah Kow (Chen Ah Kow)` and `Ahmad bin Ali @ Ah Mat`.
-- Accented and non-Latin letters, including letters with combining marks, are accepted in `NAME`, e.g. `José Tan`, `கவி` and `李伟`.
+- Accented and non-Latin letters, including letters with combining marks, are accepted in `NAME`, e.g. `José Tan`, `கவி` and `李伟`. Combining accents and other marks must be attached to a letter; they cannot appear on their own or after a digit, space or punctuation.
 - `NAME` can also contain `s/o` or `d/o` as separate words, e.g. `Ravi s/o Kumar` and `Priya d/o Kumar`. Upper and lower case are both accepted.
 - SupporterBook only checks which characters a name uses, not whether it looks like a real name. For example, `s/o Kumar` or a name with only initials is accepted.
 - Round brackets in `NAME` do not need to be balanced, and spaces around punctuation are optional. The name must still start with a letter or digit, so `(Tan)` and `@Tan` are rejected. These name rules apply to both `add` and `edit`.
-- Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`.
+- Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`. Non-breaking spaces, often copied from web pages, are treated as ordinary spaces too.
 - Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. Typing an accented letter directly or adding its accent separately also counts as the same name. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
 - Straight (`'`) and curly (`’`) apostrophes also count as the same character when comparing names, so `Charlotte O'Brien` and `Charlotte O’Brien` count as the same supporter. The apostrophe style you enter is preserved when the name is saved and displayed.
 - `TAG` must be alphanumeric, with no spaces, e.g. `t/boardIntro`. Tags that differ only in capitalisation, e.g. `t/vip t/VIP`, count as one tag, and the spelling typed first is kept.
@@ -297,7 +297,7 @@ Supply at least one name keyword or nonempty prefix value. Name keywords are opt
   are rejected. Labels cannot be searched by themselves using `p/`.
 - A supporter without an organisation, phone number, email or tags does not match a search on that missing field.
 - Results stay in their original list order and are numbered from 1. Other commands use these displayed indices.
-- A new `find` searches all supporters and replaces the previous filter. `list`, `add`, `edit`, `undo` and `redo` show the full list again.
+- A new `find` searches all supporters and replaces the previous filter. `list`, `add`, `undo`, `redo` and an `edit` that changes something show the full list again.
 - Searching preserves the viewed supporter, even when they are absent from the results. It does not change saved supporter data or add an undo point, and it preserves redo history.
 - `find` without criteria and empty filters such as `o/` are rejected. Invalid stage names produce the stage error message. Invalid searches leave the previous results unchanged.
 
@@ -334,7 +334,7 @@ Format: `quiet [DAYS]`
 - Each `quiet` searches all supporters and replaces the previous filter and ordering. It does not narrow a previous `find` result.
 - Other commands use the numbers in this displayed list. For example, `quiet` followed by `view 1` opens the first quiet supporter, and `delete 1` deletes that supporter.
 - Changes to interactions or stages refresh the quiet list. Logging recent contact can remove a supporter; deleting their last interaction can move them to the top. Check the displayed indices again after a change.
-- `list` restores the full list in its normal order. `find` restores normal ordering for its matching results. Successful `add`, `edit`, `undo` and `redo` also restore the full list in normal order.
+- `list` restores the full list in its normal order. `find` restores normal ordering for its matching results. Successful `add`, `undo` and `redo`, and an `edit` that changes something, also restore the full list in normal order.
 - Running `quiet` preserves the viewed supporter, supporter data and saved order. It adds no undo point and preserves redo history.
 - Supply at most one day count, from `1` to `2147483647`. Zero, negatives, decimals, non-numbers, larger values and additional arguments are rejected without changing the current list or selection.
 
@@ -510,7 +510,8 @@ Format: `view INDEX`
 * The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
 * A successful `view`, `log`, `editlog`, `unlog`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
 * Invalid commands leave the displayed supporter unchanged.
-* Deleting the displayed supporter or running `clear` clears the details and history. Deleting another supporter keeps the panel unchanged.
+* Deleting the displayed supporter or running `clear` clears the details and history.
+* Deleting another supporter keeps the same supporter displayed. If the deleted supporter was their introducer or someone they introduced, the corresponding introduction information updates, and the panel and history return to the top.
 * After `undo` or `redo`, the panel shows the displayed supporter's restored record, or is cleared if that supporter no longer exists.
 * Selection is not remembered after restarting the app.
 * Clicking a supporter card does not select it or change the panel. Use `view INDEX` to show a supporter.
