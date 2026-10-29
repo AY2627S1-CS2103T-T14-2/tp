@@ -348,6 +348,8 @@ After validating the displayed index, duplicate-name rule and required contact f
 compares the resulting record against a full-list snapshot excluding the original supporter.
 This avoids self-matches even when a supporter is renamed, and includes matches hidden by a filter.
 Both commands use the same comparison helper; edit feedback describes an update rather than an addition.
+An edit that leaves the record unchanged reports that nothing was changed and shows no warning,
+as the warning says the supporter was updated.
 
 The warning compares complete phone-number keys and case-insensitive email addresses, not search
 substrings. Phone formatting and type labels are ignored, but country codes are not inferred.
@@ -1209,6 +1211,11 @@ Stories are grouped by epic, with the highest-priority stories listed first with
   - 1g1. SupporterBook shows an error message stating that at least one is required, and makes no changes.
 
     Use case resumes from step 1.
+
+- 2a. The supporter already has all the given values.
+  - 2a1. SupporterBook informs the user that nothing was changed, and keeps the current list.
+
+    Use case ends.
 
 **Use case: UC05 - Delete a supporter**
 
