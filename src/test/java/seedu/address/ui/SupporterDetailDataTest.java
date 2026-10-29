@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,6 +41,19 @@ public class SupporterDetailDataTest {
                 List.of(firstIntroduced, secondIntroduced));
 
         assertEquals("Ong Kai Wen", data.getIntroducer());
+        assertEquals("Tan Wei Ming, David Li", data.getIntroductions());
+    }
+
+    @Test
+    public void constructor_modifySuppliedIntroductions_preservesSnapshot() {
+        Person person = new PersonBuilder().withName("Lim Mei Hua").build();
+        Person firstIntroduced = new PersonBuilder().withName("Tan Wei Ming").build();
+        Person secondIntroduced = new PersonBuilder().withName("David Li").build();
+        List<Person> introducedPersons = new ArrayList<>(List.of(firstIntroduced, secondIntroduced));
+        SupporterDetailData data = new SupporterDetailData(Optional.of(person), introducedPersons);
+
+        introducedPersons.clear();
+
         assertEquals("Tan Wei Ming, David Li", data.getIntroductions());
     }
 
@@ -145,10 +159,7 @@ public class SupporterDetailDataTest {
 
     @Test
     public void getLastContact_emptyHistory_returnsNoInteractionsMessage() {
-        Person person = new PersonBuilder().build();
-        SupporterDetailData data = new SupporterDetailData(Optional.of(person));
-
-        assertEquals("No interactions yet", data.getLastContact());
+        assertLastContactAndHistory("No interactions yet");
     }
 
     @Test
@@ -156,13 +167,24 @@ public class SupporterDetailDataTest {
         Interaction firstInteraction = new Interaction(LocalDate.of(2026, 9, 16), "Called");
         Interaction latestInteraction = new Interaction(LocalDate.of(2026, 10, 3), "Met");
         Interaction lastLoggedInteraction = new Interaction(LocalDate.of(2026, 9, 30), "Emailed");
-        Person person = new PersonBuilder()
-                .withInteractions(firstInteraction, latestInteraction, lastLoggedInteraction)
-                .build();
-        SupporterDetailData data = new SupporterDetailData(Optional.of(person));
+        assertLastContactAndHistory("Last contact: 03 Oct 2026",
+                firstInteraction, latestInteraction, lastLoggedInteraction);
+    }
 
-        assertEquals("Last contact: 03 Oct 2026", data.getLastContact());
-        assertEquals(List.of(firstInteraction, latestInteraction, lastLoggedInteraction), person.getInteractions());
+    @Test
+    public void getLastContact_leapDay_returnsLatestDateText() {
+        assertLastContactAndHistory("Last contact: 29 Feb 2024",
+                new Interaction(LocalDate.of(2024, 2, 28), "Called before leap day"),
+                new Interaction(LocalDate.of(2024, 2, 29), "Met on leap day"),
+                new Interaction(LocalDate.of(2024, 2, 27), "Logged a backdated email"));
+    }
+
+    @Test
+    public void getLastContact_yearBoundary_returnsLatestDateText() {
+        assertLastContactAndHistory("Last contact: 01 Jan 2024",
+                new Interaction(LocalDate.of(2023, 12, 31), "Called at year end"),
+                new Interaction(LocalDate.of(2024, 1, 1), "Met in the new year"),
+                new Interaction(LocalDate.of(2023, 12, 30), "Logged a backdated email"));
     }
 
     @Test
@@ -221,5 +243,17 @@ public class SupporterDetailDataTest {
         assertThrows(UnsupportedOperationException.class, () -> data.getInteractionEntries().remove(0));
         assertEquals(1, data.getInteractionEntries().size());
         assertEquals(List.of(interaction), person.getInteractions());
+    }
+
+    /**
+     * Verifies the last-contact text and that preparing and reading it preserve the stored interaction history.
+     */
+    private void assertLastContactAndHistory(String expectedText, Interaction... interactions) {
+        List<Interaction> expectedInteractions = List.of(interactions);
+        Person person = new PersonBuilder().withInteractions(interactions).build();
+        SupporterDetailData data = new SupporterDetailData(Optional.of(person));
+
+        assertEquals(expectedText, data.getLastContact());
+        assertEquals(expectedInteractions, person.getInteractions());
     }
 }
