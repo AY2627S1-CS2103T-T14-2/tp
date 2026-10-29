@@ -2184,6 +2184,25 @@ For the non-ASCII test cases below, copy and paste the commands directly from th
    1. Test cases: `unlog 2 1` when only one supporter is displayed; `unlog 1 3` when that supporter has only two entries<br>
       Expected: An invalid-supporter-index error for the first command and an invalid-interaction-number error for the second. Neither changes data or selection.
 
+### Last-contact dates
+
+1. Prerequisites: Use an isolated test folder with no supporter named `LastContactTester`. Run `add n/LastContactTester p/87654321`, then `find LastContactTester`. Ensure exactly one supporter is displayed. Continue through the following test cases in order.
+
+1. Test case: `view 1`<br>
+   Expected: Both the supporter card and the detail panel show `No interactions yet`. The history area shows `No interactions yet. Log one with: log INDEX nt/NOTE.`
+
+1. Test case: `log 1 nt/Recent call dt/2024-03-10`, then `log 1 nt/Earlier meeting dt/2024-02-20`<br>
+   Expected: Both last-contact lines show `Last contact: 10 Mar 2024`, even after the older interaction is logged. The history shows `Recent call` (#2) above `Earlier meeting` (#1).
+
+1. Test case: `editlog 1 2 dt/2024-02-15`<br>
+   Expected: Both last-contact lines change to `Last contact: 20 Feb 2024`. `Earlier meeting` is now #2, above `Recent call` (#1).
+
+1. Test case: `unlog 1 2`<br>
+   Expected: `Earlier meeting` is removed. Both last-contact lines change to `Last contact: 15 Feb 2024`, with `Recent call` remaining as #1.
+
+1. Test case: `unlog 1 1`<br>
+   Expected: Both last-contact lines return to `No interactions yet`, and the history area shows the empty-history message. `LastContactTester` remains selected and is still the only supporter in the displayed list.
+
 ### Viewing a supporter's details and interaction history
 
 1. Viewing a supporter with no interactions
@@ -2213,6 +2232,22 @@ For the non-ASCII test cases below, copy and paste the commands directly from th
 
    1. Test case: `view 1`<br>
       Expected: `Showing Alex Yeoh: 2 interaction(s) logged`. The history shows `#2  12 Sep 2026` before `#1  18 Jul 2026`.
+
+1. Viewing introduction information
+
+   1. Prerequisites: Use an isolated test folder with no supporters whose names contain `RelationView`. Run `add n/RelationViewIntroducer p/81000001`, `add n/RelationViewTarget p/81000002` and `add n/RelationViewGuest p/81000003`, then `find RelationView`. Ensure exactly these three supporters are displayed in that order. Continue through the following test cases in order.
+
+   1. Test case: `intro 2 by/1`, then `intro 3 by/2`, then `view 2`<br>
+      Expected: The panel shows `RelationViewTarget`, with `RelationViewIntroducer` under `Introducer` and `RelationViewGuest` under `Introduced`.
+
+   1. Test case: `find RelationViewTarget`, then `view 1`<br>
+      Expected: Only `RelationViewTarget` appears in the list. Both introduction rows still show the same names, even though the related supporters are hidden by the filter.
+
+   1. Test case: `find RelationViewIntroducer`, then `delete 1`<br>
+      Expected: The displayed list is empty. The panel keeps showing `RelationViewTarget`, with `Introducer` changed to `-` and `RelationViewGuest` still under `Introduced`.
+
+   1. Test case: `find RelationViewGuest`, then `delete 1`<br>
+      Expected: The displayed list is empty. The panel keeps showing `RelationViewTarget`, now with both introduction rows showing `-`. Their details and empty interaction history remain visible.
 
 1. Invalid view commands
 
