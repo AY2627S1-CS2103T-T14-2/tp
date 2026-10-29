@@ -91,6 +91,25 @@ public class FindCommandIntegrationTest {
     }
 
     @Test
+    public void execute_unicodeCaseVariants_matchesNamesAndOrganisationsWithoutChangingData() throws Exception {
+        logic.execute("clear");
+        logic.execute("add n/ΟΣ e/greek@example.com o/ΟΣ Foundation");
+        Person greekSupporter = model.getAddressBook().getPersonList().getFirst();
+        logic.execute("add n/İpek e/ipek@example.com");
+        Person turkishSupporter = model.getAddressBook().getPersonList().get(1);
+        AddressBook original = new AddressBook(model.getAddressBook());
+
+        for (String query : List.of("find Σ", "find σ", "find ς", "find o/Σ", "find οσ o/ος")) {
+            logic.execute(query);
+            assertEquals(List.of(greekSupporter), model.getFilteredPersonList());
+        }
+        logic.execute("find ipek");
+        assertEquals(List.of(turkishSupporter), model.getFilteredPersonList());
+        assertEquals(original, model.getAddressBook());
+        assertEquals(original, addressBookStorage.readAddressBook().orElseThrow());
+    }
+
+    @Test
     public void execute_nonBreakingSpaceSearch_matchesNamesAndOrganisations() throws Exception {
         logic.execute("clear");
         logic.execute("add n/Tan Wei Ming p/91234567 o/DBS\u00a0Bank");
