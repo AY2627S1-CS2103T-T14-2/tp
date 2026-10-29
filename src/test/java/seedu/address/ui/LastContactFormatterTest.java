@@ -27,14 +27,23 @@ public class LastContactFormatterTest {
 
     @Test
     public void format_singleDigitDay_includesLeadingZero() {
-        assertEquals("Last contact: 03 Oct 2026",
-                LastContactFormatter.format(Optional.of(LocalDate.of(2026, 10, 3))));
+        assertFormattedDate(LocalDate.of(2026, 10, 3), "Last contact: 03 Oct 2026");
     }
 
     @Test
     public void format_doubleDigitDay_preservesBothDigits() {
-        assertEquals("Last contact: 16 Sep 2026",
-                LastContactFormatter.format(Optional.of(LocalDate.of(2026, 9, 16))));
+        assertFormattedDate(LocalDate.of(2026, 9, 16), "Last contact: 16 Sep 2026");
+    }
+
+    @Test
+    public void format_leapDay_returnsLeapDayText() {
+        assertFormattedDate(LocalDate.of(2024, 2, 29), "Last contact: 29 Feb 2024");
+    }
+
+    @Test
+    public void format_yearBoundary_preservesCalendarYear() {
+        assertFormattedDate(LocalDate.of(2023, 12, 31), "Last contact: 31 Dec 2023");
+        assertFormattedDate(LocalDate.of(2024, 1, 1), "Last contact: 01 Jan 2024");
     }
 
     @Test
@@ -44,10 +53,16 @@ public class LastContactFormatterTest {
         try {
             Locale.setDefault(Locale.Category.FORMAT, Locale.FRENCH);
 
-            assertEquals("Last contact: 03 Oct 2026",
-                    LastContactFormatter.format(Optional.of(LocalDate.of(2026, 10, 3))));
+            assertFormattedDate(LocalDate.of(2026, 10, 3), "Last contact: 03 Oct 2026");
         } finally {
             Locale.setDefault(Locale.Category.FORMAT, originalLocale);
         }
+    }
+
+    /**
+     * Verifies the complete last-contact text for a supplied interaction date.
+     */
+    private void assertFormattedDate(LocalDate date, String expectedText) {
+        assertEquals(expectedText, LastContactFormatter.format(Optional.of(date)));
     }
 }
