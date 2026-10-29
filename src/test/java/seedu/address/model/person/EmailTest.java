@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 public class EmailTest {
@@ -72,6 +74,33 @@ public class EmailTest {
         assertTrue(Email.isValidEmail("peter__jack@example.com")); // consecutive underscores
         assertTrue(Email.isValidEmail("peter--jack@example.com")); // consecutive hyphens
         assertTrue(Email.isValidEmail("peter+_.-jack@example.com")); // special characters around a period
+    }
+
+    @Test
+    public void isValidEmail_consecutiveInternalDomainHyphens_accepts() {
+        for (String email : List.of("contact@foo--bar.com", "contact@xn--bcher-kva.de",
+                "contact@sub.xn--bcher-kva.de", "contact@a--b", "contact@a.b--c")) {
+            assertTrue(Email.isValidEmail(email), email);
+        }
+    }
+
+    @Test
+    public void isValidEmail_invalidDomainBoundaries_rejects() {
+        for (String email : List.of("contact@--foo.com", "contact@foo--.com", "contact@foo.--com",
+                "contact@foo.com--", "contact@a.b", "contact@foo..com", "contact@foo.c_", "contact@foo.c-")) {
+            assertFalse(Email.isValidEmail(email), email);
+        }
+    }
+
+    @Test
+    public void isValidEmail_veryLongParts_validatesWithoutStackOverflow() {
+        for (String email : List.of("a.".repeat(5000) + "a@example.com", "a@" + "a.".repeat(5000) + "com",
+                "a@" + "a-".repeat(5000) + "a.com", "a@" + "a".repeat(20000))) {
+            assertTrue(Email.isValidEmail(email));
+            assertFalse(Email.isValidEmail(email + "!"));
+        }
+        assertFalse(Email.isValidEmail("a.".repeat(5000) + "@example.com"));
+        assertFalse(Email.isValidEmail("a@" + "a-".repeat(5000) + ".com"));
     }
 
     @Test
