@@ -81,6 +81,8 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 - Extraneous parameters for commands that take no parameters, such as `help`, `list`, `stats`, `exit` and `clear`, are ignored. `undo` and `redo` instead reject any parameters, so that `undo 3` cannot look like it undid three changes.<br>
   For example, `help 123` is interpreted as `help`. Prefix-like words in these ignored parameters do not produce a note.
 
+- For the rules each parameter must follow, see the [Parameter summary](#parameter-summary).
+
 - If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
   </box>
 
@@ -127,7 +129,7 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
   and `(Office Fax)`. Extension digits do not count towards the main number's 3-to-15-digit limit.
   Your formatting, including the extension and label, is preserved when displayed and saved.
 - `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'` or `’`), hyphens (`-`), periods (`.`), commas (`,`), round brackets (`(` and `)`) and at signs (`@`), e.g. `O'Brien`, `Lee-Tan`, `J. Tan`, `Tan, Ah Kow`, `Tan Ah Kow (Chen Ah Kow)` and `Ahmad bin Ali @ Ah Mat`.
-- Accented and non-Latin letters, including letters with combining marks, are accepted in `NAME`, e.g. `José Tan`, `கவி` and `李伟`. Combining accents and other marks must be attached to a letter; they cannot appear on their own or after a digit, space or punctuation.
+- Accented and non-Latin letters, including letters with combining marks, are accepted in `NAME`, e.g. `José Tan`, `கவி` and `李伟` (on some computers, names in scripts such as Tamil may not display correctly; see [Known issues](#known-issues)). Combining accents and other marks must be attached to a letter; they cannot appear on their own or after a digit, space or punctuation.
 - `NAME` can also contain `s/o` or `d/o` as separate words, e.g. `Ravi s/o Kumar` and `Priya d/o Kumar`. Upper and lower case are both accepted.
 - SupporterBook only checks which characters a name uses, not whether it looks like a real name. For example, `s/o Kumar` or a name with only initials is accepted.
 - Round brackets in `NAME` do not need to be balanced, and spaces around punctuation are optional. The name must still start with a letter or digit, so `(Tan)` and `@Tan` are rejected. These name rules apply to both `add` and `edit`.
@@ -266,13 +268,13 @@ Prospect: 1, Contacted: 1, Cultivating: 1, Giving: 1, Lapsed: 1, Declined: 1
 
 Finds supporters by name, organisation, tag, stage, phone number or email. Combine fields to narrow a search.
 
-Format: `find [KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...`
+Format: `find [NAME_KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...`
 
 Supply at least one name keyword or nonempty prefix value. Name keywords are optional when a field filter is given.
 
 | Search field | Input | Matching rule |
 | --- | --- | --- |
-| Name | `KEYWORD` | Case-insensitive substring; `wei` matches `Tan Wei Ming` and `Weiling Koh` |
+| Name | `NAME_KEYWORD` | Case-insensitive substring; `wei` matches `Tan Wei Ming` and `Weiling Koh` |
 | Organisation | `o/ORG` | Case-insensitive substring; `o/dbs` matches `DBS Bank` |
 | Tag | `t/TAG` | Case-insensitive substring of any tag; `t/board` matches `boardIntro` |
 | Stage | `st/STAGE` | Complete stage name, ignoring case; `st/GIVING` matches `Giving`, but `st/giv` is invalid |
@@ -283,6 +285,7 @@ Supply at least one name keyword or nonempty prefix value. Name keywords are opt
 - Typing an accented letter directly or adding its accent separately produces the same search results for names and organisations. Accents remain significant, so `Jose` does not match `José`. Searching preserves the spelling saved in each supporter record.
 - **OR within a field:** any name keyword can match, and repeated values of a prefix are alternatives. For example, `find st/giving st/lapsed` finds supporters at either stage.
 - **AND between fields:** every specified field must match. For example, `find tan o/DBS st/giving` finds supporters whose names contain `tan`, whose organisation contains `DBS`, and whose stage is `Giving`.
+- To find supporters who match either of two different fields, e.g. everyone at DBS or everyone tagged `csr`, run one `find` for each field, e.g. `find o/DBS`, then `find t/csr`.
 - Repeating an identical value does not duplicate supporters or change the matches.
 - Name keywords must appear before the first prefix, without quotation marks. Use `find tan o/DBS Bank`, not `find o/DBS Bank tan`: the latter searches for the organisation text `DBS Bank tan`.
 - Prefixes used by other commands (`n/`, `a/`, `dt/`, `nt/` and `by/`) are rejected anywhere in a search. The error lists each unsupported prefix, states that `find` supports only `o/`, `t/`, `st/`, `p/` and `e/`, and includes the usage message. Use `find alex` to search by name; `find n/alex`, `find a/geylang` and `find o/dbs a/geylang` are rejected.
@@ -724,6 +727,32 @@ Edit the data file only if you are confident that you can follow the validation 
 
 1. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 2. **Names containing `a/l` or `a/p` are not supported.** In `add` and `edit`, a space followed by `a/` is treated as an address prefix, so names such as `Ravi a/l Kumar` cannot be entered as intended.
+3. **Names in some scripts may not display correctly.** On some computers, e.g. macOS, names in scripts that join letters into combined shapes, such as Tamil (`கவி`) or Hindi (`प्रिया`), are shown as unrelated characters in the list, the detail panel and command results. Chinese, Japanese and Korean names are not affected. The name is still saved, searched and compared correctly; only how it is shown is affected.
+
+---
+
+## Parameter summary
+
+These are the rules for each parameter. The command sections above give more details and examples.
+
+Parameter | Prefix | Used in | Rules
+----------|--------|---------|------
+`NAME` | `n/` | `add`, `edit` | Starts with a letter or digit. Can contain letters in any language, digits, spaces, apostrophes (`'` or `’`), hyphens, periods, commas, round brackets, `@`, and the words `s/o` and `d/o`. No two supporters can have the same name, ignoring capital letters and extra spaces.
+`PHONE` | `p/` | `add`, `edit` | 3 to 15 digits, optionally starting with `+`. Digit groups can be separated by single spaces or hyphens and enclosed in parentheses. Can end with `ext` and 1 to 6 digits, and a label in parentheses, e.g. `(65) 9123-4567 ext 12 (Office)`.
+`EMAIL` | `e/` | `add`, `edit` | Of the form `local-part@domain`, e.g. `weiming@dbs.com`. See [`add`](#adding-a-supporter-add) for the full rules.
+`ADDRESS` | `a/` | `add`, `edit` | Any text, not blank.
+`ORGANISATION` | `o/` | `add`, `edit` | Any text, not blank, at most 100 characters.
+`STAGE` | `st/` | `add`, `find`, `stage` | One of `prospect`, `contacted`, `cultivating`, `giving`, `lapsed` and `declined`, in upper or lower case.
+`TAG` | `t/` | `add`, `edit`, `tag`, `untag` | English letters and digits only, with no spaces. Tags that differ only in capitalisation count as one tag.
+`NOTE` | `nt/` | `log`, `editlog` | Any text, not blank, at most 500 characters.
+`DATE` | `dt/` | `log`, `editlog` | A date in `yyyy-MM-dd` format, from `1900-01-01` to today.
+`INTRODUCER_INDEX` | `by/` | `intro` | The index of the introducer in the displayed list. Leave it empty to remove the introducer.
+`INDEX` | none | most commands | The supporter's number in the displayed list: a positive whole number such as `1`, `2` or `3`.
+`ENTRY` | none | `editlog`, `unlog` | The interaction's number in the detail panel: a positive whole number.
+`DAYS` | none | `quiet` | A whole number from `1` to `2147483647`.
+`NAME_KEYWORD` | none | `find` | A word or part of a word in the supporter's name, e.g. `wei` for `Tan Wei Ming`.
+
+In `add` and `edit`, `t/` can be given more than once, and every other prefix only once. In `find`, every prefix can be given more than once, and the values of `o/`, `t/`, `p/` and `e/` are search text, matched as described in [`find`](#finding-supporters-by-name-or-other-fields-find).
 
 ---
 
@@ -737,7 +766,7 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t/TAG]... `<br> e.g., `edit 2 p/91234567 a/1 HarbourFront Avenue`
 **Editlog** | `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`<br> e.g., `editlog 1 2 nt/Corrected meeting dt/2024-03-15`
 **Exit**   | `exit`
-**Find**   | `find [KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...`<br> e.g., `find yu o/DBS st/cultivating`
+**Find**   | `find [NAME_KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...`<br> e.g., `find yu o/DBS st/cultivating`
 **Help**   | `help`
 **Intro**  | `intro INDEX by/[INTRODUCER_INDEX]`<br> e.g., `intro 3 by/1`
 **List**   | `list`

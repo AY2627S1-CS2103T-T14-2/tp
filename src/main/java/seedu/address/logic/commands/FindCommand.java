@@ -21,7 +21,7 @@ public class FindCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Finds supporters by name or other fields. "
             + "Use OR within a field and AND between fields.\n"
-            + "Parameters: [KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...\n"
+            + "Parameters: [NAME_KEYWORD]... [o/ORG]... [t/TAG]... [st/STAGE]... [p/PHONE]... [e/EMAIL]...\n"
             + "Supply at least one nonempty criterion. Place name keywords before all prefixes. "
             + "Text searches ignore case, treat ' and ’ as equivalent and match substrings; "
             + "stages match full names. "
