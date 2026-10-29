@@ -118,9 +118,9 @@ public class EditCommand extends Command {
             }
             model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
             feedback = String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
-        }
-        if (!warning.isEmpty()) {
-            feedback += "\n" + warning;
+            if (!warning.isEmpty()) {
+                feedback += "\n" + warning;
+            }
         }
         return new CommandResult(feedback);
     }
