@@ -510,7 +510,8 @@ Format: `view INDEX`
 * The panel keeps showing the supporter while you run `list`, `find` or `add`, even if that supporter disappears from the displayed list. These commands also preserve the current history scroll position.
 * A successful `view`, `log`, `editlog`, `unlog`, `stage`, `intro`, `tag` or `untag` switches the panel to its target. Changes to the displayed supporter's record are reflected.
 * Invalid commands leave the displayed supporter unchanged.
-* Deleting the displayed supporter or running `clear` clears the details and history. Deleting another supporter keeps the panel unchanged.
+* Deleting the displayed supporter or running `clear` clears the details and history.
+* Deleting another supporter keeps the same supporter displayed. If the deleted supporter was their introducer or someone they introduced, the corresponding introduction information updates, and the panel and history return to the top.
 * After `undo` or `redo`, the panel shows the displayed supporter's restored record, or is cleared if that supporter no longer exists.
 * Selection is not remembered after restarting the app.
 * Clicking a supporter card does not select it or change the panel. Use `view INDEX` to show a supporter.

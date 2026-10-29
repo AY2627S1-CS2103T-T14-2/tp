@@ -634,7 +634,7 @@ Date edits can renumber other entries, but do not reorder the stored list. Last 
 
 The `view INDEX` command selects a supporter from the displayed list and reports their name and number of logged interactions, or indicates that no interactions have been logged yet.
 
-On successful index validation, `ViewCommand` records the supporter using `Model#setViewedPerson(Person)` and counts `Person#getInteractions()` for the command result. The displayed list, its filter and supporter data remain unchanged.
+On successful index validation, `ViewCommand` records the supporter using `Model#setViewedPerson(Person)` and reads `Person#getInteractionCount()` for the command result. The displayed list, its filter and supporter data remain unchanged.
 
 `SupporterDetailData` prepares the display values without a JavaFX dependency:
 
@@ -643,7 +643,9 @@ On successful index validation, `ViewCommand` records the supporter using `Model
 * `SupporterDetailData` follows those indices to create immutable `InteractionEntry` objects. Numbers descend from the history size to `#1`, so the oldest entry has the smallest number. On equal dates, the later-logged entry appears first and has the larger number.
 * Back-dating and editing interaction dates can renumber existing entries. The panel, `LogCommand` and `EditLogCommand` use the same ordering method so displayed numbers match success messages.
 
-`SupporterDetailPanel#setSupporter(Optional<Person>)` skips rendering when the supporter record is unchanged, preserving the scroll position through `list`, `find` and `add`. Switching supporters or changing the displayed record rebuilds the history and returns scrolling to the top.
+After each command attempt, `MainWindow#refreshSupporterDetailPanel()` reads the viewed supporter. When one is selected, it calls `Logic#getPersonsIntroducedBy(Name)` to find the supporters they introduced across the whole address book, including those hidden by the current filter. It passes the selection and the resulting list, or an empty list when no supporter is selected, to `SupporterDetailPanel#setSupporter(Optional<Person>, List<Person>)`.
+
+The panel skips rendering when both the supporter record and the list of introduced supporter records are unchanged, preserving scrolling through `list`, `find` and `add`. Switching supporters, changing the displayed record or changing the list of introduced supporter records rebuilds the panel and returns both scroll panes to the top. This includes renaming or deleting someone the displayed supporter introduced, even though the viewed supporter remains the same.
 
 ### Viewed supporter state
 
@@ -652,12 +654,12 @@ On successful index validation, `ViewCommand` records the supporter using `Model
 Selection follows these rules:
 
 * `list`, `find` and `add` retain the viewed supporter, even if they are no longer displayed.
-* Successful `view`, `log`, `editlog`, `unlog` and `stage` commands select their target. `log`, `editlog` and `unlog` select the replacement record after updating its history. `stage` selects the replacement record after a stage change, or the existing record when the requested stage is already set.
+* Successful `view`, `log`, `editlog`, `unlog`, `stage`, `intro`, `tag` and `untag` commands select their target. `log`, `editlog` and `unlog` select the replacement record after updating its history. `stage`, `intro`, `tag` and `untag` select the replacement record after a change, or the existing record when nothing changes.
 * `ModelManager#setPerson(Person, Person)` updates selection to the replacement record when the viewed supporter is changed.
 * `ModelManager#deletePerson(Person)` clears selection when the viewed supporter is deleted.
 * `ModelManager#setAddressBook(ReadOnlyAddressBook)` clears selection when all supporter data is replaced, including by `clear`.
 
-Editing or deleting another supporter preserves selection. Parsing and index-validation failures also preserve it.
+Editing or deleting another supporter preserves selection, but the displayed introduction information can change. Renaming or deleting the viewed supporter's introducer updates or clears their introducer field; renaming or deleting someone they introduced updates the list of introductions. Parsing and index-validation failures also preserve selection.
 
 Undo and redo match immutable record versions by their original object identity rather than by name or list index. `ModelManager` records this session-only lineage in an `IdentityHashMap` whenever `setPerson` succeeds, including dependent records updated after an introducer is renamed. Restoring a snapshot selects the corresponding record even after a rename or a no-op edit; it clears selection if that supporter does not exist in the restored state. Equal-valued records belonging to different supporters do not share lineage, and no identity is written to JSON.
 
