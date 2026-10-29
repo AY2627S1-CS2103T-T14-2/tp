@@ -295,10 +295,11 @@ Parsing and the later commit check and save performed by `LogicManager` are outs
 <puml src="diagrams/QuietSequenceDiagram.puml" alt="Filtering and sorting the displayed supporters when quiet executes" />
 
 `updateFilteredPersonList(Predicate)` clears the comparator as well as updating the predicate.
-Existing `list`, `find`, `add`, `edit`, `undo` and `redo` paths therefore restore normal ordering
-without command-specific reset logic. Index-based commands already use `getFilteredPersonList()`
-and consequently operate on the displayed quiet indices. Replacing an immutable `Person` after a
-log, unlog or stage change updates both filtering and sorting automatically.
+Existing `list`, `find`, `add`, `undo` and `redo` paths, and an `edit` that changes something,
+therefore restore normal ordering without command-specific reset logic. Index-based commands
+already use `getFilteredPersonList()` and consequently operate on the displayed quiet indices.
+Replacing an immutable `Person` after a log, unlog or stage change updates both filtering and
+sorting automatically.
 
 `QuietCommandTest` covers boundaries, exclusions, missing interactions, ties and backdated history.
 `QuietCommandIntegrationTest` checks indexed commands, stored order, selection and undo/redo. It also
@@ -1589,7 +1590,7 @@ This is a variation of UC12, with the same precondition and invalid-index handli
   - **Lapsed**: Gave before, but is no longer giving.
   - **Declined**: Said no.
 - **Epic**: A large user need that is broken down into several smaller user stories. The user stories above are grouped by epic.
-- **Find filter**: The filtered list of supporters shown after a `find` or `quiet` command. It stays in place until another `find` or `quiet` replaces it, or `list`, `add`, `edit`, `undo` or `redo` shows the full list again.
+- **Find filter**: The filtered list of supporters shown after a `find` or `quiet` command. It stays in place until another `find` or `quiet` replaces it, or `list`, `add`, `undo`, `redo` or an `edit` that changes something shows the full list again.
 - **Index**: The number shown beside a supporter in the currently displayed list, used by commands to refer to that supporter. The same supporter can have a different index after a `find`.
 - **Interaction**: A dated record of one conversation or other contact with a supporter, with a short note of what happened. A supporter's interactions together form their _interaction history_.
 - **Introducer**: The supporter who introduced another supporter to the charity, recorded with `intro`. A supporter has at most one introducer, who must be another supporter in SupporterBook.
