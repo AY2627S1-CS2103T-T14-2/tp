@@ -34,7 +34,7 @@ public class MessagesTest {
         Person person = new PersonBuilder().withName("Tan Wei Ming").withPhone("91234567").withoutAddress()
                 .withTags("vip", "Donor", "boardIntro").build();
         assertEquals("Tan Wei Ming; Stage: Prospect; Phone: 91234567; Email: "
-                + person.getEmail().get() + "; Tags: [boardIntro][Donor][vip]", Messages.format(person));
+                + person.getEmail().get() + "; Tags: [boardIntro] [Donor] [vip]", Messages.format(person));
     }
 
     @Test

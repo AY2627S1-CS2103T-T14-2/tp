@@ -6,7 +6,7 @@
 
 # SupporterBook User Guide
 
-SupporterBook is a **desktop application for fundraising and outreach staff at small charities to manage donor and corporate supporter relationships, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). It keeps supporter details, cultivation stages and interaction histories in one place. If you type quickly, SupporterBook can help you find and update supporter records faster than traditional GUI applications.
+SupporterBook is a **desktop application for fundraising and outreach staff at small charities to manage donor and corporate supporter relationships, optimised for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). It keeps supporter details, cultivation stages and interaction histories in one place. If you type quickly, SupporterBook can help you find and update supporter records faster than traditional GUI applications.
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -86,7 +86,7 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 
 ### Viewing help: `help`
 
-Shows a message explaining how to access the help page.
+Opens a help window with a link to this user guide.
 
 ![help message](images/helpMessage.png)
 
@@ -250,7 +250,7 @@ Shows how many supporters are at each cultivation stage, e.g. to check whether t
 
 Format: `stats`
 
-- Every supporter is counted, including those hidden by a `find` filter.
+- Every supporter is counted, including those hidden by a `find` or `quiet` filter.
 - All six stages are listed in order on one line, including stages with no supporters.
 - The displayed list and the detail panel do not change.
 - Anything typed after the command word is ignored; `stats 123` behaves as `stats`.
@@ -312,7 +312,7 @@ Other examples:
 
 - `find o/DBS Bank` finds supporters whose organisation contains `DBS Bank`.
 - `find t/board t/donor` finds supporters with a tag containing either `board` or `donor`.
-- `find st/giving st/lapsed e/@gmail` finds supporters at either stage whose email contains `@gmail`.
+- `find st/giving st/lapsed e/@example.com` finds supporters at either stage whose email contains `@example.com`.
 - `find tan lim o/DBS o/OCBC st/giving` means `(name contains tan OR lim) AND (organisation contains DBS OR OCBC) AND (stage is Giving)`.
 
 The success message reports the number of matches, for example `3 supporter(s) listed!`.
@@ -587,6 +587,9 @@ Examples:
 Deletes all supporters, together with their logged interactions.
 
 Format: `clear`
+
+- The list becomes empty, and the detail panel stops showing a supporter.
+- There is no confirmation prompt. If you clear the list by mistake, run [`undo`](#undoing-a-change-undo) straight away to restore every supporter.
 
 ### Undoing a change: `undo`
 
