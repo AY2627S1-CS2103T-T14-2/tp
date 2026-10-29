@@ -115,8 +115,7 @@ public class Messages {
         person.getAddress().ifPresent(address -> builder.append("; Address: ").append(address));
         person.getOrganisation().ifPresent(organisation -> builder.append("; Organisation: ").append(organisation));
         if (!person.getTags().isEmpty()) {
-            builder.append("; Tags: ");
-            person.getTags().stream().sorted(Tag.ALPHABETICAL_ORDER).forEach(builder::append);
+            builder.append("; Tags: ").append(formatTags(person.getTags()));
         }
         return builder.toString();
     }
