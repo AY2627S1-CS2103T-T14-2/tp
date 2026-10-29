@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
+import seedu.address.testutil.PersonWithDisplayOrderStub;
 
 public class PersonTest {
 
@@ -510,22 +511,4 @@ public class PersonTest {
         assertEquals(expectedInteractions, person.getInteractions());
     }
 
-    /**
-     * A supporter with one interaction and a supplied display order for testing inconsistent mappings.
-     */
-    private static class PersonWithDisplayOrderStub extends Person {
-        private final List<Integer> displayOrderIndices;
-
-        PersonWithDisplayOrderStub(List<Integer> displayOrderIndices) {
-            super(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
-                    ALICE.getOrganisation(), ALICE.getIntroducer(), ALICE.getStage(),
-                    List.of(new Interaction(LocalDate.of(2024, 2, 29), "Called")), ALICE.getTags());
-            this.displayOrderIndices = displayOrderIndices;
-        }
-
-        @Override
-        public List<Integer> getInteractionIndicesInDisplayOrder() {
-            return displayOrderIndices;
-        }
-    }
 }

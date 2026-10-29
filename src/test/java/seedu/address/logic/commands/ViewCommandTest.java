@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.LogTestUtil.captureLogs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
@@ -44,14 +45,14 @@ public class ViewCommandTest {
     }
 
     @Test
-    public void execute_noInteractions_selectsSupporterAndReportsEmptyHistory() throws Exception {
+    public void execute_noInteractions_selectsSupporterAndReportsEmptyHistory() throws Throwable {
         Person personToView = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
 
         assertViewSuccess(INDEX_FIRST_PERSON, "Showing " + personToView.getName() + ": no interactions logged yet");
     }
 
     @Test
-    public void execute_oneInteraction_selectsSupporterAndReportsCount() throws Exception {
+    public void execute_oneInteraction_selectsSupporterAndReportsCount() throws Throwable {
         Person originalPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Interaction interaction = new Interaction(LocalDate.of(2026, 9, 16), "Called about volunteering");
         Person personToView = new PersonBuilder(originalPerson).withInteractions(interaction).build();
@@ -61,7 +62,7 @@ public class ViewCommandTest {
     }
 
     @Test
-    public void execute_multipleInteractions_selectsSupporterAndReportsCount() throws Exception {
+    public void execute_multipleInteractions_selectsSupporterAndReportsCount() throws Throwable {
         Person originalPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Interaction firstInteraction = new Interaction(LocalDate.of(2026, 9, 16), "Called about volunteering");
         Interaction secondInteraction = new Interaction(LocalDate.of(2026, 9, 17), "Met to discuss the appeal");
@@ -74,7 +75,7 @@ public class ViewCommandTest {
     }
 
     @Test
-    public void execute_validIndexFilteredList_selectsDisplayedSupporterAndKeepsFilter() throws Exception {
+    public void execute_validIndexFilteredList_selectsDisplayedSupporterAndKeepsFilter() throws Throwable {
         Person personToView = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
         assertEquals(List.of(personToView), model.getFilteredPersonList());
@@ -83,7 +84,7 @@ public class ViewCommandTest {
     }
 
     @Test
-    public void execute_anotherSupporter_switchesViewedSupporter() throws Exception {
+    public void execute_anotherSupporter_switchesViewedSupporter() throws Throwable {
         new ViewCommand(INDEX_FIRST_PERSON).execute(model);
         Person personToView = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
 
@@ -91,34 +92,46 @@ public class ViewCommandTest {
     }
 
     @Test
-    public void execute_invalidIndexUnfilteredList_preservesPreviousSelection() {
+    public void execute_invalidIndexUnfilteredList_preservesPreviousSelection() throws Throwable {
         Person previouslyViewedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         model.setViewedPerson(previouslyViewedPerson);
         Index invalidIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
 
-        assertCommandFailure(new ViewCommand(invalidIndex), model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertViewFailure(invalidIndex);
         assertEquals(Optional.of(previouslyViewedPerson), model.getViewedPerson());
     }
 
     @Test
-    public void execute_invalidIndexFilteredList_preservesPreviousSelection() {
+    public void execute_invalidIndexFilteredList_preservesPreviousSelection() throws Throwable {
         Person previouslyViewedPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
         model.setViewedPerson(previouslyViewedPerson);
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
         assertTrue(INDEX_SECOND_PERSON.getZeroBased() < model.getAddressBook().getPersonList().size());
 
-        assertCommandFailure(new ViewCommand(INDEX_SECOND_PERSON), model,
-                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertViewFailure(INDEX_SECOND_PERSON);
         assertEquals(Optional.of(previouslyViewedPerson), model.getViewedPerson());
     }
 
     @Test
-    public void execute_emptyDisplayedList_preservesEmptySelection() {
+    public void execute_emptyDisplayedList_preservesEmptySelection() throws Throwable {
         model.updateFilteredPersonList(unused -> false);
 
-        assertCommandFailure(new ViewCommand(INDEX_FIRST_PERSON), model,
-                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertViewFailure(INDEX_FIRST_PERSON);
         assertEquals(Optional.empty(), model.getViewedPerson());
+    }
+
+    @Test
+    public void execute_modelIgnoresSelection_throwsAssertionError() {
+        Model inconsistentModel = new ModelManager(getTypicalAddressBook(), new UserPrefs()) {
+            @Override
+            public void setViewedPerson(Person person) {
+                // Deliberately ignore the selection update to violate the model contract.
+            }
+        };
+
+        assertThrows(AssertionError.class, "Viewed supporter must match the requested supporter", () ->
+                new ViewCommand(INDEX_FIRST_PERSON).execute(inconsistentModel));
+        assertEquals(Optional.empty(), inconsistentModel.getViewedPerson());
     }
 
     @Test
@@ -142,18 +155,35 @@ public class ViewCommandTest {
     }
 
     /**
-     * Verifies feedback and selection while checking that supporter data and the displayed list are unchanged.
+     * Verifies feedback, diagnostic counts, and selection without changing supporter data or the displayed list.
      */
-    private void assertViewSuccess(Index targetIndex, String expectedMessage) throws Exception {
+    private void assertViewSuccess(Index targetIndex, String expectedMessage) throws Throwable {
         AddressBook expectedAddressBook = new AddressBook(model.getAddressBook());
         List<Person> expectedDisplayedPersons = List.copyOf(model.getFilteredPersonList());
         Person expectedViewedPerson = expectedDisplayedPersons.get(targetIndex.getZeroBased());
 
-        CommandResult result = new ViewCommand(targetIndex).execute(model);
+        List<String> messages = captureLogs(ViewCommand.class, () -> {
+            CommandResult result = new ViewCommand(targetIndex).execute(model);
+            assertEquals(new CommandResult(expectedMessage), result);
+        });
 
-        assertEquals(new CommandResult(expectedMessage), result);
         assertEquals(Optional.of(expectedViewedPerson), model.getViewedPerson());
         assertEquals(expectedAddressBook, model.getAddressBook());
         assertEquals(expectedDisplayedPersons, model.getFilteredPersonList());
+        assertEquals(List.of("Viewed supporter: displayed index=" + targetIndex.getOneBased()
+                + ", interactions=" + expectedViewedPerson.getInteractionCount()), messages);
+    }
+
+    /**
+     * Verifies rejection diagnostics and the normal command error without changing the model.
+     */
+    private void assertViewFailure(Index targetIndex) throws Throwable {
+        int displayedPersonCount = model.getFilteredPersonList().size();
+        List<String> messages = captureLogs(ViewCommand.class, () ->
+                assertCommandFailure(new ViewCommand(targetIndex), model,
+                        Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX));
+
+        assertEquals(List.of("Rejected view: displayed index=" + targetIndex.getOneBased()
+                + ", displayed supporters=" + displayedPersonCount), messages);
     }
 }

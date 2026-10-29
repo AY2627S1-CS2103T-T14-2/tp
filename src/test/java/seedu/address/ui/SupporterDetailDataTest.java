@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.LogTestUtil.captureLogs;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
+import seedu.address.testutil.PersonWithDisplayOrderStub;
 import seedu.address.ui.SupporterDetailData.InteractionEntry;
 
 /**
@@ -30,6 +32,46 @@ public class SupporterDetailDataTest {
     @Test
     public void constructor_nullIntroductions_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new SupporterDetailData(Optional.empty(), null));
+    }
+
+    @Test
+    public void constructor_noSelection_logsEmptySnapshot() throws Throwable {
+        List<String> messages = captureLogs(SupporterDetailData.class, () ->
+                new SupporterDetailData(Optional.empty()));
+
+        assertEquals(List.of("Created supporter detail snapshot: hasSupporter=false, introductions=0, interactions=0"),
+                messages);
+    }
+
+    @Test
+    public void constructor_supporterWithHistoryAndIntroductions_logsOnlyCounts() throws Throwable {
+        Person person = new PersonBuilder().withName("Private Name")
+                .withInteractions(new Interaction(LocalDate.of(2024, 2, 29), "Private note")).build();
+        List<Person> introducedPersons = List.of(new PersonBuilder().withName("First Introduced").build(),
+                new PersonBuilder().withName("Second Introduced").build());
+        List<String> messages = captureLogs(SupporterDetailData.class, () ->
+                new SupporterDetailData(Optional.of(person), introducedPersons));
+
+        assertEquals(List.of("Created supporter detail snapshot: hasSupporter=true, introductions=2, interactions=1"),
+                messages);
+    }
+
+    @Test
+    public void constructor_invalidStoredIndices_throwsAssertionError() {
+        for (int invalidStoredIndex : List.of(-1, 1)) {
+            assertInvalidDisplayOrder(List.of(invalidStoredIndex),
+                    "Display index must refer to an existing stored interaction");
+        }
+    }
+
+    @Test
+    public void constructor_missingDisplayEntry_throwsAssertionError() {
+        assertInvalidDisplayOrder(List.of(), "Every stored interaction must have a display entry");
+    }
+
+    @Test
+    public void constructor_excessDisplayEntries_throwsAssertionError() {
+        assertInvalidDisplayOrder(List.of(0, 0), "Interaction display number must be positive");
     }
 
     @Test
@@ -243,6 +285,17 @@ public class SupporterDetailDataTest {
         assertThrows(UnsupportedOperationException.class, () -> data.getInteractionEntries().remove(0));
         assertEquals(1, data.getInteractionEntries().size());
         assertEquals(List.of(interaction), person.getInteractions());
+    }
+
+    /**
+     * Verifies that an inconsistent display order is rejected without changing the stored history.
+     */
+    private void assertInvalidDisplayOrder(List<Integer> displayOrderIndices, String expectedMessage) {
+        Person person = new PersonWithDisplayOrderStub(displayOrderIndices);
+        List<Interaction> originalInteractions = List.copyOf(person.getInteractions());
+
+        assertThrows(AssertionError.class, expectedMessage, () -> new SupporterDetailData(Optional.of(person)));
+        assertEquals(originalInteractions, person.getInteractions());
     }
 
     /**
