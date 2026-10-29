@@ -1541,8 +1541,6 @@ testers are expected to do more _exploratory_ testing.
    1. Test case: Close the app, replace the contents of `preferences.json` with `null`, then launch the app.<br>
       Expected: Similar to previous.
 
-1. _{ more test cases … }_
-
 ### Adding supporters with shared contact details
 
 1. Prerequisites: Use fresh sample data in an isolated test folder. Alex Yeoh has phone `87438807`
@@ -2197,5 +2195,3 @@ For the non-ASCII test cases below, copy and paste the commands directly from th
       Expected: After each launch, the list is empty and the existing load-failure warning is shown. The whole file is rejected rather than partially loaded, and its contents are unchanged at startup.
 
    1. Cleanup: Close the app without running another command and restore the valid backup.
-
-1. _{ more test cases … }_
