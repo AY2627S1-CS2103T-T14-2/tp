@@ -266,6 +266,22 @@ Searching leaves the viewed supporter unchanged and does not mark address-book d
 unit tests cover the criteria; `FindCommandIntegrationTest` exercises filtering, displayed
 indices, stored data, selection and undo/redo through `LogicManager`.
 
+#### Design considerations:
+
+**Aspect: How to combine search criteria**
+
+- **Alternative 1 (current choice):** OR within a field, AND between fields.
+  - Pros: Name keywords and repeated prefixes widen a search, so a user who misremembers part of a name, e.g. `find alice richards`, still finds `Alice Davidson` and `Alison Richards`. Adding another field narrows the search, which suits working through a precise group, such as Giving supporters at DBS.
+  - Cons: Finding supporters who match either of two different fields, e.g. everyone at DBS or everyone tagged `csr`, takes two `find` commands.
+
+- **Alternative 2:** OR between fields as well.
+  - Pros: One command finds supporters matching any of several fields.
+  - Cons: Adding a field could only widen a search, so there would be no way to narrow one down, e.g. to the Giving supporters at DBS.
+
+- **Alternative 3:** An extra keyword in the command that chooses AND or OR between fields.
+  - Pros: Supports both kinds of search in one command.
+  - Cons: A longer format to learn and type, for a search that two `find` commands already cover.
+
 ### Finding quiet supporters
 
 `QuietCommandParser` accepts no arguments for the default 60-day threshold, or exactly one positive
@@ -1865,7 +1881,7 @@ testers are expected to do more _exploratory_ testing.
       Expected: The supporter is added at stage `Prospect`. The search shows only that supporter, numbered 1, with the name `Ravi s/o Kumar`.
 
    1. Test case: `edit 1 n/கவி`<br>
-      Expected: The name becomes `கவி`, with its combining vowel mark preserved, and the email remains `namerules@example.com`. The list shows all supporters again.
+      Expected: The name becomes `கவி`, with its combining vowel mark preserved, and the email remains `namerules@example.com`. The list shows all supporters again. On some computers, e.g. macOS, the Tamil name is shown as unrelated characters (UG known issue 3); check the saved name in `data/supporterbook.json` instead.
 
    1. Test case: Run `find e/namerules@example.com`, then `edit 1 n/Ravi s/oKumar`.<br>
       Expected: The edit is rejected with the name-rules message. Only `கவி` remains in the search results, with the email unchanged.
