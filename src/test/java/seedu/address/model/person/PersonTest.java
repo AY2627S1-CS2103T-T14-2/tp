@@ -317,19 +317,13 @@ public class PersonTest {
 
     @Test
     public void getLastInteractionDate_emptyHistory_returnsEmpty() {
-        Person person = new PersonBuilder().build();
-
-        assertEquals(Optional.empty(), person.getLastInteractionDate());
+        assertLastInteractionDateAndHistory(Optional.empty());
     }
 
     @Test
     public void getLastInteractionDate_singleInteraction_returnsDate() {
         LocalDate date = LocalDate.of(2026, 10, 3);
-        Person person = new PersonBuilder()
-                .withInteractions(new Interaction(date, "Called"))
-                .build();
-
-        assertEquals(Optional.of(date), person.getLastInteractionDate());
+        assertLastInteractionDateAndHistory(Optional.of(date), new Interaction(date, "Called"));
     }
 
     @Test
@@ -337,24 +331,42 @@ public class PersonTest {
         Interaction firstInteraction = new Interaction(LocalDate.of(2026, 9, 30), "Met");
         Interaction latestInteraction = new Interaction(LocalDate.of(2027, 1, 1), "Called");
         Interaction lastLoggedInteraction = new Interaction(LocalDate.of(2026, 10, 3), "Emailed");
-        Person person = new PersonBuilder()
-                .withInteractions(firstInteraction, latestInteraction, lastLoggedInteraction)
-                .build();
-
-        assertEquals(Optional.of(LocalDate.of(2027, 1, 1)), person.getLastInteractionDate());
-        assertEquals(List.of(firstInteraction, latestInteraction, lastLoggedInteraction), person.getInteractions());
+        assertLastInteractionDateAndHistory(Optional.of(LocalDate.of(2027, 1, 1)),
+                firstInteraction, latestInteraction, lastLoggedInteraction);
     }
 
     @Test
     public void getLastInteractionDate_duplicateLatestDates_returnsLatestDate() {
         LocalDate latestDate = LocalDate.of(2026, 10, 3);
-        Person person = new PersonBuilder()
-                .withInteractions(new Interaction(latestDate, "Called"),
-                        new Interaction(latestDate, "Emailed"),
-                        new Interaction(LocalDate.of(2026, 9, 30), "Met"))
-                .build();
+        assertLastInteractionDateAndHistory(Optional.of(latestDate),
+                new Interaction(latestDate, "Called"),
+                new Interaction(latestDate, "Emailed"),
+                new Interaction(LocalDate.of(2026, 9, 30), "Met"));
+    }
 
-        assertEquals(Optional.of(latestDate), person.getLastInteractionDate());
+    @Test
+    public void getLastInteractionDate_leapDay_returnsLeapDayAndPreservesHistory() {
+        LocalDate leapDay = LocalDate.of(2024, 2, 29);
+        assertLastInteractionDateAndHistory(Optional.of(leapDay),
+                new Interaction(leapDay, "Met on leap day"),
+                new Interaction(LocalDate.of(2024, 2, 28), "Called before leap day"));
+    }
+
+    @Test
+    public void getLastInteractionDate_acrossLeapDay_returnsMarchDateAndPreservesHistory() {
+        LocalDate marchDate = LocalDate.of(2024, 3, 1);
+        assertLastInteractionDateAndHistory(Optional.of(marchDate),
+                new Interaction(LocalDate.of(2024, 2, 28), "Called before leap day"),
+                new Interaction(marchDate, "Met after leap day"),
+                new Interaction(LocalDate.of(2024, 2, 29), "Emailed on leap day"));
+    }
+
+    @Test
+    public void getLastInteractionDate_yearBoundary_returnsJanuaryDateAndPreservesHistory() {
+        LocalDate januaryDate = LocalDate.of(2024, 1, 1);
+        assertLastInteractionDateAndHistory(Optional.of(januaryDate),
+                new Interaction(LocalDate.of(2023, 12, 31), "Called at year end"),
+                new Interaction(januaryDate, "Met in the new year"));
     }
 
     @Test
@@ -453,10 +465,10 @@ public class PersonTest {
     public void withInteractions_defensivelyCopiesHistoryAndPreservesOrder() {
         Interaction earlier = new Interaction(LocalDate.of(2024, 2, 20), "Called");
         Interaction later = new Interaction(LocalDate.of(2024, 3, 10), "Met");
-        List<Interaction> history = new ArrayList<>(List.of(later, earlier, later));
+        List<Interaction> interactions = new ArrayList<>(List.of(later, earlier, later));
 
-        Person updated = ALICE.withInteractions(history);
-        history.clear();
+        Person updated = ALICE.withInteractions(interactions);
+        interactions.clear();
 
         assertEquals(List.of(later, earlier, later), updated.getInteractions());
         assertThrows(UnsupportedOperationException.class, () -> updated.getInteractions().clear());
@@ -488,21 +500,32 @@ public class PersonTest {
     }
 
     /**
+     * Verifies the latest date and that reading it preserves every interaction in its original logging order.
+     */
+    private void assertLastInteractionDateAndHistory(Optional<LocalDate> expectedDate, Interaction... interactions) {
+        List<Interaction> expectedInteractions = List.of(interactions);
+        Person person = new PersonBuilder().withInteractions(interactions).build();
+
+        assertEquals(expectedDate, person.getLastInteractionDate());
+        assertEquals(expectedInteractions, person.getInteractions());
+    }
+
+    /**
      * A supporter with one interaction and a supplied display order for testing inconsistent mappings.
      */
     private static class PersonWithDisplayOrderStub extends Person {
-        private final List<Integer> displayOrder;
+        private final List<Integer> displayOrderIndices;
 
-        PersonWithDisplayOrderStub(List<Integer> displayOrder) {
+        PersonWithDisplayOrderStub(List<Integer> displayOrderIndices) {
             super(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(), ALICE.getAddress(),
                     ALICE.getOrganisation(), ALICE.getIntroducer(), ALICE.getStage(),
                     List.of(new Interaction(LocalDate.of(2024, 2, 29), "Called")), ALICE.getTags());
-            this.displayOrder = displayOrder;
+            this.displayOrderIndices = displayOrderIndices;
         }
 
         @Override
         public List<Integer> getInteractionIndicesInDisplayOrder() {
-            return displayOrder;
+            return displayOrderIndices;
         }
     }
 }
