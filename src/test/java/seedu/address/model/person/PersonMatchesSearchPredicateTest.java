@@ -176,8 +176,8 @@ public class PersonMatchesSearchPredicateTest {
     }
 
     @Test
-    public void constructor_phoneCriterionWithoutDigits_throwsAssertionError() {
-        for (String phone : List.of("", "+ -", "(HP)", "abc")) {
+    public void constructor_invalidNormalizedPhoneCriterion_throwsAssertionError() {
+        for (String phone : List.of("", "+ -", "(HP)", "abc", "91.23")) {
             assertThrows(AssertionError.class, () -> new PersonMatchesSearchPredicate(List.of(), List.of(),
                     List.of(), List.of(), List.of(phone), List.of()));
         }
