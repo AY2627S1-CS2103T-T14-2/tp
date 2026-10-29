@@ -832,7 +832,7 @@ Undo and redo are facilitated by `VersionedAddressBook`, which extends `AddressB
 
 These operations are exposed in the `Model` interface as `Model#commitAddressBookIfChanged(String)`, `Model#undoAddressBook()`, `Model#redoAddressBook()`, `Model#canUndoAddressBook()` and `Model#canRedoAddressBook()`. Only `ModelManager` knows that its address book is versioned; the rest of the app, including storage, still sees a `ReadOnlyAddressBook`.
 
-Each saved state is a separate `AddressBook` created with the copy constructor, so later changes to the current data never alter it. The copies share `Person` objects, which is safe because `Person` is immutable: `edit`, `log`, `stage`, `intro`, `tag` and `untag` replace a supporter with a new `Person` rather than changing the old one. A deleted supporter's interactions are stored inside their `Person`, so undoing `delete` restores the interaction history too. Deleting a supporter also removes them as the introducer of other supporters. Since a state is the whole supporter data, one undo brings back the deleted supporter and those introductions together.
+Each saved state is a separate `AddressBook` created with the copy constructor, so later changes to the current data never alter it. The copies share `Person` objects, which is safe because `Person` is immutable: `edit`, `log`, `editlog`, `unlog`, `stage`, `intro`, `tag` and `untag` replace a supporter with a new `Person` rather than changing the old one. A deleted supporter's interactions are stored inside their `Person`, so undoing `delete` restores the interaction history too. Deleting a supporter also removes them as the introducer of other supporters. Since a state is the whole supporter data, one undo brings back the deleted supporter and those introductions together.
 
 Given below is an example usage scenario and how the undo/redo mechanism behaves at each step.
 
@@ -877,7 +877,7 @@ Similarly, how an undo operation goes through the `Model` component is shown bel
 
 <puml src="diagrams/UndoSequenceDiagram-Model.puml" alt="UndoSequenceDiagram-Model" />
 
-The supporter shown in the detail panel is not part of the saved states. After restoring a state, `ModelManager` replaces the viewed supporter with the supporter of the same name in the restored data, or clears the detail panel if there is none.
+The supporter shown in the detail panel is not part of the saved states. After restoring a state, `ModelManager` shows the restored version of the same supporter, found through the record lineage described in [Viewed supporter state](#viewed-supporter-state), so this works even if the supporter was renamed. If that supporter does not exist in the restored data, the detail panel is cleared.
 
 The `redo` command does the opposite: it calls `Model#redoAddressBook()`, which shifts the `currentStatePointer` once to the right, pointing to the previously undone state, and restores the data to that state.
 
@@ -1014,11 +1014,11 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 | Priority | As a …                                     | I want to …                                                  | So that …                                                         |
 | -------- | ------------------------------------------ | ------------------------------------------------------------ | ----------------------------------------------------------------- |
-| `*`      | potential user exploring the app           | see the app pre-populated with sample supporter records      | I can tell what it will look like once my own data is in it       |
+| `* *`    | potential user exploring the app           | see the app pre-populated with sample supporter records      | I can tell what it will look like once my own data is in it       |
+| `* *`    | user ready to start using the app for real | clear all sample data in one command                         | I can begin from a clean list of my own supporters                |
+| `* *`    | new user                                   | see where the app stores my data file                        | I know what to back up and what to hand over                      |
 | `*`      | potential user exploring the app           | see a list of all available commands with an example of each | I can learn what the app does without reading a manual            |
-| `*`      | user ready to start using the app for real | clear all sample data in one command                         | I can begin from a clean list of my own supporters                |
 | `*`      | new user who already keeps a spreadsheet   | import my existing supporter list from a CSV file            | I do not have to retype 250 contacts before the app is of any use |
-| `*`      | new user                                   | see where the app stores my data file                        | I know what to back up and what to hand over                      |
 
 #### B. Contact records
 
@@ -1043,12 +1043,12 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | Priority | As a …         | I want to …                                                                 | So that …                                                                    |
 | -------- | -------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | `* * *`  | fundraiser     | find a supporter by part of their name                                      | I can pull up a record without remembering the exact spelling                |
-| `*`      | fundraiser     | search on fields other than the name                                        | I can find the person at a particular bank when their name escapes me        |
+| `* *`    | fundraiser     | search on fields other than the name                                        | I can find the person at a particular bank when their name escapes me        |
+| `* *`    | fundraiser     | filter my supporters by cultivation stage                                   | I can work through everyone at one stage of the relationship                 |
+| `* *`    | fundraiser     | combine more than one filter in a single search                             | I can ask a precise question such as corporate contacts untouched since June |
+| `* *`    | fundraiser     | sort my list by the date I last spoke to each person                        | whoever has gone quiet rises to the top                                      |
+| `* *`    | fundraiser     | see how many supporters match a search                                      | I know the size of the job before I start working through it                 |
 | `*`      | forgetful user | be warned when I add someone whose name closely matches an existing contact | I do not create a second record for a person I already have                  |
-| `*`      | fundraiser     | filter my supporters by cultivation stage                                   | I can work through everyone at one stage of the relationship                 |
-| `*`      | fundraiser     | combine more than one filter in a single search                             | I can ask a precise question such as corporate contacts untouched since June |
-| `*`      | fundraiser     | sort my list by the date I last spoke to each person                        | whoever has gone quiet rises to the top                                      |
-| `*`      | fundraiser     | see how many supporters match a search                                      | I know the size of the job before I start working through it                 |
 
 #### D. Interaction history
 
@@ -1058,7 +1058,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | `* * *`  | fundraiser | see all logged interactions for a supporter in date order                     | I can see how the relationship has developed          |
 | `* *`    | fundraiser | correct or remove a logged interaction                                        | my interaction history remains accurate              |
 | `* *`    | fundraiser | see the date of the most recent interaction beside each supporter in the list | I can see at a glance who has gone quiet              |
-| `*`      | fundraiser | log an interaction dated in the past                                          | I can write up a meeting the week after it happened   |
+| `* *`    | fundraiser | log an interaction dated in the past                                          | I can write up a meeting the week after it happened   |
 | `*`      | fundraiser | record what kind of interaction it was, such as a call, a meeting or an email | I can tell a coffee meeting apart from a mass mailing |
 | `*`      | fundraiser | record the next step I intend to take with a supporter                        | I know what I promised to do next                     |
 | `*`      | fundraiser | see which intended next steps are overdue                                     | nothing I promised slips silently                     |
@@ -1067,8 +1067,8 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 | Priority | As a …     | I want to …                                                         | So that …                                             |
 | -------- | ---------- | ------------------------------------------------------------------- | ----------------------------------------------------- |
-| `*`      | fundraiser | record who introduced me to a supporter                             | I know whose goodwill created the relationship        |
-| `*`      | fundraiser | see everyone a given person has introduced me to                    | I can tell which board member opens the most doors    |
+| `* *`    | fundraiser | record who introduced me to a supporter                             | I know whose goodwill created the relationship        |
+| `* *`    | fundraiser | see everyone a given person has introduced me to                    | I can tell which board member opens the most doors    |
 | `*`      | fundraiser | trace an introduction chain back to where it started                | I can see how a major partnership actually came about |
 | `*`      | fundraiser | see which introductions I have not yet reported back on             | the person who made them keeps making them            |
 | `*`      | fundraiser | link contacts who share an affiliation such as a company or a board | I can see everyone I know at one organisation         |
@@ -1081,7 +1081,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | `* * *`  | fundraiser | change a supporter's stage in a single command                                  | updating where things stand after a meeting takes seconds                          |
 | `* *`    | fundraiser | tag supporters with labels of my own                                            | I can group them in ways I did not anticipate when I started                       |
 | `* *`    | fundraiser | add or remove one tag without retyping the others                               | I do not lose a supporter's other tags by mistake                                  |
-| `*`      | fundraiser | see how many supporters sit at each stage                                       | I can tell early in the year whether I have enough prospects                       |
+| `* *`    | fundraiser | see how many supporters sit at each stage                                       | I can tell early in the year whether I have enough prospects                       |
 | `*`      | fundraiser | record that a supporter declined, together with a reason                        | I do not approach them again the same way                                          |
 | `*`      | fundraiser | pin a small number of key relationships                                         | the handful my year depends on stay in front of me                                 |
 | `*`      | fundraiser | see supporters marked as giving who have had no interaction this financial year | lapsed givers surface before the year closes                                       |
@@ -1092,7 +1092,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 | -------- | ------------------------------------------------ | ---------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | `* * *`  | fundraiser                                       | have every change saved automatically                                  | I never lose work by forgetting to save                                |
 | `* *`    | careless user                                    | undo my last command                                                   | a mistaken delete does not cost me a record I cannot rebuild           |
-| `*`      | careless user                                    | redo a change I undid by mistake                                       | pressing undo once too often does not cost me work I meant to keep     |
+| `* *`    | careless user                                    | redo a change I undid by mistake                                       | pressing undo once too often does not cost me work I meant to keep     |
 | `*`      | cautious user                                    | be asked to confirm before a command that wipes all my data            | one stray keystroke cannot empty the list                              |
 | `*`      | fundraiser handling other people's personal data | keep everything in a file on my own machine with nothing sent anywhere | supporters' details never leave the charity's laptop                   |
 | `*`      | fundraiser                                       | open and repair my data file in a text editor                          | a corrupted file does not mean starting again from nothing             |
@@ -1102,7 +1102,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 | Priority | As a …      | I want to …                                          | So that …                                                                |
 | -------- | ----------- | ---------------------------------------------------- | ------------------------------------------------------------------------ |
-| `*`      | expert user | bring back previous commands with the up arrow       | I can repeat a near-identical command without retyping it                |
+| `* *`    | expert user | bring back previous commands with the up arrow       | I can repeat a near-identical command without retyping it                |
 | `*`      | expert user | use short aliases for the commands I run most often  | logging a call costs me a few keystrokes                                 |
 | `*`      | expert user | see the parameters of a command as I type it         | I do not have to remember the exact format of a command I use rarely     |
 | `*`      | expert user | delete a range of contacts in one command            | clearing up after a campaign does not take twenty commands               |
@@ -1112,9 +1112,9 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 | Priority | As a …                                    | I want to …                                                             | So that …                                                           |
 | -------- | ----------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `* *`    | returning user after weeks on an event    | see which relationships have gone stale while I was busy                | I can pick up where I left off                                      |
 | `*`      | newly hired executive inheriting the role | read the interaction notes my predecessor left                          | I am not starting every relationship from zero                      |
 | `*`      | departing executive                       | hand over a single data file that holds everything                      | what I know about our supporters stays with the charity             |
-| `*`      | returning user after weeks on an event    | see which relationships have gone stale while I was busy                | I can pick up where I left off                                      |
 | `*`      | long-time user                            | archive supporters I no longer actively cultivate without deleting them | my working list stays short while the history survives              |
 | `*`      | fundraiser reporting to the board         | produce a summary of my activity over a period                          | I can show what I have been doing without rebuilding it from memory |
 
@@ -1157,6 +1157,11 @@ Stories are grouped by epic, with the highest-priority stories listed first with
   - 1e1. SupporterBook shows an error message, indicating the detail with multiple values given.
 
     Use case resumes from step 1.
+
+- 2a. Another supporter already has the same phone number or email.
+  - 2a1. SupporterBook adds the supporter anyway, and warns the user, naming each supporter who shares the phone number or email.
+
+    Use case ends.
 
 **Use case: UC02 - List all supporters**
 
@@ -1260,6 +1265,11 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
     Use case ends.
 
+- 2b. After the edit, the supporter shares a phone number or email with another supporter.
+  - 2b1. SupporterBook makes the edit anyway, and warns the user, naming each supporter who shares the phone number or email.
+
+    Use case resumes from step 3.
+
 **Use case: UC05 - Delete a supporter**
 
 **Preconditions: A list of supporters is shown, with an index beside each supporter**
@@ -1281,6 +1291,11 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 
 - 2a. The deleted supporter's details were being shown.
   - 2a1. SupporterBook stops showing that supporter's details.
+
+    Use case resumes from step 3.
+
+- 2b. The deleted supporter introduced other supporters.
+  - 2b1. SupporterBook removes them as those supporters' introducer, and states how many supporters this affected.
 
     Use case resumes from step 3.
 
@@ -1673,7 +1688,7 @@ testers are expected to do more _exploratory_ testing.
 
 ### Finding and listing supporters
 
-1. Prerequisites: The list contains `Tan Wei Ming`, `Tan Ah Kow` and `Weiling Koh`, added in that order.
+1. Prerequisites: In a disposable test folder, run `clear`, then `add n/Tan Wei Ming e/twm@example.com`, `add n/Tan Ah Kow e/tak@example.com` and `add n/Weiling Koh e/wk@example.com`, in that order.
 
 1. Test case: `find wei`<br>
    Expected: `Tan Wei Ming` and `Weiling Koh` are shown in that order, numbered 1 and 2. The message is `2 supporter(s) listed!`.
