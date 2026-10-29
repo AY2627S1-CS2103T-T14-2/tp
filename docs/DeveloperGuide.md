@@ -522,6 +522,34 @@ In tests, `PersonBuilder` builds a `Person` with an empty history unless `Person
   - Pros: Absence can be distinguished from an explicitly empty history.
   - Cons: It adds a redundant state and prevents older data files from loading.
 
+### Last-contact date
+
+A supporter's last-contact date is the latest date in their interaction history. `Person#getLastInteractionDate()` in the `Model` component returns an `Optional<LocalDate>` derived from the stored interactions.
+
+- The method maps each interaction to its date and takes the maximum with `LocalDate#compareTo`, without sorting or changing the stored history.
+- Logging an older interaction after a newer one does not move last contact backwards. Several interactions on the latest date give the same last-contact date.
+- An empty history returns an empty `Optional`, so a supporter with no interactions has no last-contact date.
+
+**Showing last contact:** `PersonCard` and `SupporterDetailData#getLastContact()` both pass the result to `LastContactFormatter#format(Optional<LocalDate>)` in the `UI` component. It returns `Last contact: ...`, or `No interactions yet` when the date is absent. Dates are formatted by `DisplayDateFormatter` using `dd MMM uuuu` and `Locale.ENGLISH`, e.g. `Last contact: 03 Oct 2026`, regardless of the computer's display language. The card shows this line below the organisation, and `SupporterDetailPanel` shows it above the interaction history. With no supporter selected, the panel shows the startup prompt instead.
+
+When `log`, `editlog` or `unlog` changes a history, the command replaces the `Person` through `Model#setPerson(Person, Person)` and selects the updated supporter. The list card and detail panel then derive last contact from the updated history. Editing or deleting the latest interaction can move last contact backwards; deleting the final interaction restores `No interactions yet`.
+
+In the `Storage` component, `JsonAdaptedPerson` saves the interactions but no separate last-contact value. Loading those interactions is enough to derive the date again.
+
+`PersonTest` checks empty histories, a single interaction, dates logged out of order and repeated latest dates. `LastContactFormatterTest` checks the empty message, date formatting and independence from the default display locale. `SupporterDetailDataTest` and `PersonCardTest` check the text supplied to the detail panel and shown on list cards.
+
+#### Design considerations:
+
+**Aspect: How to obtain the last-contact date**
+
+- **Alternative 1 (current choice):** Derive the latest date from the interaction history whenever it is requested.
+  - Pros: Logging, editing, deleting and restoring interactions cannot leave a separately stored date out of sync with the history.
+  - Cons: Each request scans all of the supporter's interactions.
+
+- **Alternative 2:** Store the last-contact date as a separate field on `Person`.
+  - Pros: Reading the date does not require scanning the history.
+  - Cons: Every history change must keep the field consistent, including finding the next latest date when the latest interaction is edited or deleted.
+
 ### Logging an interaction
 
 `LogCommand`, `EditLogCommand` and `UnlogCommand` share the package-private `InteractionCommandSupport` helper in the `Logic` component. It validates the supporter index against the displayed list and returns the selected supporter. For editing and deletion, it also validates the one-based chronological interaction number and calls `Person#getInteractionStoredIndex(int)` to obtain the zero-based stored index.
