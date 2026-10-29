@@ -3,15 +3,18 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.InteractionCommandTestUtil.assertFailurePreservesSelection;
+import static seedu.address.testutil.InteractionCommandTestUtil.setInteractions;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
+import static seedu.address.testutil.TypicalInteractions.MIDDLE;
+import static seedu.address.testutil.TypicalInteractions.NEWEST;
+import static seedu.address.testutil.TypicalInteractions.OLDEST;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,9 +35,6 @@ import seedu.address.testutil.PersonBuilder;
  */
 public class UnlogCommandTest {
 
-    private static final Interaction OLDEST = new Interaction(LocalDate.of(2026, 9, 6), "Earlier call");
-    private static final Interaction MIDDLE = new Interaction(LocalDate.of(2026, 9, 16), "Meeting");
-    private static final Interaction NEWEST = new Interaction(LocalDate.of(2026, 9, 20), "Follow-up");
 
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
@@ -72,14 +72,14 @@ public class UnlogCommandTest {
 
     @Test
     public void execute_oldestEntry_removesOldest() throws Exception {
-        setInteractions(MIDDLE, OLDEST, NEWEST);
+        setInteractions(model, INDEX_FIRST_PERSON, MIDDLE, OLDEST, NEWEST);
         new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(1)).execute(model);
         assertEquals(List.of(MIDDLE, NEWEST), model.getFilteredPersonList().get(0).getInteractions());
     }
 
     @Test
     public void execute_newestEntry_removesNewest() throws Exception {
-        setInteractions(NEWEST, OLDEST, MIDDLE);
+        setInteractions(model, INDEX_FIRST_PERSON, NEWEST, OLDEST, MIDDLE);
         new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(3)).execute(model);
         assertEquals(List.of(OLDEST, MIDDLE), model.getFilteredPersonList().get(0).getInteractions());
     }
@@ -87,7 +87,8 @@ public class UnlogCommandTest {
     @Test
     public void execute_identicalEntries_removesSelectedStoredPosition() throws Exception {
         Interaction sameDate = new Interaction(MIDDLE.getDate(), "Different note");
-        setInteractions(MIDDLE, sameDate, new Interaction(MIDDLE.getDate(), MIDDLE.getNote()));
+        setInteractions(model, INDEX_FIRST_PERSON, MIDDLE, sameDate,
+                new Interaction(MIDDLE.getDate(), MIDDLE.getNote()));
 
         // delete displayed entry #3, which maps to stored index 2
         // removing by value would incorrectly remove identical entry at stored index 0 instead
@@ -98,7 +99,7 @@ public class UnlogCommandTest {
 
     @Test
     public void execute_lastEntry_selectsSupporterWithEmptyHistory() throws Exception {
-        Person person = setInteractions(OLDEST);
+        Person person = setInteractions(model, INDEX_FIRST_PERSON, OLDEST);
         Person updated = new PersonBuilder(person).withInteractions().build();
 
         CommandResult result = new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(1)).execute(model);
@@ -113,7 +114,7 @@ public class UnlogCommandTest {
     public void execute_validFilteredIndex_preservesFilter() throws Exception {
         // show only the second supporter, whose displayed index is now 1
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
-        Person person = setInteractions(MIDDLE, OLDEST);
+        Person person = setInteractions(model, INDEX_FIRST_PERSON, MIDDLE, OLDEST);
         Person updated = new PersonBuilder(person).withInteractions(MIDDLE).build();
 
         new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(1)).execute(model);
@@ -126,41 +127,33 @@ public class UnlogCommandTest {
     public void execute_invalidSupporterIndex_throwsCommandException() {
         model.setViewedPerson(model.getFilteredPersonList().get(0));
         Index invalidIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
-        Optional<Person> previouslyViewed = model.getViewedPerson();
-        assertCommandFailure(new UnlogCommand(invalidIndex, Index.fromOneBased(1)), model,
+        assertFailurePreservesSelection(new UnlogCommand(invalidIndex, Index.fromOneBased(1)), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        assertEquals(previouslyViewed, model.getViewedPerson());
     }
 
     @Test
     public void execute_invalidFilteredIndex_throwsCommandException() {
         model.setViewedPerson(model.getFilteredPersonList().get(1));
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
-        Optional<Person> previouslyViewed = model.getViewedPerson();
         // supporter exists in the full list but is not displayed
-        assertCommandFailure(new UnlogCommand(INDEX_SECOND_PERSON, Index.fromOneBased(1)), model,
+        assertFailurePreservesSelection(new UnlogCommand(INDEX_SECOND_PERSON, Index.fromOneBased(1)), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        assertEquals(previouslyViewed, model.getViewedPerson());
     }
 
     @Test
     public void execute_invalidInteractionIndex_preservesDataAndSelection() {
-        setInteractions(OLDEST);
+        setInteractions(model, INDEX_FIRST_PERSON, OLDEST);
         model.setViewedPerson(model.getFilteredPersonList().get(1));
-        Optional<Person> previouslyViewed = model.getViewedPerson();
-        assertCommandFailure(new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2)), model,
+        assertFailurePreservesSelection(new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2)), model,
                 Messages.MESSAGE_INVALID_INTERACTION_INDEX);
-        assertEquals(previouslyViewed, model.getViewedPerson());
     }
 
     @Test
     public void execute_emptyHistory_throwsCommandException() {
-        setInteractions();
+        setInteractions(model, INDEX_FIRST_PERSON);
         model.setViewedPerson(model.getFilteredPersonList().get(1));
-        Optional<Person> previouslyViewed = model.getViewedPerson();
-        assertCommandFailure(new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(1)), model,
+        assertFailurePreservesSelection(new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(1)), model,
                 Messages.MESSAGE_INVALID_INTERACTION_INDEX);
-        assertEquals(previouslyViewed, model.getViewedPerson());
     }
 
     @Test
@@ -193,13 +186,4 @@ public class UnlogCommandTest {
                 + ", interactionIndex=" + Index.fromOneBased(2) + "}", command.toString());
     }
 
-    /**
-     * Replaces the first displayed supporter's history and returns the updated supporter.
-     */
-    private Person setInteractions(Interaction... interactions) {
-        Person original = model.getFilteredPersonList().get(0);
-        Person updated = new PersonBuilder(original).withInteractions(interactions).build();
-        model.setPerson(original, updated);
-        return updated;
-    }
 }

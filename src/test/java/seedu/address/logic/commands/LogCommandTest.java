@@ -3,10 +3,11 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.InteractionCommandTestUtil.assertFailurePreservesSelection;
+import static seedu.address.testutil.InteractionCommandTestUtil.setInteractions;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalInteractionNotes.NOTE_PADDING_SEQUENCES;
@@ -99,10 +100,8 @@ public class LogCommandTest {
 
     @Test
     public void execute_explicitPastDate_appendsAndPreservesSupporter() {
-        Person originalPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Interaction existingInteraction = new Interaction(FIXED_DATE, "Existing meeting");
-        Person personToUpdate = new PersonBuilder(originalPerson).withInteractions(existingInteraction).build();
-        model.setPerson(originalPerson, personToUpdate);
+        Person personToUpdate = setInteractions(model, INDEX_FIRST_PERSON, existingInteraction);
         LocalDate pastDate = FIXED_DATE.minusDays(10);
         Person updatedPerson = new PersonBuilder(personToUpdate)
                 .withInteractions(existingInteraction, new Interaction(pastDate, VALID_NOTE)).build();
@@ -182,12 +181,8 @@ public class LogCommandTest {
 
     @Test
     public void execute_existingIdenticalInteraction_appendsDuplicate() throws Exception {
-        Person originalPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Interaction existingInteraction = new Interaction(FIXED_DATE, VALID_NOTE);
-        Person personWithInteraction = new PersonBuilder(originalPerson)
-                .withInteractions(existingInteraction)
-                .build();
-        model.setPerson(originalPerson, personWithInteraction);
+        Person personWithInteraction = setInteractions(model, INDEX_FIRST_PERSON, existingInteraction);
 
         // identical interactions are valid because the same interaction can happen more than once
         CommandResult result = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, FIXED_CLOCK).execute(model);
@@ -236,8 +231,7 @@ public class LogCommandTest {
         Person previouslyViewedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         model.setViewedPerson(previouslyViewedPerson);
 
-        assertCommandFailure(logCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        assertEquals(Optional.of(previouslyViewedPerson), model.getViewedPerson());
+        assertFailurePreservesSelection(logCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
@@ -271,8 +265,7 @@ public class LogCommandTest {
         assertTrue(outOfBoundIndex.getZeroBased() < model.getAddressBook().getPersonList().size());
         LogCommand logCommand = new LogCommand(outOfBoundIndex, VALID_NOTE, FIXED_CLOCK);
 
-        assertCommandFailure(logCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        assertEquals(Optional.of(previouslyViewedPerson), model.getViewedPerson());
+        assertFailurePreservesSelection(logCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
