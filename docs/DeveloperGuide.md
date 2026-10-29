@@ -522,6 +522,34 @@ In tests, `PersonBuilder` builds a `Person` with an empty history unless `Person
   - Pros: Absence can be distinguished from an explicitly empty history.
   - Cons: It adds a redundant state and prevents older data files from loading.
 
+### Last-contact date
+
+A supporter's last-contact date is the latest date in their interaction history. `Person#getLastInteractionDate()` in the `Model` component returns an `Optional<LocalDate>` derived from the stored interactions.
+
+- The method maps each interaction to its date and takes the maximum with `LocalDate#compareTo`, without sorting or changing the stored history.
+- Logging an older interaction after a newer one does not move last contact backwards. Several interactions on the latest date give the same last-contact date.
+- An empty history returns an empty `Optional`, so a supporter with no interactions has no last-contact date.
+
+**Showing last contact:** `PersonCard` and `SupporterDetailData#getLastContact()` both pass the result to `LastContactFormatter#format(Optional<LocalDate>)` in the `UI` component. It returns `Last contact: ...`, or `No interactions yet` when the date is absent. Dates are formatted by `DisplayDateFormatter` using `dd MMM uuuu` and `Locale.ENGLISH`, e.g. `Last contact: 03 Oct 2026`, regardless of the computer's display language. The card shows this line below the organisation, and `SupporterDetailPanel` shows it above the interaction history. With no supporter selected, the panel shows the startup prompt instead.
+
+When `log`, `editlog` or `unlog` changes a history, the command replaces the `Person` through `Model#setPerson(Person, Person)` and selects the updated supporter. The list card and detail panel then derive last contact from the updated history. Editing or deleting the latest interaction can move last contact backwards; deleting the final interaction restores `No interactions yet`.
+
+In the `Storage` component, `JsonAdaptedPerson` saves the interactions but no separate last-contact value. Loading those interactions is enough to derive the date again.
+
+`PersonTest` checks empty histories, a single interaction, dates logged out of order and repeated latest dates. `LastContactFormatterTest` checks the empty message, date formatting and independence from the default display locale. `SupporterDetailDataTest` and `PersonCardTest` check the text supplied to the detail panel and shown on list cards.
+
+#### Design considerations:
+
+**Aspect: How to obtain the last-contact date**
+
+- **Alternative 1 (current choice):** Derive the latest date from the interaction history whenever it is requested.
+  - Pros: Logging, editing, deleting and restoring interactions cannot leave a separately stored date out of sync with the history.
+  - Cons: Each request scans all of the supporter's interactions.
+
+- **Alternative 2:** Store the last-contact date as a separate field on `Person`.
+  - Pros: Reading the date does not require scanning the history.
+  - Cons: Every history change must keep the field consistent, including finding the next latest date when the latest interaction is edited or deleted.
+
 ### Logging an interaction
 
 `LogCommand`, `EditLogCommand` and `UnlogCommand` share the package-private `InteractionCommandSupport` helper in the `Logic` component. It validates the supporter index against the displayed list and returns the selected supporter. For editing and deletion, it also validates the one-based chronological interaction number and calls `Person#getInteractionStoredIndex(int)` to obtain the zero-based stored index.
@@ -606,7 +634,7 @@ Date edits can renumber other entries, but do not reorder the stored list. Last 
 
 The `view INDEX` command selects a supporter from the displayed list and reports their name and number of logged interactions, or indicates that no interactions have been logged yet.
 
-On successful index validation, `ViewCommand` records the supporter using `Model#setViewedPerson(Person)` and counts `Person#getInteractions()` for the command result. The displayed list, its filter and supporter data remain unchanged.
+On successful index validation, `ViewCommand` records the supporter using `Model#setViewedPerson(Person)` and reads `Person#getInteractionCount()` for the command result. The displayed list, its filter and supporter data remain unchanged.
 
 `SupporterDetailData` prepares the display values without a JavaFX dependency:
 
@@ -615,7 +643,9 @@ On successful index validation, `ViewCommand` records the supporter using `Model
 * `SupporterDetailData` follows those indices to create immutable `InteractionEntry` objects. Numbers descend from the history size to `#1`, so the oldest entry has the smallest number. On equal dates, the later-logged entry appears first and has the larger number.
 * Back-dating and editing interaction dates can renumber existing entries. The panel, `LogCommand` and `EditLogCommand` use the same ordering method so displayed numbers match success messages.
 
-`SupporterDetailPanel#setSupporter(Optional<Person>)` skips rendering when the supporter record is unchanged, preserving the scroll position through `list`, `find` and `add`. Switching supporters or changing the displayed record rebuilds the history and returns scrolling to the top.
+After each command attempt, `MainWindow#refreshSupporterDetailPanel()` reads the viewed supporter. When one is selected, it calls `Logic#getPersonsIntroducedBy(Name)` to find the supporters they introduced across the whole address book, including those hidden by the current filter. It passes the selection and the resulting list, or an empty list when no supporter is selected, to `SupporterDetailPanel#setSupporter(Optional<Person>, List<Person>)`.
+
+The panel skips rendering when both the supporter record and the list of introduced supporter records are unchanged, preserving scrolling through `list`, `find` and `add`. Switching supporters, changing the displayed record or changing the list of introduced supporter records rebuilds the panel and returns both scroll panes to the top. This includes renaming or deleting someone the displayed supporter introduced, even though the viewed supporter remains the same.
 
 ### Viewed supporter state
 
@@ -624,12 +654,12 @@ On successful index validation, `ViewCommand` records the supporter using `Model
 Selection follows these rules:
 
 * `list`, `find` and `add` retain the viewed supporter, even if they are no longer displayed.
-* Successful `view`, `log`, `editlog`, `unlog` and `stage` commands select their target. `log`, `editlog` and `unlog` select the replacement record after updating its history. `stage` selects the replacement record after a stage change, or the existing record when the requested stage is already set.
+* Successful `view`, `log`, `editlog`, `unlog`, `stage`, `intro`, `tag` and `untag` commands select their target. `log`, `editlog` and `unlog` select the replacement record after updating its history. `stage`, `intro`, `tag` and `untag` select the replacement record after a change, or the existing record when nothing changes.
 * `ModelManager#setPerson(Person, Person)` updates selection to the replacement record when the viewed supporter is changed.
 * `ModelManager#deletePerson(Person)` clears selection when the viewed supporter is deleted.
 * `ModelManager#setAddressBook(ReadOnlyAddressBook)` clears selection when all supporter data is replaced, including by `clear`.
 
-Editing or deleting another supporter preserves selection. Parsing and index-validation failures also preserve it.
+Editing or deleting another supporter preserves selection, but the displayed introduction information can change. Renaming or deleting the viewed supporter's introducer updates or clears their introducer field; renaming or deleting someone they introduced updates the list of introductions. Parsing and index-validation failures also preserve selection.
 
 Undo and redo match immutable record versions by their original object identity rather than by name or list index. `ModelManager` records this session-only lineage in an `IdentityHashMap` whenever `setPerson` succeeds, including dependent records updated after an introducer is renamed. Restoring a snapshot selects the corresponding record even after a rename or a no-op edit; it clears selection if that supporter does not exist in the restored state. Equal-valued records belonging to different supporters do not share lineage, and no identity is written to JSON.
 
@@ -1292,7 +1322,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 **MSS**
 
 1.  User requests to view a specific supporter in the list, giving an index.
-2.  SupporterBook shows the supporter's details and interaction history, with the most recent interactions shown first.
+2.  SupporterBook shows the supporter's details, including their introducer, the supporters they introduced and their last-contact date, together with their interaction history, most recent first.
 
     Use case ends.
 
@@ -1304,7 +1334,17 @@ Stories are grouped by epic, with the highest-priority stories listed first with
     Use case resumes from step 1.
 
 - 2a. The supporter has no logged interactions.
-  - 2a1. SupporterBook shows the supporter's details and indicates that there are no interactions logged yet.
+  - 2a1. SupporterBook shows the supporter's details and indicates that there are no interactions logged yet and no last-contact date.
+
+    Use case ends.
+
+- 2b. The supporter has no recorded introducer.
+  - 2b1. SupporterBook indicates that no introducer is recorded.
+
+    Use case ends.
+
+- 2c. The supporter has no recorded introductions.
+  - 2c1. SupporterBook indicates that no supporters are recorded as introduced by them.
 
     Use case ends.
 
@@ -2144,6 +2184,25 @@ For the non-ASCII test cases below, copy and paste the commands directly from th
    1. Test cases: `unlog 2 1` when only one supporter is displayed; `unlog 1 3` when that supporter has only two entries<br>
       Expected: An invalid-supporter-index error for the first command and an invalid-interaction-number error for the second. Neither changes data or selection.
 
+### Last-contact dates
+
+1. Prerequisites: Use an isolated test folder with no supporter named `LastContactTester`. Run `add n/LastContactTester p/87654321`, then `find LastContactTester`. Ensure exactly one supporter is displayed. Continue through the following test cases in order.
+
+1. Test case: `view 1`<br>
+   Expected: Both the supporter card and the detail panel show `No interactions yet`. The history area shows `No interactions yet. Log one with: log INDEX nt/NOTE.`
+
+1. Test case: `log 1 nt/Recent call dt/2024-03-10`, then `log 1 nt/Earlier meeting dt/2024-02-20`<br>
+   Expected: Both last-contact lines show `Last contact: 10 Mar 2024`, even after the older interaction is logged. The history shows `Recent call` (#2) above `Earlier meeting` (#1).
+
+1. Test case: `editlog 1 2 dt/2024-02-15`<br>
+   Expected: Both last-contact lines change to `Last contact: 20 Feb 2024`. `Earlier meeting` is now #2, above `Recent call` (#1).
+
+1. Test case: `unlog 1 2`<br>
+   Expected: `Earlier meeting` is removed. Both last-contact lines change to `Last contact: 15 Feb 2024`, with `Recent call` remaining as #1.
+
+1. Test case: `unlog 1 1`<br>
+   Expected: Both last-contact lines return to `No interactions yet`, and the history area shows the empty-history message. `LastContactTester` remains selected and is still the only supporter in the displayed list.
+
 ### Viewing a supporter's details and interaction history
 
 1. Viewing a supporter with no interactions
@@ -2173,6 +2232,22 @@ For the non-ASCII test cases below, copy and paste the commands directly from th
 
    1. Test case: `view 1`<br>
       Expected: `Showing Alex Yeoh: 2 interaction(s) logged`. The history shows `#2  12 Sep 2026` before `#1  18 Jul 2026`.
+
+1. Viewing introduction information
+
+   1. Prerequisites: Use an isolated test folder with no supporters whose names contain `RelationView`. Run `add n/RelationViewIntroducer p/81000001`, `add n/RelationViewTarget p/81000002` and `add n/RelationViewGuest p/81000003`, then `find RelationView`. Ensure exactly these three supporters are displayed in that order. Continue through the following test cases in order.
+
+   1. Test case: `intro 2 by/1`, then `intro 3 by/2`, then `view 2`<br>
+      Expected: The panel shows `RelationViewTarget`, with `RelationViewIntroducer` under `Introducer` and `RelationViewGuest` under `Introduced`.
+
+   1. Test case: `find RelationViewTarget`, then `view 1`<br>
+      Expected: Only `RelationViewTarget` appears in the list. Both introduction rows still show the same names, even though the related supporters are hidden by the filter.
+
+   1. Test case: `find RelationViewIntroducer`, then `delete 1`<br>
+      Expected: The displayed list is empty. The panel keeps showing `RelationViewTarget`, with `Introducer` changed to `-` and `RelationViewGuest` still under `Introduced`.
+
+   1. Test case: `find RelationViewGuest`, then `delete 1`<br>
+      Expected: The displayed list is empty. The panel keeps showing `RelationViewTarget`, now with both introduction rows showing `-`. Their details and empty interaction history remain visible.
 
 1. Invalid view commands
 
