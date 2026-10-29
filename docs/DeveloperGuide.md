@@ -1802,6 +1802,18 @@ testers are expected to do more _exploratory_ testing.
    1. Test case: `add n/Kumar Raj p/81234567 e/`<br>
       Expected: No supporter is added. The message says the email should not be blank, and to leave out `e/` if the supporter has no email.
 
+1. Using names with slash words and Unicode letters
+   1. Prerequisites: Start from the sample data in an isolated test folder, with no supporters named `Ravi s/o Kumar` or `கவி` and no supporter using `namerules@example.com`.
+
+   1. Test case: `add n/Ravi s/o Kumar e/namerules@example.com`, then `find e/namerules@example.com`.<br>
+      Expected: The supporter is added at stage `Prospect`. The search shows only that supporter, numbered 1, with the name `Ravi s/o Kumar`.
+
+   1. Test case: `edit 1 n/கவி`<br>
+      Expected: The name becomes `கவி`, with its combining vowel mark preserved, and the email remains `namerules@example.com`. The list shows all supporters again.
+
+   1. Test case: Run `find e/namerules@example.com`, then `edit 1 n/Ravi s/oKumar`.<br>
+      Expected: The edit is rejected with the name-rules message. Only `கவி` remains in the search results, with the email unchanged.
+
 1. Clearing details with `edit`
    1. Prerequisites: Start from the sample data and run `list`. The 3rd supporter, Charlotte O'Brien, has an email but no phone number.
 
