@@ -84,23 +84,17 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_accentedName_success() {
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("José Tan").build();
-
-        assertParseSuccess(parser, "1 n/José Tan", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        assertNameParses("José Tan");
     }
 
     @Test
     public void parse_nonLatinName_success() {
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("李伟").build();
-
-        assertParseSuccess(parser, "1 n/李伟", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        assertNameParses("李伟");
     }
 
     @Test
     public void parse_curlyApostropheName_success() {
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Charlotte O’Brien").build();
-
-        assertParseSuccess(parser, "1 n/Charlotte O’Brien", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        assertNameParses("Charlotte O’Brien");
     }
 
     @Test
@@ -110,9 +104,7 @@ public class EditCommandParserTest {
             "Ahmad bin Ali @ Ah Mat", "Tan Ah Kow (Chen Ah Kow)", "Tan, Ah Kow"};
 
         for (String name : names) {
-            EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(name).build();
-
-            assertParseSuccess(parser, "1 " + PREFIX_NAME + name, new EditCommand(INDEX_FIRST_PERSON, descriptor));
+            assertNameParses(name);
         }
     }
 
@@ -391,5 +383,12 @@ public class EditCommandParserTest {
         EditCommand expectedCommand = new EditCommand(targetIndex, descriptor);
 
         assertParseSuccess(parser, userInput, expectedCommand);
+    }
+
+    private void assertNameParses(String name) {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(name).build();
+
+        assertParseSuccess(parser, INDEX_FIRST_PERSON.getOneBased() + " " + PREFIX_NAME + name,
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
     }
 }
