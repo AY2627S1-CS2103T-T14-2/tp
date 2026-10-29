@@ -38,6 +38,7 @@ import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
+import static seedu.address.testutil.TypicalOrganisationNames.ASCII_AND_EMOJI_AT_ORGANISATION_LIMIT;
 
 import org.junit.jupiter.api.Test;
 
@@ -66,7 +67,7 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_organisationUnicodeLengthBoundary_checksCodePoints() {
-        String organisationAtLimit = "a".repeat(99) + "😀";
+        String organisationAtLimit = ASCII_AND_EMOJI_AT_ORGANISATION_LIMIT;
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
                 .withOrganisation(organisationAtLimit).build();
         String input = INDEX_FIRST_PERSON.getOneBased() + " " + PREFIX_ORGANISATION + organisationAtLimit;
