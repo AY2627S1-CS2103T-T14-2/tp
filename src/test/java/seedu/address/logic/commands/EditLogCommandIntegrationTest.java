@@ -42,7 +42,7 @@ public class EditLogCommandIntegrationTest {
         CommandResult result = parser.parseCommand("editlog 1 2 dt/2024-03-15").execute(model);
         Interaction edited = new Interaction(LocalDate.of(2024, 3, 15), "Middle meeting");
         Person expected = new PersonBuilder(target).withInteractions(edited, oldest, newest).build();
-        assertDateEditUpdatesHistory(model, result, expected, other, edited.getDate());
+        assertDateEditUpdatesHistory(model, result, expected, other);
 
         // use the refreshed number to edit the same interaction's note while retaining its new date
         CommandResult nextResult = parser.parseCommand("editlog 1 3 nt/Corrected meeting?").execute(model);
@@ -93,8 +93,7 @@ public class EditLogCommandIntegrationTest {
                 List.of("Corrected meeting", "Follow-up", "Meeting"));
     }
 
-    private void assertDateEditUpdatesHistory(Model model, CommandResult result, Person expected,
-            Person other, LocalDate expectedDate) {
+    private void assertDateEditUpdatesHistory(Model model, CommandResult result, Person expected, Person other) {
         assertSelectedFilteredSupporter(model, expected, List.of(other, expected));
         assertEquals("Edited interaction #3 with " + expected.getName() + " (15 Mar 2024): Middle meeting",
                 result.getFeedbackToUser());
@@ -104,7 +103,8 @@ public class EditLogCommandIntegrationTest {
                 List.of("Middle meeting", "Recent call", "Earlier call"));
         assertEquals("Interactions (3) - newest first", display.getHistoryHeading());
         assertEquals(other.getName().fullName, display.getIntroducer());
-        assertEquals(Optional.of(expectedDate), model.getViewedPerson().orElseThrow().getLastInteractionDate());
+        assertEquals(Optional.of(LocalDate.of(2024, 3, 15)),
+                model.getViewedPerson().orElseThrow().getLastInteractionDate());
     }
 
     private void assertNoteEditPreservesDate(Model model, CommandResult result, Person expected, Person other) {
