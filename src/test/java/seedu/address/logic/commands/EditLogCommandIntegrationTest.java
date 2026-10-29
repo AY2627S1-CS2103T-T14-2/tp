@@ -42,28 +42,13 @@ public class EditLogCommandIntegrationTest {
         CommandResult result = parser.parseCommand("editlog 1 2 dt/2024-03-15").execute(model);
         Interaction edited = new Interaction(LocalDate.of(2024, 3, 15), "Middle meeting");
         Person expected = new PersonBuilder(target).withInteractions(edited, oldest, newest).build();
-        assertSelectedFilteredSupporter(model, expected, List.of(other, expected));
-        assertEquals("Edited interaction #3 with " + target.getName() + " (15 Mar 2024): Middle meeting",
-                result.getFeedbackToUser());
-        SupporterDetailData displayAfterDateEdit = new SupporterDetailData(model.getViewedPerson());
-        assertHistory(displayAfterDateEdit, List.of(3, 2, 1),
-                List.of("15 Mar 2024", "10 Mar 2024", "20 Feb 2024"),
-                List.of("Middle meeting", "Recent call", "Earlier call"));
-        assertEquals("Interactions (3) - newest first", displayAfterDateEdit.getHistoryHeading());
-        assertEquals(other.getName().fullName, displayAfterDateEdit.getIntroducer());
-        assertEquals(Optional.of(edited.getDate()), model.getViewedPerson().orElseThrow().getLastInteractionDate());
+        assertDateEditUpdatesHistory(model, result, expected, other, edited.getDate());
 
         // use the refreshed number to edit the same interaction's note while retaining its new date
         CommandResult nextResult = parser.parseCommand("editlog 1 3 nt/Corrected meeting?").execute(model);
         Person nextExpected = new PersonBuilder(target)
                 .withInteractions(new Interaction(edited.getDate(), "Corrected meeting?"), oldest, newest).build();
-        assertSelectedFilteredSupporter(model, nextExpected, List.of(other, nextExpected));
-        assertEquals("Edited interaction #3 with " + target.getName() + " (15 Mar 2024): Corrected meeting?",
-                nextResult.getFeedbackToUser());
-        SupporterDetailData displayAfterNoteEdit = new SupporterDetailData(model.getViewedPerson());
-        assertHistory(displayAfterNoteEdit, List.of(3, 2, 1),
-                List.of("15 Mar 2024", "10 Mar 2024", "20 Feb 2024"),
-                List.of("Corrected meeting?", "Recent call", "Earlier call"));
+        assertNoteEditPreservesDate(model, nextResult, nextExpected, other);
     }
 
     @Test
@@ -106,5 +91,29 @@ public class EditLogCommandIntegrationTest {
         assertHistory(display, List.of(3, 2, 1),
                 List.of("29 Feb 2024", "29 Feb 2024", "29 Feb 2024"),
                 List.of("Corrected meeting", "Follow-up", "Meeting"));
+    }
+
+    private void assertDateEditUpdatesHistory(Model model, CommandResult result, Person expected,
+            Person other, LocalDate expectedDate) {
+        assertSelectedFilteredSupporter(model, expected, List.of(other, expected));
+        assertEquals("Edited interaction #3 with " + expected.getName() + " (15 Mar 2024): Middle meeting",
+                result.getFeedbackToUser());
+        SupporterDetailData display = new SupporterDetailData(model.getViewedPerson());
+        assertHistory(display, List.of(3, 2, 1),
+                List.of("15 Mar 2024", "10 Mar 2024", "20 Feb 2024"),
+                List.of("Middle meeting", "Recent call", "Earlier call"));
+        assertEquals("Interactions (3) - newest first", display.getHistoryHeading());
+        assertEquals(other.getName().fullName, display.getIntroducer());
+        assertEquals(Optional.of(expectedDate), model.getViewedPerson().orElseThrow().getLastInteractionDate());
+    }
+
+    private void assertNoteEditPreservesDate(Model model, CommandResult result, Person expected, Person other) {
+        assertSelectedFilteredSupporter(model, expected, List.of(other, expected));
+        assertEquals("Edited interaction #3 with " + expected.getName() + " (15 Mar 2024): Corrected meeting?",
+                result.getFeedbackToUser());
+        SupporterDetailData display = new SupporterDetailData(model.getViewedPerson());
+        assertHistory(display, List.of(3, 2, 1),
+                List.of("15 Mar 2024", "10 Mar 2024", "20 Feb 2024"),
+                List.of("Corrected meeting?", "Recent call", "Earlier call"));
     }
 }

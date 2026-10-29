@@ -42,24 +42,11 @@ public class UnlogCommandIntegrationTest {
         // filtered supporter #1 is second in storage, and interaction #2 is first in its stored history
         CommandResult middleDeletionResult = parser.parseCommand("unlog 1 2").execute(model);
         Person expected = new PersonBuilder(target).withInteractions(oldest, newest).build();
-        assertSelectedFilteredSupporter(model, expected, List.of(other, expected));
-        assertEquals("Deleted interaction #2 with " + target.getName() + " (29 Feb 2024): Middle meeting.",
-                middleDeletionResult.getFeedbackToUser());
-
-        SupporterDetailData displayAfterMiddleDeletion = new SupporterDetailData(model.getViewedPerson());
-        assertHistory(displayAfterMiddleDeletion, List.of(2, 1),
-                List.of("10 Mar 2024", "20 Feb 2024"), List.of("Recent call", "Earlier call"));
-        assertEquals("Interactions (2) - newest first", displayAfterMiddleDeletion.getHistoryHeading());
-        assertEquals("", displayAfterMiddleDeletion.getPlaceholderMessage());
-        assertEquals(other.getName().fullName, displayAfterMiddleDeletion.getIntroducer());
+        assertMiddleDeletionRenumbersHistory(model, middleDeletionResult, expected, other);
 
         // the next command uses the refreshed number: #2 now identifies the newest remaining interaction
         CommandResult newestDeletionResult = parser.parseCommand("unlog 1 2").execute(model);
-        SupporterDetailData displayAfterNewestDeletion = new SupporterDetailData(model.getViewedPerson());
-        assertEquals("Deleted interaction #2 with " + target.getName() + " (10 Mar 2024): Recent call",
-                newestDeletionResult.getFeedbackToUser());
-        assertHistory(displayAfterNewestDeletion, List.of(1), List.of("20 Feb 2024"), List.of("Earlier call"));
-        assertEquals(Optional.of(oldest.getDate()), model.getViewedPerson().orElseThrow().getLastInteractionDate());
+        assertNewestDeletionUpdatesLastContact(model, newestDeletionResult, target, oldest);
     }
 
     @Test
@@ -98,5 +85,28 @@ public class UnlogCommandIntegrationTest {
         assertEquals("Interactions (0) - newest first", display.getHistoryHeading());
         assertEquals(SupporterDetailData.MESSAGE_EMPTY_HISTORY, display.getPlaceholderMessage());
         assertEquals(Optional.empty(), expected.getLastInteractionDate());
+    }
+
+    private void assertMiddleDeletionRenumbersHistory(Model model, CommandResult result,
+            Person expected, Person other) {
+        assertSelectedFilteredSupporter(model, expected, List.of(other, expected));
+        assertEquals("Deleted interaction #2 with " + expected.getName() + " (29 Feb 2024): Middle meeting.",
+                result.getFeedbackToUser());
+
+        SupporterDetailData display = new SupporterDetailData(model.getViewedPerson());
+        assertHistory(display, List.of(2, 1),
+                List.of("10 Mar 2024", "20 Feb 2024"), List.of("Recent call", "Earlier call"));
+        assertEquals("Interactions (2) - newest first", display.getHistoryHeading());
+        assertEquals("", display.getPlaceholderMessage());
+        assertEquals(other.getName().fullName, display.getIntroducer());
+    }
+
+    private void assertNewestDeletionUpdatesLastContact(Model model, CommandResult result,
+            Person target, Interaction oldest) {
+        SupporterDetailData display = new SupporterDetailData(model.getViewedPerson());
+        assertEquals("Deleted interaction #2 with " + target.getName() + " (10 Mar 2024): Recent call",
+                result.getFeedbackToUser());
+        assertHistory(display, List.of(1), List.of("20 Feb 2024"), List.of("Earlier call"));
+        assertEquals(Optional.of(oldest.getDate()), model.getViewedPerson().orElseThrow().getLastInteractionDate());
     }
 }
