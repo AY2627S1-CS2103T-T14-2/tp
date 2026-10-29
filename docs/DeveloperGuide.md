@@ -1320,7 +1320,7 @@ Stories are grouped by epic, with the highest-priority stories listed first with
 **MSS**
 
 1.  User requests to view a specific supporter in the list, giving an index.
-2.  SupporterBook shows the supporter's details and interaction history, with the most recent interactions shown first.
+2.  SupporterBook shows the supporter's details, including their introducer, the supporters they introduced and their last-contact date, together with their interaction history, most recent first.
 
     Use case ends.
 
@@ -1332,7 +1332,17 @@ Stories are grouped by epic, with the highest-priority stories listed first with
     Use case resumes from step 1.
 
 - 2a. The supporter has no logged interactions.
-  - 2a1. SupporterBook shows the supporter's details and indicates that there are no interactions logged yet.
+  - 2a1. SupporterBook shows the supporter's details and indicates that there are no interactions logged yet and no last-contact date.
+
+    Use case ends.
+
+- 2b. The supporter has no recorded introducer.
+  - 2b1. SupporterBook indicates that no introducer is recorded.
+
+    Use case ends.
+
+- 2c. The supporter has no recorded introductions.
+  - 2c1. SupporterBook indicates that no supporters are recorded as introduced by them.
 
     Use case ends.
 
