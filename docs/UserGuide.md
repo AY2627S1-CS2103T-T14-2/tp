@@ -110,10 +110,11 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 - Each supporter card in the list shows the supporter's organisation, or `(no organisation)` if they have none.
 - `EMAIL` must be of the form `local-part@domain`. The local part can contain English letters, digits
   and the special characters `+`, `_`, `-` and `.`, e.g. `wei_ming+donations@dbs.com`. A period cannot
-  start or end the local part, or appear twice in a row. The domain is made up of labels separated
-  by periods, e.g. `u.nus.edu`. Each label must start and end with an English letter or digit and
-  may contain internal hyphens, including consecutive hyphens. ASCII forms of internationalised
-  domains, e.g. `contact@xn--bcher-kva.de`, are accepted. The final label must have at least two characters.
+  start or end the local part, or appear twice in a row. The domain is made up of at least two labels
+  separated by periods, e.g. `dbs.com` or `u.nus.edu`. Each label must start and end with an English letter
+  or digit and may contain internal hyphens, including consecutive hyphens. ASCII forms of internationalised
+  domains, e.g. `contact@xn--bcher-kva.de`, are accepted. The final label, e.g. `com` or `sg`, must have at
+  least two characters and contain only English letters, so `a@bc` and `123@145.67` are rejected.
 - `STAGE` is the supporter's cultivation stage, and must be one of `prospect`, `contacted`, `cultivating`, `giving`, `lapsed` or `declined`. Upper and lower case are both accepted.
 - If `st/STAGE` is left out, the new supporter starts at stage `Prospect`.
 - `PHONE` may start with `+` and must contain between 3 and 15 main-number digits.
