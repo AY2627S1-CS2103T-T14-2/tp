@@ -17,6 +17,7 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -207,7 +208,7 @@ public class EditCommandTest {
     }
 
     @Test
-    public void execute_clearAbsentField_success() {
+    public void execute_clearAbsentField_nothingChanged() {
         // clearing a field the supporter does not have leaves it empty
         Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Person noOrganisation = new PersonBuilder(firstPerson).withoutOrganisation().build();
@@ -216,8 +217,7 @@ public class EditCommandTest {
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutOrganisation().build();
         EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
 
-        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS,
-                Messages.format(noOrganisation));
+        String expectedMessage = String.format(EditCommand.MESSAGE_NOT_CHANGED, noOrganisation.getName());
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
@@ -293,15 +293,46 @@ public class EditCommandTest {
     }
 
     @Test
-    public void execute_noFieldSpecifiedUnfilteredList_success() {
+    public void execute_noFieldSpecifiedUnfilteredList_nothingChanged() {
         EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptor());
-        Person editedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
 
-        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+        String expectedMessage = String.format(EditCommand.MESSAGE_NOT_CHANGED, firstPerson.getName());
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_unchangedValues_reportsNothingChangedAndSavesNoUndoPoint() throws Exception {
+        Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person renamed = new PersonBuilder(original).withName(VALID_NAME_BOB).build();
+        model.setPerson(original, renamed);
+        model.commitAddressBookIfChanged();
+        String expectedMessage = String.format(EditCommand.MESSAGE_NOT_CHANGED, renamed.getName());
+
+        // the same name, and every detail the supporter already has
+        assertEquals(expectedMessage, new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build()).execute(model).getFeedbackToUser());
+        assertEquals(expectedMessage, new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder(renamed).build()).execute(model).getFeedbackToUser());
+
+        model.commitAddressBookIfChanged();
+        model.undoAddressBook();
+        // the undo reverts the rename, as neither unchanged edit saved an undo point
+        assertEquals(original, model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased()));
+    }
+
+    @Test
+    public void execute_unchangedValuesFilteredList_filterKept() throws Exception {
+        showPersonAtIndex(model, INDEX_SECOND_PERSON);
+        Person secondPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+
+        new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder()
+                .withName(secondPerson.getName().fullName).build()).execute(model);
+
+        assertEquals(List.of(secondPerson), model.getFilteredPersonList());
     }
 
     @Test

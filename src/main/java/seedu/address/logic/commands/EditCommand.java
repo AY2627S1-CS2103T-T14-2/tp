@@ -57,6 +57,7 @@ public class EditCommand extends Command {
 
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited supporter: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
+    public static final String MESSAGE_NOT_CHANGED = "%1$s already has those details. Nothing was changed.";
     public static final String MESSAGE_NO_CONTACT_LEFT = "A supporter needs at least one way to reach them. "
             + "Keep their phone number or email, or give a new one, when clearing the other.";
 
@@ -105,15 +106,21 @@ public class EditCommand extends Command {
                 .toList();
         String warning = new SharedContactWarning(otherPersons, editedPerson).getEditMessage();
 
-        model.setPerson(personToEdit, editedPerson);
-        if (!personToEdit.getName().equals(editedPerson.getName())) {
-            // supporters introduced by this one keep pointing at them under the new name
-            model.replaceIntroducer(personToEdit.getName(), Optional.of(editedPerson.getName()));
-        }
-        model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
-        String feedback = String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
-        if (!warning.isEmpty()) {
-            feedback += "\n" + warning;
+        String feedback;
+        if (editedPerson.equals(personToEdit)) {
+            // say so, as no undo point is saved and a following undo reverts an earlier change
+            feedback = String.format(MESSAGE_NOT_CHANGED, personToEdit.getName());
+        } else {
+            model.setPerson(personToEdit, editedPerson);
+            if (!personToEdit.getName().equals(editedPerson.getName())) {
+                // supporters introduced by this one keep pointing at them under the new name
+                model.replaceIntroducer(personToEdit.getName(), Optional.of(editedPerson.getName()));
+            }
+            model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+            feedback = String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+            if (!warning.isEmpty()) {
+                feedback += "\n" + warning;
+            }
         }
         return new CommandResult(feedback);
     }

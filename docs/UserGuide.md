@@ -192,6 +192,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t
 - Edits the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list, including after `find`. The index **must be a positive integer** 1, 2, 3, ...
 - At least one of the optional fields must be provided.
 - Existing values will be updated to the input values. Each value follows the same rules as in `add`.
+- If the supporter already has all the given values, e.g. `edit 1 n/Alex Yeoh` for a supporter already named `Alex Yeoh`, the command reports `Nothing was changed.` and leaves the list and undo/redo history unchanged, so a following `undo` reverses an earlier change, if one is available.
 - When editing tags, all of the supporter's existing tags are removed; adding tags is not cumulative. To add or remove single tags and keep the rest, use `tag` and `untag` instead.
 - To remove all of a supporter's tags, enter `t/` without a tag after it.
 - To clear a supporter's address or organisation, enter `a/` or `o/` with nothing after it.
@@ -201,8 +202,8 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t
 - A supporter's logged interactions are kept when their details are edited.
 - A supporter's introducer is kept when their details are edited. If you rename a supporter who introduced others, those supporters show the new name as their introducer.
 - A supporter's name cannot be changed to the name of another supporter, using the same comparison as `add`. Changing only the capitalisation of their own name is allowed.
-- If the edited record shares a phone number or email with another supporter, the edit still succeeds and a warning names the matching supporters and fields, using the same comparison rules as `add`. Hidden supporters are included, but the edited supporter is not compared with their own original record. The warning reflects the resulting record, including contact details you did not change; check whether the sharing is intentional before keeping or undoing the edit.
-- After editing, the list shows all supporters in the order they were added (any `find` or `quiet` filter is cleared).
+- If an edit that changes something leaves the record sharing a phone number or email with another supporter, the edit still succeeds and a warning names the matching supporters and fields, using the same comparison rules as `add`. Hidden supporters are included, but the edited supporter is not compared with their own original record. The warning reflects the resulting record, including contact details you did not change; check whether the sharing is intentional before keeping or undoing the edit.
+- After an edit that changes something, the list shows all supporters in the order they were added (any `find` or `quiet` filter is cleared).
 
 Examples:
 

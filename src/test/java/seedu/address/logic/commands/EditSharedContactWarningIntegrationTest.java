@@ -97,13 +97,15 @@ public class EditSharedContactWarningIntegrationTest {
     }
 
     @Test
-    public void execute_noOpOnSharedContact_warnsWithoutCreatingAnotherUndoPoint() throws Exception {
+    public void execute_noOpOnSharedContact_noWarningAndNoUndoPoint() throws Exception {
         AddressBook original = new AddressBook(model.getAddressBook());
         logic.execute("edit 2 p/87438807");
 
         CommandResult result = logic.execute("edit 2 p/87438807");
 
-        assertTrue(result.getFeedbackToUser().endsWith(editWarning("Alex Yeoh (phone)")));
+        // the warning says the supporter was updated, so it is shown only when something changed
+        Person edited = model.getFilteredPersonList().get(1);
+        assertEquals(String.format(EditCommand.MESSAGE_NOT_CHANGED, edited.getName()), result.getFeedbackToUser());
         logic.execute("undo");
         assertEquals(original, model.getAddressBook());
         assertFalse(model.canUndoAddressBook());
