@@ -68,7 +68,7 @@ public class ParserUtilTest {
     public void parseIndex_withUsageValidInput_returnsIndex() throws Exception {
         assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseIndex(WHITESPACE + "01" + WHITESPACE, "delete INDEX"));
         assertEquals(Index.fromOneBased(Integer.MAX_VALUE),
-                ParserUtil.parseIndex("2147483647", "delete INDEX"));
+                ParserUtil.parseIndex(Integer.toString(Integer.MAX_VALUE), "delete INDEX"));
     }
 
     @Test
@@ -150,9 +150,10 @@ public class ParserUtilTest {
 
     @Test
     public void parseInteractionIndices_maximumIndices_success() throws Exception {
+        String maximumIndex = Integer.toString(Integer.MAX_VALUE);
         InteractionIndices expected = new InteractionIndices(Index.fromOneBased(Integer.MAX_VALUE),
                 Index.fromOneBased(Integer.MAX_VALUE));
-        assertEquals(expected, ParserUtil.parseInteractionIndices("2147483647 2147483647"));
+        assertEquals(expected, ParserUtil.parseInteractionIndices(maximumIndex + " " + maximumIndex));
     }
 
     @Test
@@ -379,7 +380,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseInteractionDate_todayInClockZone_returnsDate() throws Exception {
-        // It is already 20 October in Singapore, although the UTC date is still 19 October.
+        // it is already 20 October in Singapore, although the UTC date is still 19 October
         assertEquals(LocalDate.of(2026, 10, 20),
                 ParserUtil.parseInteractionDate("2026-10-20", INTERACTION_CLOCK));
     }

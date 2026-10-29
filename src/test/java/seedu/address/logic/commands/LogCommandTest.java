@@ -17,6 +17,7 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
@@ -127,27 +128,28 @@ public class LogCommandTest {
     @Test
     public void execute_emptyDate_usesClockAtExecution() throws Exception {
         // the clock must only be consulted when execute is called, not when the command is constructed
-        boolean[] executing = {false};
+        boolean[] isExecuting = {false};
         Clock executionClock = new Clock() {
 
             @Override
-            public java.time.ZoneId getZone() {
+            public ZoneId getZone() {
                 return ZoneOffset.UTC;
             }
 
             @Override
-            public Clock withZone(java.time.ZoneId zone) {
+            public Clock withZone(ZoneId zone) {
                 return FIXED_CLOCK.withZone(zone);
             }
 
             @Override
             public Instant instant() {
-                assertTrue(executing[0]);
+                assertTrue(isExecuting[0]);
                 return FIXED_CLOCK.instant();
             }
         };
         LogCommand command = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, Optional.empty(), executionClock);
-        executing[0] = true;
+
+        isExecuting[0] = true;
         command.execute(model);
 
         assertEquals(List.of(new Interaction(FIXED_DATE, VALID_NOTE)),
@@ -307,8 +309,9 @@ public class LogCommandTest {
                 + ", note=" + VALID_NOTE + ", date=Optional.empty}";
         assertEquals(expected, logCommand.toString());
     }
+
     @Test
-    public void toStringMethod_explicitDate() {
+    public void toStringMethod_explicitDate_includesDate() {
         LogCommand command = new LogCommand(INDEX_FIRST_PERSON, VALID_NOTE, Optional.of(FIXED_DATE));
         String expected = LogCommand.class.getCanonicalName() + "{targetIndex=" + INDEX_FIRST_PERSON
                 + ", note=" + VALID_NOTE + ", date=Optional[2026-09-16]}";

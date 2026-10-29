@@ -46,7 +46,12 @@ public class UnlogCommandIntegrationTest {
 
         // the next command uses the refreshed number: #2 now identifies the newest remaining interaction
         CommandResult newestDeletionResult = parser.parseCommand("unlog 1 2").execute(model);
-        assertNewestDeletionUpdatesLastContact(model, newestDeletionResult, target, oldest);
+
+        SupporterDetailData display = new SupporterDetailData(model.getViewedPerson());
+        assertEquals("Deleted interaction #2 with " + target.getName() + " (10 Mar 2024): Recent call",
+                newestDeletionResult.getFeedbackToUser());
+        assertHistory(display, List.of(1), List.of("20 Feb 2024"), List.of("Earlier call"));
+        assertEquals(Optional.of(oldest.getDate()), model.getViewedPerson().orElseThrow().getLastInteractionDate());
     }
 
     @Test
@@ -101,12 +106,4 @@ public class UnlogCommandIntegrationTest {
         assertEquals(other.getName().fullName, display.getIntroducer());
     }
 
-    private void assertNewestDeletionUpdatesLastContact(Model model, CommandResult result,
-            Person target, Interaction oldest) {
-        SupporterDetailData display = new SupporterDetailData(model.getViewedPerson());
-        assertEquals("Deleted interaction #2 with " + target.getName() + " (10 Mar 2024): Recent call",
-                result.getFeedbackToUser());
-        assertHistory(display, List.of(1), List.of("20 Feb 2024"), List.of("Earlier call"));
-        assertEquals(Optional.of(oldest.getDate()), model.getViewedPerson().orElseThrow().getLastInteractionDate());
-    }
 }

@@ -21,6 +21,9 @@ import org.junit.jupiter.api.Test;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Interaction;
 
+/**
+ * Tests JSON interaction conversion, validation errors and stored date boundaries.
+ */
 public class JsonAdaptedInteractionTest {
 
     private static final String VALID_DATE = "2026-09-16";
@@ -46,6 +49,7 @@ public class JsonAdaptedInteractionTest {
         Interaction interaction = new JsonAdaptedInteraction(VALID_DATE, note).toModelType();
         assertEquals(note, interaction.getNote());
         assertEquals(interaction, new JsonAdaptedInteraction(interaction).toModelType());
+
         JsonAdaptedInteraction tooLong = new JsonAdaptedInteraction(VALID_DATE, note + "a");
         assertThrows(IllegalValueException.class, Interaction.MESSAGE_CONSTRAINTS, tooLong::toModelType);
     }

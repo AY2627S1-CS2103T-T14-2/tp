@@ -46,7 +46,7 @@ public final class InteractionCommandTestUtil {
      * Verifies the selected supporter, single-person filter and complete stored supporter list.
      */
     public static void assertSelectedFilteredSupporter(Model model, Person expectedPerson,
-                                                       List<Person> expectedStoredPersons) {
+            List<Person> expectedStoredPersons) {
         assertEquals(Optional.of(expectedPerson), model.getViewedPerson());
         assertEquals(List.of(expectedPerson), model.getFilteredPersonList());
         assertEquals(expectedStoredPersons, model.getAddressBook().getPersonList());

@@ -7,6 +7,8 @@ import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.UnlogCommand;
@@ -39,7 +41,7 @@ public class UnlogCommandParserTest {
 
     @Test
     public void parse_missingOrExtraArguments_throwsParseException() {
-        for (String args : new String[]{"", "  ", "1", "1 2 3", "1 2 nt/Note"}) {
+        for (String args : List.of("", "  ", "1", "1 2 3", "1 2 nt/Note")) {
             assertParseFailure(parser, args, MESSAGE_INVALID_INDICES);
         }
     }

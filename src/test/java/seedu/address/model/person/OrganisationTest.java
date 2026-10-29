@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalOrganisationNames.ASCII_AND_EMOJI_AT_ORGANISATION_LIMIT;
 import static seedu.address.testutil.TypicalOrganisationNames.ORGANISATION_CODE_POINT_LIMIT;
-import static seedu.address.testutil.TypicalOrganisationNames.UNICODE_ORGANISATIONS_AT_LIMIT;
 
 import java.util.List;
 
@@ -18,7 +18,12 @@ public class OrganisationTest {
 
     @Test
     public void constructor_unicodeLengthBoundaries_checksCodePoints() {
-        for (String name : UNICODE_ORGANISATIONS_AT_LIMIT) {
+        String emojiOnlyName = "😀".repeat(ORGANISATION_CODE_POINT_LIMIT);
+        // woman + zero-width joiner + laptop occupy three code points in one joined emoji
+        int joinedEmojiCodePointCount = 3;
+        String joinedEmojiName = "a".repeat(ORGANISATION_CODE_POINT_LIMIT - joinedEmojiCodePointCount) + "👩‍💻";
+
+        for (String name : List.of(ASCII_AND_EMOJI_AT_ORGANISATION_LIMIT, emojiOnlyName, joinedEmojiName)) {
             assertTrue(Organisation.isValidOrganisation(name));
             assertEquals(name, new Organisation(name).value);
             assertFalse(Organisation.isValidOrganisation(name + "a"));

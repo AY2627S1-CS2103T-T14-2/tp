@@ -54,6 +54,7 @@ public class UnlogCommandTest {
     public void execute_middleEntry_removesChronologicalEntryAndPreservesSupporter() {
         Person original = model.getFilteredPersonList().get(0);
         Person introducer = model.getFilteredPersonList().get(1);
+
         // entry #2 is stored first, so chronological numbering must not be treated as stored position
         Person person = new PersonBuilder(original).withIntroducer(introducer.getName().fullName)
                 .withInteractions(MIDDLE, OLDEST, NEWEST).build();
@@ -73,28 +74,32 @@ public class UnlogCommandTest {
     @Test
     public void execute_oldestEntry_removesOldest() throws Exception {
         setInteractions(model, INDEX_FIRST_PERSON, MIDDLE, OLDEST, NEWEST);
+
         new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(1)).execute(model);
+
         assertEquals(List.of(MIDDLE, NEWEST), model.getFilteredPersonList().get(0).getInteractions());
     }
 
     @Test
     public void execute_newestEntry_removesNewest() throws Exception {
         setInteractions(model, INDEX_FIRST_PERSON, NEWEST, OLDEST, MIDDLE);
+
         new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(3)).execute(model);
+
         assertEquals(List.of(OLDEST, MIDDLE), model.getFilteredPersonList().get(0).getInteractions());
     }
 
     @Test
     public void execute_identicalEntries_removesSelectedStoredPosition() throws Exception {
-        Interaction sameDate = new Interaction(MIDDLE.getDate(), "Different note");
-        setInteractions(model, INDEX_FIRST_PERSON, MIDDLE, sameDate,
+        Interaction sameDateInteraction = new Interaction(MIDDLE.getDate(), "Different note");
+        setInteractions(model, INDEX_FIRST_PERSON, MIDDLE, sameDateInteraction,
                 new Interaction(MIDDLE.getDate(), MIDDLE.getNote()));
 
         // delete displayed entry #3, which maps to stored index 2
         // removing by value would incorrectly remove identical entry at stored index 0 instead
         new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(3)).execute(model);
 
-        assertEquals(List.of(MIDDLE, sameDate), model.getFilteredPersonList().get(0).getInteractions());
+        assertEquals(List.of(MIDDLE, sameDateInteraction), model.getFilteredPersonList().get(0).getInteractions());
     }
 
     @Test
@@ -127,6 +132,7 @@ public class UnlogCommandTest {
     public void execute_invalidSupporterIndex_throwsCommandException() {
         model.setViewedPerson(model.getFilteredPersonList().get(0));
         Index invalidIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
+
         assertFailurePreservesSelection(new UnlogCommand(invalidIndex, Index.fromOneBased(1)), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
@@ -135,6 +141,7 @@ public class UnlogCommandTest {
     public void execute_invalidFilteredIndex_throwsCommandException() {
         model.setViewedPerson(model.getFilteredPersonList().get(1));
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
+
         // supporter exists in the full list but is not displayed
         assertFailurePreservesSelection(new UnlogCommand(INDEX_SECOND_PERSON, Index.fromOneBased(1)), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
@@ -144,6 +151,7 @@ public class UnlogCommandTest {
     public void execute_invalidInteractionIndex_preservesDataAndSelection() {
         setInteractions(model, INDEX_FIRST_PERSON, OLDEST);
         model.setViewedPerson(model.getFilteredPersonList().get(1));
+
         assertFailurePreservesSelection(new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(2)), model,
                 Messages.MESSAGE_INVALID_INTERACTION_INDEX);
     }
@@ -152,6 +160,7 @@ public class UnlogCommandTest {
     public void execute_emptyHistory_throwsCommandException() {
         setInteractions(model, INDEX_FIRST_PERSON);
         model.setViewedPerson(model.getFilteredPersonList().get(1));
+
         assertFailurePreservesSelection(new UnlogCommand(INDEX_FIRST_PERSON, Index.fromOneBased(1)), model,
                 Messages.MESSAGE_INVALID_INTERACTION_INDEX);
     }
