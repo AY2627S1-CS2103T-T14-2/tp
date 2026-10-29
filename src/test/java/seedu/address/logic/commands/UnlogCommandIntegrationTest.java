@@ -84,7 +84,7 @@ public class UnlogCommandIntegrationTest {
         assertEquals(List.of(), display.getInteractionEntries());
         assertEquals("Interactions (0) - newest first", display.getHistoryHeading());
         assertEquals(SupporterDetailData.MESSAGE_EMPTY_HISTORY, display.getPlaceholderMessage());
-        assertEquals(Optional.empty(), expected.getLastInteractionDate());
+        assertEquals(Optional.empty(), model.getViewedPerson().orElseThrow().getLastInteractionDate());
     }
 
     private void assertMiddleDeletionRenumbersHistory(Model model, CommandResult result,

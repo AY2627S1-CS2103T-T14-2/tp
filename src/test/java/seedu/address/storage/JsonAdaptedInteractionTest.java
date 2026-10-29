@@ -15,6 +15,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.exceptions.IllegalValueException;
@@ -65,16 +66,15 @@ public class JsonAdaptedInteractionTest {
 
     @Test
     public void toModelType_invalidCalendarDate_throwsIllegalValueException() {
-        JsonAdaptedInteraction interaction = new JsonAdaptedInteraction("2026-02-29", VALID_NOTE);
-        assertThrows(IllegalValueException.class, Interaction.MESSAGE_INVALID_DATE_FORMAT, () -> {
-            try {
-                interaction.toModelType();
-            } catch (IllegalValueException exception) {
-                DateTimeParseException cause = assertInstanceOf(DateTimeParseException.class, exception.getCause());
-                assertEquals("2026-02-29", cause.getParsedString());
-                throw exception;
-            }
-        });
+        String invalidDate = "2026-02-29";
+        JsonAdaptedInteraction interaction = new JsonAdaptedInteraction(invalidDate, VALID_NOTE);
+
+        IllegalValueException exception =
+                Assertions.assertThrows(IllegalValueException.class, interaction::toModelType);
+
+        assertEquals(Interaction.MESSAGE_INVALID_DATE_FORMAT, exception.getMessage());
+        DateTimeParseException cause = assertInstanceOf(DateTimeParseException.class, exception.getCause());
+        assertEquals(invalidDate, cause.getParsedString());
     }
 
     @Test
