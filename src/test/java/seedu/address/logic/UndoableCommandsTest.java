@@ -14,6 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.logic.commands.ClearCommand;
+import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
@@ -63,6 +65,19 @@ public class UndoableCommandsTest {
     @Test
     public void execute_clear_savesOneUndoPoint() throws Exception {
         assertSavesOneUndoPoint("clear");
+    }
+
+    @Test
+    public void execute_clearAlreadyEmpty_undoRevertsEarlierClear() throws Exception {
+        logic.execute("clear");
+
+        CommandResult result = logic.execute("clear");
+
+        assertEquals(ClearCommand.MESSAGE_ALREADY_EMPTY, result.getFeedbackToUser());
+        // the second clear saved no undo point, so undo reverts the first clear and nothing is left to undo
+        logic.execute("undo");
+        assertEquals(getTypicalAddressBook(), model.getAddressBook());
+        assertFalse(model.canUndoAddressBook());
     }
 
     @Test
