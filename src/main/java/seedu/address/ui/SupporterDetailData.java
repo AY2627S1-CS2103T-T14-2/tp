@@ -6,8 +6,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.DisplayDateFormatter;
 import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Person;
@@ -23,6 +25,8 @@ public final class SupporterDetailData {
     public static final String MESSAGE_EMPTY_HISTORY = "No interactions yet. Log one with: log INDEX nt/NOTE.";
 
     private static final String UNSET_FIELD = "-";
+
+    private static final Logger logger = LogsCenter.getLogger(SupporterDetailData.class);
 
     private final Optional<Person> viewedPerson;
     private final List<Person> introducedPersons;
@@ -44,6 +48,10 @@ public final class SupporterDetailData {
         this.viewedPerson = requireNonNull(viewedPerson);
         this.introducedPersons = List.copyOf(requireNonNull(introducedPersons));
         interactionEntries = viewedPerson.map(SupporterDetailData::createInteractionEntries).orElseGet(List::of);
+
+        logger.fine(() -> "Created supporter detail snapshot: hasSupporter=" + hasSupporter()
+                + ", introductions=" + this.introducedPersons.size()
+                + ", interactions=" + interactionEntries.size());
     }
 
     /**
@@ -144,8 +152,12 @@ public final class SupporterDetailData {
         List<Interaction> interactions = person.getInteractions();
         List<InteractionEntry> entries = new ArrayList<>();
         for (int storedIndex : person.getInteractionIndicesInDisplayOrder()) {
+            assert storedIndex >= 0 && storedIndex < interactions.size()
+                    : "Display index must refer to an existing stored interaction";
             entries.add(new InteractionEntry(interactions.size() - entries.size(), interactions.get(storedIndex)));
         }
+
+        assert entries.size() == interactions.size() : "Every stored interaction must have a display entry";
         return List.copyOf(entries);
     }
 
@@ -159,6 +171,7 @@ public final class SupporterDetailData {
         private final String note;
 
         private InteractionEntry(int number, Interaction interaction) {
+            assert number > 0 : "Interaction display number must be positive";
             this.number = number;
             date = interaction.getDate();
             note = interaction.getNote();
