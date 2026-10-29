@@ -1,9 +1,9 @@
 package seedu.address.model.person;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import java.util.Arrays;
+import java.util.Locale;
 
 /**
  * Represents a supporter's cultivation stage, i.e. how far the relationship has progressed.
@@ -39,8 +39,9 @@ public enum Stage {
      */
     public static Stage fromString(String stage) {
         requireNonNull(stage);
-        checkArgument(isValidStage(stage), MESSAGE_CONSTRAINTS);
-        return valueOf(stage.trim().toUpperCase());
+        String trimmed = stage.trim();
+        return Arrays.stream(values()).filter(value -> value.name().equalsIgnoreCase(trimmed)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(MESSAGE_CONSTRAINTS));
     }
 
     /**
@@ -48,7 +49,7 @@ public enum Stage {
      */
     @Override
     public String toString() {
-        String lowerCase = name().toLowerCase();
+        String lowerCase = name().toLowerCase(Locale.ROOT);
         return Character.toUpperCase(lowerCase.charAt(0)) + lowerCase.substring(1);
     }
 }

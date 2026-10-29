@@ -52,6 +52,40 @@ public class PersonMatchesSearchPredicateTest {
     }
 
     @Test
+    public void test_greekSigmaVariants_matchesRegardlessOfWordPosition() {
+        Person person = new PersonBuilder(supporter).withName("ΟΣ").withOrganisation("ΟΣ Foundation").build();
+
+        for (String keyword : List.of("Σ", "σ", "ς", "ΟΣ", "οσ", "ος")) {
+            assertTrue(new PersonMatchesSearchPredicate(List.of(keyword)).test(person));
+            PersonMatchesSearchPredicate organisationPredicate = new PersonMatchesSearchPredicate(List.of(),
+                    List.of(keyword), List.of(), List.of(), List.of(), List.of());
+            assertTrue(organisationPredicate.test(person));
+        }
+        assertEquals("ΟΣ", person.getName().fullName);
+        assertEquals("ΟΣ Foundation", person.getOrganisation().orElseThrow().value);
+    }
+
+    @Test
+    public void test_dottedAndDotlessI_matchesNameIdentityComparison() {
+        Person person = new PersonBuilder(supporter).withName("İpek").build();
+
+        for (String keyword : List.of("ipek", "İPEK", "ıpek", "Ipek")) {
+            assertTrue(person.getName().isSameName(new Name(keyword)));
+            assertTrue(new PersonMatchesSearchPredicate(List.of(keyword)).test(person));
+        }
+        assertEquals("İpek", person.getName().fullName);
+    }
+
+    @Test
+    public void test_supplementaryCaseVariants_matchesWithoutExpandingCharacters() {
+        Person person = new PersonBuilder(supporter).withName("\uD801\uDC00 Straße").build();
+
+        assertTrue(new PersonMatchesSearchPredicate(List.of("\uD801\uDC28")).test(person));
+        assertTrue(new PersonMatchesSearchPredicate(List.of("STRAẞE")).test(person));
+        assertFalse(new PersonMatchesSearchPredicate(List.of("STRASSE")).test(person));
+    }
+
+    @Test
     public void test_organisationKeywords_matchesAnyCaseInsensitiveSubstring() {
         PersonMatchesSearchPredicate predicate = new PersonMatchesSearchPredicate(List.of(),
                 List.of("OCBC", "dbs bank"), List.of(), List.of(), List.of(), List.of());
@@ -259,6 +293,15 @@ public class PersonMatchesSearchPredicateTest {
 
         assertEquals(predicate, equivalent);
         assertEquals(equivalent, predicate);
+        assertEquals(predicate.hashCode(), equivalent.hashCode());
+    }
+
+    @Test
+    public void equals_unicodeCaseVariants_returnsTrueWithSameHashCode() {
+        PersonMatchesSearchPredicate predicate = new PersonMatchesSearchPredicate(List.of("ΟΣ", "İpek"));
+        PersonMatchesSearchPredicate equivalent = new PersonMatchesSearchPredicate(List.of("οσ", "ipek"));
+
+        assertEquals(predicate, equivalent);
         assertEquals(predicate.hashCode(), equivalent.hashCode());
     }
 

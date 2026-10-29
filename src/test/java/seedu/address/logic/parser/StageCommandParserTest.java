@@ -6,7 +6,10 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSucces
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import seedu.address.logic.commands.StageCommand;
 import seedu.address.model.person.Stage;
@@ -33,6 +36,20 @@ public class StageCommandParserTest {
 
         // leading zeros in index
         assertParseSuccess(parser, " 02 prospect", new StageCommand(INDEX_SECOND_PERSON, Stage.PROSPECT));
+    }
+
+    @Test
+    @ResourceLock("java.util.Locale.default")
+    public void parse_turkishDefaultLocale_returnsStageCommand() {
+        Locale originalLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            assertParseSuccess(parser, " 1 giving", new StageCommand(INDEX_FIRST_PERSON, Stage.GIVING));
+            assertParseSuccess(parser, " 2 st/cultivating", new StageCommand(INDEX_SECOND_PERSON, Stage.CULTIVATING));
+            assertParseFailure(parser, " 1 gave", Stage.MESSAGE_CONSTRAINTS);
+        } finally {
+            Locale.setDefault(originalLocale);
+        }
     }
 
     @Test

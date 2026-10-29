@@ -24,10 +24,11 @@ public class Phone {
     private static final int MIN_DIGITS = 3;
     private static final int MAX_DIGITS = 15;
     private static final int MAX_EXTENSION_DIGITS = 6;
-    private static final String DIGIT_GROUP_REGEX = "(?:[0-9]+|\\([0-9]+\\))";
-    private static final String MAIN_NUMBER_REGEX = "\\+?" + DIGIT_GROUP_REGEX + "(?:[ -]" + DIGIT_GROUP_REGEX + ")*";
+    // Separators delimit groups unambiguously, so possessive repetition avoids recursive backtracking.
+    private static final String DIGIT_GROUP_REGEX = "(?:[0-9]++|\\([0-9]++\\))";
+    private static final String MAIN_NUMBER_REGEX = "\\+?" + DIGIT_GROUP_REGEX + "(?:[ -]" + DIGIT_GROUP_REGEX + ")*+";
     private static final String EXTENSION_REGEX = "(?: (?i:ext) [0-9]{1," + MAX_EXTENSION_DIGITS + "})?";
-    private static final String TYPE_LABEL_REGEX = " \\([A-Za-z]+(?: [A-Za-z]+)*\\)";
+    private static final String TYPE_LABEL_REGEX = " \\([A-Za-z]++(?: [A-Za-z]++)*+\\)";
     private static final String LABEL_REGEX = "(?:" + TYPE_LABEL_REGEX + ")?";
 
     public static final String VALIDATION_REGEX =

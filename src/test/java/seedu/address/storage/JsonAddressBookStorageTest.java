@@ -18,9 +18,11 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
@@ -98,6 +100,32 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void readAddressBook_trailingContent_throwsWithoutReturningPartialData() throws Exception {
+        Path dataFile = testFolder.resolve("trailing.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+        for (String suffix : List.of("not json", "{\"persons\":[{\"name\":\"Lost\",\"phone\":\"123\","
+                + "\"stage\":\"Giving\"}]}")) {
+            String json = "{\"persons\":[]}" + suffix;
+            Files.writeString(dataFile, json);
+
+            assertThrows(DataLoadingException.class, storage::readAddressBook);
+            assertEquals(json, Files.readString(dataFile));
+        }
+    }
+
+    @Test
+    public void readAddressBook_veryLongPhone_throwsDataLoadingExceptionWithoutChangingFile() throws Exception {
+        Path dataFile = testFolder.resolve("longPhone.json");
+        String json = "{\"persons\":[{\"name\":\"Phone Test\",\"stage\":\"Giving\",\"phone\":\""
+                + "1-".repeat(5000) + "1\"}]}";
+        Files.writeString(dataFile, json);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+        assertEquals(json, Files.readString(dataFile));
+    }
+
+    @Test
     public void readAddressBook_nullRoot_throwsDataLoadingExceptionWithoutChangingFile() throws Exception {
         assertNullDataRejectedWithoutChangingFile("null");
     }
@@ -151,6 +179,27 @@ public class JsonAddressBookStorageTest {
         readBack = jsonAddressBookStorage.readAddressBook().get(); // file path not specified
         assertEquals(original, new AddressBook(readBack));
 
+    }
+
+    @Test
+    @ResourceLock("java.util.Locale.default")
+    public void readAndSaveAddressBook_turkishDefaultLocale_preservesStages() throws Exception {
+        AddressBook book = getTypicalAddressBook();
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("locale.json"));
+        storage.saveAddressBook(book);
+        String originalContents = Files.readString(storage.getAddressBookFilePath());
+        Locale originalLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            ReadOnlyAddressBook restored = storage.readAddressBook().orElseThrow();
+            assertEquals(book, restored);
+
+            storage.saveAddressBook(restored);
+            assertEquals(originalContents, Files.readString(storage.getAddressBookFilePath()));
+            assertEquals(book, storage.readAddressBook().orElseThrow());
+        } finally {
+            Locale.setDefault(originalLocale);
+        }
     }
 
     @Test

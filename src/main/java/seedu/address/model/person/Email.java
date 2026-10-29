@@ -3,6 +3,8 @@ package seedu.address.model.person;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.util.regex.Pattern;
+
 /**
  * Represents a Person's email in the address book.
  * Guarantees: immutable; is valid as declared in {@link #isValidEmail(String)}
@@ -21,16 +23,19 @@ public class Email {
             + "    - end with a domain label at least 2 characters long\n"
             + "    - have each domain label start and end with alphanumeric characters\n"
             + "    - have each domain label consist of alphanumeric characters, separated only by hyphens, if any.";
-    // alphanumeric and special characters
-    private static final String ALPHANUMERIC_NO_UNDERSCORE = "[^\\W_]+"; // alphanumeric characters except underscore
+    private static final String ALPHANUMERIC_NO_UNDERSCORE = "[A-Za-z0-9]++";
     // dot-atom form (RFC 5322): words of alphanumeric characters, '+', '_' and '-', joined by single periods
-    private static final String LOCAL_PART_WORD = "[\\w+-]+";
-    private static final String LOCAL_PART_REGEX = "^" + LOCAL_PART_WORD + "(\\." + LOCAL_PART_WORD + ")*";
+    // Separators cannot occur in words, so possessive repetition keeps long inputs stack safe.
+    private static final String LOCAL_PART_WORD = "[\\w+-]++";
+    private static final String LOCAL_PART_REGEX = "^" + LOCAL_PART_WORD + "(?:\\." + LOCAL_PART_WORD + ")*+";
+    // Consecutive internal hyphens are valid, including the xn-- prefix of ASCII IDN labels.
     private static final String DOMAIN_PART_REGEX = ALPHANUMERIC_NO_UNDERSCORE
-            + "(-" + ALPHANUMERIC_NO_UNDERSCORE + ")*";
-    private static final String DOMAIN_LAST_PART_REGEX = "(" + DOMAIN_PART_REGEX + "){2,}$"; // At least two chars
-    private static final String DOMAIN_REGEX = "(" + DOMAIN_PART_REGEX + "\\.)*" + DOMAIN_LAST_PART_REGEX;
+            + "(?:-++" + ALPHANUMERIC_NO_UNDERSCORE + ")*+";
+    private static final String DOMAIN_LAST_PART_REGEX = "(?=[A-Za-z0-9-]{2,}+$)" + DOMAIN_PART_REGEX + "$";
+    private static final String DOMAIN_REGEX = "(?:" + DOMAIN_PART_REGEX + "\\.)*+" + DOMAIN_LAST_PART_REGEX;
     public static final String VALIDATION_REGEX = LOCAL_PART_REGEX + "@" + DOMAIN_REGEX;
+
+    private static final Pattern VALIDATION_PATTERN = Pattern.compile(VALIDATION_REGEX);
 
     public final String value;
 
@@ -49,7 +54,8 @@ public class Email {
      * Returns true if a given string is a valid email.
      */
     public static boolean isValidEmail(String test) {
-        return test.matches(VALIDATION_REGEX);
+        requireNonNull(test);
+        return VALIDATION_PATTERN.matcher(test).matches();
     }
 
     @Override

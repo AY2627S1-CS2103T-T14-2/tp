@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 
 import java.text.Normalizer;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
@@ -93,7 +92,10 @@ public class PersonMatchesSearchPredicate implements Predicate<Person> {
     }
 
     private static String normalizeText(String text) {
-        return Normalizer.normalize(text, Normalizer.Form.NFC).replace('’', '\'').toLowerCase(Locale.ROOT);
+        // Fold code points independently: whole-string lowercasing changes final sigma and expands dotted I.
+        return Normalizer.normalize(text, Normalizer.Form.NFC).replace('’', '\'').codePoints()
+                .map(Character::toUpperCase).map(Character::toLowerCase)
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
     }
 
     private static boolean matchesText(String value, List<String> keywords) {
