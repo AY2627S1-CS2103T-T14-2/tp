@@ -285,7 +285,7 @@ Supply at least one name keyword or nonempty prefix value. Name keywords are opt
 - Typing an accented letter directly or adding its accent separately produces the same search results for names and organisations. Accents remain significant, so `Jose` does not match `José`. Searching preserves the spelling saved in each supporter record.
 - **OR within a field:** any name keyword can match, and repeated values of a prefix are alternatives. For example, `find st/giving st/lapsed` finds supporters at either stage.
 - **AND between fields:** every specified field must match. For example, `find tan o/DBS st/giving` finds supporters whose names contain `tan`, whose organisation contains `DBS`, and whose stage is `Giving`.
-- To find supporters who match either of two different fields, e.g. everyone at DBS or everyone tagged `csr`, run one `find` for each field, e.g. `find o/DBS`, then `find t/csr`.
+- To find supporters who match either of two different fields, e.g. everyone at DBS or everyone tagged `csr`, run one `find` for each field, e.g. `find o/DBS`, then `find t/csr`. Each `find` replaces the previous result rather than adding to it, so check the supporters shown after each one; the two results are not combined into one list.
 - Repeating an identical value does not duplicate supporters or change the matches.
 - Name keywords must appear before the first prefix, without quotation marks. Use `find tan o/DBS Bank`, not `find o/DBS Bank tan`: the latter searches for the organisation text `DBS Bank tan`.
 - Prefixes used by other commands (`n/`, `a/`, `dt/`, `nt/` and `by/`) are rejected anywhere in a search. The error lists each unsupported prefix, states that `find` supports only `o/`, `t/`, `st/`, `p/` and `e/`, and includes the usage message. Use `find alex` to search by name; `find n/alex`, `find a/geylang` and `find o/dbs a/geylang` are rejected.
@@ -751,6 +751,8 @@ Parameter | Prefix | Used in | Rules
 `ENTRY` | none | `editlog`, `unlog` | The interaction's number in the detail panel: a positive whole number.
 `DAYS` | none | `quiet` | A whole number from `1` to `2147483647`.
 `NAME_KEYWORD` | none | `find` | A word or part of a word in the supporter's name, e.g. `wei` for `Tan Wei Ming`.
+
+In `edit`, `p/`, `e/`, `a/`, `o/` or `t/` with nothing after it clears that field instead (removing all tags for `t/`), as long as the supporter keeps a phone number or an email. In `add`, an empty prefix is rejected; leave the prefix out instead.
 
 In `add` and `edit`, `t/` can be given more than once, and every other prefix only once. In `find`, every prefix can be given more than once, and the values of `o/`, `t/`, `p/` and `e/` are search text, matched as described in [`find`](#finding-supporters-by-name-or-other-fields-find).
 
