@@ -192,6 +192,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [t
 - Edits the supporter at the specified `INDEX`. The index refers to the index number shown in the displayed supporter list, including after `find`. The index **must be a positive integer** 1, 2, 3, ...
 - At least one of the optional fields must be provided.
 - Existing values will be updated to the input values. Each value follows the same rules as in `add`.
+- If the supporter already has all the given values, e.g. `edit 1 n/Alex Yeoh` for a supporter already named `Alex Yeoh`, the command reports `Nothing was changed.` and leaves the list and undo/redo history unchanged, so a following `undo` reverses an earlier change, if one is available. A shared-contact warning, described below, is still shown.
 - When editing tags, all of the supporter's existing tags are removed; adding tags is not cumulative. To add or remove single tags and keep the rest, use `tag` and `untag` instead.
 - To remove all of a supporter's tags, enter `t/` without a tag after it.
 - To clear a supporter's address or organisation, enter `a/` or `o/` with nothing after it.
