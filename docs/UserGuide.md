@@ -589,6 +589,7 @@ Deletes all supporters, together with their logged interactions.
 Format: `clear`
 
 - The list becomes empty, and the detail panel stops showing a supporter.
+- If there are no supporters, nothing is changed and the result says so, so a following `undo` reverses an earlier change, if one is available.
 - There is no confirmation prompt. If you clear the list by mistake, run [`undo`](#undoing-a-change-undo) straight away to restore every supporter.
 
 ### Undoing a change: `undo`

@@ -14,7 +14,6 @@ public class ClearCommand extends Command {
     public static final String MESSAGE_SUCCESS = "SupporterBook has been cleared!";
     public static final String MESSAGE_ALREADY_EMPTY = "SupporterBook is already empty. Nothing was changed.";
 
-
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
