@@ -127,11 +127,11 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
   and `(Office Fax)`. Extension digits do not count towards the main number's 3-to-15-digit limit.
   Your formatting, including the extension and label, is preserved when displayed and saved.
 - `NAME` must start with a letter or digit, and can contain letters, digits, spaces, apostrophes (`'` or `’`), hyphens (`-`), periods (`.`), commas (`,`), round brackets (`(` and `)`) and at signs (`@`), e.g. `O'Brien`, `Lee-Tan`, `J. Tan`, `Tan, Ah Kow`, `Tan Ah Kow (Chen Ah Kow)` and `Ahmad bin Ali @ Ah Mat`.
-- Accented and non-Latin letters, including letters with combining marks, are accepted in `NAME`, e.g. `José Tan`, `கவி` and `李伟`.
+- Accented and non-Latin letters, including letters with combining marks, are accepted in `NAME`, e.g. `José Tan`, `கவி` and `李伟`. Combining accents and other marks must be attached to a letter; they cannot appear on their own or after a digit, space or punctuation.
 - `NAME` can also contain `s/o` or `d/o` as separate words, e.g. `Ravi s/o Kumar` and `Priya d/o Kumar`. Upper and lower case are both accepted.
 - SupporterBook only checks which characters a name uses, not whether it looks like a real name. For example, `s/o Kumar` or a name with only initials is accepted.
 - Round brackets in `NAME` do not need to be balanced, and spaces around punctuation are optional. The name must still start with a letter or digit, so `(Tan)` and `@Tan` are rejected. These name rules apply to both `add` and `edit`.
-- Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`.
+- Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`. Non-breaking spaces, often copied from web pages, are treated as ordinary spaces too.
 - Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. Typing an accented letter directly or adding its accent separately also counts as the same name. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
 - Straight (`'`) and curly (`’`) apostrophes also count as the same character when comparing names, so `Charlotte O'Brien` and `Charlotte O’Brien` count as the same supporter. The apostrophe style you enter is preserved when the name is saved and displayed.
 - `TAG` must be alphanumeric, with no spaces, e.g. `t/boardIntro`. Tags that differ only in capitalisation, e.g. `t/vip t/VIP`, count as one tag, and the spelling typed first is kept.

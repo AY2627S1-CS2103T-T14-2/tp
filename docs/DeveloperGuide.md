@@ -320,10 +320,22 @@ The command retains the existing filter. `ModelManager#deletePerson(Person)` cle
 
 Two supporters count as the same supporter if their names match, ignoring case, extra spaces and differences between straight (`'`) and curly (`’`) apostrophes. No other field is compared.
 
-- The `Name` constructor removes leading and trailing spaces and reduces each run of spaces inside the name to one, so every `Name` is stored in a normalised form.
+**Validating and normalising names:** `Name#isValidName(String)` checks the normalised input against `Name.VALIDATION_REGEX`.
+
+- A name must start with a Unicode letter or an ASCII digit (`0` to `9`). It can contain Unicode letters, ASCII digits, spaces, straight or curly apostrophes, hyphens, periods, commas, round brackets and at signs. Round brackets need not be balanced.
+- Unicode combining marks are allowed after a letter, including after other marks attached to that letter. Marks cannot stand alone or follow a digit, space or punctuation.
+- Slashes are accepted only in the whole words `s/o` and `d/o`, ignoring case. Each word must be separated from other text by whitespace or the start or end of the name. These words may also appear at the start or end; validation checks the name's form rather than whether it represents a real person.
+- Normalisation uses `Normalizer.Form.NFC`, so a letter entered with a separate combining accent has the same stored form as its canonically equivalent precomposed letter. Non-breaking spaces (`U+00A0`) become ordinary spaces; leading and trailing whitespace is trimmed, and runs of spaces or ASCII whitespace, such as tabs, become one space. The `Name` constructor validates the input and stores this normalised form in `fullName`.
+
+`AddCommandParser` and `EditCommandParser` both use `ParserUtil#parseName(String)`, which reports `Name.MESSAGE_CONSTRAINTS` for invalid names and constructs a `Name` for valid ones. In the `Storage` component, `JsonAdaptedPerson` also uses `Name#isValidName(String)` and the `Name` constructor when loading supporter and introducer names, so the same rules apply to saved data.
+
+**Comparing names:**
+
 - `Name#isSameName(Name)` replaces curly apostrophes (`’`) with straight apostrophes (`'`) in both names for comparison, then compares them ignoring case. Because both names are already normalised, extra spaces and canonically equivalent Unicode spellings need no special handling. Apostrophe replacement does not change `fullName`, so the original apostrophe style is preserved when saved and displayed. `Name#equals(Object)` and `Name#hashCode()` continue to use the stored spelling.
 - `Person#isSamePerson(Person)` uses `Name#isSameName(Name)`. `UniquePersonList`, `AddCommand`, `EditCommand` and the loading of the data file all rely on `Person#isSamePerson(Person)`, so they all apply the same rule.
 - When `AddCommand` or `EditCommand` finds a duplicate, `Messages#getErrorMessageForDuplicatePerson(List, Person)` names the supporter already in the list, and suggests adding a distinguishing word to the new name.
+
+`NameTest` checks supported punctuation and slash words, Unicode letters and combining marks, normalisation, and name comparison. `AddCommandParserTest` and `EditCommandParserTest` check that supported names and non-breaking spaces are accepted alongside other command fields, and invalid name forms are rejected.
 
 #### Design considerations:
 
@@ -407,7 +419,7 @@ In tests, `PersonBuilder` gives every `Person` the default stage unless `PersonB
 
 A stage can be set when a supporter is added, and changed afterwards with the `stage` command.
 
-**Setting a stage in `add`:** `AddCommandParser` accepts an optional `st/STAGE` prefix (`CliSyntax.PREFIX_STAGE`) and parses it with `ParserUtil#parseStage(String)`. If the prefix is absent, `Stage.DEFAULT_STAGE` is used. The prefix is `st/` rather than `s/`, so that a name containing `s/o` can later be allowed without being misread as a stage.
+**Setting a stage in `add`:** `AddCommandParser` accepts an optional `st/STAGE` prefix (`CliSyntax.PREFIX_STAGE`) and parses it with `ParserUtil#parseStage(String)`. If the prefix is absent, `Stage.DEFAULT_STAGE` is used. The prefix is `st/` rather than `s/`, so that a name containing `s/o` is not misread as a stage.
 
 **Changing a stage with `stage INDEX STAGE`:** The command is implemented by `StageCommandParser` and `StageCommand`, and works as follows.
 
@@ -1829,6 +1841,18 @@ testers are expected to do more _exploratory_ testing.
 
    1. Test case: `add n/Kumar Raj p/81234567 e/`<br>
       Expected: No supporter is added. The message says the email should not be blank, and to leave out `e/` if the supporter has no email.
+
+1. Using names with slash words and Unicode letters
+   1. Prerequisites: Start from the sample data in an isolated test folder, with no supporters named `Ravi s/o Kumar` or `கவி` and no supporter using `namerules@example.com`.
+
+   1. Test case: `add n/Ravi s/o Kumar e/namerules@example.com`, then `find e/namerules@example.com`.<br>
+      Expected: The supporter is added at stage `Prospect`. The search shows only that supporter, numbered 1, with the name `Ravi s/o Kumar`.
+
+   1. Test case: `edit 1 n/கவி`<br>
+      Expected: The name becomes `கவி`, with its combining vowel mark preserved, and the email remains `namerules@example.com`. The list shows all supporters again.
+
+   1. Test case: Run `find e/namerules@example.com`, then `edit 1 n/Ravi s/oKumar`.<br>
+      Expected: The edit is rejected with the name-rules message. Only `கவி` remains in the search results, with the email unchanged.
 
 1. Clearing details with `edit`
    1. Prerequisites: Start from the sample data and run `list`. The 3rd supporter, Charlotte O'Brien, has an email but no phone number.
