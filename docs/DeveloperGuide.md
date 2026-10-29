@@ -242,8 +242,10 @@ extension and label syntax as stored numbers. They are search fragments rather t
 
 `PersonMatchesSearchPredicate` defensively copies its criteria and normalizes both text criteria
 and field values to NFC, replaces curly apostrophes (`’`) with straight apostrophes (`'`), and
-lowercases with `Locale.ROOT`. Names, organisations, tags and emails use substring matching on
-that normalized text; accents remain significant, and stored text is unchanged.
+folds case one Unicode code point at a time using `Character.toUpperCase` followed by
+`Character.toLowerCase`. This lets `Σ`, `σ` and `ς` match each other, and `İ` match `i`.
+Names, organisations, tags and emails use substring matching on that normalized text;
+accents remain significant, and stored text is unchanged.
 `NameContainsKeywordsPredicate` delegates to the same matcher for name-only filtering.
 Stages match exactly. `normalizePhone(String)` delegates to `Phone#normalizeForSearch(String)`
 to remove separators, parentheses, trailing type labels and extension markers from both phone
