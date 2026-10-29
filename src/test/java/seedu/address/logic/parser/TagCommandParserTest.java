@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 
@@ -24,9 +25,8 @@ public class TagCommandParserTest {
 
     @Test
     public void parse_invalidIndexValues_reportsIndexErrorAndUsage() {
-        String expectedMessage = ParserUtil.MESSAGE_INVALID_INDEX + "\n" + TagCommand.MESSAGE_USAGE;
-        for (String index : new String[]{"0", "-1", "+1", "abc", "1.5", "2147483648"}) {
-            assertParseFailure(parser, index + " t/vip", expectedMessage);
+        for (String invalidIndex : getInvalidIndexInputs("abc")) {
+            assertParseFailure(parser, invalidIndex + " t/vip", MESSAGE_INVALID_INDEX);
         }
     }
 

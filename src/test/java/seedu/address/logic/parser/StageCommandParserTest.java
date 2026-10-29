@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 
@@ -83,26 +84,13 @@ public class StageCommandParserTest {
 
     @Test
     public void parse_invalidIndex_failure() {
-        // not a number
-        assertParseFailure(parser, " x giving", MESSAGE_INVALID_INDEX);
+        for (String invalidIndex : getInvalidIndexInputs("x")) {
+            assertParseFailure(parser, " " + invalidIndex + " giving", MESSAGE_INVALID_INDEX);
+        }
 
         // non-ASCII digit
-        assertParseFailure(parser, " ２ giving", MESSAGE_INVALID_INDEX);
-
-        // zero
-        assertParseFailure(parser, " 0 giving", MESSAGE_INVALID_INDEX);
-
-        // negative
-        assertParseFailure(parser, " -1 giving", MESSAGE_INVALID_INDEX);
-
-        // signed
-        assertParseFailure(parser, " +1 giving", MESSAGE_INVALID_INDEX);
-
-        // decimal
-        assertParseFailure(parser, " 1.5 giving", MESSAGE_INVALID_INDEX);
-
-        // larger than the maximum int
-        assertParseFailure(parser, " 2147483648 giving", MESSAGE_INVALID_INDEX);
+        String fullWidthIndex = "２";
+        assertParseFailure(parser, " " + fullWidthIndex + " giving", MESSAGE_INVALID_INDEX);
 
         // invalid index is reported before invalid stage
         assertParseFailure(parser, " 0 gave", MESSAGE_INVALID_INDEX);

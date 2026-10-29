@@ -80,8 +80,8 @@ public class ParserUtilTest {
     public void parseIndex_withUsageInvalidInput_reportsReasonAndUsage() {
         String usage = "delete INDEX\nDeletes a supporter.";
         String expectedMessage = "Index must be a positive integer (1, 2, 3, ...).\n" + usage;
-        for (String input : List.of("0", "-1", "+1", "1.5", "abc", "2147483648")) {
-            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseIndex(input, usage));
+        for (String invalidIndex : getInvalidIndexInputs("abc")) {
+            assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseIndex(invalidIndex, usage));
         }
     }
 
