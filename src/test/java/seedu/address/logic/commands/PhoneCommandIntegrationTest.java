@@ -68,6 +68,29 @@ public class PhoneCommandIntegrationTest {
     }
 
     @Test
+    public void execute_veryLongPhones_handlesInputWithoutChangingSavedSupporter() throws Exception {
+        logic.execute("add n/Phone Test p/91234567");
+        logic.execute("view 1");
+        AddressBook before = new AddressBook(model.getAddressBook());
+        var selection = model.getViewedPerson();
+        byte[] saved = Files.readAllBytes(storage.getAddressBookFilePath());
+        String phone = "1-".repeat(5000) + "1";
+
+        for (String command : List.of("add n/Long Phone p/" + phone, "edit 1 p/" + phone,
+                "find p/" + phone + "-")) {
+            assertThrows(ParseException.class, () -> logic.execute(command));
+            assertEquals(before, model.getAddressBook());
+            assertEquals(selection, model.getViewedPerson());
+            assertArrayEquals(saved, Files.readAllBytes(storage.getAddressBookFilePath()));
+        }
+
+        logic.execute("find p/" + phone);
+        assertEquals(List.of(), model.getFilteredPersonList());
+        assertEquals(before, storage.readAddressBook().orElseThrow());
+        assertEquals(selection, model.getViewedPerson());
+    }
+
+    @Test
     public void execute_invalidAnnotatedPhone_preservesDataResultsSelectionAndSavedFile() throws Exception {
         logic.execute("add n/Phone Test p/(65) 9123 4567 (HP)");
         logic.execute("view 1");

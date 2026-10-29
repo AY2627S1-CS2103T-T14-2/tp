@@ -60,6 +60,35 @@ public class PhoneTest {
     }
 
     @Test
+    public void isValidPhone_veryLongNumbers_rejectsWithoutStackOverflow() {
+        for (String phone : List.of("1".repeat(20000), "1-".repeat(5000) + "1",
+                "(1) ".repeat(5000) + "1")) {
+            assertFalse(Phone.isValidPhone(phone));
+            assertThrows(IllegalArgumentException.class, () -> new Phone(phone));
+        }
+    }
+
+    @Test
+    public void isValidPhoneSearch_veryLongFragments_validatesWithoutStackOverflow() {
+        String fragment = "1-".repeat(5000) + "1";
+
+        assertTrue(Phone.isValidPhoneSearch(fragment));
+        assertFalse(Phone.isValidPhoneSearch(fragment + "-"));
+        assertFalse(Phone.isValidPhoneSearch(fragment + "x"));
+        assertEquals("1".repeat(5001), Phone.normalizeForSearch(fragment));
+    }
+
+    @Test
+    public void isValidPhone_veryLongLabel_preservesExistingFormatRules() {
+        String phone = "123 (" + "Office ".repeat(5000) + "Fax)";
+
+        assertTrue(Phone.isValidPhone(phone));
+        assertTrue(Phone.isValidPhoneSearch(phone));
+        assertFalse(Phone.isValidPhone(phone + "x"));
+        assertEquals("123", Phone.normalizeForSearch(phone));
+    }
+
+    @Test
     public void equals() {
         Phone phone = new Phone("999");
 

@@ -98,6 +98,18 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void readAddressBook_veryLongPhone_throwsDataLoadingExceptionWithoutChangingFile() throws Exception {
+        Path dataFile = testFolder.resolve("longPhone.json");
+        String json = "{\"persons\":[{\"name\":\"Phone Test\",\"stage\":\"Giving\",\"phone\":\""
+                + "1-".repeat(5000) + "1\"}]}";
+        Files.writeString(dataFile, json);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+        assertEquals(json, Files.readString(dataFile));
+    }
+
+    @Test
     public void readAddressBook_nullRoot_throwsDataLoadingExceptionWithoutChangingFile() throws Exception {
         assertNullDataRejectedWithoutChangingFile("null");
     }
