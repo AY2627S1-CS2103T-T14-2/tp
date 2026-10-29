@@ -54,15 +54,20 @@ public class EmailTest {
         assertFalse(Email.isValidEmail("peterjack@-example.com")); // domain name starts with a hyphen
         assertFalse(Email.isValidEmail("peterjack@example.com-")); // domain name ends with a hyphen
         assertFalse(Email.isValidEmail("peterjack@example.c")); // top level domain has less than two chars
+        assertFalse(Email.isValidEmail("a@bc")); // domain name has only one label
+        assertFalse(Email.isValidEmail("test@localhost")); // domain name has only one label
+        assertFalse(Email.isValidEmail("123@145")); // numeric domain name with only one label
+        assertFalse(Email.isValidEmail("123@145.67")); // numeric top level domain
+        assertFalse(Email.isValidEmail("peterjack@example.c0m")); // digit in top level domain
+        assertFalse(Email.isValidEmail("peterjack@example.co-m")); // hyphen in top level domain
 
         // valid email
         assertTrue(Email.isValidEmail("PeterJack_1190@example.com")); // underscore in local part
         assertTrue(Email.isValidEmail("PeterJack.1190@example.com")); // period in local part
         assertTrue(Email.isValidEmail("PeterJack+1190@example.com")); // '+' symbol in local part
         assertTrue(Email.isValidEmail("PeterJack-1190@example.com")); // hyphen in local part
-        assertTrue(Email.isValidEmail("a@bc")); // minimal
-        assertTrue(Email.isValidEmail("test@localhost")); // alphabets only
-        assertTrue(Email.isValidEmail("123@145")); // numeric local part and domain name
+        assertTrue(Email.isValidEmail("a@b.co")); // minimal
+        assertTrue(Email.isValidEmail("123@145.com")); // numeric local part and second-level domain
         assertTrue(Email.isValidEmail("a1+be.d@example1.com")); // mixture of alphanumeric and special characters
         assertTrue(Email.isValidEmail("peter_jack@very-very-very-long-example.com")); // long domain name
         assertTrue(Email.isValidEmail("if.you.dream.it_you.can.do.it@example.com")); // long local part
@@ -79,7 +84,7 @@ public class EmailTest {
     @Test
     public void isValidEmail_consecutiveInternalDomainHyphens_accepts() {
         for (String email : List.of("contact@foo--bar.com", "contact@xn--bcher-kva.de",
-                "contact@sub.xn--bcher-kva.de", "contact@a--b", "contact@a.b--c")) {
+                "contact@sub.xn--bcher-kva.de", "contact@a--b.sg", "contact@a.b--c.com")) {
             assertTrue(Email.isValidEmail(email), email);
         }
     }
@@ -95,7 +100,7 @@ public class EmailTest {
     @Test
     public void isValidEmail_veryLongParts_validatesWithoutStackOverflow() {
         for (String email : List.of("a.".repeat(5000) + "a@example.com", "a@" + "a.".repeat(5000) + "com",
-                "a@" + "a-".repeat(5000) + "a.com", "a@" + "a".repeat(20000))) {
+                "a@" + "a-".repeat(5000) + "a.com", "a@" + "a".repeat(20000) + ".com")) {
             assertTrue(Email.isValidEmail(email));
             assertFalse(Email.isValidEmail(email + "!"));
         }
@@ -105,10 +110,10 @@ public class EmailTest {
 
     @Test
     public void equals() {
-        Email email = new Email("valid@email");
+        Email email = new Email("valid@email.com");
 
         // same values -> returns true
-        assertTrue(email.equals(new Email("valid@email")));
+        assertTrue(email.equals(new Email("valid@email.com")));
 
         // same object -> returns true
         assertTrue(email.equals(email));
@@ -120,6 +125,6 @@ public class EmailTest {
         assertFalse(email.equals(5.0f));
 
         // different values -> returns false
-        assertFalse(email.equals(new Email("other.valid@email")));
+        assertFalse(email.equals(new Email("other.valid@email.com")));
     }
 }

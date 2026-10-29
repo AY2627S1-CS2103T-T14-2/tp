@@ -17,10 +17,10 @@ public class Email {
             + "1. The local-part should only contain alphanumeric characters and these special characters, excluding "
             + "the parentheses, (" + SPECIAL_CHARACTERS + "). The local-part may not start or end with a period, "
             + "or have two periods in a row.\n"
-            + "2. The local-part is followed by an '@' and then a domain name. The domain name is made up of domain "
-            + "labels separated by periods.\n"
+            + "2. The local-part is followed by an '@' and then a domain name. The domain name is made up of at "
+            + "least two domain labels separated by periods, e.g. example.com.\n"
             + "The domain name must:\n"
-            + "    - end with a domain label at least 2 characters long\n"
+            + "    - end with a domain label of at least 2 letters only, e.g. com or sg\n"
             + "    - have each domain label start and end with alphanumeric characters\n"
             + "    - have each domain label consist of alphanumeric characters, separated only by hyphens, if any.";
     private static final String ALPHANUMERIC_NO_UNDERSCORE = "[A-Za-z0-9]++";
@@ -31,8 +31,9 @@ public class Email {
     // Consecutive internal hyphens are valid, including the xn-- prefix of ASCII IDN labels.
     private static final String DOMAIN_PART_REGEX = ALPHANUMERIC_NO_UNDERSCORE
             + "(?:-++" + ALPHANUMERIC_NO_UNDERSCORE + ")*+";
-    private static final String DOMAIN_LAST_PART_REGEX = "(?=[A-Za-z0-9-]{2,}+$)" + DOMAIN_PART_REGEX + "$";
-    private static final String DOMAIN_REGEX = "(?:" + DOMAIN_PART_REGEX + "\\.)*+" + DOMAIN_LAST_PART_REGEX;
+    // the top-level domain, e.g. com or sg, has letters only, so 123@145.67 and a@bc are not accepted
+    private static final String DOMAIN_LAST_PART_REGEX = "[A-Za-z]{2,}+$";
+    private static final String DOMAIN_REGEX = "(?:" + DOMAIN_PART_REGEX + "\\.)++" + DOMAIN_LAST_PART_REGEX;
     public static final String VALIDATION_REGEX = LOCAL_PART_REGEX + "@" + DOMAIN_REGEX;
 
     private static final Pattern VALIDATION_PATTERN = Pattern.compile(VALIDATION_REGEX);
