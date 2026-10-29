@@ -614,7 +614,7 @@ Re-applies the change most recently reverted by `undo`.
 
 Format: `redo`
 
-- Running `redo` again re-applies the next undone change, in the order they were undone.
+- Running `redo` again re-applies the next undone change. Changes are redone in the order they were first made, so the change undone last is redone first.
 - Making a new change after `undo` discards the undone changes, so they can no longer be redone.
 - After redoing, all supporters are listed, and the detail panel is updated in the same way as for `undo`.
 - The result display names the command being redone, e.g. `Redid the last undone change: tag 1 t/vip`.
