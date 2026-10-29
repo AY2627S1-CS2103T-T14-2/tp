@@ -108,7 +108,12 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 - `ORGANISATION` can include text, punctuation and emoji (e.g. `Procter & Gamble`). A space followed by a recognised command prefix such as `a/` or `t/` starts another field. For example, in `Bang & Olufsen a/s`, `a/` is interpreted as the address prefix.
 - `ORGANISATION` must not be blank and can be at most 100 characters long after leading and trailing spaces are removed and repeated internal spaces are reduced to one. For this limit, simple emoji such as 😀 count as one character, while combined emoji or a letter with a combining accent can count as more than one.
 - Each supporter card in the list shows the supporter's organisation, or `(no organisation)` if they have none.
-- `EMAIL` must be of the form `local-part@domain`. The local part can contain letters, digits and the special characters `+`, `_`, `-` and `.`, e.g. `wei_ming+donations@dbs.com`. A period cannot start or end the local part, or appear twice in a row. The domain is made up of labels separated by periods, e.g. `u.nus.edu`.
+- `EMAIL` must be of the form `local-part@domain`. The local part can contain English letters, digits
+  and the special characters `+`, `_`, `-` and `.`, e.g. `wei_ming+donations@dbs.com`. A period cannot
+  start or end the local part, or appear twice in a row. The domain is made up of labels separated
+  by periods, e.g. `u.nus.edu`. Each label must start and end with an English letter or digit and
+  may contain internal hyphens, including consecutive hyphens. ASCII forms of internationalised
+  domains, e.g. `contact@xn--bcher-kva.de`, are accepted. The final label must have at least two characters.
 - `STAGE` is the supporter's cultivation stage, and must be one of `prospect`, `contacted`, `cultivating`, `giving`, `lapsed` or `declined`. Upper and lower case are both accepted.
 - If `st/STAGE` is left out, the new supporter starts at stage `Prospect`.
 - `PHONE` may start with `+` and must contain between 3 and 15 main-number digits.
@@ -140,8 +145,8 @@ whether to keep or undo the addition.
 Phone comparison uses the complete number, ignoring formatting; country codes are not inferred,
 so `+65 9123-4567` and `6591234567` match, but `91234567` is not assumed to be the same number.
 Email comparison ignores case but does not remove dots or `+suffixes`.
-The check includes supporters hidden by `find` or `quiet`. It applies when adding, not when editing
-or loading existing data, and does not change the rule that duplicate names are rejected.
+The check includes supporters hidden by `find` or `quiet`. It applies when adding or editing,
+not when loading existing data, and does not change the rule that duplicate names are rejected.
 
 For example, if Alex Yeoh already has phone `87438807`, `add n/Dup Phone p/87438807` still adds
 the new supporter and includes a warning identifying `Alex Yeoh (phone)`.
