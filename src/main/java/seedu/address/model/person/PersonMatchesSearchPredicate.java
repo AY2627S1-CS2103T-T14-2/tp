@@ -7,7 +7,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Predicate;
+import java.util.logging.Logger;
+import java.util.stream.Stream;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 
 /**
@@ -17,6 +20,8 @@ import seedu.address.commons.util.ToStringBuilder;
  * Phone matching ignores formatting, type labels and extension markers, but retains extension digits.
  */
 public class PersonMatchesSearchPredicate implements Predicate<Person> {
+    private static final Logger logger = LogsCenter.getLogger(PersonMatchesSearchPredicate.class);
+
     private final List<String> nameKeywords;
     private final List<String> organisationKeywords;
     private final List<String> tagKeywords;
@@ -45,6 +50,15 @@ public class PersonMatchesSearchPredicate implements Predicate<Person> {
         this.stages = List.copyOf(stages);
         this.phoneKeywords = phoneKeywords.stream().map(PersonMatchesSearchPredicate::normalizePhone).toList();
         this.emailKeywords = normalizeText(emailKeywords);
+        assert Stream.of(this.nameKeywords, this.organisationKeywords, this.tagKeywords, this.emailKeywords)
+                .flatMap(List::stream).noneMatch(String::isEmpty) : "Validated text criteria must be nonempty";
+        assert this.phoneKeywords.stream().allMatch(keyword -> !keyword.isEmpty()
+                && keyword.chars().allMatch(digit -> digit >= '0' && digit <= '9'))
+                : "Validated phone criteria must normalize to nonempty ASCII digits";
+        logger.fine(() -> "Created search predicate: names=" + this.nameKeywords.size()
+                + ", organisations=" + this.organisationKeywords.size() + ", tags=" + this.tagKeywords.size()
+                + ", stages=" + this.stages.size() + ", phones=" + this.phoneKeywords.size()
+                + ", emails=" + this.emailKeywords.size());
     }
 
     @Override

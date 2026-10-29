@@ -165,6 +165,25 @@ public class PersonMatchesSearchPredicateTest {
     }
 
     @Test
+    public void constructor_emptyTextCriterion_throwsAssertionError() {
+        assertThrows(AssertionError.class, () -> new PersonMatchesSearchPredicate(List.of("")));
+        assertThrows(AssertionError.class, () -> new PersonMatchesSearchPredicate(List.of(), List.of(""),
+                List.of(), List.of(), List.of(), List.of()));
+        assertThrows(AssertionError.class, () -> new PersonMatchesSearchPredicate(List.of(), List.of(),
+                List.of(""), List.of(), List.of(), List.of()));
+        assertThrows(AssertionError.class, () -> new PersonMatchesSearchPredicate(List.of(), List.of(),
+                List.of(), List.of(), List.of(), List.of("")));
+    }
+
+    @Test
+    public void constructor_phoneCriterionWithoutDigits_throwsAssertionError() {
+        for (String phone : List.of("", "+ -", "(HP)", "abc")) {
+            assertThrows(AssertionError.class, () -> new PersonMatchesSearchPredicate(List.of(), List.of(),
+                    List.of(), List.of(), List.of(phone), List.of()));
+        }
+    }
+
+    @Test
     public void constructor_mutableCriteria_defensivelyCopiesLists() {
         List<String> organisations = new ArrayList<>(List.of("DBS"));
         List<Stage> stages = new ArrayList<>(List.of(Stage.GIVING));
