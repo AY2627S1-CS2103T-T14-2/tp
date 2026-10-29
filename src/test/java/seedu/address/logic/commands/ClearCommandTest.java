@@ -13,9 +13,20 @@ import seedu.address.model.UserPrefs;
 public class ClearCommandTest {
 
     @Test
-    public void execute_emptyAddressBook_success() {
+    public void execute_emptyAddressBook_reportsNothingChanged() {
         Model model = new ModelManager();
         Model expectedModel = new ModelManager();
+
+        assertCommandSuccess(new ClearCommand(), model, ClearCommand.MESSAGE_ALREADY_EMPTY, expectedModel);
+    }
+
+    @Test
+    public void execute_noSupportersDisplayed_clearsHiddenSupporters() {
+        Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+        model.updateFilteredPersonList(person -> false);
+        Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+        expectedModel.updateFilteredPersonList(person -> false);
+        expectedModel.setAddressBook(new AddressBook());
 
         assertCommandSuccess(new ClearCommand(), model, ClearCommand.MESSAGE_SUCCESS, expectedModel);
     }
