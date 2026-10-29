@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.time.Clock;
@@ -110,10 +111,19 @@ public class ParserUtilTest {
     public void parseInteractionIndices_withUsageInvalidInput_reportsReasonAndUsage() {
         String usage = "unlog INDEX ENTRY\nDeletes an interaction.";
         String expectedMessage = "Provide exactly two positive integer indices: INDEX ENTRY.\n" + usage;
-        for (String input : List.of("", WHITESPACE, "1", "1 2 3", "0 1", "1 0", "abc 1", "1 abc",
-                "-1 1", "1 -1", "+1 1", "1 +1", "1.5 1", "1 1.5", "2147483648 1", "1 2147483648")) {
+
+        // wrong number of indices
+        for (String input : List.of("", WHITESPACE, "1", "1 2 3")) {
             assertThrows(ParseException.class, expectedMessage, () ->
                     ParserUtil.parseInteractionIndices(input, usage));
+        }
+
+        // invalid value in either index position
+        for (String invalidIndex : getInvalidIndexInputs("abc")) {
+            assertThrows(ParseException.class, expectedMessage, () ->
+                    ParserUtil.parseInteractionIndices(invalidIndex + " 1", usage));
+            assertThrows(ParseException.class, expectedMessage, () ->
+                    ParserUtil.parseInteractionIndices("1 " + invalidIndex, usage));
         }
     }
 
@@ -160,12 +170,19 @@ public class ParserUtilTest {
 
     @Test
     public void parseInteractionIndices_invalidIndexInEitherPosition_throwsParseException() {
-        for (String invalid : List.of("0", "-1", "+1", "1.5", "abc", "2147483648", "99999999999999999999")) {
+        for (String invalidIndex : getInvalidIndexInputs("abc")) {
             assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES, () ->
-                    ParserUtil.parseInteractionIndices(invalid + " 1"));
+                    ParserUtil.parseInteractionIndices(invalidIndex + " 1"));
             assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES, () ->
-                    ParserUtil.parseInteractionIndices("1 " + invalid));
+                    ParserUtil.parseInteractionIndices("1 " + invalidIndex));
         }
+
+        // also reject values far beyond the integer range
+        String indexBeyondLongRange = "99999999999999999999";
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES, () ->
+                ParserUtil.parseInteractionIndices(indexBeyondLongRange + " 1"));
+        assertThrows(ParseException.class, ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES, () ->
+                ParserUtil.parseInteractionIndices("1 " + indexBeyondLongRange));
     }
 
     @Test

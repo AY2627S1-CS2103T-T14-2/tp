@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalInteractionNotes.CHARACTER_PRESERVATION_NOTES;
@@ -104,10 +105,15 @@ public class EditLogCommandParserTest {
 
     @Test
     public void parse_invalidIndexInEitherPosition_failure() {
-        for (String invalidIndex : List.of("0", "-1", "+1", "abc", "1.5", "2147483648", "１")) {
+        for (String invalidIndex : getInvalidIndexInputs("abc")) {
             assertParseFailure(parser, invalidIndex + " 2 nt/Note", MESSAGE_INVALID_INDICES);
             assertParseFailure(parser, "1 " + invalidIndex + " nt/Note", MESSAGE_INVALID_INDICES);
         }
+
+        // non-ASCII digits are rejected in either index position
+        String fullWidthIndex = "１";
+        assertParseFailure(parser, fullWidthIndex + " 2 nt/Note", MESSAGE_INVALID_INDICES);
+        assertParseFailure(parser, "1 " + fullWidthIndex + " nt/Note", MESSAGE_INVALID_INDICES);
     }
 
     @Test
