@@ -24,14 +24,14 @@ public final class SupporterUpdateTestUtil {
     /**
      * Returns the supporter at {@code index} in {@code model}'s displayed list.
      */
-    public static Person personAt(Model model, Index index) {
+    public static Person getPersonAt(Model model, Index index) {
         return model.getFilteredPersonList().get(index.getZeroBased());
     }
 
     /**
      * Returns tags with the given names.
      */
-    public static Set<Tag> tags(String... tagNames) {
+    public static Set<Tag> createTags(String... tagNames) {
         return Stream.of(tagNames).map(Tag::new).collect(Collectors.toSet());
     }
 
@@ -39,7 +39,7 @@ public final class SupporterUpdateTestUtil {
      * Returns a copy of {@code model} in which {@code target} is replaced by {@code updated},
      * who is also the viewed supporter.
      */
-    public static Model expectedModelAfterUpdate(Model model, Person target, Person updated) {
+    public static Model createExpectedModelAfterUpdate(Model model, Person target, Person updated) {
         Model expectedModel = copyOf(model);
         expectedModel.setPerson(target, updated);
         expectedModel.setViewedPerson(updated);
@@ -49,7 +49,7 @@ public final class SupporterUpdateTestUtil {
     /**
      * Returns a copy of {@code model} whose supporters are unchanged and whose viewed supporter is {@code viewed}.
      */
-    public static Model expectedModelViewing(Model model, Person viewed) {
+    public static Model createExpectedModelViewing(Model model, Person viewed) {
         Model expectedModel = copyOf(model);
         expectedModel.setViewedPerson(viewed);
         return expectedModel;
