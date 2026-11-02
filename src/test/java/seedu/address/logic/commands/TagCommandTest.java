@@ -7,10 +7,10 @@ import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.Assert.assertThrows;
-import static seedu.address.testutil.SupporterUpdateTestUtil.expectedModelAfterUpdate;
-import static seedu.address.testutil.SupporterUpdateTestUtil.expectedModelViewing;
-import static seedu.address.testutil.SupporterUpdateTestUtil.personAt;
-import static seedu.address.testutil.SupporterUpdateTestUtil.tags;
+import static seedu.address.testutil.SupporterUpdateTestUtil.createExpectedModelAfterUpdate;
+import static seedu.address.testutil.SupporterUpdateTestUtil.createExpectedModelViewing;
+import static seedu.address.testutil.SupporterUpdateTestUtil.createTags;
+import static seedu.address.testutil.SupporterUpdateTestUtil.getPersonAt;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
@@ -39,7 +39,7 @@ public class TagCommandTest {
 
     @Test
     public void constructor_nullArguments_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> new TagCommand(null, tags("vip")));
+        assertThrows(NullPointerException.class, () -> new TagCommand(null, createTags("vip")));
         assertThrows(NullPointerException.class, () -> new TagCommand(INDEX_FIRST_PERSON, null));
     }
 
@@ -52,73 +52,73 @@ public class TagCommandTest {
     @Test
     public void execute_newTags_addsTagsAndKeepsExisting() {
         // first typical person is tagged "friends"
-        Person target = personAt(model, INDEX_FIRST_PERSON);
+        Person target = getPersonAt(model, INDEX_FIRST_PERSON);
         Person expectedPerson = new PersonBuilder(target).withTags("friends", "vip", "donor").build();
 
         String expectedMessage = String.format(TagCommand.MESSAGE_TAGS_ADDED, target.getName(), "[donor] [vip]");
 
-        assertCommandSuccess(new TagCommand(INDEX_FIRST_PERSON, tags("vip", "donor")), model, expectedMessage,
-                expectedModelAfterUpdate(model, target, expectedPerson));
+        assertCommandSuccess(new TagCommand(INDEX_FIRST_PERSON, createTags("vip", "donor")), model, expectedMessage,
+                createExpectedModelAfterUpdate(model, target, expectedPerson));
     }
 
     @Test
     public void execute_someTagsAlreadyPresent_skipsThem() {
         // "FRIENDS" matches the existing "friends" tag, which keeps its original case
-        Person target = personAt(model, INDEX_FIRST_PERSON);
+        Person target = getPersonAt(model, INDEX_FIRST_PERSON);
         Person expectedPerson = new PersonBuilder(target).withTags("friends", "vip").build();
 
         String expectedMessage = String.format(TagCommand.MESSAGE_TAGS_ADDED, target.getName(), "[vip]") + "\n"
                 + String.format(TagCommand.MESSAGE_TAGS_SKIPPED, "[FRIENDS]");
 
-        assertCommandSuccess(new TagCommand(INDEX_FIRST_PERSON, tags("FRIENDS", "vip")), model, expectedMessage,
-                expectedModelAfterUpdate(model, target, expectedPerson));
+        assertCommandSuccess(new TagCommand(INDEX_FIRST_PERSON, createTags("FRIENDS", "vip")), model, expectedMessage,
+                createExpectedModelAfterUpdate(model, target, expectedPerson));
     }
 
     @Test
     public void execute_allTagsPresent_successWithoutChange() {
         // second typical person is tagged "owesMoney" and "friends"
-        Person target = personAt(model, INDEX_SECOND_PERSON);
+        Person target = getPersonAt(model, INDEX_SECOND_PERSON);
 
         String expectedMessage = String.format(TagCommand.MESSAGE_NOTHING_ADDED, target.getName(),
                 "[friends] [owesmoney]");
 
-        assertCommandSuccess(new TagCommand(INDEX_SECOND_PERSON, tags("friends", "owesmoney")), model,
-                expectedMessage, expectedModelViewing(model, target));
+        assertCommandSuccess(new TagCommand(INDEX_SECOND_PERSON, createTags("friends", "owesmoney")), model,
+                expectedMessage, createExpectedModelViewing(model, target));
     }
 
     @Test
     public void execute_sameTagInTwoCases_addedOnceWithoutSkipping() {
         // third typical person has no tags; t/vip and t/VIP count as one tag
-        Person target = personAt(model, INDEX_THIRD_PERSON);
+        Person target = getPersonAt(model, INDEX_THIRD_PERSON);
         Person expectedPerson = new PersonBuilder(target).withTags("VIP").build();
 
         String expectedMessage = String.format(TagCommand.MESSAGE_TAGS_ADDED, target.getName(), "[VIP]");
 
-        assertCommandSuccess(new TagCommand(INDEX_THIRD_PERSON, tags("vip", "VIP")), model, expectedMessage,
-                expectedModelAfterUpdate(model, target, expectedPerson));
+        assertCommandSuccess(new TagCommand(INDEX_THIRD_PERSON, createTags("vip", "VIP")), model, expectedMessage,
+                createExpectedModelAfterUpdate(model, target, expectedPerson));
     }
 
     @Test
     public void execute_lastDisplayedIndex_addsTag() {
         // the largest valid index; the last typical person has no tags
         Index lastIndex = Index.fromOneBased(model.getFilteredPersonList().size());
-        Person target = personAt(model, lastIndex);
+        Person target = getPersonAt(model, lastIndex);
         Person expectedPerson = new PersonBuilder(target).withTags("vip").build();
 
         String expectedMessage = String.format(TagCommand.MESSAGE_TAGS_ADDED, target.getName(), "[vip]");
 
-        assertCommandSuccess(new TagCommand(lastIndex, tags("vip")), model, expectedMessage,
-                expectedModelAfterUpdate(model, target, expectedPerson));
+        assertCommandSuccess(new TagCommand(lastIndex, createTags("vip")), model, expectedMessage,
+                createExpectedModelAfterUpdate(model, target, expectedPerson));
     }
 
     @Test
     public void execute_filteredList_successAndFilterKept() throws Exception {
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
 
-        new TagCommand(INDEX_FIRST_PERSON, tags("vip")).execute(model);
+        new TagCommand(INDEX_FIRST_PERSON, createTags("vip")).execute(model);
 
         assertEquals(1, model.getFilteredPersonList().size());
-        Person updatedPerson = personAt(model, INDEX_FIRST_PERSON);
+        Person updatedPerson = getPersonAt(model, INDEX_FIRST_PERSON);
         assertTrue(updatedPerson.getTags().contains(new Tag("vip")));
         assertEquals(Optional.of(updatedPerson), model.getViewedPerson());
     }
@@ -126,26 +126,26 @@ public class TagCommandTest {
     @Test
     public void execute_invalidIndexUnfilteredList_throwsCommandException() {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
-        assertCommandFailure(new TagCommand(outOfBoundIndex, tags("vip")), model,
+        assertCommandFailure(new TagCommand(outOfBoundIndex, createTags("vip")), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
     public void execute_invalidIndexFilteredList_throwsCommandException() {
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
-        assertCommandFailure(new TagCommand(INDEX_SECOND_PERSON, tags("vip")), model,
+        assertCommandFailure(new TagCommand(INDEX_SECOND_PERSON, createTags("vip")), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
     public void equals() {
-        TagCommand tagFirst = new TagCommand(INDEX_FIRST_PERSON, tags("vip"));
+        TagCommand tagFirst = new TagCommand(INDEX_FIRST_PERSON, createTags("vip"));
 
         // same object -> returns true
         assertTrue(tagFirst.equals(tagFirst));
 
         // same values -> returns true
-        assertTrue(tagFirst.equals(new TagCommand(INDEX_FIRST_PERSON, tags("vip"))));
+        assertTrue(tagFirst.equals(new TagCommand(INDEX_FIRST_PERSON, createTags("vip"))));
 
         // different types -> returns false
         assertFalse(tagFirst.equals(1));
@@ -154,22 +154,22 @@ public class TagCommandTest {
         assertFalse(tagFirst.equals(null));
 
         // different index -> returns false
-        assertFalse(tagFirst.equals(new TagCommand(INDEX_SECOND_PERSON, tags("vip"))));
+        assertFalse(tagFirst.equals(new TagCommand(INDEX_SECOND_PERSON, createTags("vip"))));
 
         // different tags -> returns false
-        assertFalse(tagFirst.equals(new TagCommand(INDEX_FIRST_PERSON, tags("donor"))));
+        assertFalse(tagFirst.equals(new TagCommand(INDEX_FIRST_PERSON, createTags("donor"))));
 
         // same tag in two cases counts as one -> returns true
-        assertTrue(new TagCommand(INDEX_FIRST_PERSON, tags("VIP", "vip"))
-                .equals(new TagCommand(INDEX_FIRST_PERSON, tags("VIP"))));
+        assertTrue(new TagCommand(INDEX_FIRST_PERSON, createTags("VIP", "vip"))
+                .equals(new TagCommand(INDEX_FIRST_PERSON, createTags("VIP"))));
 
         // same tags but untag -> returns false
-        assertFalse(tagFirst.equals(new UntagCommand(INDEX_FIRST_PERSON, tags("vip"))));
+        assertFalse(tagFirst.equals(new UntagCommand(INDEX_FIRST_PERSON, createTags("vip"))));
     }
 
     @Test
     public void toStringMethod() {
-        Set<Tag> tagsToAdd = tags("vip");
+        Set<Tag> tagsToAdd = createTags("vip");
         TagCommand tagCommand = new TagCommand(INDEX_FIRST_PERSON, tagsToAdd);
         String expected = TagCommand.class.getCanonicalName() + "{targetIndex=" + INDEX_FIRST_PERSON
                 + ", tagsToAdd=" + tagsToAdd + "}";

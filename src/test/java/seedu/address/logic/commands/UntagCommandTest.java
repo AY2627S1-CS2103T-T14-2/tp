@@ -7,10 +7,10 @@ import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.Assert.assertThrows;
-import static seedu.address.testutil.SupporterUpdateTestUtil.expectedModelAfterUpdate;
-import static seedu.address.testutil.SupporterUpdateTestUtil.expectedModelViewing;
-import static seedu.address.testutil.SupporterUpdateTestUtil.personAt;
-import static seedu.address.testutil.SupporterUpdateTestUtil.tags;
+import static seedu.address.testutil.SupporterUpdateTestUtil.createExpectedModelAfterUpdate;
+import static seedu.address.testutil.SupporterUpdateTestUtil.createExpectedModelViewing;
+import static seedu.address.testutil.SupporterUpdateTestUtil.createTags;
+import static seedu.address.testutil.SupporterUpdateTestUtil.getPersonAt;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
@@ -39,7 +39,7 @@ public class UntagCommandTest {
 
     @Test
     public void constructor_nullArguments_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> new UntagCommand(null, tags("vip")));
+        assertThrows(NullPointerException.class, () -> new UntagCommand(null, createTags("vip")));
         assertThrows(NullPointerException.class, () -> new UntagCommand(INDEX_FIRST_PERSON, null));
     }
 
@@ -52,85 +52,85 @@ public class UntagCommandTest {
     @Test
     public void execute_existingTag_removesTagAndKeepsOthers() {
         // second typical person is tagged "owesMoney" and "friends"
-        Person target = personAt(model, INDEX_SECOND_PERSON);
+        Person target = getPersonAt(model, INDEX_SECOND_PERSON);
         Person expectedPerson = new PersonBuilder(target).withTags("friends").build();
 
         String expectedMessage = String.format(UntagCommand.MESSAGE_TAGS_REMOVED, target.getName(), "[owesMoney]");
 
-        assertCommandSuccess(new UntagCommand(INDEX_SECOND_PERSON, tags("owesMoney")), model, expectedMessage,
-                expectedModelAfterUpdate(model, target, expectedPerson));
+        assertCommandSuccess(new UntagCommand(INDEX_SECOND_PERSON, createTags("owesMoney")), model, expectedMessage,
+                createExpectedModelAfterUpdate(model, target, expectedPerson));
     }
 
     @Test
     public void execute_differentCase_removesTagAsStored() {
         // "FRIENDS" removes the first typical person's only tag, "friends", and the message shows it as stored
-        Person target = personAt(model, INDEX_FIRST_PERSON);
+        Person target = getPersonAt(model, INDEX_FIRST_PERSON);
         Person expectedPerson = new PersonBuilder(target).withTags().build();
 
         String expectedMessage = String.format(UntagCommand.MESSAGE_TAGS_REMOVED, target.getName(), "[friends]");
 
-        assertCommandSuccess(new UntagCommand(INDEX_FIRST_PERSON, tags("FRIENDS")), model, expectedMessage,
-                expectedModelAfterUpdate(model, target, expectedPerson));
+        assertCommandSuccess(new UntagCommand(INDEX_FIRST_PERSON, createTags("FRIENDS")), model, expectedMessage,
+                createExpectedModelAfterUpdate(model, target, expectedPerson));
     }
 
     @Test
     public void execute_someTagsMissing_skipsThem() {
-        Person target = personAt(model, INDEX_SECOND_PERSON);
+        Person target = getPersonAt(model, INDEX_SECOND_PERSON);
         Person expectedPerson = new PersonBuilder(target).withTags("owesMoney").build();
 
         String expectedMessage = String.format(UntagCommand.MESSAGE_TAGS_REMOVED, target.getName(), "[friends]")
                 + "\n" + String.format(UntagCommand.MESSAGE_TAGS_SKIPPED, "[donor] [vip]");
 
-        assertCommandSuccess(new UntagCommand(INDEX_SECOND_PERSON, tags("vip", "friends", "donor")), model,
-                expectedMessage, expectedModelAfterUpdate(model, target, expectedPerson));
+        assertCommandSuccess(new UntagCommand(INDEX_SECOND_PERSON, createTags("vip", "friends", "donor")), model,
+                expectedMessage, createExpectedModelAfterUpdate(model, target, expectedPerson));
     }
 
     @Test
     public void execute_noMatchingTags_successWithoutChange() {
         // third typical person has no tags
-        Person target = personAt(model, INDEX_THIRD_PERSON);
+        Person target = getPersonAt(model, INDEX_THIRD_PERSON);
 
         String expectedMessage = String.format(UntagCommand.MESSAGE_NOTHING_REMOVED, target.getName(), "[vip]");
 
-        assertCommandSuccess(new UntagCommand(INDEX_THIRD_PERSON, tags("vip")), model, expectedMessage,
-                expectedModelViewing(model, target));
+        assertCommandSuccess(new UntagCommand(INDEX_THIRD_PERSON, createTags("vip")), model, expectedMessage,
+                createExpectedModelViewing(model, target));
     }
 
     @Test
     public void execute_sameTagInTwoCases_removedWithoutSkipping() {
         // t/VIP and t/vip count as one tag, so neither is reported as skipped
-        Person target = personAt(model, INDEX_THIRD_PERSON);
+        Person target = getPersonAt(model, INDEX_THIRD_PERSON);
         Person taggedVip = new PersonBuilder(target).withTags("VIP").build();
         model.setPerson(target, taggedVip);
         Person expectedPerson = new PersonBuilder(target).withTags().build();
 
         String expectedMessage = String.format(UntagCommand.MESSAGE_TAGS_REMOVED, target.getName(), "[VIP]");
 
-        assertCommandSuccess(new UntagCommand(INDEX_THIRD_PERSON, tags("VIP", "vip")), model, expectedMessage,
-                expectedModelAfterUpdate(model, taggedVip, expectedPerson));
+        assertCommandSuccess(new UntagCommand(INDEX_THIRD_PERSON, createTags("VIP", "vip")), model, expectedMessage,
+                createExpectedModelAfterUpdate(model, taggedVip, expectedPerson));
     }
 
     @Test
     public void execute_tagsDifferingOnlyInCase_removesBoth() {
-        Person target = personAt(model, INDEX_THIRD_PERSON);
+        Person target = getPersonAt(model, INDEX_THIRD_PERSON);
         Person taggedTwice = new PersonBuilder(target).withTags("VIP", "vip", "donor").build();
         model.setPerson(target, taggedTwice);
         Person expectedPerson = new PersonBuilder(target).withTags("donor").build();
 
         String expectedMessage = String.format(UntagCommand.MESSAGE_TAGS_REMOVED, target.getName(), "[VIP] [vip]");
 
-        assertCommandSuccess(new UntagCommand(INDEX_THIRD_PERSON, tags("vip")), model, expectedMessage,
-                expectedModelAfterUpdate(model, taggedTwice, expectedPerson));
+        assertCommandSuccess(new UntagCommand(INDEX_THIRD_PERSON, createTags("vip")), model, expectedMessage,
+                createExpectedModelAfterUpdate(model, taggedTwice, expectedPerson));
     }
 
     @Test
     public void execute_filteredList_successAndFilterKept() throws Exception {
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
 
-        new UntagCommand(INDEX_FIRST_PERSON, tags("friends")).execute(model);
+        new UntagCommand(INDEX_FIRST_PERSON, createTags("friends")).execute(model);
 
         assertEquals(1, model.getFilteredPersonList().size());
-        Person updatedPerson = personAt(model, INDEX_FIRST_PERSON);
+        Person updatedPerson = getPersonAt(model, INDEX_FIRST_PERSON);
         assertEquals(Set.of(new Tag("owesMoney")), updatedPerson.getTags());
         assertEquals(Optional.of(updatedPerson), model.getViewedPerson());
     }
@@ -138,26 +138,26 @@ public class UntagCommandTest {
     @Test
     public void execute_invalidIndexUnfilteredList_throwsCommandException() {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
-        assertCommandFailure(new UntagCommand(outOfBoundIndex, tags("vip")), model,
+        assertCommandFailure(new UntagCommand(outOfBoundIndex, createTags("vip")), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
     public void execute_invalidIndexFilteredList_throwsCommandException() {
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
-        assertCommandFailure(new UntagCommand(INDEX_SECOND_PERSON, tags("vip")), model,
+        assertCommandFailure(new UntagCommand(INDEX_SECOND_PERSON, createTags("vip")), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
     public void equals() {
-        UntagCommand untagFirst = new UntagCommand(INDEX_FIRST_PERSON, tags("vip"));
+        UntagCommand untagFirst = new UntagCommand(INDEX_FIRST_PERSON, createTags("vip"));
 
         // same object -> returns true
         assertTrue(untagFirst.equals(untagFirst));
 
         // same values -> returns true
-        assertTrue(untagFirst.equals(new UntagCommand(INDEX_FIRST_PERSON, tags("vip"))));
+        assertTrue(untagFirst.equals(new UntagCommand(INDEX_FIRST_PERSON, createTags("vip"))));
 
         // different types -> returns false
         assertFalse(untagFirst.equals(1));
@@ -166,15 +166,15 @@ public class UntagCommandTest {
         assertFalse(untagFirst.equals(null));
 
         // different index -> returns false
-        assertFalse(untagFirst.equals(new UntagCommand(INDEX_SECOND_PERSON, tags("vip"))));
+        assertFalse(untagFirst.equals(new UntagCommand(INDEX_SECOND_PERSON, createTags("vip"))));
 
         // different tags -> returns false
-        assertFalse(untagFirst.equals(new UntagCommand(INDEX_FIRST_PERSON, tags("donor"))));
+        assertFalse(untagFirst.equals(new UntagCommand(INDEX_FIRST_PERSON, createTags("donor"))));
     }
 
     @Test
     public void toStringMethod() {
-        Set<Tag> tagsToRemove = tags("vip");
+        Set<Tag> tagsToRemove = createTags("vip");
         UntagCommand untagCommand = new UntagCommand(INDEX_FIRST_PERSON, tagsToRemove);
         String expected = UntagCommand.class.getCanonicalName() + "{targetIndex=" + INDEX_FIRST_PERSON
                 + ", tagsToRemove=" + tagsToRemove + "}";
