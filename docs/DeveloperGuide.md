@@ -17,6 +17,16 @@ This project is based on the AddressBook-Level3 project created by the [SE-EDU i
 
 Libraries used: [JavaFX](https://openjfx.io/), [Jackson](https://github.com/FasterXML/jackson), [JUnit5](https://github.com/junit-team/junit5)
 
+**Use of AI:** Team members used AI coding assistants, such as [Claude Code](https://claude.com/product/claude-code) and [Codex](https://openai.com/codex/), in the project. Every AI-assisted change was reviewed, tested and revised where needed by the team member who submitted it, and went through the team's usual PR review before being merged. Notable uses of AI:
+
+- Drafting implementations of features and bug fixes from the team's feature specifications, which team members then reviewed, refined and tested.
+- Writing and extending automated tests, including suggesting edge cases such as boundary values and invalid inputs, and reducing repeated setup in test code.
+- Edge-case and exploratory testing of the app before releases, e.g., running command sequences against the app's logic and comparing the results with the UG and DG.
+- Preliminary reviews of PRs before teammates' reviews, e.g., checking for coding-standard issues, unhandled cases and missing tests.
+- Drafting and proofreading UG and DG content, including PlantUML diagrams, and checking that UG examples match the app's actual behavior.
+- Drafting issue and PR descriptions.
+- Planning feature development at a high level for each iteration.
+
 ---
 
 ## **Setting up, getting started**
