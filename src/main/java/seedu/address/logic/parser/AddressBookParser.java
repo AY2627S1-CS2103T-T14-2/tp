@@ -110,7 +110,7 @@ public class AddressBookParser {
         }
 
         final String commandWord = getCommandWord(matcher);
-        final String arguments = matcher.group("arguments").replaceFirst("^\\u00A0+", " ");
+        final String arguments = matcher.group("arguments").replaceFirst("^[\\s\\u00A0]+", " ");
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
         // log messages such as the one below.
