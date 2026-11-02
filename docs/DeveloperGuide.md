@@ -242,7 +242,9 @@ each prefix value extends up to the next recognized prefix. Before tokenization,
 property, including non-breaking spaces (NBSPs, U+00A0), into single ordinary spaces and trim the result.
 This allows pasted NBSPs between name keywords, inside organisation phrases and around prefixes
 to behave like ordinary spaces. NBSP-only search criteria and filter values become empty,
-so existing validation rejects them.
+so existing validation rejects them. For every command, `AddressBookParser` also ends the command
+word at an NBSP and replaces any run of spaces and NBSPs at the start of the arguments with one space, so `find<NBSP>alex`
+is parsed like `find alex` and prefixes such as ` n/` in `add` are still found.
 
 The parser rejects missing criteria and empty prefix values. Stage values use
 `ParserUtil#parseStage(String)` so invalid or partial stage names produce the existing stage error.
