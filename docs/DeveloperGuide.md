@@ -515,7 +515,7 @@ In tests, `PersonBuilder` builds a `Person` with no organisation unless `PersonB
 Each `Person` owns an interaction history. An entry is represented by the immutable `Interaction` class in the `Model` component and contains a `LocalDate` and a short note.
 
 - Dates supplied through `log` and `editlog` must be on or before today because these commands record completed interactions. JSON loading accepts dates through tomorrow to accommodate a one-day local date difference between saving and loading, such as after changing time zones; the stored date is preserved. Dates more than one calendar day ahead of the computer’s local date at loading are still rejected, whether caused by a time-zone change or a clock adjustment.
-- `Interaction#isValidDateFormat(String)` checks the ASCII `yyyy-MM-dd` format for both command parsing and JSON loading. Each caller then uses `LocalDate#parse(String)` to check calendar validity.
+- `Interaction#isValidDateFormat(String)` checks the ASCII `yyyy-MM-dd` format, including a month from `01` to `12` and a day from `01` to `31`, for both command parsing and JSON loading. A date failing this check gets `Interaction.MESSAGE_INVALID_DATE_FORMAT`. Each caller then uses `LocalDate#parse(String)` to check that the date exists. A correctly formatted date that does not, such as `2024-02-30`, gets `Interaction.MESSAGE_NONEXISTENT_DATE` instead, so the user is not told to fix a format that is already correct.
 - Both command parsing and JSON loading use `Interaction#isValidDate(LocalDate, LocalDate)`, which accepts dates from `Interaction.MIN_DATE` (`1900-01-01`) through a caller-supplied upper bound, inclusive. Callers obtain today from their clock; tests can supply a fixed date or clock. The `Interaction` constructor checks that the date is non-null but does not itself enforce the date range.
 - An interaction note is trimmed before it is stored. It must not be blank after trimming and must be at most `Interaction.MAX_NOTE_LENGTH` (500) Unicode code points long. `Interaction.isValidNote()` counts code points after trimming; supplementary characters count as one, while combining sequences can count as multiple code points.
 - `Person` stores interactions in logging order. Its constructor makes a defensive copy of the supplied list, and `Person#getInteractions()` returns an unmodifiable view.
@@ -2207,8 +2207,8 @@ For the non-ASCII test cases below, copy and paste the commands directly from th
    1. Test case: `editlog 1 1`<br>
       Expected: A message requiring at least one field to edit.
 
-   1. Test cases: `editlog 1 1 nt/`, `editlog 1 1 dt/2024-02-30`, `editlog 1 1 dt/1899-12-31`, and a date after today<br>
-      Expected: The corresponding note or date validation error.
+   1. Test cases: `editlog 1 1 nt/`, `editlog 1 1 dt/2024-13-01`, `editlog 1 1 dt/2024-02-30`, `editlog 1 1 dt/1899-12-31`, and a date after today<br>
+      Expected: The corresponding note or date validation error. `2024-13-01` gets the date-format error, while `2024-02-30` gets an error saying the date does not exist.
 
    1. Test cases: `editlog 1 1 nt/First nt/Second` and `editlog 1 1 dt/2024-02-29 dt/2024-03-01`<br>
       Expected: A repeated-prefix error.

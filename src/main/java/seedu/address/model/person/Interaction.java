@@ -21,7 +21,10 @@ public class Interaction {
     public static final LocalDate MIN_DATE = LocalDate.of(1900, 1, 1);
 
     public static final String MESSAGE_INVALID_DATE_FORMAT =
-            "Interaction dates must be valid dates in yyyy-MM-dd format, e.g. 2026-10-01.";
+            "Interaction dates must be in yyyy-MM-dd format, with a month from 01 to 12 and a day from 01 to 31, "
+                    + "e.g. 2026-10-01.";
+    public static final String MESSAGE_NONEXISTENT_DATE =
+            "Interaction dates must exist in the calendar, e.g. 2023-02-29 and 2024-04-31 do not exist.";
     public static final String MESSAGE_EARLY_DATE = "Interaction dates must be on or after " + MIN_DATE + ".";
     public static final String MESSAGE_FUTURE_DATE = "Interaction dates cannot be in the future.";
 
@@ -29,7 +32,8 @@ public class Interaction {
             "Interaction notes should not be blank and should be at most " + MAX_NOTE_LENGTH
                     + " characters long, excluding spaces at the beginning and end.";
 
-    private static final Pattern DATE_FORMAT_PATTERN = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
+    private static final Pattern DATE_FORMAT_PATTERN =
+            Pattern.compile("[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])");
 
     private final LocalDate date;
     private final String note;
@@ -55,7 +59,8 @@ public class Interaction {
 
     /**
      * Returns true if {@code date} matches the ASCII yyyy-MM-dd format.
-     * This checks only the format, not calendar validity or the allowed date range.
+     * This checks the format, including a month from 01 to 12 and a day from 01 to 31,
+     * but not whether the date exists (e.g. 2023-02-29) or the allowed date range.
      */
     public static boolean isValidDateFormat(String date) {
         requireNonNull(date);

@@ -8,7 +8,8 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSucces
 import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
-import static seedu.address.testutil.TypicalInteractionDates.INVALID_DATE_INPUTS;
+import static seedu.address.testutil.TypicalInteractionDates.INVALID_DATE_FORMAT_INPUTS;
+import static seedu.address.testutil.TypicalInteractionDates.NONEXISTENT_DATE_INPUTS;
 import static seedu.address.testutil.TypicalInteractionNotes.ASCII_AND_EMOJI_AT_NOTE_LIMIT;
 import static seedu.address.testutil.TypicalInteractionNotes.CHARACTER_PRESERVATION_NOTES;
 import static seedu.address.testutil.TypicalInteractionNotes.UNICODE_BLANK_NOTES;
@@ -136,10 +137,18 @@ public class LogCommandParserTest {
     }
 
     @Test
-    public void parse_invalidDate_failure() {
-        for (String date : INVALID_DATE_INPUTS) {
+    public void parse_invalidDateFormat_failure() {
+        for (String date : INVALID_DATE_FORMAT_INPUTS) {
             assertParseFailure(parser, " 1 nt/" + VALID_NOTE + " dt/" + date,
                     Interaction.MESSAGE_INVALID_DATE_FORMAT);
+        }
+    }
+
+    @Test
+    public void parse_nonexistentDate_failure() {
+        for (String date : NONEXISTENT_DATE_INPUTS) {
+            assertParseFailure(parser, " 1 nt/" + VALID_NOTE + " dt/" + date,
+                    Interaction.MESSAGE_NONEXISTENT_DATE);
         }
     }
 

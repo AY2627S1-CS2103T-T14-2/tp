@@ -8,7 +8,8 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.IndexTestUtil.getInvalidIndexInputs;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
-import static seedu.address.testutil.TypicalInteractionDates.INVALID_DATE_INPUTS;
+import static seedu.address.testutil.TypicalInteractionDates.INVALID_DATE_FORMAT_INPUTS;
+import static seedu.address.testutil.TypicalInteractionDates.NONEXISTENT_DATE_INPUTS;
 import static seedu.address.testutil.TypicalInteractionNotes.ASCII_AND_EMOJI_AT_NOTE_LIMIT;
 import static seedu.address.testutil.TypicalInteractionNotes.CHARACTER_PRESERVATION_NOTES;
 import static seedu.address.testutil.TypicalInteractionNotes.UNICODE_BLANK_NOTES;
@@ -131,8 +132,11 @@ public class EditLogCommandParserTest {
 
     @Test
     public void parse_invalidDate_failure() {
-        for (String date : INVALID_DATE_INPUTS) {
+        for (String date : INVALID_DATE_FORMAT_INPUTS) {
             assertParseFailure(parser, " 1 2 dt/" + date, Interaction.MESSAGE_INVALID_DATE_FORMAT);
+        }
+        for (String date : NONEXISTENT_DATE_INPUTS) {
+            assertParseFailure(parser, " 1 2 dt/" + date, Interaction.MESSAGE_NONEXISTENT_DATE);
         }
 
         assertParseFailure(parser, " 1 2 dt/1899-12-31", Interaction.MESSAGE_EARLY_DATE);

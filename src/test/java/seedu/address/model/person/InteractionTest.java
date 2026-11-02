@@ -109,6 +109,21 @@ public class InteractionTest {
     }
 
     @Test
+    public void isValidDateFormat_monthAndDayLimits_returnsTrue() {
+        // month and day limits; whether the date exists is checked separately
+        for (String date : List.of("2026-01-01", "2026-12-31", "2026-02-31")) {
+            assertTrue(Interaction.isValidDateFormat(date), date);
+        }
+    }
+
+    @Test
+    public void isValidDateFormat_monthOrDayOutOfRange_returnsFalse() {
+        for (String date : List.of("2026-00-10", "2026-13-10", "2026-01-00", "2026-01-32", "2026-1-01")) {
+            assertFalse(Interaction.isValidDateFormat(date), date);
+        }
+    }
+
+    @Test
     public void isValidDate_withinRange_returnsTrue() {
         // include both limits, their inner neighbors and an ordinary historical date
         for (LocalDate date : List.of(LocalDate.of(1900, 1, 1), LocalDate.of(1900, 1, 2),
