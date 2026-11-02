@@ -217,9 +217,9 @@ The advisory scan never rejects input; the notes only point out words treated as
 
 All supporter, introducer and interaction-entry indices are parsed by `ParserUtil#parseIndex(String)`. It trims surrounding whitespace, then uses `StringUtil#isNonZeroUnsignedInteger(String)` to require ASCII digits (`[0-9]+`) and a value from `1` to `2147483647`. Leading zeros are allowed. The ASCII check rejects full-width and Arabic-Indic digits.
 
-`ParserUtil#parseIndex(String, String)` first checks that the trimmed argument contains exactly one value. Empty or multi-word arguments produce `Invalid command format!` followed by the supplied command usage. A single value is delegated to the existing single-argument parser; invalid values produce `Index must be a positive integer (1, 2, 3, ...).` followed by usage, preserving the original exception as the cause. This includes values above the supported maximum of `2147483647`, even though they are positive integers. The overload is used by `delete`, `view`, `edit`, `stage`, `log`, `tag`, `untag`, and both target and introducer index parsing in `intro`.
+`ParserUtil#parseIndex(String, String)` first checks that the trimmed argument contains exactly one value. Empty or multi-word arguments produce `Invalid command format!` followed by the supplied command usage. A single value is delegated to the existing single-argument parser; invalid values produce `Index must be a whole number from 1 to 2147483647.` followed by usage, preserving the original exception as the cause. This includes values above the supported maximum of `2147483647`, even though they are positive integers. The overload is used by `delete`, `view`, `edit`, `stage`, `log`, `tag`, `untag`, and both target and introducer index parsing in `intro`.
 
-`ParserUtil#parseInteractionIndices(String, String)` provides the corresponding behavior for `editlog` and `unlog`: missing, extra or invalid indices produce `Provide exactly two positive integer indices: INDEX ENTRY.` followed by command usage. These helpers validate syntax and integer range only; commands still validate supporter indices against the displayed list and interaction numbers against the selected history.
+`ParserUtil#parseInteractionIndices(String, String)` provides the corresponding behavior for `editlog` and `unlog`: missing, extra or invalid indices produce `Provide exactly two indices: INDEX ENTRY. Each must be a whole number from 1 to 2147483647.` followed by command usage. These helpers validate syntax and integer range only; commands still validate supporter indices against the displayed list and interaction numbers against the selected history.
 
 Validation order is unchanged. Missing required arguments can fail a command's format checks before index parsing, and `intro` checks duplicate prefixes before parsing its indices. A blank `by/` still requests removal of the introducer. Valid indices, including leading zeros and surrounding whitespace, retain their existing interpretation.
 
@@ -627,7 +627,7 @@ Identical interactions are appended normally because two calls or messages with 
 **Parsing `editlog INDEX ENTRY [nt/NOTE] [dt/DATE]`:** The command is parsed by `EditLogCommandParser` as follows.
 
 1. `AddressBookParser` passes the arguments to `EditLogCommandParser#parse(String)`, which tokenizes `nt/` and `dt/`.
-2. Parse the preamble with `ParserUtil#parseInteractionIndices(String, String)`, reporting `Provide exactly two positive integer indices: INDEX ENTRY.` followed by editlog usage for missing, extra or invalid indices, then reject duplicate prefixes.
+2. Parse the preamble with `ParserUtil#parseInteractionIndices(String, String)`, reporting `Provide exactly two indices: INDEX ENTRY. Each must be a whole number from 1 to 2147483647.` followed by editlog usage for missing, extra or invalid indices, then reject duplicate prefixes.
 3. Require at least one edit field. Validate supplied values using `ParserUtil#parseInteractionNote(String)` and `ParserUtil#parseInteractionDate(String)`. The existing note constraints and date range of `1900-01-01` through today apply. Note validation precedes date validation regardless of prefix order.
 4. Create an `EditLogCommand` with the two indices, an `Optional<String>` note and an `Optional<LocalDate>` date. Empty optionals represent omitted fields, not requests to clear them.
 
@@ -647,7 +647,7 @@ Date edits can renumber other entries, but do not reorder the stored list. Last 
 
 ### Deleting an interaction
 
-**Parsing `unlog INDEX ENTRY`:** `AddressBookParser` passes the arguments to `UnlogCommandParser`. It uses `ParserUtil#parseInteractionIndices(String, String)` to require exactly two positive integers and creates an `UnlogCommand`. Missing, extra or invalid indices report `Provide exactly two positive integer indices: INDEX ENTRY.` followed by unlog usage.
+**Parsing `unlog INDEX ENTRY`:** `AddressBookParser` passes the arguments to `UnlogCommandParser`. It uses `ParserUtil#parseInteractionIndices(String, String)` to require exactly two positive integers and creates an `UnlogCommand`. Missing, extra or invalid indices report `Provide exactly two indices: INDEX ENTRY. Each must be a whole number from 1 to 2147483647.` followed by unlog usage.
 
 `UnlogCommand` performs the model update as follows.
 
@@ -1849,13 +1849,13 @@ testers are expected to do more _exploratory_ testing.
    1. Prerequisites: Run a `find` showing exactly one supporter.
 
    1. Test case: `delete 0`<br>
-      Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by delete usage. No supporter or history is deleted, and the list is unchanged.
+      Expected: `Index must be a whole number from 1 to 2147483647.` followed by delete usage. No supporter or history is deleted, and the list is unchanged.
 
    1. Test case: `delete 2`<br>
       Expected: `The supporter index provided is invalid.` is shown, even if the full supporter list has more supporters. The displayed list and data are unchanged.
 
    1. Other invalid index values to try: `delete abc` and `delete -1`.<br>
-      Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by delete usage, with no data or list changes.
+      Expected: `Index must be a whole number from 1 to 2147483647.` followed by delete usage, with no data or list changes.
 
    1. Missing or extra arguments: `delete` and `delete 1 2`.<br>
       Expected: `Invalid command format!` followed by delete usage, with no data or list changes.
@@ -2133,19 +2133,19 @@ For the non-ASCII test cases below, copy and paste the commands directly from th
 1. Prerequisites: Use isolated test data with at least two supporters. The second supporter ensures that `stage ２ giving` tests digit validation with an otherwise valid index. Run `list`, then `log 1 nt/Index validation test` and `view 1`, and note the displayed list, selected supporter and interaction history.
 
 1. Test cases: `delete 0`, `delete abc`, `view 0` and `edit 0 n/x`<br>
-   Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the respective command's usage. Data, filtering, selection and the saved data file remain unchanged.
+   Expected: `Index must be a whole number from 1 to 2147483647.` followed by the respective command's usage. Data, filtering, selection and the saved data file remain unchanged.
 
 1. Test cases: `stage 0 giving`, `log 0 nt/Called`, `tag 0 t/vip`, `untag 0 t/vip`, `intro 0 by/1` and `intro 1 by/abc`<br>
    Expected: The same positive-integer explanation followed by the respective command's usage. No data or selection changes.
 
 1. Test cases: Run `view １`, `view ١` and `stage ２ giving` separately.<br>
-   Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the respective command's usage. The indices use full-width or Arabic-Indic digits. Data, filtering, selection and the saved data file remain unchanged.
+   Expected: `Index must be a whole number from 1 to 2147483647.` followed by the respective command's usage. The indices use full-width or Arabic-Indic digits. Data, filtering, selection and the saved data file remain unchanged.
 
 1. Test cases: `editlog 1 abc nt/Note`, `unlog 0 1`, `unlog 1` and `unlog 1 2 3`<br>
-   Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by the respective command's usage. No data or selection changes.
+   Expected: `Provide exactly two indices: INDEX ENTRY. Each must be a whole number from 1 to 2147483647.` followed by the respective command's usage. No data or selection changes.
 
 1. Test cases: Run `editlog １ 1 nt/x` and `editlog 1 １ nt/x` separately.<br>
-   Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by editlog usage. Each command contains one full-width index. The interaction history and selection remain unchanged.
+   Expected: `Provide exactly two indices: INDEX ENTRY. Each must be a whole number from 1 to 2147483647.` followed by editlog usage. Each command contains one full-width index. The interaction history and selection remain unchanged.
 
 1. Test cases: `delete`, `view`, `edit n/Bob`, `stage 1`, `log 1`, `intro 1`, `tag 1` and `untag 1`<br>
    Expected: `Invalid command format!` followed by the respective command's usage because required arguments are missing. No data or selection changes.
@@ -2202,7 +2202,7 @@ For the non-ASCII test cases below, copy and paste the commands directly from th
 
 1. Invalid edit commands
    1. Test cases: `editlog`, `editlog 1 nt/Note`, `editlog 1 abc nt/Note` and `editlog 1 2 3 nt/Note`<br>
-      Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by editlog usage.
+      Expected: `Provide exactly two indices: INDEX ENTRY. Each must be a whole number from 1 to 2147483647.` followed by editlog usage.
 
    1. Test case: `editlog 1 1`<br>
       Expected: A message requiring at least one field to edit.
@@ -2235,7 +2235,7 @@ For the non-ASCII test cases below, copy and paste the commands directly from th
 
 1. Invalid deletion commands
    1. Test cases: `unlog`, `unlog 1`, `unlog 1 2 3`, `unlog 0 1` and `unlog 1 abc`<br>
-      Expected: `Provide exactly two positive integer indices: INDEX ENTRY.` followed by unlog usage. Data and selection remain unchanged.
+      Expected: `Provide exactly two indices: INDEX ENTRY. Each must be a whole number from 1 to 2147483647.` followed by unlog usage. Data and selection remain unchanged.
 
    1. Test cases: `unlog 2 1` when only one supporter is displayed; `unlog 1 3` when that supporter has only two entries<br>
       Expected: An invalid-supporter-index error for the first command and an invalid-interaction-number error for the second. Neither changes data or selection.
@@ -2308,7 +2308,7 @@ For the non-ASCII test cases below, copy and paste the commands directly from th
 1. Invalid view commands
 
    1. Test cases: `view abc`, `view 0`, `view -1` and `view 1.5`<br>
-      Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by the `view` usage message.
+      Expected: `Index must be a whole number from 1 to 2147483647.` followed by the `view` usage message.
 
    1. Test case: `view 2147483648` (a positive integer exceeding the supported maximum of `2147483647`)<br>
       Expected: The same index error and `view` usage message. The value is rejected because it exceeds the supported integer range.
