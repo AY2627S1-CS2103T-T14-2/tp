@@ -340,7 +340,8 @@ public class QuietCommandIntegrationTest {
     /**
      * Checks stored order and rebuilds the quiet view from disk without inheriting session history or selection.
      */
-    private void assertSavedStateAndReloadedQuiet(AddressBook expected, List<Person> expectedQuietSupporters) throws Exception {
+    private void assertSavedStateAndReloadedQuiet(AddressBook expected, List<Person> expectedQuietSupporters)
+            throws Exception {
         assertEquals(expected, model.getAddressBook());
         assertEquals(expected.getPersonList(), model.getAddressBook().getPersonList());
         Model reloaded = new ModelManager(addressBookStorage.readAddressBook().orElseThrow(), new UserPrefs());
@@ -348,7 +349,7 @@ public class QuietCommandIntegrationTest {
 
         new QuietCommand(60, CLOCK).execute(reloaded);
 
-        assertEquals(expectedQuiet, reloaded.getFilteredPersonList());
+        assertEquals(expectedQuietSupporters, reloaded.getFilteredPersonList());
         assertTrue(reloaded.getViewedPerson().isEmpty());
         assertFalse(reloaded.canUndoAddressBook());
         assertFalse(reloaded.canRedoAddressBook());
