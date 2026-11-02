@@ -1852,7 +1852,7 @@ testers are expected to do more _exploratory_ testing.
       Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by delete usage. No supporter or history is deleted, and the list is unchanged.
 
    1. Test case: `delete 2`<br>
-      Expected: `The supporter index provided is invalid.` is shown, even if the full supporter list has more supporters. The displayed list and data are unchanged.
+      Expected: `The supporter index provided is out of range for the displayed supporter list.` is shown, even if the full supporter list has more supporters. The displayed list and data are unchanged.
 
    1. Other invalid index values to try: `delete abc` and `delete -1`.<br>
       Expected: `Index must be a positive integer (1, 2, 3, ...).` followed by delete usage, with no data or list changes.
@@ -2317,10 +2317,10 @@ For the non-ASCII test cases below, copy and paste the commands directly from th
       Expected: `Invalid command format!` followed by the `view` usage message.
 
    1. Test case: With exactly one supporter displayed, run `view 2`.<br>
-      Expected: `The supporter index provided is invalid.`
+      Expected: `The supporter index provided is out of range for the displayed supporter list.`
 
    1. Test case: Run a `find` that returns no supporters, then `view 1`.<br>
-      Expected: `The supporter index provided is invalid.`
+      Expected: `The supporter index provided is out of range for the displayed supporter list.`
 
    Invalid view commands must also leave the detail panel unchanged.
 
