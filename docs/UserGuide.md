@@ -136,6 +136,7 @@ Format: `add n/NAME [p/PHONE] [e/EMAIL] [a/ADDRESS] [o/ORGANISATION] [st/STAGE] 
 - `NAME` can also contain `s/o` or `d/o` as separate words, e.g. `Ravi s/o Kumar` and `Priya d/o Kumar`. Upper and lower case are both accepted.
 - SupporterBook only checks which characters a name uses, not whether it looks like a real name. For example, `s/o Kumar` or a name with only initials is accepted.
 - Round brackets in `NAME` do not need to be balanced, and spaces around punctuation are optional. The name must still start with a letter or digit, so `(Tan)` and `@Tan` are rejected. These name rules apply to both `add` and `edit`.
+- `NAME` has no length limit, so long full names, e.g. with several given names and a patronymic, can be saved in full. Long names wrap onto more lines on the supporter card and in the detail panel.
 - Extra spaces in `NAME` are removed, e.g. `n/  Tan   Wei Ming` is saved as `Tan Wei Ming`. Non-breaking spaces, often copied from web pages, are treated as ordinary spaces too.
 - Two supporters cannot have the same name. Names are compared ignoring capital letters and extra spaces, so `tan wei ming` is the same supporter as `Tan Wei Ming`. Typing an accented letter directly or adding its accent separately also counts as the same name. If two different people share a name, add something to tell them apart, e.g. `n/Tan Wei Ming DBS`.
 - Straight (`'`) and curly (`’`) apostrophes also count as the same character when comparing names, so `Charlotte O'Brien` and `Charlotte O’Brien` count as the same supporter. The apostrophe style you enter is preserved when the name is saved and displayed.
@@ -742,7 +743,7 @@ These are the rules for each parameter. The command sections above give more det
 
 Parameter | Prefix | Used in | Rules
 ----------|--------|---------|------
-`NAME` | `n/` | `add`, `edit` | Starts with a letter or digit. Can contain letters in any language, digits, spaces, apostrophes (`'` or `’`), hyphens, periods, commas, round brackets, `@`, and the words `s/o` and `d/o`. No two supporters can have the same name, ignoring capital letters and extra spaces.
+`NAME` | `n/` | `add`, `edit` | Starts with a letter or digit. Can contain letters in any language, digits, spaces, apostrophes (`'` or `’`), hyphens, periods, commas, round brackets, `@`, and the words `s/o` and `d/o`. No length limit. No two supporters can have the same name, ignoring capital letters and extra spaces.
 `PHONE` | `p/` | `add`, `edit` | 3 to 15 digits, optionally starting with `+`. Digit groups can be separated by single spaces or hyphens and enclosed in parentheses. Can end with `ext` and 1 to 6 digits, and a label in parentheses, e.g. `(65) 9123-4567 ext 12 (Office)`.
 `EMAIL` | `e/` | `add`, `edit` | Of the form `local-part@domain`, e.g. `weiming@dbs.com`. See [`add`](#adding-a-supporter-add) for the full rules.
 `ADDRESS` | `a/` | `add`, `edit` | Any text, not blank.
