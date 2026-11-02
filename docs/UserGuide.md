@@ -74,7 +74,7 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
   For words treated as ordinary text, SupporterBook adds an advisory note in the cases below. This includes prefixes that belong to another command, e.g. `by/` in `add`, `st/` in `edit` or `t/` in `log`:
   - If the command saves the word, e.g. into an address or a note, the note follows the result, so you can run `undo` and enter the command again. For example, `log 1 nt/Called dte/2024-10-01` logs the note `Called dte/2024-10-01` dated today, and points out `dte/`.
   - If the command's format or one of its values is invalid, the note follows the error, as the mistyped prefix may be what made the value before it invalid. For example, `add n/Tan p/91234567 by/1` shows the rules for phone numbers, followed by `Note: by/ is not a recognised prefix for this command, so it was read as part of the value before it.`
-  - If the format and values are valid but the command still cannot be carried out, only the error is shown. For example, `log 999 nt/Called dte/2024-10-01` with fewer than 999 supporters displayed reports the invalid index without a note.
+  - If the format and values are valid but the command still cannot be carried out, only the error is shown. For example, `log 999 nt/Called dte/2024-10-01` with fewer than 999 supporters displayed reports the out-of-range supporter index without a note.
 
   Everyday words such as `s/o`, `c/o`, `w/` and `and/or` are not flagged. If a note points out a word you meant to type, such as `Unit/` in an address, you can ignore it.
 
