@@ -730,6 +730,7 @@ Edit the data file only if you are confident that you can follow the validation 
 1. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 2. **Names containing `a/l` or `a/p` are not supported.** In `add` and `edit`, a space followed by `a/` is treated as an address prefix, so names such as `Ravi a/l Kumar` cannot be entered as intended.
 3. **Names in some scripts may not display correctly.** On some computers, e.g. macOS, names in scripts that join letters into combined shapes, such as Tamil (`கவி`) or Hindi (`प्रिया`), are shown as unrelated characters in the list, the detail panel and command results. Chinese, Japanese and Korean names are not affected. The name is still saved, searched and compared correctly; only how it is shown is affected.
+4. **Very long tags are cut off on supporter cards.** A tag cannot contain spaces, so it cannot wrap onto a new line. At the default window size, a tag longer than about 50 characters is cut off at the right edge of its supporter card. Use `view` to see the full tag in the detail panel. The tag is still saved and searched correctly.
 
 ---
 
