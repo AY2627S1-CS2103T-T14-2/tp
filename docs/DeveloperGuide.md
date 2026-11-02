@@ -128,6 +128,7 @@ How the `Logic` component works:
 1. The result of the command execution is encapsulated as a `CommandResult` object.
 1. Before returning it from `Logic`, `LogicManager` calls `commitAddressBookIfChanged(String)` with the command text to record changes for undo/redo and saves the data through `Storage`.
    If saving fails after the command changed the data, the change stays in the `Model` and `LogicManager` throws a `CommandException` whose message starts with the command's result and ends with `LogicManager.MESSAGE_CHANGE_NOT_SAVED_FORMAT`, so the user does not repeat a command such as `delete 1`, which would change another supporter. The message suggests `undo` to reverse the change, or `redo` after an `undo`, since another `undo` would reverse an earlier change.
+   If saving fails after a command that changed nothing, `LogicManager` returns the `CommandResult` with the save error added through `CommandResult#withNote(String)` instead of throwing, so that `help` still opens the help window and `exit` still closes the app.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -2443,6 +2444,9 @@ For the non-ASCII test cases below, copy and paste the commands directly from th
 
    1. Test case: `delete 1`<br>
       Expected: The error shows the deletion message, then that the data could not be saved, then that the change was made but not saved and should not be repeated. The first supporter is no longer in the list.
+
+   1. Test case: `view 1`, then `help`<br>
+      Expected: Each command shows its usual result, followed by the error that the data could not be saved. The first supporter is shown in the detail panel, and the help window opens.
 
    1. Test case: Make the file writable again, e.g. with `chmod u+w data/supporterbook.json`, run `list`, then close and relaunch the app.<br>
       Expected: `Listed all supporters.` is shown. After relaunching, only the supporter deleted in the previous test is missing.
