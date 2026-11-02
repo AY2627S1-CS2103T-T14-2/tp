@@ -306,7 +306,7 @@ public class ParserUtil {
         try {
             parsedDate = LocalDate.parse(trimmedDate);
         } catch (DateTimeParseException e) {
-            throw new ParseException(Interaction.MESSAGE_INVALID_DATE_FORMAT, e);
+            throw new ParseException(Interaction.MESSAGE_NONEXISTENT_DATE, e);
         }
         if (!Interaction.isValidDate(parsedDate, LocalDate.now(clock))) {
             throw new ParseException(parsedDate.isBefore(Interaction.MIN_DATE)

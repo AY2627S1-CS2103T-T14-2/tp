@@ -14,9 +14,12 @@ public final class TypicalInteractionDates {
     public static final Clock INTERACTION_CLOCK = Clock.fixed(
             Instant.parse("2026-10-19T16:30:00Z"), ZoneId.of("Asia/Singapore"));
 
-    // blank inputs, unsupported formats and impossible calendar dates
-    public static final List<String> INVALID_DATE_INPUTS = List.of(
-            "", "   ", "2024-2-29", "2024/02/29", "2024-02-30", "2023-02-29");
+    // blank inputs, unsupported formats and months or days outside 01-12 and 01-31
+    public static final List<String> INVALID_DATE_FORMAT_INPUTS = List.of(
+            "", "   ", "2024-2-29", "2024/02/29", "2024-13-01", "2024-01-32");
+
+    // correctly formatted dates that do not exist in the calendar
+    public static final List<String> NONEXISTENT_DATE_INPUTS = List.of("2024-02-30", "2023-02-29", "2024-04-31");
 
     private TypicalInteractionDates() {
     }

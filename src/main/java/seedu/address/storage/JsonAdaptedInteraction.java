@@ -71,7 +71,7 @@ class JsonAdaptedInteraction {
         try {
             modelDate = LocalDate.parse(date);
         } catch (DateTimeParseException exception) {
-            throw new IllegalValueException(Interaction.MESSAGE_INVALID_DATE_FORMAT, exception);
+            throw new IllegalValueException(Interaction.MESSAGE_NONEXISTENT_DATE, exception);
         }
 
         LocalDate latestAllowedDate = LocalDate.now(clock).plusDays(FUTURE_DATE_ALLOWANCE_DAYS);

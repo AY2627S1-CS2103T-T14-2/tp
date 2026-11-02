@@ -69,14 +69,21 @@ public class JsonAdaptedInteractionTest {
     }
 
     @Test
-    public void toModelType_invalidCalendarDate_throwsIllegalValueException() {
+    public void toModelType_monthOutOfRange_throwsIllegalValueException() {
+        JsonAdaptedInteraction interaction = new JsonAdaptedInteraction("2026-13-01", VALID_NOTE);
+        assertThrows(IllegalValueException.class, Interaction.MESSAGE_INVALID_DATE_FORMAT, () ->
+                interaction.toModelType(INTERACTION_CLOCK));
+    }
+
+    @Test
+    public void toModelType_nonexistentDate_throwsIllegalValueException() {
         String invalidDate = "2026-02-29";
         JsonAdaptedInteraction interaction = new JsonAdaptedInteraction(invalidDate, VALID_NOTE);
 
         IllegalValueException exception =
                 Assertions.assertThrows(IllegalValueException.class, interaction::toModelType);
 
-        assertEquals(Interaction.MESSAGE_INVALID_DATE_FORMAT, exception.getMessage());
+        assertEquals(Interaction.MESSAGE_NONEXISTENT_DATE, exception.getMessage());
         DateTimeParseException cause = assertInstanceOf(DateTimeParseException.class, exception.getCause());
         assertEquals(invalidDate, cause.getParsedString());
     }
