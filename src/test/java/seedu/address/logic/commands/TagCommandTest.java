@@ -7,6 +7,10 @@ import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.SupporterUpdateTestUtil.expectedModelAfterUpdate;
+import static seedu.address.testutil.SupporterUpdateTestUtil.expectedModelViewing;
+import static seedu.address.testutil.SupporterUpdateTestUtil.personAt;
+import static seedu.address.testutil.SupporterUpdateTestUtil.tags;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
@@ -14,14 +18,11 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
-import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -51,61 +52,63 @@ public class TagCommandTest {
     @Test
     public void execute_newTags_addsTagsAndKeepsExisting() {
         // first typical person is tagged "friends"
-        Person target = personAt(INDEX_FIRST_PERSON);
+        Person target = personAt(model, INDEX_FIRST_PERSON);
         Person expectedPerson = new PersonBuilder(target).withTags("friends", "vip", "donor").build();
 
         String expectedMessage = String.format(TagCommand.MESSAGE_TAGS_ADDED, target.getName(), "[donor] [vip]");
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-        expectedModel.setPerson(target, expectedPerson);
-        expectedModel.setViewedPerson(expectedPerson);
 
         assertCommandSuccess(new TagCommand(INDEX_FIRST_PERSON, tags("vip", "donor")), model, expectedMessage,
-                expectedModel);
+                expectedModelAfterUpdate(model, target, expectedPerson));
     }
 
     @Test
     public void execute_someTagsAlreadyPresent_skipsThem() {
         // "FRIENDS" matches the existing "friends" tag, which keeps its original case
-        Person target = personAt(INDEX_FIRST_PERSON);
+        Person target = personAt(model, INDEX_FIRST_PERSON);
         Person expectedPerson = new PersonBuilder(target).withTags("friends", "vip").build();
 
         String expectedMessage = String.format(TagCommand.MESSAGE_TAGS_ADDED, target.getName(), "[vip]") + "\n"
                 + String.format(TagCommand.MESSAGE_TAGS_SKIPPED, "[FRIENDS]");
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-        expectedModel.setPerson(target, expectedPerson);
-        expectedModel.setViewedPerson(expectedPerson);
 
         assertCommandSuccess(new TagCommand(INDEX_FIRST_PERSON, tags("FRIENDS", "vip")), model, expectedMessage,
-                expectedModel);
+                expectedModelAfterUpdate(model, target, expectedPerson));
     }
 
     @Test
     public void execute_allTagsPresent_successWithoutChange() {
         // second typical person is tagged "owesMoney" and "friends"
-        Person target = personAt(INDEX_SECOND_PERSON);
+        Person target = personAt(model, INDEX_SECOND_PERSON);
 
         String expectedMessage = String.format(TagCommand.MESSAGE_NOTHING_ADDED, target.getName(),
                 "[friends] [owesmoney]");
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-        expectedModel.setViewedPerson(target);
 
         assertCommandSuccess(new TagCommand(INDEX_SECOND_PERSON, tags("friends", "owesmoney")), model,
-                expectedMessage, expectedModel);
+                expectedMessage, expectedModelViewing(model, target));
     }
 
     @Test
     public void execute_sameTagInTwoCases_addedOnceWithoutSkipping() {
         // third typical person has no tags; t/vip and t/VIP count as one tag
-        Person target = personAt(INDEX_THIRD_PERSON);
+        Person target = personAt(model, INDEX_THIRD_PERSON);
         Person expectedPerson = new PersonBuilder(target).withTags("VIP").build();
 
         String expectedMessage = String.format(TagCommand.MESSAGE_TAGS_ADDED, target.getName(), "[VIP]");
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-        expectedModel.setPerson(target, expectedPerson);
-        expectedModel.setViewedPerson(expectedPerson);
 
         assertCommandSuccess(new TagCommand(INDEX_THIRD_PERSON, tags("vip", "VIP")), model, expectedMessage,
-                expectedModel);
+                expectedModelAfterUpdate(model, target, expectedPerson));
+    }
+
+    @Test
+    public void execute_lastDisplayedIndex_addsTag() {
+        // the largest valid index; the last typical person has no tags
+        Index lastIndex = Index.fromOneBased(model.getFilteredPersonList().size());
+        Person target = personAt(model, lastIndex);
+        Person expectedPerson = new PersonBuilder(target).withTags("vip").build();
+
+        String expectedMessage = String.format(TagCommand.MESSAGE_TAGS_ADDED, target.getName(), "[vip]");
+
+        assertCommandSuccess(new TagCommand(lastIndex, tags("vip")), model, expectedMessage,
+                expectedModelAfterUpdate(model, target, expectedPerson));
     }
 
     @Test
@@ -115,7 +118,7 @@ public class TagCommandTest {
         new TagCommand(INDEX_FIRST_PERSON, tags("vip")).execute(model);
 
         assertEquals(1, model.getFilteredPersonList().size());
-        Person updatedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person updatedPerson = personAt(model, INDEX_FIRST_PERSON);
         assertTrue(updatedPerson.getTags().contains(new Tag("vip")));
         assertEquals(Optional.of(updatedPerson), model.getViewedPerson());
     }
@@ -171,13 +174,5 @@ public class TagCommandTest {
         String expected = TagCommand.class.getCanonicalName() + "{targetIndex=" + INDEX_FIRST_PERSON
                 + ", tagsToAdd=" + tagsToAdd + "}";
         assertEquals(expected, tagCommand.toString());
-    }
-
-    private Person personAt(Index index) {
-        return model.getFilteredPersonList().get(index.getZeroBased());
-    }
-
-    private static Set<Tag> tags(String... tagNames) {
-        return Stream.of(tagNames).map(Tag::new).collect(Collectors.toSet());
     }
 }

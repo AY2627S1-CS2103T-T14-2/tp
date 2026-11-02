@@ -7,6 +7,10 @@ import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.SupporterUpdateTestUtil.expectedModelAfterUpdate;
+import static seedu.address.testutil.SupporterUpdateTestUtil.expectedModelViewing;
+import static seedu.address.testutil.SupporterUpdateTestUtil.personAt;
+import static seedu.address.testutil.SupporterUpdateTestUtil.tags;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
@@ -14,14 +18,11 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
-import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -51,92 +52,75 @@ public class UntagCommandTest {
     @Test
     public void execute_existingTag_removesTagAndKeepsOthers() {
         // second typical person is tagged "owesMoney" and "friends"
-        Person target = personAt(INDEX_SECOND_PERSON);
+        Person target = personAt(model, INDEX_SECOND_PERSON);
         Person expectedPerson = new PersonBuilder(target).withTags("friends").build();
 
         String expectedMessage = String.format(UntagCommand.MESSAGE_TAGS_REMOVED, target.getName(), "[owesMoney]");
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-        expectedModel.setPerson(target, expectedPerson);
-        expectedModel.setViewedPerson(expectedPerson);
 
         assertCommandSuccess(new UntagCommand(INDEX_SECOND_PERSON, tags("owesMoney")), model, expectedMessage,
-                expectedModel);
+                expectedModelAfterUpdate(model, target, expectedPerson));
     }
 
     @Test
     public void execute_differentCase_removesTagAsStored() {
-        // "FRIENDS" removes the first typical person's "friends" tag, and the message shows it as stored
-        Person target = personAt(INDEX_FIRST_PERSON);
+        // "FRIENDS" removes the first typical person's only tag, "friends", and the message shows it as stored
+        Person target = personAt(model, INDEX_FIRST_PERSON);
         Person expectedPerson = new PersonBuilder(target).withTags().build();
 
         String expectedMessage = String.format(UntagCommand.MESSAGE_TAGS_REMOVED, target.getName(), "[friends]");
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-        expectedModel.setPerson(target, expectedPerson);
-        expectedModel.setViewedPerson(expectedPerson);
 
         assertCommandSuccess(new UntagCommand(INDEX_FIRST_PERSON, tags("FRIENDS")), model, expectedMessage,
-                expectedModel);
+                expectedModelAfterUpdate(model, target, expectedPerson));
     }
 
     @Test
     public void execute_someTagsMissing_skipsThem() {
-        Person target = personAt(INDEX_SECOND_PERSON);
+        Person target = personAt(model, INDEX_SECOND_PERSON);
         Person expectedPerson = new PersonBuilder(target).withTags("owesMoney").build();
 
         String expectedMessage = String.format(UntagCommand.MESSAGE_TAGS_REMOVED, target.getName(), "[friends]")
                 + "\n" + String.format(UntagCommand.MESSAGE_TAGS_SKIPPED, "[donor] [vip]");
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-        expectedModel.setPerson(target, expectedPerson);
-        expectedModel.setViewedPerson(expectedPerson);
 
         assertCommandSuccess(new UntagCommand(INDEX_SECOND_PERSON, tags("vip", "friends", "donor")), model,
-                expectedMessage, expectedModel);
+                expectedMessage, expectedModelAfterUpdate(model, target, expectedPerson));
     }
 
     @Test
     public void execute_noMatchingTags_successWithoutChange() {
         // third typical person has no tags
-        Person target = personAt(INDEX_THIRD_PERSON);
+        Person target = personAt(model, INDEX_THIRD_PERSON);
 
         String expectedMessage = String.format(UntagCommand.MESSAGE_NOTHING_REMOVED, target.getName(), "[vip]");
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-        expectedModel.setViewedPerson(target);
 
         assertCommandSuccess(new UntagCommand(INDEX_THIRD_PERSON, tags("vip")), model, expectedMessage,
-                expectedModel);
+                expectedModelViewing(model, target));
     }
 
     @Test
     public void execute_sameTagInTwoCases_removedWithoutSkipping() {
         // t/VIP and t/vip count as one tag, so neither is reported as skipped
-        Person target = personAt(INDEX_THIRD_PERSON);
+        Person target = personAt(model, INDEX_THIRD_PERSON);
         Person taggedVip = new PersonBuilder(target).withTags("VIP").build();
         model.setPerson(target, taggedVip);
         Person expectedPerson = new PersonBuilder(target).withTags().build();
 
         String expectedMessage = String.format(UntagCommand.MESSAGE_TAGS_REMOVED, target.getName(), "[VIP]");
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-        expectedModel.setPerson(taggedVip, expectedPerson);
-        expectedModel.setViewedPerson(expectedPerson);
 
         assertCommandSuccess(new UntagCommand(INDEX_THIRD_PERSON, tags("VIP", "vip")), model, expectedMessage,
-                expectedModel);
+                expectedModelAfterUpdate(model, taggedVip, expectedPerson));
     }
 
     @Test
     public void execute_tagsDifferingOnlyInCase_removesBoth() {
-        Person target = personAt(INDEX_THIRD_PERSON);
+        Person target = personAt(model, INDEX_THIRD_PERSON);
         Person taggedTwice = new PersonBuilder(target).withTags("VIP", "vip", "donor").build();
         model.setPerson(target, taggedTwice);
         Person expectedPerson = new PersonBuilder(target).withTags("donor").build();
 
         String expectedMessage = String.format(UntagCommand.MESSAGE_TAGS_REMOVED, target.getName(), "[VIP] [vip]");
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-        expectedModel.setPerson(taggedTwice, expectedPerson);
-        expectedModel.setViewedPerson(expectedPerson);
 
         assertCommandSuccess(new UntagCommand(INDEX_THIRD_PERSON, tags("vip")), model, expectedMessage,
-                expectedModel);
+                expectedModelAfterUpdate(model, taggedTwice, expectedPerson));
     }
 
     @Test
@@ -146,7 +130,7 @@ public class UntagCommandTest {
         new UntagCommand(INDEX_FIRST_PERSON, tags("friends")).execute(model);
 
         assertEquals(1, model.getFilteredPersonList().size());
-        Person updatedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person updatedPerson = personAt(model, INDEX_FIRST_PERSON);
         assertEquals(Set.of(new Tag("owesMoney")), updatedPerson.getTags());
         assertEquals(Optional.of(updatedPerson), model.getViewedPerson());
     }
@@ -195,13 +179,5 @@ public class UntagCommandTest {
         String expected = UntagCommand.class.getCanonicalName() + "{targetIndex=" + INDEX_FIRST_PERSON
                 + ", tagsToRemove=" + tagsToRemove + "}";
         assertEquals(expected, untagCommand.toString());
-    }
-
-    private Person personAt(Index index) {
-        return model.getFilteredPersonList().get(index.getZeroBased());
-    }
-
-    private static Set<Tag> tags(String... tagNames) {
-        return Stream.of(tagNames).map(Tag::new).collect(Collectors.toSet());
     }
 }

@@ -45,6 +45,30 @@ public class TagTest {
     }
 
     @Test
+    public void equals() {
+        Tag vip = new Tag("vip");
+
+        // same object -> returns true
+        assertTrue(vip.equals(vip));
+
+        // same name -> returns true
+        assertTrue(vip.equals(new Tag("vip")));
+        assertEquals(vip.hashCode(), new Tag("vip").hashCode());
+
+        // same name in a different case -> returns false, unlike isSameTag
+        assertFalse(vip.equals(new Tag("VIP")));
+
+        // different name -> returns false
+        assertFalse(vip.equals(new Tag("vips")));
+
+        // different types -> returns false
+        assertFalse(vip.equals("vip"));
+
+        // null -> returns false
+        assertFalse(vip.equals(null));
+    }
+
+    @Test
     public void alphabeticalOrder() {
         // case is ignored, except to order tags that differ only in case
         assertTrue(Tag.ALPHABETICAL_ORDER.compare(new Tag("apple"), new Tag("Banana")) < 0);
