@@ -29,6 +29,8 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.ExitCommand;
+import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RedoCommand;
 import seedu.address.logic.commands.StageCommand;
@@ -247,12 +249,28 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_storageThrowsWithoutChange_throwsOnlySaveError() {
+    public void execute_storageThrowsWithoutChange_showsResultAndSaveError() throws Exception {
         model.addPerson(ALICE);
         useStorageFailingWhile(dummyIoException, () -> true);
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
 
-        assertCommandException(ListCommand.COMMAND_WORD,
-                String.format(LogicManager.FILE_OPS_ERROR_FORMAT, dummyIoException.getMessage()));
+        assertCommandSuccess(ListCommand.COMMAND_WORD, ListCommand.MESSAGE_SUCCESS + "\n"
+                + String.format(LogicManager.FILE_OPS_ERROR_FORMAT, dummyIoException.getMessage()), expectedModel);
+    }
+
+    @Test
+    public void execute_storageThrowsOnHelpOrExit_stillShowsHelpOrExits() throws Exception {
+        useStorageFailingWhile(dummyAdException, () -> true);
+        String saveError = String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT,
+                dummyAdException.getMessage());
+
+        CommandResult helpResult = logic.execute(HelpCommand.COMMAND_WORD);
+        assertEquals(new CommandResult(HelpCommand.SHOWING_HELP_MESSAGE + "\n" + saveError, true, false),
+                helpResult);
+
+        CommandResult exitResult = logic.execute(ExitCommand.COMMAND_WORD);
+        assertEquals(new CommandResult(ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT + "\n" + saveError, false, true),
+                exitResult);
     }
 
     @Test

@@ -62,25 +62,26 @@ public class LogicManager implements Logic {
             commandResult = addUnrecognisedPrefixNote(commandResult, commandText);
         }
 
-        saveAddressBook(command, commandResult, hasChangedData);
-        return commandResult;
+        return saveAddressBook(command, commandResult, hasChangedData);
     }
 
     /**
      * Saves the address book. If saving fails after {@code command} changed the data, the error also shows
      * {@code commandResult} and says the change was kept, since repeating a command such as {@code delete 1}
      * would change another supporter. It names {@code redo} as the way to reverse an {@code undo}.
+     * Otherwise, returns {@code commandResult} with any save error added, so {@code help} and {@code exit} work.
      */
-    private void saveAddressBook(Command command, CommandResult commandResult, boolean hasChangedData)
+    private CommandResult saveAddressBook(Command command, CommandResult commandResult, boolean hasChangedData)
             throws CommandException {
         try {
             storage.saveAddressBook(model.getAddressBook());
+            return commandResult;
         } catch (IOException ioe) {
             String saveError = ioe instanceof AccessDeniedException
                     ? String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, ioe.getMessage())
                     : String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage());
             if (!hasChangedData) {
-                throw new CommandException(saveError, ioe);
+                return commandResult.withNote(saveError);
             }
             logger.warning("Kept a change that could not be saved: " + ioe.getMessage());
             String reversingCommandWord = command instanceof UndoCommand
