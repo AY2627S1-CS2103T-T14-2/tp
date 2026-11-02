@@ -74,7 +74,7 @@ public class ParserUtilTest {
     @Test
     public void parseIndex_withUsageInvalidInput_reportsReasonAndUsage() {
         String usage = "delete INDEX\nDeletes a supporter.";
-        String expectedMessage = "Index must be a positive integer (1, 2, 3, ...).\n" + usage;
+        String expectedMessage = MESSAGE_INVALID_INDEX + "\n" + usage;
         for (String invalidIndex : getInvalidIndexInputs("abc")) {
             assertThrows(ParseException.class, expectedMessage, () -> ParserUtil.parseIndex(invalidIndex, usage));
         }
@@ -105,7 +105,7 @@ public class ParserUtilTest {
     @Test
     public void parseInteractionIndices_withUsageInvalidInput_reportsReasonAndUsage() {
         String usage = "unlog INDEX ENTRY\nDeletes an interaction.";
-        String expectedMessage = "Provide exactly two positive integer indices: INDEX ENTRY.\n" + usage;
+        String expectedMessage = ParserUtil.MESSAGE_INVALID_INTERACTION_INDICES + "\n" + usage;
 
         // wrong number of indices
         for (String input : List.of("", WHITESPACE, "1", "1 2 3")) {
