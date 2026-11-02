@@ -1,3 +1,5 @@
+# SupporterBook
+
 [![CI Status](https://github.com/AY2627S1-CS2103T-T14-2/tp/actions/workflows/gradle.yml/badge.svg)](https://github.com/AY2627S1-CS2103T-T14-2/tp/actions)
 [![codecov](https://codecov.io/gh/AY2627S1-CS2103T-T14-2/tp/graph/badge.svg?token=F2MKTTV2I5)](https://codecov.io/gh/AY2627S1-CS2103T-T14-2/tp)
 
