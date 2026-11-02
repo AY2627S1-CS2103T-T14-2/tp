@@ -30,9 +30,9 @@ import seedu.address.model.tag.Tag;
  */
 public class ParserUtil {
 
-    public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer (1, 2, 3, ...).";
+    public static final String MESSAGE_INVALID_INDEX = "Index must be a whole number from 1 to 2147483647.";
     public static final String MESSAGE_INVALID_INTERACTION_INDICES =
-            "Provide exactly two positive integer indices: INDEX ENTRY.";
+            "Provide exactly two indices: INDEX ENTRY. Each must be a whole number from 1 to 2147483647.";
 
     public static final String MESSAGE_BLANK_TAG = "Tag should not be blank. "
             + "Provide a tag name after " + PREFIX_TAG + ".";
