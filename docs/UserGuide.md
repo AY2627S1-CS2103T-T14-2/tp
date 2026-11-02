@@ -354,7 +354,7 @@ Examples:
 The success message reports the count and threshold, for example:
 
 ```text
-3 supporter(s) listed: no interactions or last contacted more than 60 days ago.
+3 supporter(s) listed: no interactions or last contacted more than 60 day(s) ago.
 ```
 
 No matches produces an empty list and the same message with a count of `0`.

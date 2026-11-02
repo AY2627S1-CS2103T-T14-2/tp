@@ -33,7 +33,7 @@ public class QuietCommand extends Command {
             + "A supporter last contacted exactly DAYS days ago is not included.\n"
             + "Example: " + COMMAND_WORD + " 30";
     public static final String MESSAGE_SUCCESS =
-            "%1$d supporter(s) listed: no interactions or last contacted more than %2$d days ago.";
+            "%1$d supporter(s) listed: no interactions or last contacted more than %2$d day(s) ago.";
 
     private static final Logger logger = LogsCenter.getLogger(QuietCommand.class);
     private static final Comparator<Person> LAST_CONTACT_ORDER =
