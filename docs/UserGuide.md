@@ -66,8 +66,8 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 - Items followed by `...` can appear zero or more times.<br>
   For example, `[t/TAG]... ` may be omitted, or written as `t/friend` or `t/friend t/family`.
 
-- Parameters can be in any order.<br>
-  For example, if the command specifies `n/NAME p/PHONE`, `p/PHONE n/NAME` is also acceptable.
+- Prefixed parameters can be in any order among themselves. Parameters without prefixes must stay in the positions shown in the command format.<br>
+  For example, `edit 1 n/John Doe p/91234567` and `edit 1 p/91234567 n/John Doe` are equivalent, but `INDEX` must remain before the prefixed parameters.
   For `find`, name keywords must come before the first prefix; its prefixed filters can be in any order.
 
 - A command only recognises the prefixes in its own format. Other prefix-like words normally stay part of the value before them, e.g. `em/` mistyped for `e/`, or `e/` used in `log`. The exception is `find`: known prefixes outside its search format are rejected with an unsupported-search-filter error. Other prefix-like words are not automatically rejected, since addresses and notes can contain slashes, e.g. `Unit/3`.<br>
