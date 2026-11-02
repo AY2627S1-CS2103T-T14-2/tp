@@ -25,6 +25,8 @@ public class PersonCardContactDetailsTest {
             "Blk 123 Ang Mo Kio Avenue 6, #12-345, Singapore Society Building, Singapore 560123";
     private static final String LONG_EMAIL =
             "fundraising.partnerships.and.corporate.giving@internationalcharityfoundation.org.sg";
+    private static final String LONG_PHONE =
+            "(65) 9123-4567 ext 123456 (Office Fax For The Corporate Partnerships And Giving Team)";
     private static final double CARD_WIDTH = 320;
     private static final double LAYOUT_TOLERANCE = 1.0;
 
@@ -45,6 +47,22 @@ public class PersonCardContactDetailsTest {
             assertTrue(email.localToScene(email.getBoundsInLocal()).getMaxY()
                     <= root.localToScene(root.getBoundsInLocal()).getMaxY() + LAYOUT_TOLERANCE,
                     "The card should grow to fit the wrapped lines");
+        });
+    }
+
+    @Test
+    public void layout_longPhoneLabel_showsFullText() throws Exception {
+        Person person = new PersonBuilder().withPhone(LONG_PHONE).build();
+
+        runOnFxThread(() -> {
+            Region root = createLaidOutCard(person);
+            Label phone = (Label) root.lookup("#phone");
+            Label address = (Label) root.lookup("#address");
+
+            assertFullyDisplayed(phone, LONG_PHONE);
+            assertTrue(address.localToScene(address.getBoundsInLocal()).getMinY()
+                    >= phone.localToScene(phone.getBoundsInLocal()).getMaxY(),
+                    "The address should be below the wrapped phone number");
         });
     }
 
