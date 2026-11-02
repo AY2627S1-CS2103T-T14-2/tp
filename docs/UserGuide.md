@@ -58,6 +58,8 @@ SupporterBook is a **desktop application for fundraising and outreach staff at s
 
 - Command words ignore case. For example, `list`, `LIST` and `List` all list every supporter.
 
+- A non-breaking space after the command word, e.g. in a command copied from a web page, is treated as an ordinary space.
+
 - Supporter and interaction numbers must be positive whole numbers written with the digits `0` to `9`. Use the supporter number in the currently displayed list and the interaction number shown beside the entry. Leading zeros are allowed (`01` means `1`), but other digit characters, such as full-width `１`, are rejected.
 
 - Items in square brackets are optional.<br>

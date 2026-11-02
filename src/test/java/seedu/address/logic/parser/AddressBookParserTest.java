@@ -280,6 +280,17 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_nonBreakingSpaceAfterCommandWord_parsedAsSpace() throws Exception {
+        // a non-breaking space is often copied from web pages, e.g. the online user guide
+        assertEquals(parser.parseCommand("find alex"), parser.parseCommand("find alex"));
+        assertEquals(new ViewCommand(INDEX_FIRST_PERSON), parser.parseCommand("view  1"));
+        Person person = new PersonBuilder().build();
+        assertEquals(new AddCommand(person),
+                parser.parseCommand(PersonUtil.getAddCommand(person).replaceFirst(" ", " ")));
+        assertTrue(parser.parseCommand("undo ") instanceof UndoCommand);
+    }
+
+    @Test
     public void parseCommand_list() throws Exception {
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
         assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD + " 3") instanceof ListCommand);

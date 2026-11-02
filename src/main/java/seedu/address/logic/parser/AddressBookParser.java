@@ -51,9 +51,10 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class AddressBookParser {
 
     /**
-     * Used for initial separation of command word and args.
+     * Used for initial separation of command word and args, which a pasted non-breaking space may separate.
      */
-    private static final Pattern BASIC_COMMAND_FORMAT = Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)");
+    private static final Pattern BASIC_COMMAND_FORMAT =
+            Pattern.compile("(?<commandWord>[^\\s\\u00A0]+)(?<arguments>.*)");
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
     private static final Set<String> COMMANDS_WITHOUT_ARGUMENTS = Set.of(ClearCommand.COMMAND_WORD,
             ListCommand.COMMAND_WORD, StatsCommand.COMMAND_WORD, ExitCommand.COMMAND_WORD, HelpCommand.COMMAND_WORD,
@@ -109,7 +110,7 @@ public class AddressBookParser {
         }
 
         final String commandWord = getCommandWord(matcher);
-        final String arguments = matcher.group("arguments");
+        final String arguments = matcher.group("arguments").replaceFirst("^\\u00A0+", " ");
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
         // log messages such as the one below.
