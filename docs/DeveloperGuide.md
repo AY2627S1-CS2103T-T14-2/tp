@@ -360,7 +360,7 @@ Two supporters count as the same supporter if their names match, ignoring case, 
 
 - `Name#isSameName(Name)` replaces curly apostrophes (`’`) with straight apostrophes (`'`) in both names for comparison, then compares them ignoring case. Because both names are already normalised, extra spaces and canonically equivalent Unicode spellings need no special handling. Apostrophe replacement does not change `fullName`, so the original apostrophe style is preserved when saved and displayed. `Name#equals(Object)` and `Name#hashCode()` continue to use the stored spelling.
 - `Person#isSamePerson(Person)` uses `Name#isSameName(Name)`. `UniquePersonList`, `AddCommand`, `EditCommand` and the loading of the data file all rely on `Person#isSamePerson(Person)`, so they all apply the same rule.
-- When `AddCommand` or `EditCommand` finds a duplicate, `Messages#getErrorMessageForDuplicatePerson(List, Person)` names the supporter already in the list, and suggests adding a distinguishing word to the new name.
+- When `AddCommand` finds a duplicate, it builds the error using `Messages#getErrorMessageForDuplicatePerson(List, Person)`. `EditCommand` formats `Messages.MESSAGE_DUPLICATE_PERSON` directly with the matching supporter's name. Both messages name the existing supporter and suggest adding a distinguishing word to the new name.
 
 `NameTest` checks supported punctuation and slash words, Unicode letters and combining marks, normalisation, and name comparison. `AddCommandParserTest` and `EditCommandParserTest` check that supported names and non-breaking spaces are accepted alongside other command fields, and invalid name forms are rejected.
 
