@@ -12,6 +12,7 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -268,6 +269,72 @@ public class FindCommandIntegrationTest {
 
         logic.execute("undo");
         assertEquals(getTypicalAddressBook(), model.getAddressBook());
+    }
+
+    @Test
+    public void execute_noOpCommandsAfterFilteredUndo_preserveResultsSelectionAndRedo() throws Exception {
+        logic.execute("view 2");
+        logic.execute("edit 2 n/Benson Renamed");
+        Person renamedBenson = new PersonBuilder(BENSON).withName("Benson Renamed").build();
+        logic.execute("undo");
+        logic.execute("find meier o/DBS t/friend st/giving p/98-76 e/@EXAMPLE");
+
+        for (String command : List.of("edit 1 o/DBS Bank", "tag 1 t/FRIENDS", "stage 1 giving")) {
+            logic.execute(command);
+
+            assertEquals(List.of(BENSON), model.getFilteredPersonList(), command);
+            assertEquals(Optional.of(BENSON), model.getViewedPerson(), command);
+            assertEquals(getTypicalAddressBook(), model.getAddressBook(), command);
+            assertEquals(getTypicalAddressBook(), addressBookStorage.readAddressBook().orElseThrow(), command);
+            assertFalse(model.canUndoAddressBook(), command);
+            assertTrue(model.canRedoAddressBook(), command);
+        }
+
+        logic.execute("redo");
+        AddressBook expected = getTypicalAddressBook();
+        expected.setPerson(BENSON, renamedBenson);
+        assertEquals(expected.getPersonList(), model.getFilteredPersonList());
+        assertEquals(Optional.of(renamedBenson), model.getViewedPerson());
+        assertEquals(expected, model.getAddressBook());
+        assertEquals(expected, addressBookStorage.readAddressBook().orElseThrow());
+        assertFalse(model.canRedoAddressBook());
+
+        logic.execute("undo");
+        assertEquals(Optional.of(BENSON), model.getViewedPerson());
+        assertEquals(getTypicalAddressBook(), addressBookStorage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_repeatedFiltersAndMissingFields_combineOrWithinAndAcrossGroups() throws Exception {
+        logic.execute("clear");
+        logic.execute("add n/Alpha p/11111111 o/DBS st/giving t/vip");
+        logic.execute("add n/Beta e/beta@example.com o/OCBC st/giving t/board");
+        logic.execute("add n/Gamma p/22222222 e/gamma@example.com st/lapsed t/vip");
+        AddressBook original = new AddressBook(model.getAddressBook());
+        Person alpha = original.getPersonList().get(0);
+        Person beta = original.getPersonList().get(1);
+        Person gamma = original.getPersonList().get(2);
+        logic.execute("view 2");
+        List<Map.Entry<String, List<Person>>> cases = List.of(
+                Map.entry("find Alpha Beta", List.of(alpha, beta)),
+                Map.entry("find st/giving st/lapsed t/vip", List.of(alpha, gamma)),
+                Map.entry("find o/DBS o/OCBC t/vip", List.of(alpha)),
+                Map.entry("find p/111 p/222", List.of(alpha, gamma)),
+                Map.entry("find e/@example.com", List.of(beta, gamma)),
+                Map.entry("find o/DBS e/@example.com", List.of()),
+                Map.entry("find t/vip t/vip p/222", List.of(gamma)),
+                Map.entry("find Beta st/lapsed", List.of()));
+
+        for (Map.Entry<String, List<Person>> testCase : cases) {
+            String query = testCase.getKey();
+            CommandResult result = logic.execute(query);
+
+            assertEquals(testCase.getValue(), model.getFilteredPersonList(), query);
+            assertEquals(testCase.getValue().size() + " supporter(s) listed!", result.getFeedbackToUser(), query);
+            assertEquals(Optional.of(beta), model.getViewedPerson(), query);
+            assertEquals(original, model.getAddressBook(), query);
+            assertEquals(original, addressBookStorage.readAddressBook().orElseThrow(), query);
+        }
     }
 
     /**

@@ -275,6 +275,86 @@ public class QuietCommandIntegrationTest {
         assertFalse(model.canUndoAddressBook());
     }
 
+    @Test
+    public void execute_logUndoRedoAndReload_preserveQuietEligibilityAndDisplayedIndices() throws Exception {
+        executeQuiet(60);
+        logic.execute("log 3 nt/Follow up dt/" + TODAY);
+        Person contactedOld = new PersonBuilder(old)
+                .withInteractions(old.getInteractions().getFirst(), new Interaction(TODAY, "Follow up"))
+                .build();
+        AddressBook expected = new AddressBook(original);
+        expected.setPerson(old, contactedOld);
+
+        assertEquals(List.of(never, older), model.getFilteredPersonList());
+        assertEquals(Optional.of(contactedOld), model.getViewedPerson());
+        assertSavedStateAndReloadedQuiet(expected, List.of(never, older));
+
+        logic.execute("undo");
+        assertEquals(original.getPersonList(), model.getFilteredPersonList());
+        assertEquals(Optional.of(old), model.getViewedPerson());
+        assertTrue(model.canRedoAddressBook());
+        assertSavedStateAndReloadedQuiet(original, List.of(never, older, old));
+
+        logic.execute("redo");
+        assertEquals(expected.getPersonList(), model.getFilteredPersonList());
+        assertEquals(Optional.of(contactedOld), model.getViewedPerson());
+        assertFalse(model.canRedoAddressBook());
+        assertSavedStateAndReloadedQuiet(expected, List.of(never, older));
+
+        executeQuiet(60);
+        logic.execute("view 2");
+        assertEquals(List.of(never, older), model.getFilteredPersonList());
+        assertEquals(Optional.of(older), model.getViewedPerson());
+    }
+
+    @Test
+    public void execute_unlogUndoRedoAndReload_preserveQuietOrderingAndDisplayedIndices() throws Exception {
+        executeQuiet(60);
+        logic.execute("unlog 3 1");
+        Person uncontactedOld = new PersonBuilder(old).withInteractions().build();
+        AddressBook expected = new AddressBook(original);
+        expected.setPerson(old, uncontactedOld);
+
+        assertEquals(List.of(uncontactedOld, never, older), model.getFilteredPersonList());
+        assertEquals(Optional.of(uncontactedOld), model.getViewedPerson());
+        assertSavedStateAndReloadedQuiet(expected, List.of(uncontactedOld, never, older));
+
+        logic.execute("undo");
+        assertEquals(original.getPersonList(), model.getFilteredPersonList());
+        assertEquals(Optional.of(old), model.getViewedPerson());
+        assertTrue(model.canRedoAddressBook());
+        assertSavedStateAndReloadedQuiet(original, List.of(never, older, old));
+
+        logic.execute("redo");
+        assertEquals(expected.getPersonList(), model.getFilteredPersonList());
+        assertEquals(Optional.of(uncontactedOld), model.getViewedPerson());
+        assertFalse(model.canRedoAddressBook());
+        assertSavedStateAndReloadedQuiet(expected, List.of(uncontactedOld, never, older));
+
+        executeQuiet(60);
+        logic.execute("view 2");
+        assertEquals(List.of(uncontactedOld, never, older), model.getFilteredPersonList());
+        assertEquals(Optional.of(never), model.getViewedPerson());
+    }
+
+    /**
+     * Checks stored order and rebuilds the quiet view from disk without inheriting session history or selection.
+     */
+    private void assertSavedStateAndReloadedQuiet(AddressBook expected, List<Person> expectedQuietSupporters)
+            throws Exception {
+        assertEquals(expected, model.getAddressBook());
+        assertEquals(expected.getPersonList(), model.getAddressBook().getPersonList());
+        Model reloaded = new ModelManager(addressBookStorage.readAddressBook().orElseThrow(), new UserPrefs());
+        assertEquals(expected.getPersonList(), reloaded.getAddressBook().getPersonList());
+
+        new QuietCommand(60, CLOCK).execute(reloaded);
+
+        assertEquals(expectedQuietSupporters, reloaded.getFilteredPersonList());
+        assertTrue(reloaded.getViewedPerson().isEmpty());
+        assertFalse(reloaded.canUndoAddressBook());
+        assertFalse(reloaded.canRedoAddressBook());
+    }
+
     private void executeQuiet(int days) {
         new QuietCommand(days, CLOCK).execute(model);
         model.commitAddressBookIfChanged();
