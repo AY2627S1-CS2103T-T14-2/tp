@@ -5,16 +5,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.FxTestUtil.runOnFxThread;
 
 import java.time.LocalDate;
+import java.util.Locale;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import seedu.address.model.person.Interaction;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Stage;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -26,6 +31,42 @@ public class PersonCardTest {
     private static final String LONG_ORGANISATION =
             "Singapore Society for the Prevention of Cruelty to Animals";
     private static final double LAYOUT_TOLERANCE = 1.0;
+
+    @Test
+    @ResourceLock("java.util.Locale.default")
+    public void constructor_englishAndTurkishLocales_preservesEveryStageColour() throws Exception {
+        Map<Stage, Color> expectedColours = Map.of(
+                Stage.PROSPECT, Color.web("#6b6b6b"),
+                Stage.CONTACTED, Color.web("#3e6fb0"),
+                Stage.CULTIVATING, Color.web("#8a5bb5"),
+                Stage.GIVING, Color.web("#3a8a4f"),
+                Stage.LAPSED, Color.web("#b07a2a"),
+                Stage.DECLINED, Color.web("#a23c3c"));
+        runOnFxThread(() -> {
+            Locale originalLocale = Locale.getDefault();
+            Locale originalDisplayLocale = Locale.getDefault(Locale.Category.DISPLAY);
+            Locale originalFormatLocale = Locale.getDefault(Locale.Category.FORMAT);
+            try {
+                for (Locale locale : new Locale[] {Locale.ENGLISH, Locale.forLanguageTag("tr-TR")}) {
+                    Locale.setDefault(locale);
+                    for (Stage stage : Stage.values()) {
+                        Person person = new PersonBuilder().withStage(stage.name()).build();
+                        PersonCard card = createLaidOutCard(person, 400);
+                        Label badge = (Label) card.getRoot().lookup("#stage");
+
+                        assertEquals(stage.toString(), badge.getText());
+                        assertTrue(badge.getStyleClass().contains("stage_" + stage.name().toLowerCase(Locale.ROOT)));
+                        assertEquals(expectedColours.get(stage), badge.getBackground().getFills().getFirst().getFill(),
+                                stage + " under " + locale);
+                    }
+                }
+            } finally {
+                Locale.setDefault(originalLocale);
+                Locale.setDefault(Locale.Category.DISPLAY, originalDisplayLocale);
+                Locale.setDefault(Locale.Category.FORMAT, originalFormatLocale);
+            }
+        });
+    }
 
     @Test
     public void constructor_emptyHistory_showsNoInteractionsMessage() throws Exception {

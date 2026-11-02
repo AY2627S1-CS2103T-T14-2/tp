@@ -1,5 +1,6 @@
 package seedu.address.ui;
 
+import java.util.Locale;
 import java.util.Optional;
 
 import javafx.fxml.FXML;
@@ -59,7 +60,7 @@ public class PersonCard extends UiPart<Region> {
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
         stage.setText(person.getStage().toString());
-        stage.getStyleClass().add(STAGE_STYLE_CLASS_PREFIX + person.getStage().name().toLowerCase());
+        stage.getStyleClass().add(STAGE_STYLE_CLASS_PREFIX + person.getStage().name().toLowerCase(Locale.ROOT));
         organisation.setText(person.getOrganisation().map(org -> org.value).orElse(NO_ORGANISATION));
         lastContact.setText(LastContactFormatter.format(person.getLastInteractionDate()));
         showIfPresent(phone, person.getPhone().map(p -> p.value));
